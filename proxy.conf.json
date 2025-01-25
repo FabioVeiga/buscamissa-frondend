@@ -1,0 +1,7 @@
+{
+  "/api/*": {
+    "target": "http://ec2-52-70-28-46.compute-1.amazonaws.com:5000",
+    "secure": false,
+    "changeOrigin": true
+  }
+}

@@ -1,0 +1,68 @@
+.church-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+  
+    .church-card {
+      display: flex;
+      flex-direction: row;
+      width: 600px;
+      padding: 16px;
+  
+      .church-card-content {
+        display: flex;
+        gap: 16px;
+  
+        .church-image {
+          flex: 1;
+          position: relative;
+  
+          img {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            cursor: pointer;
+          }
+  
+          .thumbnails {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+  
+            img {
+              width: 48px;
+              height: 48px;
+              border-radius: 4px;
+              cursor: pointer;
+              border: 2px solid transparent;
+  
+              &:hover {
+                border-color: #1976d2;
+              }
+            }
+          }
+        }
+  
+        .church-info {
+          flex: 2;
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+  
+          h2 {
+            margin: 0;
+          }
+  
+          .actions {
+            margin-top: 16px;
+  
+            button {
+              margin-right: 8px;
+            }
+          }
+        }
+      }
+    }
+  }
+  
