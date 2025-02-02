@@ -5,6 +5,7 @@ import { DashboardComponent } from "./modules/admin/dashboard/dashboard.componen
 import { LayoutHomeComponent } from "./core/layout/home/layout/layout.component";
 import { LayoutComponent } from "./core/layout/admin/layout/layout.component";
 import { RegisterChurchComponent } from "./modules/public/register-church/register-church.component";
+import { SponsorsComponent } from "./modules/public/sponsors/sponsors.component";
 
 export const routes: Routes = [
   {
@@ -13,6 +14,7 @@ export const routes: Routes = [
     children: [
       { path: 'home', component: HomeComponent },
       { path: 'nova', component: RegisterChurchComponent },
+      { path: 'patrocinadores', component: SponsorsComponent },
       { path: "", redirectTo: "home", pathMatch: "full" },
     ]
   },
