@@ -1,30 +1,18 @@
 .header {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 64px; // Altura padrão do mat-toolbar
-    font-size: 24px;
-    font-weight: bold;
-    color: #999;
-    
-    .title {
-      text-align: center;
-      flex-grow: 1; // Centraliza o título
-    }
-  }
-  
-  .banner {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 100vw; // Preenche toda a largura da viewport
-    // height: 100vh; // Preenche toda a altura da viewport
-    overflow: hidden;
-  
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 64px; // Altura padrão do mat-toolbar
+  font-size: 24px;
+  font-weight: bold;
+  color: #999;
+
+  .title {
+    text-align: center;
+    flex-grow: 1;
     img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover; // Cobre o espaço sem distorcer
+      padding: 5px;
+      max-width: 40px;
     }
   }
-  
+}

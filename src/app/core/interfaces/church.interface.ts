@@ -11,11 +11,13 @@ export interface FilterSearchChurch {
 }
 
 export interface Church {
+  id?: number;
   nome: string;
   paroco: string;
   imagem: string;
   missas: Mass[];
   endereco: Address;
+  imagemUrl?: string;
 }
 
 export interface UpdateChurch {
@@ -26,10 +28,10 @@ export interface UpdateChurch {
 }
 
 export interface Mass {
-  id: number;
-  diaDaSemana: number;
+  id?: number;
+  diaSemana?: number;
   horario: string;
-  observacao: string;
+  observacao?: string;
 }
 
 export interface Address {
@@ -42,3 +44,11 @@ export interface Address {
   estado: string;
   regiao: string;
 }
+
+export interface ResponseAddress {
+  data: {
+    localidades: string[];
+    bairros: string[];
+  };
+}
+

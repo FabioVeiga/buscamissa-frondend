@@ -1,68 +1,89 @@
-.church-list {
+.filters {
+  display: flex;
+  padding: 20px;
+}
+
+.filter-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  width: 100%;
+  align-items: center;
+
+  mat-form-field {
+    flex: 1;
+    min-width: 200px;
+  }
+}
+
+.list {
+  margin-bottom: 16px;
+  padding: 16px;
+  border-radius: 8px;
+  box-shadow: 2px 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.full-width {
+  width: 100%;
+}
+
+mat-list-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #ddd;
+  padding: 8px 0;
+}
+
+mat-list-item:last-child {
+  border-bottom: none;
+}
+
+.church-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  background: #fff;
+
+  &__image {
     display: flex;
-    flex-wrap: wrap;
-    gap: 16px;
-    justify-content: center;
-  
-    .church-card {
+    flex-direction: column;
+    align-items: center;
+
+    img {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 8px;
+    }
+
+    &__actions {
+      margin-top: 8px;
       display: flex;
-      flex-direction: row;
-      width: 600px;
-      padding: 16px;
-  
-      .church-card-content {
-        display: flex;
-        gap: 16px;
-  
-        .church-image {
-          flex: 1;
-          position: relative;
-  
-          img {
-            width: 100%;
-            height: auto;
-            border-radius: 8px;
-            cursor: pointer;
-          }
-  
-          .thumbnails {
-            display: flex;
-            gap: 8px;
-            margin-top: 8px;
-  
-            img {
-              width: 48px;
-              height: 48px;
-              border-radius: 4px;
-              cursor: pointer;
-              border: 2px solid transparent;
-  
-              &:hover {
-                border-color: #1976d2;
-              }
-            }
-          }
-        }
-  
-        .church-info {
-          flex: 2;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-  
-          h2 {
-            margin: 0;
-          }
-  
-          .actions {
-            margin-top: 16px;
-  
-            button {
-              margin-right: 8px;
-            }
-          }
-        }
-      }
+      gap: 8px;
     }
   }
-  
+
+  &__info {
+    flex: 1;
+
+    h3 {
+      margin: 0;
+      font-size: 1.2rem;
+    }
+
+    p {
+      margin: 4px 0;
+    }
+  }
+
+  &__schedule {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    gap: 8px;
+    margin-top: 12px;
+  }
+}

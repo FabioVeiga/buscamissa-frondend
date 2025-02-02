@@ -39,11 +39,13 @@ export class UsersService {
 
   /** Busca usuários filtrados pelos parâmetros informados */
   searchByFilters(filters: FilterSearchUser) {
-    const params = Object.entries(filters).reduce((httpParams, [key, value]) => {
-      return value !== undefined && value !== null ? httpParams.set(key, value.toString()) : httpParams;
-    }, new HttpParams());
-
-    return this.http.get(`/api/Usuario/buscar-por-filtro`, { params }).pipe(
+    let params = new HttpParams(); // Criamos um HttpParams vazio
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params = params.append(key, value.toString()); // Adicionamos apenas os valores válidos
+      }
+    });
+    return this.http.get(`Usuario/buscar-por-filtro`, { params }).pipe(
       catchError(this.handleError)
     );
   }

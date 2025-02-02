@@ -1,7 +1,7 @@
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { inject, Injectable } from "@angular/core";
-import { catchError, throwError } from "rxjs";
-import { Church, FilterSearchChurch, UpdateChurch } from "../interfaces/church.interface";
+import { catchError, Observable, throwError } from "rxjs";
+import { Church, FilterSearchChurch, ResponseAddress, UpdateChurch } from "../interfaces/church.interface";
 
 @Injectable({
   providedIn: "root",
@@ -31,12 +31,20 @@ export class ChurchesService {
     );
   }
 
+  /** Busca cidades e bairros através da UF */
+  addressRange(uf: string): Observable<ResponseAddress> {
+    return this.http.get<ResponseAddress>(`Igreja/obter-enderecos?uf=${uf}`)
+      .pipe(catchError(this.handleError));
+  }
+  
   /** Busca igrejas filtradas pelos parâmetros informados */
   searchByFilters(filters: FilterSearchChurch) {
-    const params = Object.entries(filters).reduce((httpParams, [key, value]) => {
-      return value !== undefined && value !== null ? httpParams.set(key, value.toString()) : httpParams;
-    }, new HttpParams());
-
+    let params = new HttpParams();
+    Object.entries(filters).forEach(([key, value]) => {
+      if (value !== undefined && value !== null && value !== '') {
+        params = params.append(key, value.toString());
+      }
+    });
     return this.http.get(`Igreja/buscar-por-filtro`, { params }).pipe(
       catchError(this.handleError)
     );
