@@ -143,7 +143,7 @@ export class RegisterChurchComponent implements OnInit {
     const payload = {
       nome: formValues.nomeIgreja,
       paroco: formValues.nomeParoco,
-      imagem: formValues.imagemBase64, // Aqui você já terá o base64 da imagem
+      imagem: formValues.imagem, // Aqui você já terá o base64 da imagem
       missas: formValues.missas.map((missa: any) => ({
         id: 0, // Ajuste do id conforme necessário
         diaSemana: missa.diaSemana,
