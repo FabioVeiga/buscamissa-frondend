@@ -45,7 +45,12 @@
                     <input matInput formControlName="whatsapp">
                 </mat-form-field>
 
-                <mat-form-field appearance="outline" class="full-width">
+                <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>E-mail de contato</mat-label>
+                    <input matInput formControlName="emailContato">
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="half-width">
                     <mat-label>Nome da Igreja</mat-label>
                     <input matInput formControlName="nomeIgreja">
                 </mat-form-field>
@@ -59,11 +64,10 @@
             <h3>Horários</h3>
             <!-- Lista de horários adicionados -->
             <div formArrayName="missas">
-                <div *ngFor="let horarioCtrl of horarios.controls; let i = index" [formGroupName]="i"
-                    class="horario-container">
+                <div *ngFor="let horarioCtrl of horarios.controls; let i = index" [formGroupName]="i" class="form-grid">
 
                     <!-- Seleção do dia da semana -->
-                    <mat-form-field appearance="outline">
+                    <mat-form-field appearance="outline" class="half-width">
                         <mat-label>Dia da semana</mat-label>
                         <mat-select formControlName="diaSemana">
                             <mat-option *ngFor="let dia of diasSemana" [value]="dia.key">
@@ -73,13 +77,16 @@
                     </mat-form-field>
 
                     <!-- Campo de horário -->
-                    <mat-form-field appearance="outline">
+                    <mat-form-field appearance="outline" class="half-width">
                         <mat-label>Horário</mat-label>
                         <input matInput type="time" formControlName="horario">
+                        <mat-error *ngIf="horarioCtrl.get('horario')?.hasError('minutosInvalidos')">
+                            Os minutos devem ser 00, 15, 30 ou 45.
+                        </mat-error>
                     </mat-form-field>
 
                     <!-- Campo de observação -->
-                    <mat-form-field appearance="outline">
+                    <mat-form-field appearance="outline" class="half-width">
                         <mat-label>Observação</mat-label>
                         <input matInput type="text" formControlName="observacao">
                     </mat-form-field>
@@ -97,6 +104,47 @@
                     Novo horário
                 </button>
             </div>
+            <mat-divider class="mt-4 mb-4"></mat-divider>
+
+            <h3>Redes Sociais</h3>
+            <div class="form-grid">
+                <!-- Facebook -->
+                <!-- Rede Social: LinkedIn -->
+                <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>LinkedIn</mat-label>
+                    <input matInput formControlName="linkedin">
+                </mat-form-field>
+
+                <!-- Rede Social: Facebook -->
+                <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Facebook</mat-label>
+                    <input matInput formControlName="facebook">
+                </mat-form-field>
+
+                <!-- Rede Social: Instagram -->
+                <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>Instagram</mat-label>
+                    <input matInput formControlName="instagram">
+                </mat-form-field>
+
+                <!-- Rede Social: YouTube -->
+                <mat-form-field appearance="outline" class="half-width">
+                    <mat-label>YouTube</mat-label>
+                    <input matInput formControlName="youtube">
+                </mat-form-field>
+
+            </div>
+
+            <mat-divider class="mt-4 mb-4"></mat-divider>
+
+            <h3>Foto</h3>
+            <!-- Imagem -->
+
+
+            <input type="file" (change)="onImageSelect($event)" />
+            <mat-hint>{{ imageName }}</mat-hint> <!-- Exibe o nome do arquivo -->
+
+
         </mat-card-content>
         <hr>
         <mat-card-actions class="text-center">

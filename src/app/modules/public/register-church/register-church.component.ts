@@ -19,6 +19,7 @@ import { MatInputModule } from "@angular/material/input";
 import { ChurchesService } from "../../../core/services/churches.service";
 import { HttpErrorResponse } from "@angular/common/http";
 import { MatSelectModule } from "@angular/material/select";
+import { horarioMinutosValidator } from "../../../core/misc/validator-minute";
 
 @Component({
   selector: "app-register-church",
@@ -35,6 +36,7 @@ import { MatSelectModule } from "@angular/material/select";
     MatButtonModule,
     MatIconModule,
     MatSelectModule,
+    MatDividerModule,
   ],
   templateUrl: "./register-church.component.html",
   styleUrls: ["./register-church.component.scss"],
@@ -43,6 +45,7 @@ export class RegisterChurchComponent implements OnInit {
   _church = inject(ChurchesService);
   form!: FormGroup;
   diaSelecionado: number | null = null;
+  imageName = ""; // Nome da imagem selecionada
 
   diasSemana = [
     { key: 0, label: "Domingo" },
@@ -68,24 +71,30 @@ export class RegisterChurchComponent implements OnInit {
       estado: [""],
       telefone: [""],
       whatsapp: [""],
-      missas: this.fb.array([]), // FormArray para armazenar os horários
+      emailContato: [""],
+      missas: this.fb.array([], Validators.required), // FormArray para armazenar os horários
+      facebook: [""], // Nome do perfil do Facebook
+      instagram: [""], // Nome do perfil do Instagram
+      linkedin: [""], // Nome do perfil do LinkedIn
+      youtube: [""], // Nome do perfil do YouTube
+      imagem: [""], // Imagem da igreja em base64
     });
   }
 
   // Função para buscar o endereço pelo CEP.
   getCEP() {
-    this._church.searchByCEP(this.form.get("cep")?.value).subscribe({
-      next: (response: any) => {
-        const address = response.data[0].endereco;
-        this.form.get("endereco")?.setValue(address.logradouro);
-        this.form.get("bairro")?.setValue(address.bairro);
-        this.form.get("cidade")?.setValue(address.localidade);
-        this.form.get("estado")?.setValue(address.uf);
-      },
-      error: (error: HttpErrorResponse) => {
-        console.error(error);
-      },
-    });
+    // this._church.searchByCEP(this.form.get("cep")?.value).subscribe({
+    //   next: (response: any) => {
+    //     const address = response.data[0].endereco;
+    //     this.form.get("endereco")?.setValue(address.logradouro);
+    //     this.form.get("bairro")?.setValue(address.bairro);
+    //     this.form.get("cidade")?.setValue(address.localidade);
+    //     this.form.get("estado")?.setValue(address.uf);
+    //   },
+    //   error: (error: HttpErrorResponse) => {
+    //     console.error(error);
+    //   },
+    // });
   }
 
   get horarios(): FormArray {
@@ -95,8 +104,8 @@ export class RegisterChurchComponent implements OnInit {
   adicionarHorario(): void {
     this.horarios.push(
       this.fb.group({
-        diaSemana: null, // Dropdown do dia da semana
-        horario: "", // Campo de horário
+        diaSemana: ["", [Validators.required]], // Dropdown do dia da semana
+        horario: ["", [Validators.required, horarioMinutosValidator()]], // Horário
         observacao: "", // Observação
       })
     );
@@ -106,8 +115,73 @@ export class RegisterChurchComponent implements OnInit {
     this.horarios.removeAt(index);
   }
 
+  // Função para selecionar a imagem
+  onImageSelect(event: any): void {
+    const file = event.target.files[0];
+
+    if (file) {
+      this.imageName = file.name; // Armazena o nome do arquivo
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => {
+        this.form.get("imagemBase64")?.setValue(reader.result as string); // Armazenando o valor em base64
+      };
+    }
+  }
+
   // Função de submissão
   submit(): void {
-    console.log(this.form.value); // Aqui você pode processar o formulário
+    if (this.form.invalid) {
+      console.log("Por favor, preencha todos os campos obrigatórios.");
+      return; // Evita o envio do formulário
+    }
+
+    // Obtendo os valores do formulário
+    const formValues = this.form.value;
+
+    // Mapeando os valores para o formato desejado
+    const payload = {
+      nome: formValues.nomeIgreja,
+      paroco: formValues.nomeParoco,
+      imagem: formValues.imagemBase64, // Aqui você já terá o base64 da imagem
+      missas: formValues.missas.map((missa: any) => ({
+        id: 0, // Ajuste do id conforme necessário
+        diaSemana: missa.diaSemana,
+        horario: missa.horario,
+        observacao: missa.observacao,
+      })),
+      endereco: {
+        cep: formValues.cep,
+        logradouro: formValues.endereco,
+        complemento: formValues.numero,
+        bairro: formValues.bairro,
+        localidade: formValues.cidade,
+        uf: formValues.estado,
+        estado: formValues.estado || "0",  // Caso precise do estado aqui
+        regiao: formValues.regiao || "0" 
+      },
+      contato: {
+        emailContato: formValues.emailContato || "",
+        ddd: "11",  // Pega o DDD do telefone
+        telefone: formValues.telefone || "",  // Verifica se o campo de telefone está preenchido
+        dddWhatsApp: "11", // Pega o DDD do WhatsApp
+        telefoneWhatsApp: formValues.whatsapp || ""  // Verifica se o campo de WhatsApp está preenchido
+      },
+      redeSociais: [
+        { tipoRedeSocial: 1, nomeDoPerfil: formValues.linkedin || "" },
+        { tipoRedeSocial: 2, nomeDoPerfil: formValues.facebook || "" },
+        { tipoRedeSocial: 3, nomeDoPerfil: formValues.instagram || "" },
+        { tipoRedeSocial: 4, nomeDoPerfil: formValues.youtube || "" }
+      ]
+    };
+    this._church.newChurch(payload).subscribe({
+      next: (response: any) => {
+        console.log("Igreja cadastrada com sucesso!", response);
+      },
+      error: (error: HttpErrorResponse) => {
+        console.error("Ocorreu um erro ao cadastrar a igreja.", error);
+      }
+    });
+    // console.log(payload); // Aqui você pode processar o payload, como enviar para o backend
   }
 }

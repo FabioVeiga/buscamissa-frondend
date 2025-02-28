@@ -16,22 +16,15 @@
     text-align: center;
 }
 
-.horarios-container {
-    margin-left: 20px;
-    padding: 10px;
-    border-left: 2px solid #ccc;
-}
-
-.horario-item {
+.rede-social-container {
     display: flex;
+    justify-content: space-between;
     gap: 10px;
-    align-items: center;
-}
-
-
-.horario-container {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 10px;
-}
+    flex-wrap: wrap;
+  }
+  
+  .rede-social-item {
+    flex: 1 1 calc(25% - 10px); /* Ajusta o tamanho para que 4 campos caibam na mesma linha */
+    min-width: 200px; /* Garantir que os campos tenham um tamanho mínimo */
+  }
+  
