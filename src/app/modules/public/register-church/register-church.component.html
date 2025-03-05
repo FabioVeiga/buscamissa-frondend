@@ -6,7 +6,7 @@
             <div class="form-grid">
                 <mat-form-field appearance="outline" class="half-width">
                     <mat-label>Cep</mat-label>
-                    <input matInput formControlName="cep" maxlength="8" mask="00000-000" maskPlaceholder="_____-___"
+                    <input matInput formControlName="cep" maxlength="9" mask="00000-000" maskPlaceholder="_____-___"
                         (blur)="getCEP()">
                 </mat-form-field>
 
@@ -37,12 +37,12 @@
 
                 <mat-form-field appearance="outline" class="half-width">
                     <mat-label>Telefone</mat-label>
-                    <input matInput formControlName="telefone">
+                    <input matInput formControlName="telefone" mask="(00) 00000-0000">
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="half-width">
                     <mat-label>WhatsApp</mat-label>
-                    <input matInput formControlName="whatsapp">
+                    <input matInput formControlName="whatsapp" mask="(00) 00000-0000">
                 </mat-form-field>
 
                 <mat-form-field appearance="outline" class="half-width">
