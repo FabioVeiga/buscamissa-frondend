@@ -1,18 +1,14 @@
-.header {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 64px; // Altura padrão do mat-toolbar
-  font-size: 24px;
-  font-weight: bold;
-  color: #999;
+header {
+  background: #fff;
+  border-bottom: 1px solid #ddd;
+}
 
-  .title {
-    text-align: center;
-    flex-grow: 1;
-    img {
-      padding: 5px;
-      max-width: 40px;
-    }
-  }
+.logo img {
+  height: 50px;
+}
+
+.nav-link {
+  color: #333;
+  font-weight: bold;
+  text-decoration: none;
 }

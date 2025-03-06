@@ -1,99 +1,121 @@
-<mat-card class="filters">
-    <form [formGroup]="form" class="filter-form">
-        <mat-form-field appearance="outline">
-            <mat-label><strong>Estado</strong></mat-label>
-            <mat-select formControlName="Uf" required (selectionChange)="getAddress(this.form.value.Uf)">
-                <mat-option *ngFor="let state of states" [value]="state.sigla">
-                    {{ state.nome }}
-                </mat-option>
-            </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-            <mat-label><strong>Cidade</strong></mat-label>
-            <mat-select formControlName="Localidade">
-                <mat-option *ngFor="let city of cities" [value]="city">
-                    {{ city }}
-                </mat-option>
-            </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-            <mat-label><strong>Bairros</strong></mat-label>
-            <mat-select formControlName="Bairro">
-                <mat-option *ngFor="let district of districts" [value]="district">
-                    {{ district }}
-                </mat-option>
-            </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-            <mat-label><strong>Dias da semana</strong></mat-label>
-            <mat-select formControlName="DiaDaSemana">
-                <mat-option [value]="''">Todos</mat-option>
-                <mat-option [value]="0">Domingo</mat-option>
-                <mat-option [value]="1">Segunda-feira</mat-option>
-                <mat-option [value]="2">Terça-feira</mat-option>
-                <mat-option [value]="3">Quarta-feira</mat-option>
-                <mat-option [value]="4">Quinta-feira</mat-option>
-                <mat-option [value]="5">Sexta-feira</mat-option>
-                <mat-option [value]="6">Sábado</mat-option>
-            </mat-select>
-        </mat-form-field>
-        <mat-form-field appearance="outline">
-            <mat-label><strong>Horário</strong></mat-label>
-            <input matInput type="time" formControlName="Horario" />
-        </mat-form-field>
-    </form>
-    <button mat-flat-button color="warn" [disabled]="isLoading || form.invalid" (click)="searchFilter()">
-        <mat-icon>search</mat-icon> Buscar
-    </button>
-</mat-card>
+<section class="hero">
+    <h1>&nbsp;</h1>
+    <p>&nbsp;</p>
+</section>
 
-<br>
-
-<!-- Resultado da busca -->
-<div *ngIf="churchInfo.length > 0; else noData">
-    <mat-card class="list" *ngFor="let church of churchInfo">
-        <div class="church-card">
-            <div class="church-card__image">
-                <img [src]="church.imagemUrl ?? 'assets/church/naodisponivel.png'" alt="Imagem da Igreja" />
-                <div class="church-card__actions">
-                    <button mat-icon-button>
-                        <mat-icon>edit</mat-icon>
-                    </button>
-                    <button mat-icon-button>
-                        <mat-icon>delete</mat-icon>
+<section class="search-box">
+    <div class="filters">
+        <form [formGroup]="form" class="filter-form">
+            <div class="row">
+                <div class="col-md-4">
+                    <mat-form-field appearance="outline">
+                        <mat-label>Estado</mat-label>
+                        <mat-select formControlName="Uf" required (selectionChange)="getAddress(this.form.value.Uf)">
+                            <mat-option *ngFor="let state of states" [value]="state.sigla">{{ state.nome }}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+                <div class="col-md-4">
+                    <mat-form-field appearance="outline">
+                        <mat-label>Cidade</mat-label>
+                        <mat-select formControlName="Localidade">
+                            <mat-option *ngFor="let city of cities" [value]="city">{{ city }}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+                <div class="col-md-4">
+                    <mat-form-field appearance="outline">
+                        <mat-label>Bairros</mat-label>
+                        <mat-select formControlName="Bairro">
+                            <mat-option *ngFor="let district of districts" [value]="district">{{ district
+                                }}</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-4">
+                    <mat-form-field appearance="outline">
+                        <mat-label>Dias da semana</mat-label>
+                        <mat-select formControlName="DiaDaSemana">
+                            <mat-option [value]="''">Todos</mat-option>
+                            <mat-option [value]="0">Domingo</mat-option>
+                            <mat-option [value]="1">Segunda-feira</mat-option>
+                            <mat-option [value]="2">Terça-feira</mat-option>
+                            <mat-option [value]="3">Quarta-feira</mat-option>
+                            <mat-option [value]="4">Quinta-feira</mat-option>
+                            <mat-option [value]="5">Sexta-feira</mat-option>
+                            <mat-option [value]="6">Sábado</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+                <div class="col-md-4">
+                    <mat-form-field appearance="outline">
+                        <mat-label>Horário</mat-label>
+                        <input matInput type="time" formControlName="Horario">
+                    </mat-form-field>
+                </div>
+                <div class="col-md-4 d-flex align-items-end">
+                    <button mat-flat-button color="primary" class="w-100" [disabled]="isLoading || form.invalid"
+                        (click)="searchFilter()">
+                        <mat-icon>search</mat-icon> Buscar
                     </button>
                 </div>
             </div>
+        </form>
+    </div>
+</section>
 
-            <div class="church-card__info">
-                <h3>{{ church.nome }} - {{ church.paroco }}</h3>
-                <p>{{ church.endereco }}</p>
-                <p><strong>Telefone: </strong> {{ church.telefone ?? 'Não informado' }}</p>
-                <p><strong>WhatsApp: </strong> {{ church.whatsapp ?? 'Não informado' }}</p>
+<section class="featured-properties">
 
-                <div class="church-card__schedule">
-                    <div *ngFor="let missa of church.missas">
-                        <strong>{{ missa.diaSemana }}:</strong> &nbsp;
-                        <span *ngFor="let horario of missa.horario">{{ horario }} </span>
+    <!-- Resultado da busca -->
+    <div *ngIf="churchInfo.length > 0; else noData">
+        <div class="list" *ngFor="let church of churchInfo">
+            <div class="church-card">
+                <div class="church-card__image">
+                    <img [src]="church.imagemUrl ?? 'assets/church/naodisponivel.png'" alt="Imagem da Igreja" />
+                    <div class="church-card__actions">
+                        <button mat-icon-button>
+                            <mat-icon>edit</mat-icon>
+                        </button>
+                        <button mat-icon-button>
+                            <mat-icon>delete</mat-icon>
+                        </button>
                     </div>
                 </div>
 
+                <div class="church-card__info">
+                    <h3>{{ church.nome }} - {{ church.paroco }}</h3>
+                    <p>{{ church.endereco }}</p>
+                    <p><strong>Telefone: </strong> {{ church.telefone ?? 'Não informado' }}</p>
+                    <p><strong>WhatsApp: </strong> {{ church.whatsapp ?? 'Não informado' }}</p>
+
+                    <div class="church-card__schedule">
+                        <div *ngFor="let missa of church.missas">
+                            <strong>{{ missa.diaSemana }}:</strong> &nbsp;
+                            <span *ngFor="let horario of missa.horario">{{ horario }} </span>
+                        </div>
+                    </div>
+
+                </div>
             </div>
+
+            <!-- Caso não tenha missas -->
+            <ng-template #noMass>
+                <p>Nenhuma missa cadastrada.</p>
+            </ng-template>
         </div>
+        <mat-paginator [length]="totalItems" [pageSize]="pageSize" [pageSizeOptions]="[5, 10, 20]"
+            (page)="onPageChange($event)">
+        </mat-paginator>
+    </div>
 
-        <!-- Caso não tenha missas -->
-        <ng-template #noMass>
-            <p>Nenhuma missa cadastrada.</p>
-        </ng-template>
-    </mat-card>
-    <mat-paginator [length]="totalItems" [pageSize]="pageSize" [pageSizeOptions]="[5, 10, 20]"
-        (page)="onPageChange($event)">
-    </mat-paginator>
-</div>
+    <!-- Caso não encontre nada -->
+    <ng-template #noData>
+        <mat-card>
+            <p>Nenhuma igreja encontrada.</p>
+        </mat-card>
+    </ng-template>
 
-<!-- Caso não encontre nada -->
-<ng-template #noData>
-    <mat-card>
-        <p>Nenhuma igreja encontrada.</p>
-    </mat-card>
-</ng-template>
+
+</section>
