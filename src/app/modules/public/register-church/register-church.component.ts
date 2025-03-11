@@ -21,6 +21,7 @@ import { HttpErrorResponse } from "@angular/common/http";
 import { MatSelectModule } from "@angular/material/select";
 import { horarioMinutosValidator } from "../../../core/misc/validator-minute";
 import { NgxMaskDirective, NgxMaskPipe, provideNgxMask } from "ngx-mask";
+import { MatSnackBar } from "@angular/material/snack-bar";
 
 @Component({
   selector: "app-register-church",
@@ -45,6 +46,7 @@ import { NgxMaskDirective, NgxMaskPipe, provideNgxMask } from "ngx-mask";
   styleUrls: ["./register-church.component.scss"],
 })
 export class RegisterChurchComponent implements OnInit {
+  _snackbar = inject(MatSnackBar);
   _church = inject(ChurchesService);
   form!: FormGroup;
   diaSelecionado: number | null = null;
@@ -68,17 +70,20 @@ export class RegisterChurchComponent implements OnInit {
       nomeParoco: ["", Validators.required],
       cep: [""],
       endereco: [""],
-      numero: [""],
+      numero: ["", Validators.required],
+      complemento: [""],
       bairro: [""],
       cidade: [""],
       estado: [""],
+      uf: [""],
+      regiao: [""],
       telefone: [""],
       whatsapp: [""],
       emailContato: [""],
       missas: this.fb.array([], Validators.required),
       facebook: [""],
       instagram: [""],
-      linkedin: [""],
+      tiktok: [""],
       youtube: [""],
       imagem: [""],
     });
@@ -88,34 +93,36 @@ export class RegisterChurchComponent implements OnInit {
   getCEP() {
     this._church.searchByCEP(this.form.get("cep")?.value).subscribe({
       next: (response: any) => {
-        const igreja = response.data.response;
+        if (
+          response.data.messagemAplicacao ===
+          "Habilitar para usuario editar e validar!"
+        ) {
+          const igreja = response.data.response;
 
-        if (igreja && igreja.endereco) {
+          // Preenche os dados no formulário
           this.form.patchValue({
             nomeIgreja: igreja.nome,
             nomeParoco: igreja.paroco,
             cep: igreja.endereco.cep,
             endereco: igreja.endereco.logradouro,
-            numero: igreja.endereco.complemento,
+            numero: igreja.endereco.numero,
+            complemento: igreja.endereco.complemento,
             bairro: igreja.endereco.bairro,
             cidade: igreja.endereco.localidade,
             estado: igreja.endereco.uf,
-            telefone: igreja.contato?.telefone || "",
-            whatsapp: igreja.contato?.telefoneWhatsApp || "",
-            emailContato: igreja.contato?.emailContato || "",
+            uf: igreja.endereco.uf,
+            regiao: igreja.endereco.regiao,
+            telefone: `${igreja.contato.ddd}${igreja.contato.telefone}`,
+            whatsapp: `${igreja.contato.dddWhatsApp}${igreja.contato.telefoneWhatsApp}`,
+            emailContato: igreja.contato.emailContato,
             facebook: this.getSocialMedia(igreja.redesSociais, 1),
             instagram: this.getSocialMedia(igreja.redesSociais, 2),
             youtube: this.getSocialMedia(igreja.redesSociais, 3),
-            linkedin: this.getSocialMedia(igreja.redesSociais, 4),
+            tiktok: this.getSocialMedia(igreja.redesSociais, 4),
           });
 
-          // Desabilita os campos preenchidos
-          this.disableFields();
-        }
-
-        // Preenche os horários das missas
-        this.horarios.clear();
-        if (igreja.missas && igreja.missas.length) {
+          // Limpa o array de missas antes de adicionar novas
+          this.horarios.clear();
           igreja.missas.forEach((missa: any) => {
             this.horarios.push(
               this.fb.group({
@@ -128,12 +135,44 @@ export class RegisterChurchComponent implements OnInit {
               })
             );
           });
+
+          // Desabilita os campos necessários
+          this.disableFields();
         }
       },
-      error: (error: HttpErrorResponse) => {
-        console.error("Erro ao buscar CEP:", error);
+      error: (error) => {
+        if (error.status === 404 && error.error?.data?.endereco) {
+          const endereco = error.error.data.endereco;
+          this.form.patchValue({
+            endereco: endereco.logradouro,
+            numero: endereco.complemento,
+            bairro: endereco.bairro,
+            cidade: endereco.localidade,
+            estado: endereco.estado,
+            uf: endereco.uf,
+            regiao: endereco.regiao,
+          });
+
+          this.disableAddressFields();
+
+          this._snackbar.open(error.error.data.messagemAplicacao, "OK", {
+            duration: 5000,
+            panelClass: "warning-snackbar",
+          });
+        } else {
+          console.error("Ocorreu um erro ao buscar o CEP.", error);
+        }
       },
     });
+  }
+
+  disableAddressFields() {
+    this.form.get("cep")?.disable();
+    this.form.get("endereco")?.disable();
+    this.form.get("bairro")?.disable();
+    this.form.get("cidade")?.disable();
+    this.form.get("estado")?.disable();
+    this.form.get("numero")?.enable();
   }
 
   get horarios(): FormArray {
@@ -143,9 +182,9 @@ export class RegisterChurchComponent implements OnInit {
   adicionarHorario(): void {
     this.horarios.push(
       this.fb.group({
-        diaSemana: ["", [Validators.required]], // Dropdown do dia da semana
-        horario: ["", [Validators.required, horarioMinutosValidator()]], // Horário
-        observacao: "", // Observação
+        diaSemana: ["", [Validators.required]],
+        horario: ["", [Validators.required, horarioMinutosValidator()]],
+        observacao: "",
       })
     );
   }
@@ -154,16 +193,16 @@ export class RegisterChurchComponent implements OnInit {
     this.horarios.removeAt(index);
   }
 
-  // Função para selecionar a imagem
   onImageSelect(event: any): void {
     const file = event.target.files[0];
-
     if (file) {
-      this.imageName = file.name; // Armazena o nome do arquivo
+      this.imageName = file.name;
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => {
-        this.form.get("imagem")?.setValue(reader.result as string); // Armazenando o valor em base64
+        const base64String = reader.result as string;
+        const base64Data = base64String.split(",")[1];
+        this.form.get("imagem")?.setValue(base64Data);
       };
     }
   }
@@ -172,10 +211,10 @@ export class RegisterChurchComponent implements OnInit {
   submit(): void {
     if (this.form.invalid) {
       console.log("Por favor, preencha todos os campos obrigatórios.");
-      return; // Evita o envio do formulário
+      return;
     }
-
-    const formValues = this.form.value;
+    // Captura os valores incluindo os campos desabilitados
+    const formValues = this.form.getRawValue();
     const payload = {
       nome: formValues.nomeIgreja,
       paroco: formValues.nomeParoco,
@@ -188,26 +227,25 @@ export class RegisterChurchComponent implements OnInit {
       endereco: {
         cep: formValues.cep,
         logradouro: formValues.endereco,
-        complemento: formValues.numero,
+        complemento: formValues.complemento,
         bairro: formValues.bairro,
         localidade: formValues.cidade,
         uf: formValues.estado,
-        estado: formValues.estado ?? "0",
-        regiao: formValues.regiao ?? "0",
+        estado: formValues.estado,
+        regiao: formValues.regiao,
       },
       contato: {
         emailContato: formValues.emailContato,
-        ddd: formValues.telefone.substring(0, 2),
-        telefone: formValues.telefone.substring(2),
-        dddWhatsApp: formValues.whatsapp.substring(0, 2),
-        telefoneWhatsApp: formValues.whatsapp.substring(2),
+        ddd: formValues.telefone?.substring(0, 2),
+        telefone: formValues.telefone?.substring(2),
+        dddWhatsApp: formValues.whatsapp?.substring(0, 2),
+        telefoneWhatsApp: formValues.whatsapp?.substring(2),
       },
-
       redeSociais: [
-        { tipoRedeSocial: 1, nomeDoPerfil: formValues.linkedin },
-        { tipoRedeSocial: 2, nomeDoPerfil: formValues.facebook },
-        { tipoRedeSocial: 3, nomeDoPerfil: formValues.instagram },
-        { tipoRedeSocial: 4, nomeDoPerfil: formValues.youtube },
+        { tipoRedeSocial: 1, nomeDoPerfil: formValues.facebook },
+        { tipoRedeSocial: 2, nomeDoPerfil: formValues.instagram },
+        { tipoRedeSocial: 3, nomeDoPerfil: formValues.youtube },
+        { tipoRedeSocial: 4, nomeDoPerfil: formValues.tiktok },
       ],
     };
     this._church.newChurch(payload).subscribe({
@@ -228,8 +266,6 @@ export class RegisterChurchComponent implements OnInit {
 
   // Função para desabilitar os campos após preenchimento
   private disableFields(): void {
-    this.form.get("nomeIgreja")?.disable();
-    this.form.get("nomeParoco")?.disable();
     this.form.get("cep")?.disable();
     this.form.get("endereco")?.disable();
     this.form.get("numero")?.disable();
@@ -241,7 +277,8 @@ export class RegisterChurchComponent implements OnInit {
     this.form.get("emailContato")?.disable();
     this.form.get("facebook")?.disable();
     this.form.get("instagram")?.disable();
-    this.form.get("linkedin")?.disable();
+    this.form.get("tiktok")?.disable();
+    this.form.get("complemento")?.disable();
     this.form.get("youtube")?.disable();
   }
 }

@@ -26,9 +26,7 @@ export class ChurchesService {
 
   /** Busca igrejas próximas pelo CEP */
   searchByCEP(cep: string) {
-    return this.http.get(`Igreja/buscar-por-cep?cep=${cep}`).pipe(
-      catchError(this.handleError)
-    );
+    return this.http.get(`Igreja/buscar-por-cep?cep=${cep}`);
   }
 
   /** Busca cidades e bairros através da UF */
@@ -59,6 +57,6 @@ export class ChurchesService {
 
   /** Método para tratar erros */
   private handleError(error: any) {
-    return throwError(() => new Error(error.error.data?.messagemAplicacao || "Ocorreu um erro inesperado."));
+    return throwError(() => new Error(error.error?.data?.messagemAplicacao || "Ocorreu um erro inesperado."));
   }
 }

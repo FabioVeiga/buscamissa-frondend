@@ -6,6 +6,7 @@ import { LayoutHomeComponent } from "./core/layout/home/layout/layout.component"
 import { LayoutComponent } from "./core/layout/admin/layout/layout.component";
 import { RegisterChurchComponent } from "./modules/public/register-church/register-church.component";
 import { SponsorsComponent } from "./modules/public/sponsors/sponsors.component";
+import { SendCodeComponent } from "./modules/public/register-church/send-code/send-code.component";
 
 export const routes: Routes = [
   {
@@ -14,18 +15,10 @@ export const routes: Routes = [
     children: [
       { path: 'home', component: HomeComponent },
       { path: 'nova', component: RegisterChurchComponent },
+      { path: 'nova/:id', component: SendCodeComponent },
       { path: 'patrocinadores', component: SponsorsComponent },
       { path: "", redirectTo: "home", pathMatch: "full" },
     ]
-  },
-  {
-    path: "painel",
-    component: LayoutComponent,
-    children: [
-      { path: 'login', component: LoginComponent },
-      { path: 'dashboard', component: DashboardComponent },
-      { path: "", redirectTo: "login", pathMatch: "full" },
-    ],
   },
   { path: "**", redirectTo: "home", pathMatch: "full" },
 ];
