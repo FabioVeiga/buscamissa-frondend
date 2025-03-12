@@ -257,7 +257,12 @@ export class RegisterChurchComponent implements OnInit {
     };
     this._church.newChurch(payload).subscribe({
       next: (response: any) => {
-        console.log("Igreja cadastrada com sucesso!", response);
+        const controleId = response?.data?.response?.controleId;
+        if (controleId) {
+          this._router.navigate(['/enviar-codigo', controleId]);
+        } else {
+          console.log("Erro: controleId não encontrado na resposta");
+        }
       },
       error: (error: HttpErrorResponse) => {
         console.error("Ocorreu um erro ao cadastrar a igreja.", error);

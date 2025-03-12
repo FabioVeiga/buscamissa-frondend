@@ -70,7 +70,7 @@ export class SendCodeComponent implements OnInit {
           this._router.navigate(["/validar"], {
             queryParams: {
               email: body.email,
-              controleId: response.data.controleId,
+              controleId: body.controleId,
             },
           });
         } else {
@@ -78,6 +78,7 @@ export class SendCodeComponent implements OnInit {
         }
       },
       error: (error: any) => {
+        this._snackbar.open(error?.data?.mensagemTela);
         console.log("Erro ao gerar código", error);
       },
     });

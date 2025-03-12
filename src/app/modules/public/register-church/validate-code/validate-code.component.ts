@@ -21,6 +21,7 @@ import { MatInputModule } from "@angular/material/input";
 import { ChurchesService } from "../../../../core/services/churches.service";
 import { ActivatedRoute, Router } from "@angular/router";
 import { MatSnackBar } from "@angular/material/snack-bar";
+import { NgOtpInputComponent } from "ng-otp-input";
 
 @Component({
   selector: "app-validate-code",
@@ -33,6 +34,7 @@ import { MatSnackBar } from "@angular/material/snack-bar";
     MatFormFieldModule,
     MatIconModule,
     FormsModule,
+    NgOtpInputComponent,
   ],
   templateUrl: "./validate-code.component.html",
   styleUrl: "./validate-code.component.scss",
@@ -47,13 +49,17 @@ export class ValidateCodeComponent {
   form: FormGroup;
   email: string = "";
   controleId: number = 0;
-  code: string[] = ["", "", "", "", "", ""];
-
-  @ViewChildren("codeInput") codeInputs!: QueryList<ElementRef>;
 
   constructor() {
     this.form = this._fb.group({
-      codigoValidador: ["", Validators.required],
+      codigoValidador: [
+        "",
+        [
+          Validators.required,
+          Validators.minLength(6),
+          Validators.maxLength(6)
+        ]
+      ],
     });
   }
 
@@ -64,31 +70,9 @@ export class ValidateCodeComponent {
     });
   }
 
-  moveFocus(event: any, index: number) {
-    if (event.inputType !== "deleteContentBackward" && event.target.value) {
-      const nextInput = this.codeInputs.toArray()[index + 1];
-      if (nextInput) {
-        nextInput.nativeElement.focus();
-      }
-    }
-  }
-
-  handleBackspace(event: any, index: number) {
-    if (!this.code[index] && index > 0) {
-      const prevInput = this.codeInputs.toArray()[index - 1];
-      if (prevInput) {
-        prevInput.nativeElement.focus();
-      }
-    }
-  }
-
-  isCodeComplete(): boolean {
-    return this.code.every((digit) => digit !== "");
-  }
-
   validateCode(): void {
     if (this.form.invalid) {
-      this._snackbar.open('Código inválido!');
+      this._snackbar.open("Código inválido!");
       return;
     }
 
@@ -107,6 +91,11 @@ export class ValidateCodeComponent {
         console.error("Erro ao validar código:", error);
       },
     });
+  }
+
+  onOtpSubmit(otp: string[]) {
+    console.log("OTP Submitted:", otp.join(""));
+    // Aqui você pode fazer a chamada para o backend para validar o OTP.
   }
 
   resendCode() {
