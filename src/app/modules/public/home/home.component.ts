@@ -134,7 +134,7 @@ export class HomeComponent {
             id: church.id,
             nome: church.nome,
             paroco: church.paroco,
-            imagemUrl: church.imagemUrl,
+            imagem: church.imagem,
             endereco: `${church.endereco.logradouro}, ${church.endereco.bairro}, ${church.endereco.localidade} - ${church.endereco.uf}`,
             missas: church.missas.map((missa: Mass) => ({
               diaSemana: this.getDayName(missa.diaSemana ?? 0),
