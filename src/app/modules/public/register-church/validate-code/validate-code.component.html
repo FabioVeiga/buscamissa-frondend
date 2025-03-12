@@ -1,1 +1,31 @@
-<p>validate-code works!</p>
+<div class="auth-container text-center">
+  <h2 class="title">Confirmação de usuário</h2>
+  <small
+    >Foi enviado para {{ email }} um código de confirmação, por favor, insira o
+    código recebido abaixo.</small
+  >
+  <br />
+  <form [formGroup]="form">
+    <div class="code-inputs">
+      <ng-otp-input formControlName="codigoValidador" [config]="{ length: 6 }"></ng-otp-input>
+    </div>
+
+    <button
+      mat-raised-button
+      color="warn"
+      class="finalizar-button"
+      (click)="validateCode()"
+      [disabled]="form.invalid"
+    >
+      Finalizar
+    </button>
+
+    <a class="resendCode" (click)="resendCode()">Reenviar token via e-mail</a>
+
+    <p class="terms">
+      Ao clicar em Finalizar, você concorda com os
+      <a href="#">Termos de Uso</a>, <a href="#">Política de Privacidade</a> -
+      LGPD de <a href="/">Busca Missa &copy;</a>
+    </p>
+  </form>
+</div>

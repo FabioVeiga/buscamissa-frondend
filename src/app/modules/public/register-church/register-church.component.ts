@@ -22,6 +22,7 @@ import { MatSelectModule } from "@angular/material/select";
 import { horarioMinutosValidator } from "../../../core/misc/validator-minute";
 import { NgxMaskDirective, NgxMaskPipe, provideNgxMask } from "ngx-mask";
 import { MatSnackBar } from "@angular/material/snack-bar";
+import { Router } from "@angular/router";
 
 @Component({
   selector: "app-register-church",
@@ -48,9 +49,12 @@ import { MatSnackBar } from "@angular/material/snack-bar";
 export class RegisterChurchComponent implements OnInit {
   _snackbar = inject(MatSnackBar);
   _church = inject(ChurchesService);
+  _router = inject(Router);
   form!: FormGroup;
   diaSelecionado: number | null = null;
   imageName = "";
+  alter = false;
+  id: number = 0;
 
   diasSemana = [
     { key: 0, label: "Domingo" },
@@ -98,8 +102,9 @@ export class RegisterChurchComponent implements OnInit {
           "Habilitar para usuario editar e validar!"
         ) {
           const igreja = response.data.response;
-
+          this.alter = true;
           // Preenche os dados no formulário
+          this.id = igreja.id;
           this.form.patchValue({
             nomeIgreja: igreja.nome,
             nomeParoco: igreja.paroco,
@@ -108,6 +113,7 @@ export class RegisterChurchComponent implements OnInit {
             numero: igreja.endereco.numero,
             complemento: igreja.endereco.complemento,
             bairro: igreja.endereco.bairro,
+            imagem: igreja.imagemUrl,
             cidade: igreja.endereco.localidade,
             estado: igreja.endereco.uf,
             uf: igreja.endereco.uf,
@@ -126,6 +132,7 @@ export class RegisterChurchComponent implements OnInit {
           igreja.missas.forEach((missa: any) => {
             this.horarios.push(
               this.fb.group({
+                id: [missa.id],
                 diaSemana: [missa.diaSemana, Validators.required],
                 horario: [
                   missa.horario,
@@ -250,10 +257,56 @@ export class RegisterChurchComponent implements OnInit {
     };
     this._church.newChurch(payload).subscribe({
       next: (response: any) => {
-        console.log("Igreja cadastrada com sucesso!", response);
+        const controleId = response?.data?.response?.controleId;
+        if (controleId) {
+          this._router.navigate(['/enviar-codigo', controleId]);
+        } else {
+          console.log("Erro: controleId não encontrado na resposta");
+        }
       },
       error: (error: HttpErrorResponse) => {
         console.error("Ocorreu um erro ao cadastrar a igreja.", error);
+      },
+    });
+  }
+
+  // Função de submissão
+  save(): void {
+    if (this.form.invalid) {
+      console.log("Por favor, preencha todos os campos obrigatórios.");
+      return;
+    }
+    // Captura os valores incluindo os campos desabilitados
+    const formValues = this.form.getRawValue();
+    const payload = {
+      id: this.id,
+      paroco: formValues.nomeParoco,
+      imagem: formValues.imagem,
+      missas: formValues.missas.map((missa: any) => ({
+        id: missa.id,
+        diaSemana: missa.diaSemana,
+        horario: missa.horario,
+        observacao: missa.observacao,
+      })),
+      contato: {
+        emailContato: formValues.emailContato,
+        ddd: formValues.telefone?.substring(0, 2),
+        telefone: formValues.telefone?.substring(2),
+        dddWhatsApp: formValues.whatsapp?.substring(0, 2),
+        telefoneWhatsApp: formValues.whatsapp?.substring(2),
+      },
+    }; 
+    this._church.updateChurch(payload).subscribe({
+      next: (response: any) => {
+        const controleId = response?.data?.response?.controleId;
+        if (controleId) {
+          this._router.navigate(['/enviar-codigo', controleId]);
+        } else {
+          console.log("Erro: controleId não encontrado na resposta");
+        }
+      },
+      error: (error: HttpErrorResponse) => {
+        console.log(error);
       },
     });
   }
@@ -272,13 +325,11 @@ export class RegisterChurchComponent implements OnInit {
     this.form.get("bairro")?.disable();
     this.form.get("cidade")?.disable();
     this.form.get("estado")?.disable();
-    this.form.get("telefone")?.disable();
-    this.form.get("whatsapp")?.disable();
-    this.form.get("emailContato")?.disable();
     this.form.get("facebook")?.disable();
     this.form.get("instagram")?.disable();
     this.form.get("tiktok")?.disable();
     this.form.get("complemento")?.disable();
     this.form.get("youtube")?.disable();
+    this.form.get("nomeIgreja")?.disable();
   }
 }

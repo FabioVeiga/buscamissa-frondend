@@ -28,3 +28,32 @@
     min-width: 200px; /* Garantir que os campos tenham um tamanho mínimo */
   }
   
+  .image-upload {
+    margin-top: 16px;
+  }
+  
+  .image-label {
+    display: inline-block;
+    padding: 8px 16px;
+    background-color: #1976d2;
+    color: white;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .image-label input {
+    display: none;
+  }
+  
+  .image-preview {
+    margin-top: 16px;
+    display: flex;
+    justify-content: center;
+  }
+  
+  .image-preview img {
+    max-width: 100%;
+    max-height: 200px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }

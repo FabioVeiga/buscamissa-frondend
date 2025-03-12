@@ -14,17 +14,17 @@ export interface Church {
   id?: number;
   nome: string;
   paroco: string;
-  imagem: string;
+  imagem?: string;
   missas: Mass[];
   endereco: Address;
-  imagemUrl?: string;
 }
 
 export interface UpdateChurch {
-  id: number;
+  id?: number;
   paroco: string;
-  imagemUrl: string;
+  imagem: string;
   missas: Mass[];
+  contato: {};
 }
 
 export interface Mass {

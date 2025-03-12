@@ -21,7 +21,6 @@
           <input matInput formControlName="endereco" />
         </mat-form-field>
 
-
         <mat-form-field appearance="outline" class="half-width">
           <mat-label>Bairro</mat-label>
           <input matInput formControlName="bairro" />
@@ -38,14 +37,14 @@
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="half-width">
-            <mat-label>Número</mat-label>
-            <input matInput formControlName="numero" required />
-          </mat-form-field>
-  
-          <mat-form-field appearance="outline" class="half-width">
-              <mat-label>Complemento</mat-label>
-              <input matInput formControlName="complemento" />
-            </mat-form-field>
+          <mat-label>Número</mat-label>
+          <input matInput formControlName="numero" required />
+        </mat-form-field>
+
+        <mat-form-field appearance="outline" class="half-width">
+          <mat-label>Complemento</mat-label>
+          <input matInput formControlName="complemento" />
+        </mat-form-field>
 
         <mat-form-field appearance="outline" class="half-width">
           <mat-label>Telefone</mat-label>
@@ -158,16 +157,33 @@
       <input type="file" (change)="onImageSelect($event)" />
       <mat-hint>{{ imageName }}</mat-hint>
       <!-- Exibe o nome do arquivo -->
+             <!-- Exibir Imagem Atual -->
+              
+      <div *ngIf="form.get('imagem')?.value" class="image-preview">
+        <img [src]="'data:image/png;base64,' + form.get('imagem')?.value" alt="Imagem da Igreja">
+      </div>
+
     </mat-card-content>
     <hr />
     <mat-card-actions class="text-center">
       <button
+        *ngIf="!alter"
         mat-raised-button
         color="primary"
         (click)="submit()"
         type="submit"
       >
         Cadastrar
+      </button>
+
+      <button
+        *ngIf="alter"
+        mat-raised-button
+        color="primary"
+        (click)="save()"
+        type="submit"
+      >
+        Salvar
       </button>
     </mat-card-actions>
   </mat-card>
