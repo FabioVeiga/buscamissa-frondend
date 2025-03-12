@@ -26,7 +26,7 @@ jobs:
         run: npm install
 
       - name: Build Angular App
-        run: ng build
+        run: npm run build
 
       - name: Deploy to Azure
         id: builddeploy
