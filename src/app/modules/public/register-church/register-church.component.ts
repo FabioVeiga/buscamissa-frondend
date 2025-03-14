@@ -7,50 +7,48 @@ import {
   Validators,
   FormsModule,
   ReactiveFormsModule,
+  ValidatorFn,
+  AbstractControl,
+  ValidationErrors,
 } from "@angular/forms";
-import { MatButtonModule } from "@angular/material/button";
-import { MatCardModule } from "@angular/material/card";
-import { MatCheckboxModule } from "@angular/material/checkbox";
-import { MatOptionModule } from "@angular/material/core";
-import { MatDividerModule } from "@angular/material/divider";
-import { MatFormFieldModule } from "@angular/material/form-field";
-import { MatIconModule } from "@angular/material/icon";
-import { MatInputModule } from "@angular/material/input";
 import { ChurchesService } from "../../../core/services/churches.service";
 import { HttpErrorResponse } from "@angular/common/http";
-import { MatSelectModule } from "@angular/material/select";
 import { horarioMinutosValidator } from "../../../core/misc/validator-minute";
-import { NgxMaskDirective, NgxMaskPipe, provideNgxMask } from "ngx-mask";
-import { MatSnackBar } from "@angular/material/snack-bar";
 import { Router } from "@angular/router";
+
+import { PanelModule } from "primeng/panel";
+import { FieldsetModule } from "primeng/fieldset";
+import { InputMaskModule } from "primeng/inputmask";
+import { IftaLabelModule } from "primeng/iftalabel";
+import { InputTextModule } from "primeng/inputtext";
+import { InputNumberModule } from "primeng/inputnumber";
+import { ButtonModule } from "primeng/button";
+import { SelectModule } from "primeng/select";
+import { DatePickerModule } from "primeng/datepicker";
+import { FileUploadModule } from "primeng/fileupload";
+import { ToastModule } from "primeng/toast";
+import { MessageService } from "primeng/api";
+import { InputGroupModule } from "primeng/inputgroup";
+import { InputGroupAddonModule } from "primeng/inputgroupaddon";
+import { FloatLabelModule } from "primeng/floatlabel";
+import { KeyFilterModule } from "primeng/keyfilter";
+import { PrimeNgModule } from "../../../core/shared/primeng.module";
+import { LoadingComponent } from "../../../core/components/loading/loading.component";
 
 @Component({
   selector: "app-register-church",
-  imports: [
-    CommonModule,
-    ReactiveFormsModule,
-    FormsModule,
-    MatFormFieldModule,
-    MatOptionModule,
-    MatCheckboxModule,
-    MatCardModule,
-    MatDividerModule,
-    MatInputModule,
-    MatButtonModule,
-    MatIconModule,
-    MatSelectModule,
-    MatDividerModule,
-    NgxMaskDirective,
-  ],
-  providers: [provideNgxMask()],
+  imports: [CommonModule, ReactiveFormsModule, PrimeNgModule, LoadingComponent],
+  providers: [MessageService],
   templateUrl: "./register-church.component.html",
   styleUrls: ["./register-church.component.scss"],
 })
 export class RegisterChurchComponent implements OnInit {
-  _snackbar = inject(MatSnackBar);
+  _toast = inject(MessageService);
   _church = inject(ChurchesService);
   _router = inject(Router);
   form!: FormGroup;
+
+  isLoading = false;
   diaSelecionado: number | null = null;
   imageName = "";
   alter = false;
@@ -83,7 +81,7 @@ export class RegisterChurchComponent implements OnInit {
       regiao: [""],
       telefone: [""],
       whatsapp: [""],
-      emailContato: [""],
+      emailContato: ["", Validators.email],
       missas: this.fb.array([], Validators.required),
       facebook: [""],
       instagram: [""],
@@ -95,12 +93,10 @@ export class RegisterChurchComponent implements OnInit {
 
   // Função para buscar o endereço pelo CEP.
   getCEP() {
+    this.isLoading = true;
     this._church.searchByCEP(this.form.get("cep")?.value).subscribe({
       next: (response: any) => {
-        if (
-          response.data.messagemAplicacao ===
-          "Habilitar para usuario editar e validar!"
-        ) {
+        if (response.data.response) {
           const igreja = response.data.response;
           this.alter = true;
           // Preenche os dados no formulário
@@ -127,17 +123,13 @@ export class RegisterChurchComponent implements OnInit {
             tiktok: this.getSocialMedia(igreja.redesSociais, 4),
           });
 
-          // Limpa o array de missas antes de adicionar novas
-          this.horarios.clear();
           igreja.missas.forEach((missa: any) => {
+            const horario = missa.horario ? this.stringParaDate(missa.horario) : null;
             this.horarios.push(
               this.fb.group({
                 id: [missa.id],
                 diaSemana: [missa.diaSemana, Validators.required],
-                horario: [
-                  missa.horario,
-                  [Validators.required, horarioMinutosValidator()],
-                ],
+                horario: [horario, [Validators.required]],
                 observacao: [missa.observacao],
               })
             );
@@ -161,18 +153,70 @@ export class RegisterChurchComponent implements OnInit {
           });
 
           this.disableAddressFields();
-
-          this._snackbar.open(error.error.data.messagemAplicacao, "OK", {
-            duration: 5000,
-            panelClass: "warning-snackbar",
+          this._toast.add({
+            severity: "info",
+            summary: "Informação",
+            detail: error.error.data.messagemAplicacao,
           });
+          this.isLoading = false;
         } else {
+          this.isLoading = false;
           console.error("Ocorreu um erro ao buscar o CEP.", error);
         }
+      },
+      complete: () => {
+        this.isLoading = false;
       },
     });
   }
 
+  minutosValidos(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      if (control.value) {
+        let horario = control.value;
+  
+        // Se for um objeto Date, converta para string no formato "HH:mm:ss"
+        if (horario instanceof Date) {
+          const hours = horario.getHours().toString().padStart(2, '0');
+          const minutes = horario.getMinutes().toString().padStart(2, '0');
+          const seconds = horario.getSeconds().toString().padStart(2, '0');
+          horario = `${hours}:${minutes}:${seconds}`;  // Converte para "HH:mm:ss"
+        }
+  
+        const [hours, minutes] = horario.split(":").map((val: string) => parseInt(val, 10));
+  
+        if (![0, 15, 30, 45].includes(minutes)) {
+          return { minutosInvalidos: true };
+        }
+      }
+      return null;
+    };
+  }
+  
+
+  stringParaDate(horario: string): Date {
+    const [hourStr, minuteStr, secondStr] = horario?.split(":");
+    
+    const hours = parseInt(hourStr, 10);
+    const minutes = parseInt(minuteStr, 10);
+    const seconds = parseInt(secondStr, 10);
+  
+    // Criamos um objeto Date com a data padrão e apenas alteramos as horas, minutos e segundos
+    const date = new Date();
+    date.setHours(hours, minutes, seconds, 0);  // Setando a hora, minutos e segundos
+  
+    return date;
+  }
+
+  dateParaString(date: Date): string {
+    const hours = date.getHours().toString().padStart(2, '0');  // Adiciona zero à esquerda se necessário
+    const minutes = date.getMinutes().toString().padStart(2, '0');  // Adiciona zero à esquerda se necessário
+    const seconds = date.getSeconds().toString().padStart(2, '0');  // Adiciona zero à esquerda se necessário
+    
+    return `${hours}:${minutes}:${seconds}`;
+  }  
+  
+  
   disableAddressFields() {
     this.form.get("cep")?.disable();
     this.form.get("endereco")?.disable();
@@ -190,7 +234,10 @@ export class RegisterChurchComponent implements OnInit {
     this.horarios.push(
       this.fb.group({
         diaSemana: ["", [Validators.required]],
-        horario: ["", [Validators.required, horarioMinutosValidator()]],
+        horario: [
+          null, // Permite que o valor inicial seja null ou vazio
+          [Validators.required, this.minutosValidos()],
+        ],
         observacao: "",
       })
     );
@@ -201,26 +248,26 @@ export class RegisterChurchComponent implements OnInit {
   }
 
   onImageSelect(event: any): void {
-    const file = event.target.files[0];
+    const file = event.files[0];
     if (file) {
       this.imageName = file.name;
       const reader = new FileReader();
       reader.readAsDataURL(file);
       reader.onload = () => {
         const base64String = reader.result as string;
-        const base64Data = base64String.split(",")[1];
-        this.form.get("imagem")?.setValue(base64Data);
+        const base64Data = base64String.split(",")[1];  // Extrai a parte base64
+        this.form.get("imagem")?.setValue(base64Data);  // Atualiza o valor no formulário
       };
     }
   }
 
   // Função de submissão
   submit(): void {
+    this.isLoading = true;
     if (this.form.invalid) {
       console.log("Por favor, preencha todos os campos obrigatórios.");
       return;
     }
-    // Captura os valores incluindo os campos desabilitados
     const formValues = this.form.getRawValue();
     const payload = {
       nome: formValues.nomeIgreja,
@@ -228,7 +275,7 @@ export class RegisterChurchComponent implements OnInit {
       imagem: formValues.imagem,
       missas: formValues.missas.map((missa: any) => ({
         diaSemana: missa.diaSemana,
-        horario: missa.horario,
+        horario: this.stringParaDate(missa.horario),
         observacao: missa.observacao,
       })),
       endereco: {
@@ -255,11 +302,12 @@ export class RegisterChurchComponent implements OnInit {
         { tipoRedeSocial: 4, nomeDoPerfil: formValues.tiktok },
       ],
     };
+    // return console.log(payload);
     this._church.newChurch(payload).subscribe({
       next: (response: any) => {
         const controleId = response?.data?.response?.controleId;
         if (controleId) {
-          this._router.navigate(['/enviar-codigo', controleId]);
+          this._router.navigate(["/enviar-codigo", controleId]);
         } else {
           console.log("Erro: controleId não encontrado na resposta");
         }
@@ -267,16 +315,17 @@ export class RegisterChurchComponent implements OnInit {
       error: (error: HttpErrorResponse) => {
         console.error("Ocorreu um erro ao cadastrar a igreja.", error);
       },
+      complete: () => {
+        this.isLoading = false;
+      },
     });
   }
 
-  // Função de submissão
   save(): void {
     if (this.form.invalid) {
       console.log("Por favor, preencha todos os campos obrigatórios.");
       return;
     }
-    // Captura os valores incluindo os campos desabilitados
     const formValues = this.form.getRawValue();
     const payload = {
       id: this.id,
@@ -285,7 +334,7 @@ export class RegisterChurchComponent implements OnInit {
       missas: formValues.missas.map((missa: any) => ({
         id: missa.id,
         diaSemana: missa.diaSemana,
-        horario: missa.horario,
+        horario: typeof missa.horario === 'string' ? this.stringParaDate(missa.horario) : this.dateParaString(missa.horario),
         observacao: missa.observacao,
       })),
       contato: {
@@ -295,18 +344,21 @@ export class RegisterChurchComponent implements OnInit {
         dddWhatsApp: formValues.whatsapp?.substring(0, 2),
         telefoneWhatsApp: formValues.whatsapp?.substring(2),
       },
-    }; 
+    };
     this._church.updateChurch(payload).subscribe({
       next: (response: any) => {
         const controleId = response?.data?.response?.controleId;
         if (controleId) {
-          this._router.navigate(['/enviar-codigo', controleId]);
+          this._router.navigate(["/enviar-codigo", controleId]);
         } else {
           console.log("Erro: controleId não encontrado na resposta");
         }
       },
       error: (error: HttpErrorResponse) => {
         console.log(error);
+      },
+      complete: () => {
+        this.isLoading = false;
       },
     });
   }

@@ -1,190 +1,181 @@
-<form [formGroup]="form" class="form-container">
-  <h2 class="text-center">Cadastrar uma Igreja</h2>
-  <mat-card>
-    <mat-card-content>
-      <h3>Dados da Igreja</h3>
-      <div class="form-grid">
-        <mat-form-field appearance="outline" class="half-width">
-          <mat-label>CEP</mat-label>
-          <input
-            matInput
-            formControlName="cep"
-            maxlength="9"
-            mask="00000-000"
-            maskPlaceholder="_____-___"
-            (blur)="getCEP()"
-          />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="full-width">
-          <mat-label>Endereço</mat-label>
-          <input matInput formControlName="endereco" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="half-width">
-          <mat-label>Bairro</mat-label>
-          <input matInput formControlName="bairro" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="half-width">
-          <mat-label>Cidade</mat-label>
-          <input matInput formControlName="cidade" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="half-width">
-          <mat-label>Estado</mat-label>
-          <input matInput formControlName="estado" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="half-width">
-          <mat-label>Número</mat-label>
-          <input matInput formControlName="numero" required />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="half-width">
-          <mat-label>Complemento</mat-label>
-          <input matInput formControlName="complemento" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="half-width">
-          <mat-label>Telefone</mat-label>
-          <input matInput formControlName="telefone" mask="(00) 0000-0000" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="half-width">
-          <mat-label>WhatsApp</mat-label>
-          <input matInput formControlName="whatsapp" mask="(00) 00000-0000" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="half-width">
-          <mat-label>E-mail de contato</mat-label>
-          <input matInput formControlName="emailContato" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="half-width">
-          <mat-label>Nome da Igreja</mat-label>
-          <input matInput formControlName="nomeIgreja" />
-        </mat-form-field>
-
-        <mat-form-field appearance="outline" class="half-width">
-          <mat-label>Nome do Pároco</mat-label>
-          <input matInput formControlName="nomeParoco" />
-        </mat-form-field>
+<div class="hero">
+  <h1>Cadastro de igreja</h1>
+</div>
+<app-loading *ngIf="isLoading" />
+<p-panel class="p-1">
+  <form [formGroup]="form">
+    <p-fieldset legend="Endereço">
+      <div class="flex flex-wrap gap-4">
+        <p-inputmask
+          formControlName="cep"
+          mask="99999-999"
+          placeholder="CEP"
+          (onBlur)="getCEP()"
+        />
+        <input
+          pInputText
+          id="endereco"
+          formControlName="endereco"
+          placeholder="Endereço"
+        />
+        <input pInputText formControlName="bairro" placeholder="Bairro" />
+        <input pInputText formControlName="cidade" placeholder="Cidade" />
+        <input pInputText formControlName="estado" placeholder="Estado" />
+        <input
+          pInputText
+          formControlName="numero"
+          placeholder="Número"
+          pKeyFilter="int"
+        />
+        <input
+          pInputText
+          formControlName="complemento"
+          placeholder="Complemento"
+        />
       </div>
+    </p-fieldset>
 
-      <h3>Horários</h3>
-      <!-- Lista de horários adicionados -->
-      <div formArrayName="missas">
-        <div
-          *ngFor="let horarioCtrl of horarios.controls; let i = index"
-          [formGroupName]="i"
-          class="form-grid"
-        >
-          <!-- Seleção do dia da semana -->
-          <mat-form-field appearance="outline" class="half-width">
-            <mat-label>Dia da semana</mat-label>
-            <mat-select formControlName="diaSemana">
-              <mat-option *ngFor="let dia of diasSemana" [value]="dia.key">
-                {{ dia.label }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
+    <p-fieldset legend="Contatos">
+      <div class="flex flex-wrap gap-4">
+        <p-inputmask
+          formControlName="telefone"
+          mask="(99) 9999-9999"
+          placeholder="Telefone"
+        />
+        <p-inputmask
+          formControlName="whatsapp"
+          mask="(99) 99999-9999"
+          placeholder="WhatsApp"
+        />
+        <input
+          pInputText
+          formControlName="emailContato"
+          placeholder="E-mail de contato"
+        />
+        <input
+          pInputText
+          formControlName="nomeIgreja"
+          placeholder="Nome da Igreja"
+        />
+        <input
+          pInputText
+          formControlName="nomeParoco"
+          placeholder="Nome do Pároco"
+        />
+      </div>
+    </p-fieldset>
 
-          <!-- Campo de horário -->
-          <mat-form-field appearance="outline" class="half-width">
-            <mat-label>Horário</mat-label>
-            <input matInput type="time" formControlName="horario" />
-            <mat-error
+    <p-fieldset legend="Horários">
+      <div class="flex flex-wrap gap-4">
+        <div formArrayName="missas">
+          <div
+            *ngFor="let horarioCtrl of horarios.controls; let i = index"
+            [formGroupName]="i"
+            class="inline-flex gap-4 pt-4"
+          >
+            <p-select
+              formControlName="diaSemana"
+              [options]="diasSemana"
+              optionLabel="label"
+              optionValue="key"
+              placeholder="Selecione o dia"
+              class="w-100"
+            ></p-select>
+
+            <p-datepicker
+              inputId="calendar-timeonly"
+              formControlName="horario"
+              [timeOnly]="true"
+              [showTime]="true"
+              [placeholder]="'Selecione o horário'"
+              [appendTo]="'body'"
+            >
+            </p-datepicker>
+            <small
+              id="username-help"
               *ngIf="horarioCtrl.get('horario')?.hasError('minutosInvalidos')"
             >
               Os minutos devem ser 00, 15, 30 ou 45.
-            </mat-error>
-          </mat-form-field>
+            </small>
 
-          <!-- Campo de observação -->
-          <mat-form-field appearance="outline" class="half-width">
-            <mat-label>Observação</mat-label>
-            <input matInput type="text" formControlName="observacao" />
-          </mat-form-field>
+            <input
+              pInputText
+              formControlName="observacao"
+              placeholder="Observação"
+              class="w-full"
+            />
 
-          <!-- Botão para remover horário -->
-          <button mat-icon-button color="warn" (click)="removerHorario(i)">
-            <mat-icon>remove_circle</mat-icon>
-          </button>
+            <p-button icon="pi pi-trash" (click)="removerHorario(i)"></p-button>
+          </div>
         </div>
       </div>
-
-      <!-- Botão para adicionar novo horário -->
-      <div class="btn-container">
-        <button mat-raised-button color="primary" (click)="adicionarHorario()">
-          Novo horário
-        </button>
+      <div class="pt-4">
+        <p-button
+          label="Novo horário"
+          icon="pi pi-plus"
+          class="p-button-primary"
+          size="small"
+          (click)="adicionarHorario()"
+        ></p-button>
       </div>
-      <mat-divider class="mt-4 mb-4"></mat-divider>
-
-      <h3>Redes Sociais</h3>
-      <div class="form-grid">
-        <!-- Rede Social: Facebook -->
-        <mat-form-field appearance="outline" class="half-width">
-          <mat-label>Facebook</mat-label>
-          <input matInput formControlName="facebook" />
-        </mat-form-field>
-
-        <!-- Rede Social: Instagram -->
-        <mat-form-field appearance="outline" class="half-width">
-          <mat-label>Instagram</mat-label>
-          <input matInput formControlName="instagram" />
-        </mat-form-field>
-
-        <!-- Rede Social: YouTube -->
-        <mat-form-field appearance="outline" class="half-width">
-          <mat-label>YouTube</mat-label>
-          <input matInput formControlName="youtube" />
-        </mat-form-field>
-
-        <!-- Rede Social: TikTok -->
-        <mat-form-field appearance="outline" class="half-width">
-          <mat-label>TikTok</mat-label>
-          <input matInput formControlName="tiktok" />
-        </mat-form-field>
+    </p-fieldset>
+    <p-fieldset legend="Redes sociais">
+      <div class="card grid grid-cols-1 md:grid-cols-2 gap-4">
+        <p-inputgroup>
+          <p-inputgroup-addon>
+            <i class="pi pi-facebook"></i>
+          </p-inputgroup-addon>
+          <input pInputText formControlName="facebook" placeholder="Facebook" />
+        </p-inputgroup>
+        <p-inputgroup>
+          <p-inputgroup-addon>
+            <i class="pi pi-instagram"></i>
+          </p-inputgroup-addon>
+          <input
+            pInputText
+            formControlName="instagram"
+            placeholder="Instagram"
+          />
+        </p-inputgroup>
+        <p-inputgroup>
+          <p-inputgroup-addon>
+            <i class="pi pi-youtube"></i>
+          </p-inputgroup-addon>
+          <input pInputText formControlName="youtube" placeholder="YouTube" />
+        </p-inputgroup>
+        <p-inputgroup>
+          <p-inputgroup-addon>
+            <i class="pi pi-tiktok"></i>
+          </p-inputgroup-addon>
+          <input pInputText formControlName="tiktok" placeholder="TikTok" />
+        </p-inputgroup>
       </div>
-
-      <mat-divider class="mt-4 mb-4"></mat-divider>
-
-      <h3>Foto</h3>
-      <!-- Imagem -->
-
-      <input type="file" (change)="onImageSelect($event)" />
-      <mat-hint>{{ imageName }}</mat-hint>
-      <!-- Exibe o nome do arquivo -->
-             <!-- Exibir Imagem Atual -->
-              
-      <div *ngIf="form.get('imagem')?.value" class="image-preview">
-        <img [src]="'data:image/png;base64,' + form.get('imagem')?.value" alt="Imagem da Igreja">
+    </p-fieldset>
+    <p-fieldset legend="Foto">
+      <p-toast />
+      <div *ngIf="form.get('imagem')?.value">
+        <img
+          [src]="form.get('imagem')?.value"
+          alt="Imagem da Igreja"
+          width="100"
+          height="100"
+        />
       </div>
-
-    </mat-card-content>
-    <hr />
-    <mat-card-actions class="text-center">
-      <button
-        *ngIf="!alter"
-        mat-raised-button
-        color="primary"
-        (click)="submit()"
-        type="submit"
+      <p-fileupload
+        mode="basic"
+        chooseIcon="pi pi-upload"
+        accept="image/*"
+        maxFileSize="1000000"
+        (onSelect)="onImageSelect($event)"
+        chooseLabel="{{ form.get('imagem')?.value ? 'Alterar imagem' : 'Selecionar foto'}}"
       >
-        Cadastrar
-      </button>
-
-      <button
-        *ngIf="alter"
-        mat-raised-button
-        color="primary"
-        (click)="save()"
-        type="submit"
+      </p-fileupload>
+    </p-fieldset>
+    <div class="pt-4">
+      <p-button *ngIf="!alter" (click)="submit()" type="submit"
+        >Cadastrar</p-button
       >
-        Salvar
-      </button>
-    </mat-card-actions>
-  </mat-card>
-</form>
+      <p-button *ngIf="alter" (click)="save()" type="submit">Salvar</p-button>
+    </div>
+  </form>
+</p-panel>

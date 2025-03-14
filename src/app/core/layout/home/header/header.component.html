@@ -1,12 +1,16 @@
-<header class="d-flex justify-content-between align-items-center p-3">
-  <div class="logo">
-    <img src="assets/logo.png" alt="Novos Ares Imobiliária">
-  </div>
-  <nav class="d-flex gap-4">
-    <a href="#" class="nav-link">Sobre nós</a>
-    <a href="#" class="nav-link">Patrocinadores</a>
-  </nav>
-  <button mat-button color="primary" [routerLink]="'/nova'">
-    Cadastrar Igreja
-  </button>
-</header>
+<p-toolbar [style]="{ 'padding': '1rem', 'margin': '1rem 0 1rem 0' }">
+  <ng-template #start>
+    <div class="flex items-center gap-2">
+      <a [routerLink]="['/']" class="logo-container">
+        <img src="assets/logo.png" class="logo" alt="Busca Missa">
+        <h2>Busca missa</h2>
+      </a>
+    </div>
+  </ng-template>
+
+  <ng-template #end>
+    <div class="flex items-center gap-2">
+      <p-button label="Cadastrar igreja" [routerLink]="'nova'" size="small" />
+    </div>
+  </ng-template>
+</p-toolbar>

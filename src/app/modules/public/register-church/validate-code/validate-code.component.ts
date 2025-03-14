@@ -1,11 +1,5 @@
 import { CommonModule, NgIf } from "@angular/common";
-import {
-  Component,
-  ElementRef,
-  inject,
-  QueryList,
-  ViewChildren,
-} from "@angular/core";
+import { Component, inject } from "@angular/core";
 import {
   FormBuilder,
   FormGroup,
@@ -13,29 +7,22 @@ import {
   ReactiveFormsModule,
   Validators,
 } from "@angular/forms";
-import { MatButtonModule } from "@angular/material/button";
-import { MatCheckboxModule } from "@angular/material/checkbox";
-import { MatFormFieldModule } from "@angular/material/form-field";
-import { MatIconModule } from "@angular/material/icon";
-import { MatInputModule } from "@angular/material/input";
 import { ChurchesService } from "../../../../core/services/churches.service";
 import { ActivatedRoute, Router } from "@angular/router";
-import { MatSnackBar } from "@angular/material/snack-bar";
-import { NgOtpInputComponent } from "ng-otp-input";
+import { PrimeNgModule } from "../../../../core/shared/primeng.module";
+import { LoadingComponent } from "../../../../core/components/loading/loading.component";
+import { MessageService } from "primeng/api";
 
 @Component({
   selector: "app-validate-code",
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    MatInputModule,
-    MatCheckboxModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatIconModule,
     FormsModule,
-    NgOtpInputComponent,
+    PrimeNgModule,
+    LoadingComponent,
   ],
+  providers: [MessageService],
   templateUrl: "./validate-code.component.html",
   styleUrl: "./validate-code.component.scss",
 })
@@ -44,8 +31,9 @@ export class ValidateCodeComponent {
   private _route = inject(ActivatedRoute);
   private _router = inject(Router);
   private _service = inject(ChurchesService);
-  private _snackbar = inject(MatSnackBar);
+  private _toast = inject(MessageService);
 
+  isLoading = false;
   form: FormGroup;
   email: string = "";
   controleId: number = 0;
@@ -54,11 +42,7 @@ export class ValidateCodeComponent {
     this.form = this._fb.group({
       codigoValidador: [
         "",
-        [
-          Validators.required,
-          Validators.minLength(6),
-          Validators.maxLength(6)
-        ]
+        [Validators.required, Validators.minLength(6), Validators.maxLength(6)],
       ],
     });
   }
@@ -71,8 +55,13 @@ export class ValidateCodeComponent {
   }
 
   validateCode(): void {
+    this.isLoading = true;
     if (this.form.invalid) {
-      this._snackbar.open("Código inválido!");
+      this._toast.add({
+        severity: "info",
+        summary: "Aviso!",
+        detail: "Código inválido.",
+      });
       return;
     }
 
@@ -84,22 +73,24 @@ export class ValidateCodeComponent {
 
     this._service.validateCode(payload).subscribe({
       next: (response: any) => {
-        this._snackbar.open(response);
+        this._toast.add({
+          severity: "success",
+          summary: "Aviso!",
+          detail: response,
+        });
         this._router.navigate(["/sucesso"]);
       },
-      error: (error: Error) => {
-        console.error("Erro ao validar código:", error);
+      error: (error) => {
+        this._toast.add({
+          severity: "info",
+          summary: "Aviso!",
+          detail: error.error?.data?.mensagemTela,
+        });
+        this.isLoading = false;
+      },
+      complete: () => {
+        this.isLoading = false;
       },
     });
-  }
-
-  onOtpSubmit(otp: string[]) {
-    console.log("OTP Submitted:", otp.join(""));
-    // Aqui você pode fazer a chamada para o backend para validar o OTP.
-  }
-
-  resendCode() {
-    console.log("Reenviando código para", this.email);
-    // Lógica para reenviar código aqui
   }
 }

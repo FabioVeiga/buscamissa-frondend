@@ -16,26 +16,22 @@ export class ChurchesService {
 
   /** Cria uma nova igreja */
   newChurch(church: Church) {
-    return this.http.post(`Igreja`, church).pipe(catchError(this.handleError));
+    return this.http.post(`Igreja`, church);
   }
 
   /** Atualiza os dados de uma igreja existente */
   updateChurch(church: UpdateChurch) {
-    return this.http.put(`Igreja`, church).pipe(catchError(this.handleError));
+    return this.http.put(`Igreja`, church);
   }
 
   /** Gera código para criar ou editar igreja */
   generateCode(body: any) {
-    return this.http
-      .post(`Usuario/gerar-codigo-validador`, body)
-      .pipe(catchError(this.handleError));
+    return this.http.post(`Usuario/gerar-codigo-validador`, body);
   }
 
   /** Valida código da igreja */
   validateCode(body: any) {
-    return this.http
-      .post(`CodigoValidador/validar-igreja`, body)
-      .pipe(catchError(this.handleError));
+    return this.http.post(`CodigoValidador/validar-igreja`, body);
   }
 
   /** Busca igrejas próximas pelo CEP */
@@ -45,9 +41,7 @@ export class ChurchesService {
 
   /** Busca cidades e bairros através da UF */
   addressRange(uf: string): Observable<ResponseAddress> {
-    return this.http
-      .get<ResponseAddress>(`Igreja/obter-enderecos?uf=${uf}`)
-      .pipe(catchError(this.handleError));
+    return this.http.get<ResponseAddress>(`Igreja/obter-enderecos?uf=${uf}`);
   }
 
   /** Busca igrejas filtradas pelos parâmetros informados */
@@ -58,25 +52,11 @@ export class ChurchesService {
         params = params.append(key, value.toString());
       }
     });
-    return this.http
-      .get(`Igreja/buscar-por-filtro`, { params })
-      .pipe(catchError(this.handleError));
+    return this.http.get(`Igreja/buscar-por-filtro`, { params });
   }
 
   /** Busca atualizações de uma igreja específica */
   searchUpdates(churchId: number) {
-    return this.http
-      .get(`Igreja/buscar-por-atualizacoes/${churchId}`)
-      .pipe(catchError(this.handleError));
-  }
-
-  /** Método para tratar erros */
-  private handleError(error: any) {
-    return throwError(
-      () =>
-        new Error(
-          error.error?.data?.messagemAplicacao || "Ocorreu um erro inesperado."
-        )
-    );
+    return this.http.get(`Igreja/buscar-por-atualizacoes/${churchId}`);
   }
 }

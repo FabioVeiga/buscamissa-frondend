@@ -1,26 +1,25 @@
+<app-loading *ngIf="isLoading" />
+<div class="hero">
+  <h1 class="title">Confirmação de usuário</h1>
+  <p>Último passo...</p>
+</div>
 <div class="auth-container text-center">
-  <h2 class="title">Confirmação de usuário</h2>
-  <small
-    >Foi enviado para {{ email }} um código de confirmação, por favor, insira o
-    código recebido abaixo.</small
-  >
-  <br />
   <form [formGroup]="form">
-    <div class="code-inputs">
-      <ng-otp-input formControlName="codigoValidador" [config]="{ length: 6 }"></ng-otp-input>
+    <div class="flex flex-col items-center">
+      <p class="text-muted-color block mb-8">
+        Foi enviado para <strong>{{ email }}</strong> um código de confirmação,
+        por favor, insira o código recebido abaixo.
+      </p>
+      <p-inputotp
+        formControlName="codigoValidador"
+        [length]="6"
+        [integerOnly]="true"
+      />
+      <div class="flex justify-between mt-8 self-stretch">
+        <p-button label="Reenviar código" [link]="true"  class="p-0" />
+        <p-button label="Confirmar código" (click)="validateCode()" />
+      </div>
     </div>
-
-    <button
-      mat-raised-button
-      color="warn"
-      class="finalizar-button"
-      (click)="validateCode()"
-      [disabled]="form.invalid"
-    >
-      Finalizar
-    </button>
-
-    <a class="resendCode" (click)="resendCode()">Reenviar token via e-mail</a>
 
     <p class="terms">
       Ao clicar em Finalizar, você concorda com os

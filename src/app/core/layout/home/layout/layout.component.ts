@@ -6,7 +6,7 @@ import { RouterModule } from "@angular/router";
 
 @Component({
   selector: "app-layout-home",
-  imports: [CommonModule, HeaderHomeComponent, RouterModule],
+  imports: [CommonModule, HeaderHomeComponent, FooterHomeComponent,RouterModule],
   templateUrl: "./layout.component.html",
   styleUrls: ["./layout.component.scss"],
 })

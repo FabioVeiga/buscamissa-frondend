@@ -8,11 +8,11 @@ import {
 } from "@angular/common/http";
 import { Observable, throwError } from "rxjs";
 import { catchError } from "rxjs/operators";
-import { MatSnackBar } from "@angular/material/snack-bar";
+import { MessageService } from "primeng/api";
 
 @Injectable()
 export class ErrorInterceptor implements HttpInterceptor {
-  private _snackbar = inject(MatSnackBar);
+  private _toast = inject(MessageService); 
 
   intercept(
     req: HttpRequest<any>,
@@ -28,10 +28,7 @@ export class ErrorInterceptor implements HttpInterceptor {
             errorMessage = error.error.data.messagemAplicacao;
           }
         }
-        this._snackbar.open(errorMessage, "OK", {
-          duration: 5000,
-          panelClass: "error-snackbar",
-        });
+        this._toast.add({ severity: 'info', summary: 'Informação', detail: errorMessage });
         return throwError(() => new Error(errorMessage));
       })
     );

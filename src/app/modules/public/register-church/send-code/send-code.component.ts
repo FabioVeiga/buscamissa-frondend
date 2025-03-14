@@ -8,13 +8,9 @@ import {
   ReactiveFormsModule,
   Validators,
 } from "@angular/forms";
-import { MatSnackBar } from "@angular/material/snack-bar";
-import { NgIf } from "@angular/common";
-import { MatButtonModule } from "@angular/material/button";
-import { MatCheckboxModule } from "@angular/material/checkbox";
-import { MatFormFieldModule } from "@angular/material/form-field";
-import { MatInputModule } from "@angular/material/input";
-import { MatIconModule } from "@angular/material/icon";
+import { MessageService } from "primeng/api";
+import { PrimeNgModule } from "../../../../core/shared/primeng.module";
+import { LoadingComponent } from "../../../../core/components/loading/loading.component";
 
 @Component({
   selector: "app-send-code",
@@ -22,13 +18,10 @@ import { MatIconModule } from "@angular/material/icon";
   imports: [
     CommonModule,
     ReactiveFormsModule,
-    NgIf,
-    MatInputModule,
-    MatCheckboxModule,
-    MatButtonModule,
-    MatFormFieldModule,
-    MatIconModule,
+    PrimeNgModule,
+    LoadingComponent
   ],
+  providers: [MessageService],
   templateUrl: "./send-code.component.html",
   styleUrl: "./send-code.component.scss",
 })
@@ -37,8 +30,9 @@ export class SendCodeComponent implements OnInit {
   private _route = inject(ActivatedRoute);
   private _router = inject(Router);
   private _service = inject(ChurchesService);
-  private _snackbar = inject(MatSnackBar);
+  private _toast = inject(MessageService);
 
+  isLoading = false;
   controleId!: number;
   form!: FormGroup;
 
@@ -53,8 +47,9 @@ export class SendCodeComponent implements OnInit {
   }
 
   generateValidationCode(): void {
+    this.isLoading = true;
     if (this.form.invalid) {
-      this._snackbar.open("Por favor, preencha todos os campos obrigatórios.");
+      this._toast.add({ severity: 'info', summary: 'Aviso!', detail: "Por favor, preencha todos os campos obrigatórios." });
       return;
     }
     const body = {
@@ -74,11 +69,13 @@ export class SendCodeComponent implements OnInit {
             },
           });
         } else {
-          this._snackbar.open(response?.data?.mensagemTela);
+          this.isLoading = false;
+          this._toast.add({ severity: 'error', summary: 'Aviso!', detail: response?.data?.mensagemTela });
         }
       },
       error: (error: any) => {
-        this._snackbar.open(error?.data?.mensagemTela);
+        this.isLoading = false;
+        this._toast.add({ severity: 'error', summary: 'Aviso!', detail: error });
         console.log("Erro ao gerar código", error);
       },
     });

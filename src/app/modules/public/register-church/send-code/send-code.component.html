@@ -1,36 +1,39 @@
+<app-loading *ngIf="isLoading" />
+<div class="hero">
+  <h1 class="title">Validação de usuário</h1>
+  <p>Estamos quase lá...</p>
+</div>
 <div class="container text-center">
-    <h2 class="title">Validação de usuário</h2>
-    <h4>Estamos quase lá...</h4>
-    <small>Para prosseguir com a alteração ou criação da Igreja, precisamos confirmar o seu e-mail, preencha os campos abaixo e você receberá um código.</small>
-    <form [formGroup]="form">
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>Nome</mat-label>
-        <mat-icon matPrefix class="my-icon">person</mat-icon>
-        <input matInput type="text" formControlName="nome" />
-        <mat-error *ngIf="form.get('nome')?.invalid && form.get('nome')?.touched">
-          Nome é obrigatório.
-        </mat-error>
-      </mat-form-field>
-      <mat-form-field appearance="outline" class="full-width">
-        <mat-label>E-mail</mat-label>
-        <mat-icon matPrefix class="my-icon">email</mat-icon>
-        <input matInput type="email" formControlName="email" />
-        <mat-error *ngIf="form.get('email')?.invalid && form.get('email')?.touched">
-          E-mail inválido.
-        </mat-error>
-      </mat-form-field>
-      <mat-checkbox formControlName="aceitarTermo">
-        Aceito os Termos e Condições
-      </mat-checkbox>
-      <mat-error *ngIf="form.get('aceitarTermo')?.invalid && form.get('aceitarTermo')?.touched">
-        Você precisa aceitar os termos.
-      </mat-error>
-      <mat-checkbox formControlName="aceitarPromocao">
-        Aceito receber promoções
-      </mat-checkbox>
-      <button mat-raised-button color="primary" [disabled]="form.invalid" (click)="generateValidationCode()">
-        Continuar
-      </button>
-    </form>
-  </div>
-  
+  <small
+    >Para prosseguir com a alteração ou criação da Igreja, precisamos confirmar
+    o seu e-mail, preencha os campos abaixo e você receberá um código.</small
+  >
+  <form [formGroup]="form" class="flex flex-wrap gap-4">
+    <p-inputgroup>
+      <p-inputgroup-addon>
+        <i class="pi pi-user"></i>
+      </p-inputgroup-addon>
+      <input pInputText formControlName="nome" placeholder="Nome" />
+    </p-inputgroup>
+
+    <p-inputgroup>
+      <p-inputgroup-addon>
+        <i class="pi pi-at"></i>
+      </p-inputgroup-addon>
+      <input pInputText formControlName="email" placeholder="E-mail" />
+    </p-inputgroup>
+
+    <div class="flex items-center">
+      <p-checkbox id="termos" formControlName="aceitarTermo" [binary]="true" />
+      <label for="termos" class="ml-2"> Aceito os termos de uso </label>
+    </div>
+
+    <div class="flex items-center">
+      <p-checkbox formControlName="aceitarPromocao" [binary]="true" />
+      <label for="termos" class="ml-2"> Aceito receber promoções </label>
+    </div>
+  </form>
+  <p-button [disabled]="form.invalid" (click)="generateValidationCode()">
+    Continuar
+  </p-button>
+</div>
