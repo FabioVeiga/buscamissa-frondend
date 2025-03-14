@@ -118,6 +118,19 @@ export class HomeComponent {
     });
   }
 
+  reportChurch(emailContato: string): void {
+    if (emailContato) {
+      // Aqui você pode abrir o cliente de email ou executar qualquer lógica necessária
+      window.location.href = `mailto:${emailContato}`;
+    } else {
+      this._toast.add({
+        severity: 'warn',
+        summary: 'Erro',
+        detail: 'Email de contato não disponível.',
+      });
+    }
+  }
+
   public searchFilter() {
     this.isLoading = true;
     const filters = {
@@ -130,13 +143,15 @@ export class HomeComponent {
       next: (resp: any) => {
         if (resp?.data?.items) {
           this.churchInfo = resp.data.items.map((church: any) => ({
+            alteracao: church.alteracao,
+            usuario: church.usuario.nome,
             id: church.id,
             nome: church.nome,
             paroco: church.paroco,
             imagem: church.imagemUrl,
-            endereco: `${church.endereco.logradouro}, ${church.endereco.bairro}, ${church.endereco.localidade} - ${church.endereco.uf}`,
+            endereco: church.endereco,
             missas: church.missas.map((missa: Mass) => ({
-              diaSemana: this.getDayName(missa.diaSemana ?? 0),
+              diaSemana: missa.diaSemana,
               horario: Array.isArray(missa.horario)
                 ? missa.horario
                 : [missa.horario], // Garante que seja sempre um array
@@ -156,17 +171,45 @@ export class HomeComponent {
     });
   }
 
+  
+
   // Converte dia da semana de número para nome
-  private getDayName(dayIndex: number): string {
-    const days = [
-      "Domingo",
-      "Segunda-feira",
-      "Terça-feira",
-      "Quarta-feira",
-      "Quinta-feira",
-      "Sexta-feira",
-      "Sábado",
+  getDayName(dia: number): string {
+    const daysOfWeek = [
+      'Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 
+      'Quinta-feira', 'Sexta-feira', 'Sábado'
     ];
-    return days[dayIndex] || "Desconhecido";
+    return daysOfWeek[dia] || 'Desconhecido';
   }
+
+  getFormattedMasses(missas: Mass[]): string[] {
+    const daysOfWeek = [
+      'Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 
+      'Quinta-feira', 'Sexta-feira', 'Sábado'
+    ];
+  
+    // Mapeia os dias da semana, e retorna apenas os dias que tiverem horários
+    return daysOfWeek.map((day, index) => {
+      // Filtra as missas que correspondem ao dia da semana
+      const filteredMasses = missas.filter(missa => missa.diaSemana === index);
+  
+      if (filteredMasses.length > 0) {
+        const horarios = filteredMasses
+          .flatMap((missa) => missa.horario) // Garante que seja um array de horários
+          .map((hora: string) => this.formatTime(hora)) // Formata o horário
+          .join(', '); // Junta os horários por vírgula
+  
+        return `${day}: ${horarios}`;
+      }
+  
+      return ''; // Retorna uma string vazia se não houver missas para o dia
+    }).filter(Boolean); // Filtra os dias sem missas
+  }
+  
+  // Método para formatar a hora (ex: "07:00:00" => "7:15h")
+  formatTime(timeString: string): string {
+    const [hours, minutes] = timeString.split(":");
+    return `${parseInt(hours, 10)}:${minutes}h`;
+  }
+
 }

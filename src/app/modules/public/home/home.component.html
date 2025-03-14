@@ -3,7 +3,7 @@
   <p>Mais próxima de sua casa.</p>
 </div>
 <p-panel class="p-1" header="Selecione seus filtros">
-  <app-loading *ngIf="isLoading"/>
+  <app-loading *ngIf="isLoading" />
   <form [formGroup]="form" class="filters flex flex-wrap gap-4">
     <p-iftalabel class="flex-1">
       <p-select
@@ -102,7 +102,7 @@
   </form>
   <br />
   <p-button
-    label="Buscar igreja mais próxima"
+    label="Buscar"
     icon="pi pi-check"
     [loading]="isLoading"
     [disabled]="form.invalid"
@@ -111,49 +111,124 @@
   />
 </p-panel>
 
-<p-panel>
-  <p-dataview
-    #dv
-    [value]="churchInfo"
-    layout="grid"
-    [rows]="5"
-    [paginator]="true"
-  >
-    <ng-template #grid let-items>
-      <div class="grid grid-cols-12 gap-4">
+<p-panel *ngIf="churchInfo && churchInfo.length > 0">
+  <p-dataview [value]="churchInfo" [rows]="5" [paginator]="true">
+    <ng-template #list let-items>
+      <div class="grid grid-cols-12 gap-4 grid-nogutter">
         <div
-          *ngFor="let church of items"
-          class="col-span-12 sm:col-span-6 md:col-span-4 xl:col-span-6 p-2"
+          class="col-span-12"
+          *ngFor="let church of items; let first = first"
         >
           <div
-            class="p-6 border border-surface-200 dark:border-surface-700 bg-surface-0 dark:bg-surface-900 rounded flex flex-col"
+            class="flex flex-col sm:flex-row sm:items-center p-6 gap-4"
+            [ngClass]="{
+              'border-t border-surface-200 dark:border-surface-700': !first
+            }"
           >
+            <!-- Imagem -->
             <div class="bg-surface-50 flex justify-center rounded p-4">
               <div class="relative mx-auto">
-                <p-image class="rounded w-full" [src]="church.imagemUrl ?? '/assets/church/naodisponivel.png'" [alt]="church.name" [preview]="true" />
-              </div>
-            </div>
-            <div class="pt-6">
-              <div class="flex flex-row justify-between products-start gap-2">
-                <div>
-                  <span
-                    class="font-medium text-surface-500 dark:text-surface-400 text-sm"
-                    >{{ church.paroco }}</span
-                  >
-                  <div class="text-lg font-medium mt-1">{{ church.nome }}</div>
-                </div>
-
-              </div>
-              <div class="flex flex-col gap-6 mt-6">
-                <div class="flex gap-2">
+                <p-image
+                  class="rounded w-full"
+                  [src]="church.imagem ?? '/assets/church/naodisponivel.png'"
+                  [alt]="church.nome"
+                  [preview]="true"
+                  width="200"
+                  height="200"
+                />
+                <!-- Botão Editar -->
+                <div class="flex justify-center mt-1 md:mt-4">
+                  <p-inputgroup>
                   <button
                     pButton
-                    label="Detalhes"
-                    class="flex-auto whitespace-nowrap"
+                    icon="pi pi-pencil"
+                    size="small"
+                    label="Editar"
+                    class="p-button-sm p-button-rounded p-button-outlined p-button-text text-sm"
+                    style="color: #2c3e50; border-color: #bdc3c7"
                   ></button>
+                  <button
+                    pButton
+                    icon="pi pi-exclamation-circle"
+                    size="small"
+                    label="Denunciar"
+                    class="p-button-sm p-button-rounded p-button-outlined p-button-text text-sm"
+                    style="color: #2c3e50; border-color: #bdc3c7"
+                    (click)="reportChurch(church.emailContato)"
+                  ></button>
+                </p-inputgroup>
                 </div>
               </div>
             </div>
+
+            <!-- Conteúdo -->
+            <div
+              class="flex flex-col md:flex-row justify-between md:items-center flex-1 gap-6"
+            >
+              <div
+                class="flex flex-col md:flex-row justify-between items-start gap-2"
+              >
+                <!-- Detalhes da Igreja -->
+                <div>
+                  <div
+                    class="text-lg font-medium text-surface-900 dark:text-surface-0 mt-2"
+                  >
+                    {{ church.nome }} - {{ church.paroco }}
+                  </div>
+                  <div
+                    class="font-small text-surface-900 dark:text-surface-0 mt-2"
+                  >
+                    {{ church.endereco.logradouro }},
+                    {{ church.endereco.numero }} {{ church.endereco.bairro }} -
+                    {{ church.endereco.uf }}/{{ church.endereco.estado }}
+                  </div>
+                  <div
+                    class="font-small text-surface-900 dark:text-surface-0 mt-2"
+                  >
+                    Telefone :({{ church.contato?.ddd }})
+                    {{ church.contato?.telefone }} / WhatsApp: ({{
+                      church.contato?.dddWhatsapp
+                    }})
+                    {{ church.contato?.telefoneWhatsApp }}
+                  </div>
+                  <p-divider />
+                  <!-- Lista de Horários -->
+                  <div class="font-small mt-2">
+                    <div
+                      class="text-lg font-medium text-surface-900 dark:text-surface-0 mb-2"
+                    >
+                      Horários:
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <!-- Looping pelos horários das missas -->
+                      <!-- Exibe os horários formatados -->
+                      <div *ngIf="church.missas?.length">
+                        <div
+                          *ngFor="
+                            let formattedMass of getFormattedMasses(
+                              church.missas
+                            )
+                          "
+                        >
+                          <p
+                            class="font-small text-surface-900 dark:text-surface-0 mt-2"
+                          >
+                            {{ formattedMass }}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <!-- Informações de Alteração -->
+          <div
+            class="font-small text-xs text-surface-500 dark:text-surface-400 text-right"
+          >
+            Última alteração: {{ church.alteracao | date }} por
+            {{ church.usuario }}
           </div>
         </div>
       </div>

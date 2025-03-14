@@ -21,6 +21,7 @@ import { IftaLabelModule } from 'primeng/iftalabel';
 import { PanelModule } from 'primeng/panel';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputOtpModule } from 'primeng/inputotp';
+import { DividerModule } from 'primeng/divider';
 
 @NgModule({
   imports: [
@@ -43,7 +44,8 @@ import { InputOtpModule } from 'primeng/inputotp';
     DataViewModule,
     ImageModule,
     CheckboxModule,
-    InputOtpModule
+    InputOtpModule,
+    DividerModule
   ],
   exports: [
     FieldsetModule,
@@ -64,7 +66,8 @@ import { InputOtpModule } from 'primeng/inputotp';
     DataViewModule,
     ImageModule,
     CheckboxModule,
-    InputOtpModule
+    InputOtpModule,
+    DividerModule
   ]
 })
 export class PrimeNgModule { }
