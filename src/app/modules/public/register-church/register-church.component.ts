@@ -1,11 +1,10 @@
-import { CommonModule } from "@angular/common";
+import { CommonModule, DatePipe } from "@angular/common";
 import { Component, inject, OnInit } from "@angular/core";
 import {
   FormBuilder,
   FormGroup,
   FormArray,
   Validators,
-  FormsModule,
   ReactiveFormsModule,
   ValidatorFn,
   AbstractControl,
@@ -13,32 +12,15 @@ import {
 } from "@angular/forms";
 import { ChurchesService } from "../../../core/services/churches.service";
 import { HttpErrorResponse } from "@angular/common/http";
-import { horarioMinutosValidator } from "../../../core/misc/validator-minute";
 import { Router } from "@angular/router";
-
-import { PanelModule } from "primeng/panel";
-import { FieldsetModule } from "primeng/fieldset";
-import { InputMaskModule } from "primeng/inputmask";
-import { IftaLabelModule } from "primeng/iftalabel";
-import { InputTextModule } from "primeng/inputtext";
-import { InputNumberModule } from "primeng/inputnumber";
-import { ButtonModule } from "primeng/button";
-import { SelectModule } from "primeng/select";
-import { DatePickerModule } from "primeng/datepicker";
-import { FileUploadModule } from "primeng/fileupload";
-import { ToastModule } from "primeng/toast";
 import { MessageService } from "primeng/api";
-import { InputGroupModule } from "primeng/inputgroup";
-import { InputGroupAddonModule } from "primeng/inputgroupaddon";
-import { FloatLabelModule } from "primeng/floatlabel";
-import { KeyFilterModule } from "primeng/keyfilter";
 import { PrimeNgModule } from "../../../core/shared/primeng.module";
 import { LoadingComponent } from "../../../core/components/loading/loading.component";
 
 @Component({
   selector: "app-register-church",
   imports: [CommonModule, ReactiveFormsModule, PrimeNgModule, LoadingComponent],
-  providers: [MessageService],
+  providers: [MessageService, DatePipe],
   templateUrl: "./register-church.component.html",
   styleUrls: ["./register-church.component.scss"],
 })
@@ -46,6 +28,7 @@ export class RegisterChurchComponent implements OnInit {
   _toast = inject(MessageService);
   _church = inject(ChurchesService);
   _router = inject(Router);
+  _datePipe = inject(DatePipe);
   form!: FormGroup;
 
   isLoading = false;
@@ -124,7 +107,9 @@ export class RegisterChurchComponent implements OnInit {
           });
 
           igreja.missas.forEach((missa: any) => {
-            const horario = missa.horario ? this.stringParaDate(missa.horario) : null;
+            const horario = missa.horario
+              ? this.stringParaDate(missa.horario)
+              : null;
             this.horarios.push(
               this.fb.group({
                 id: [missa.id],
@@ -174,17 +159,19 @@ export class RegisterChurchComponent implements OnInit {
     return (control: AbstractControl): ValidationErrors | null => {
       if (control.value) {
         let horario = control.value;
-  
+
         // Se for um objeto Date, converta para string no formato "HH:mm:ss"
         if (horario instanceof Date) {
-          const hours = horario.getHours().toString().padStart(2, '0');
-          const minutes = horario.getMinutes().toString().padStart(2, '0');
-          const seconds = horario.getSeconds().toString().padStart(2, '0');
-          horario = `${hours}:${minutes}:${seconds}`;  // Converte para "HH:mm:ss"
+          const hours = horario.getHours().toString().padStart(2, "0");
+          const minutes = horario.getMinutes().toString().padStart(2, "0");
+          const seconds = horario.getSeconds().toString().padStart(2, "0");
+          horario = `${hours}:${minutes}:${seconds}`; // Converte para "HH:mm:ss"
         }
-  
-        const [hours, minutes] = horario.split(":").map((val: string) => parseInt(val, 10));
-  
+
+        const [hours, minutes] = horario
+          .split(":")
+          .map((val: string) => parseInt(val, 10));
+
         if (![0, 15, 30, 45].includes(minutes)) {
           return { minutosInvalidos: true };
         }
@@ -192,31 +179,29 @@ export class RegisterChurchComponent implements OnInit {
       return null;
     };
   }
-  
 
   stringParaDate(horario: string): Date {
     const [hourStr, minuteStr, secondStr] = horario?.split(":");
-    
+
     const hours = parseInt(hourStr, 10);
     const minutes = parseInt(minuteStr, 10);
     const seconds = parseInt(secondStr, 10);
-  
+
     // Criamos um objeto Date com a data padrão e apenas alteramos as horas, minutos e segundos
     const date = new Date();
-    date.setHours(hours, minutes, seconds, 0);  // Setando a hora, minutos e segundos
-  
+    date.setHours(hours, minutes, seconds, 0); // Setando a hora, minutos e segundos
+
     return date;
   }
 
   dateParaString(date: Date): string {
-    const hours = date.getHours().toString().padStart(2, '0');  // Adiciona zero à esquerda se necessário
-    const minutes = date.getMinutes().toString().padStart(2, '0');  // Adiciona zero à esquerda se necessário
-    const seconds = date.getSeconds().toString().padStart(2, '0');  // Adiciona zero à esquerda se necessário
-    
+    const hours = date.getHours().toString().padStart(2, "0"); // Adiciona zero à esquerda se necessário
+    const minutes = date.getMinutes().toString().padStart(2, "0"); // Adiciona zero à esquerda se necessário
+    const seconds = date.getSeconds().toString().padStart(2, "0"); // Adiciona zero à esquerda se necessário
+
     return `${hours}:${minutes}:${seconds}`;
-  }  
-  
-  
+  }
+
   disableAddressFields() {
     this.form.get("cep")?.disable();
     this.form.get("endereco")?.disable();
@@ -255,8 +240,8 @@ export class RegisterChurchComponent implements OnInit {
       reader.readAsDataURL(file);
       reader.onload = () => {
         const base64String = reader.result as string;
-        const base64Data = base64String.split(",")[1];  // Extrai a parte base64
-        this.form.get("imagem")?.setValue(base64Data);  // Atualiza o valor no formulário
+        const base64Data = base64String.split(",")[1]; // Extrai a parte base64
+        this.form.get("imagem")?.setValue(base64Data); // Atualiza o valor no formulário
       };
     }
   }
@@ -275,7 +260,7 @@ export class RegisterChurchComponent implements OnInit {
       imagem: formValues.imagem,
       missas: formValues.missas.map((missa: any) => ({
         diaSemana: missa.diaSemana,
-        horario: this.stringParaDate(missa.horario),
+        horario: this._datePipe.transform(missa.horario, "HH:mm:ss"),
         observacao: missa.observacao,
       })),
       endereco: {
@@ -302,7 +287,6 @@ export class RegisterChurchComponent implements OnInit {
         { tipoRedeSocial: 4, nomeDoPerfil: formValues.tiktok },
       ],
     };
-    // return console.log(payload);
     this._church.newChurch(payload).subscribe({
       next: (response: any) => {
         const controleId = response?.data?.response?.controleId;
@@ -311,8 +295,10 @@ export class RegisterChurchComponent implements OnInit {
         } else {
           console.log("Erro: controleId não encontrado na resposta");
         }
+        this.isLoading = false;
       },
       error: (error: HttpErrorResponse) => {
+        this.isLoading = false;
         console.error("Ocorreu um erro ao cadastrar a igreja.", error);
       },
       complete: () => {
@@ -334,7 +320,10 @@ export class RegisterChurchComponent implements OnInit {
       missas: formValues.missas.map((missa: any) => ({
         id: missa.id,
         diaSemana: missa.diaSemana,
-        horario: typeof missa.horario === 'string' ? this.stringParaDate(missa.horario) : this.dateParaString(missa.horario),
+        horario:
+          typeof missa.horario === "string"
+            ? this.stringParaDate(missa.horario)
+            : this.dateParaString(missa.horario),
         observacao: missa.observacao,
       })),
       contato: {
