@@ -76,18 +76,26 @@ export class RegisterChurchComponent implements OnInit {
 
   // Função para buscar o endereço pelo CEP.
   getCEP() {
+    if (!this.form.get("cep")?.value) return;
     this.isLoading = true;
-    this._church.searchByCEP(this.form.get("cep")?.value).subscribe({
+    const cepAtual = this.form.get("cep")?.value;
+    this.limparHorarios();
+    this.enableFields();
+    this._church.searchByCEP(cepAtual).subscribe({
       next: (response: any) => {
         if (response.data.response) {
           const igreja = response.data.response;
           this.alter = true;
+
+          // Reseta o formulário mantendo o CEP
+          this.form.reset();
+          this.form.patchValue({ cep: cepAtual });
+
           // Preenche os dados no formulário
           this.id = igreja.id;
           this.form.patchValue({
             nomeIgreja: igreja.nome,
             nomeParoco: igreja.paroco,
-            cep: igreja.endereco.cep,
             endereco: igreja.endereco.logradouro,
             numero: igreja.endereco.numero,
             complemento: igreja.endereco.complemento,
@@ -106,6 +114,7 @@ export class RegisterChurchComponent implements OnInit {
             tiktok: this.getSocialMedia(igreja.redesSociais, 4),
           });
 
+          // Limpa os horários e adiciona os novos
           igreja.missas.forEach((missa: any) => {
             const horario = missa.horario
               ? this.stringParaDate(missa.horario)
@@ -123,10 +132,16 @@ export class RegisterChurchComponent implements OnInit {
           // Desabilita os campos necessários
           this.disableFields();
         }
+        this.isLoading = false;
       },
       error: (error) => {
         if (error.status === 404 && error.error?.data?.endereco) {
           const endereco = error.error.data.endereco;
+
+          // Reseta o formulário mantendo o CEP
+          this.form.reset();
+          this.form.patchValue({ cep: cepAtual });
+
           this.form.patchValue({
             endereco: endereco.logradouro,
             numero: endereco.complemento,
@@ -143,15 +158,20 @@ export class RegisterChurchComponent implements OnInit {
             summary: "Informação",
             detail: error.error.data.messagemAplicacao,
           });
-          this.isLoading = false;
         } else {
-          this.isLoading = false;
           console.error("Ocorreu um erro ao buscar o CEP.", error);
         }
+        this.isLoading = false;
       },
       complete: () => {
         this.isLoading = false;
       },
+    });
+  }
+
+  enableFields() {
+    Object.keys(this.form.controls).forEach((field) => {
+      this.form.get(field)?.enable();
     });
   }
 
@@ -203,7 +223,6 @@ export class RegisterChurchComponent implements OnInit {
   }
 
   disableAddressFields() {
-    this.form.get("cep")?.disable();
     this.form.get("endereco")?.disable();
     this.form.get("bairro")?.disable();
     this.form.get("cidade")?.disable();
@@ -232,6 +251,12 @@ export class RegisterChurchComponent implements OnInit {
     this.horarios.removeAt(index);
   }
 
+  limparHorarios(): void {
+    while (this.horarios.length !== 0) {
+      this.horarios.removeAt(0); // Remove um por um
+    }
+  }
+
   onImageSelect(event: any): void {
     const file = event.files[0];
     if (file) {
@@ -245,14 +270,11 @@ export class RegisterChurchComponent implements OnInit {
       };
     }
   }
+  
 
   // Função de submissão
   submit(): void {
     this.isLoading = true;
-    if (this.form.invalid) {
-      console.log("Por favor, preencha todos os campos obrigatórios.");
-      return;
-    }
     const formValues = this.form.getRawValue();
     const payload = {
       nome: formValues.nomeIgreja,
@@ -299,7 +321,25 @@ export class RegisterChurchComponent implements OnInit {
       },
       error: (error: HttpErrorResponse) => {
         this.isLoading = false;
-        console.error("Ocorreu um erro ao cadastrar a igreja.", error);
+        let errorMessage = '';
+        if (error.error && error.error.errors && typeof error.error.errors === 'object') {
+          for (const field in error.error.errors) {
+            if (error.error.errors.hasOwnProperty(field)) {
+              const fieldErrors = Array.isArray(error.error.errors[field])
+                ? error.error.errors[field].join(', ') 
+                : error.error.errors[field]; 
+        
+              errorMessage += `${field}: ${fieldErrors}\n`;
+            }
+          }
+        } else {
+          errorMessage = 'Erro desconhecido ao processar as informações.';
+        }
+        this._toast.add({
+          severity: "error",
+          summary: "Erro de Validação",
+          detail: errorMessage || 'Erro de validação.',
+        });
       },
       complete: () => {
         this.isLoading = false;
@@ -308,10 +348,6 @@ export class RegisterChurchComponent implements OnInit {
   }
 
   save(): void {
-    if (this.form.invalid) {
-      console.log("Por favor, preencha todos os campos obrigatórios.");
-      return;
-    }
     const formValues = this.form.getRawValue();
     const payload = {
       id: this.id,
@@ -344,7 +380,25 @@ export class RegisterChurchComponent implements OnInit {
         }
       },
       error: (error: HttpErrorResponse) => {
-        console.log(error);
+        let errorMessage = '';
+        if (error.error && error.error.errors && typeof error.error.errors === 'object') {
+          for (const field in error.error.errors) {
+            if (error.error.errors.hasOwnProperty(field)) {
+              const fieldErrors = Array.isArray(error.error.errors[field])
+                ? error.error.errors[field].join(', ') 
+                : error.error.errors[field]; 
+        
+              errorMessage += `${field}: ${fieldErrors}\n`;
+            }
+          }
+        } else {
+          errorMessage = 'Erro desconhecido ao processar as informações.';
+        }
+        this._toast.add({
+          severity: "error",
+          summary: "Erro de Validação",
+          detail: errorMessage || 'Erro de validação.',
+        });
       },
       complete: () => {
         this.isLoading = false;
@@ -360,7 +414,6 @@ export class RegisterChurchComponent implements OnInit {
 
   // Função para desabilitar os campos após preenchimento
   private disableFields(): void {
-    this.form.get("cep")?.disable();
     this.form.get("endereco")?.disable();
     this.form.get("numero")?.disable();
     this.form.get("bairro")?.disable();

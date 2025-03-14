@@ -5,7 +5,7 @@
 <p-panel class="p-1">
   <form [formGroup]="form">
     <p-fieldset legend="Endereço">
-      <div class="flex flex-wrap gap-4">
+      <div class="flex flex-wrap gap-4 w-full">
         <p-inputmask
           formControlName="cep"
           mask="99999-999"
@@ -17,8 +17,14 @@
           id="endereco"
           formControlName="endereco"
           placeholder="Endereço"
+          class="w-107"
         />
-        <input pInputText formControlName="bairro" placeholder="Bairro" />
+        <input
+          pInputText
+          formControlName="bairro"
+          placeholder="Bairro"
+          class="w-106"
+        />
         <input pInputText formControlName="cidade" placeholder="Cidade" />
         <input pInputText formControlName="estado" placeholder="Estado" />
         <input
@@ -31,9 +37,28 @@
           pInputText
           formControlName="complemento"
           placeholder="Complemento"
+          class="w-95"
         />
       </div>
     </p-fieldset>
+
+    <p-fieldset legend="Dados Igreja">
+      <div class="flex gap-4 w-full">
+        <input
+          pInputText
+          formControlName="nomeIgreja"
+          placeholder="Nome da Igreja"
+          class="w-full sm:w-1/2"
+        />
+        <input
+          pInputText
+          formControlName="nomeParoco"
+          placeholder="Nome do Pároco"
+          class="w-full sm:w-1/2"
+        />
+      </div>
+    </p-fieldset>
+    
 
     <p-fieldset legend="Contatos">
       <div class="flex flex-wrap gap-4">
@@ -153,21 +178,24 @@
     </p-fieldset>
     <p-fieldset legend="Foto">
       <p-toast />
-      <div *ngIf="form.get('imagem')?.value">
+      <div *ngIf="form.get('imagem')?.value" class="flex justify-center">
         <img
-          [src]="form.get('imagem')?.value"
+          [src]="'data:image/png;base64,' + form.get('imagem')?.value"
           alt="Imagem da Igreja"
-          width="100"
-          height="100"
+          width="200"
+          height="200"
         />
       </div>
+      <br />
       <p-fileupload
         mode="basic"
         chooseIcon="pi pi-upload"
         accept="image/*"
         maxFileSize="1000000"
         (onSelect)="onImageSelect($event)"
-        chooseLabel="{{ form.get('imagem')?.value ? 'Alterar imagem' : 'Selecionar foto'}}"
+        chooseLabel="{{
+          form.get('imagem')?.value ? 'Alterar imagem' : 'Selecionar foto'
+        }}"
       >
       </p-fileupload>
     </p-fieldset>
