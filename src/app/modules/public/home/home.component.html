@@ -3,8 +3,9 @@
   <p>Mais próxima de sua casa.</p>
 </div>
 <p-panel class="p-1" header="Selecione seus filtros">
-  <app-loading *ngIf="isLoading" />
+  <!-- <app-loading *ngIf="isLoading" /> -->
   <form [formGroup]="form" class="filters flex flex-wrap gap-4">
+    <!-- Estado -->
     <p-iftalabel class="flex-1">
       <p-select
         [options]="states"
@@ -12,22 +13,19 @@
         optionValue="sigla"
         [filter]="true"
         filterBy="nome"
-        [showClear]="true"
+        [showClear]="!isLoadingAddress"
         formControlName="Uf"
         placeholder="Selecione um estado"
         class="w-full"
+        [loading]="isLoadingAddress"
         id="Uf"
         (onChange)="getAddress(this.form.value.Uf)"
       >
-        <ng-template #selectedItem let-states>
-          <div class="flex items-center gap-2">
-            <div>{{ states.nome }}</div>
-          </div>
-        </ng-template>
       </p-select>
       <label for="Uf">Estado</label>
     </p-iftalabel>
 
+    <!-- Cidade -->
     <p-iftalabel class="flex-1">
       <p-select
         [options]="cities"
@@ -38,6 +36,8 @@
         placeholder="Selecione uma cidade"
         class="w-full"
         id="Localidade"
+        [loading]="isLoadingCities"
+        (onChange)="getAddress(this.form.value.Uf, this.form.value.Localidade)"
       >
         <ng-template #selectedItem let-cities>
           <div class="flex items-center gap-2">
@@ -45,19 +45,21 @@
           </div>
         </ng-template>
       </p-select>
-      <label for="Uf">Localidade</label>
+      <label for="Localidade">Localidade</label>
     </p-iftalabel>
 
+    <!-- Bairro -->
     <p-iftalabel class="flex-1">
       <p-select
         [options]="districts"
         [filter]="true"
         filterBy="districts"
         [showClear]="true"
-        formControlName="Localidade"
+        formControlName="Bairro"
         placeholder="Selecione um bairro"
         class="w-full"
         id="Bairro"
+        [loading]="isLoadingDistricts"
       >
         <ng-template #selectedItem let-districts>
           <div class="flex items-center gap-2">
@@ -101,18 +103,30 @@
     </p-iftalabel> -->
   </form>
   <br />
-  <p-button
-    label="Buscar"
-    icon="pi pi-check"
-    [loading]="isLoading"
-    [disabled]="form.invalid"
-    (onClick)="searchFilter()"
-    class="w-full mx-auto block"
-  />
+  <div class="flex">
+    <p-inputgroup>
+      <p-button
+        label="Buscar"
+        icon="pi pi-check"
+        [loading]="isLoading"
+        [disabled]="form.invalid || isLoading"
+        (onClick)="searchFilter()"
+        class="w-30"
+      />
+      <p-button
+        label="Limpar"
+        icon="pi pi-eraser"
+        [loading]="isLoading"
+        variant="outlined" severity="secondary"
+        [disabled]="form.invalid || isLoading"
+        (onClick)="clearFilter()"
+      />
+    </p-inputgroup>
+  </div>
 </p-panel>
 
 <p-panel *ngIf="churchInfo && churchInfo.length > 0">
-  <p-dataview [value]="churchInfo" [rows]="5" [paginator]="true">
+  <p-dataview [value]="churchInfo" [rows]="3" [paginator]="true">
     <ng-template #list let-items>
       <div class="grid grid-cols-12 gap-4 grid-nogutter">
         <div
@@ -130,7 +144,7 @@
               <div class="relative mx-auto">
                 <p-image
                   class="rounded w-full"
-                  [src]="church.imagem ?? '/assets/church/naodisponivel.png'"
+                  [src]="church.imagemUrl ?? '/assets/church/naodisponivel.png'"
                   [alt]="church.nome"
                   [preview]="true"
                   width="200"
@@ -139,24 +153,25 @@
                 <!-- Botão Editar -->
                 <div class="flex justify-center mt-1 md:mt-4">
                   <p-inputgroup>
-                  <button
-                    pButton
-                    icon="pi pi-pencil"
-                    size="small"
-                    label="Editar"
-                    class="p-button-sm p-button-rounded p-button-outlined p-button-text text-sm"
-                    style="color: #2c3e50; border-color: #bdc3c7"
-                  ></button>
-                  <button
-                    pButton
-                    icon="pi pi-exclamation-circle"
-                    size="small"
-                    label="Denunciar"
-                    class="p-button-sm p-button-rounded p-button-outlined p-button-text text-sm"
-                    style="color: #2c3e50; border-color: #bdc3c7"
-                    (click)="reportChurch(church.emailContato)"
-                  ></button>
-                </p-inputgroup>
+                    <button
+                      pButton
+                      icon="pi pi-pencil"
+                      size="small"
+                      label="Editar"
+                      class="p-button-sm p-button-rounded p-button-outlined p-button-text text-sm"
+                      style="color: #2c3e50; border-color: #bdc3c7"
+                      (click)="editChurch()"
+                    ></button>
+                    <button
+                      pButton
+                      icon="pi pi-exclamation-circle"
+                      size="small"
+                      label="Denunciar"
+                      class="p-button-sm p-button-rounded p-button-outlined p-button-text text-sm"
+                      style="color: #2c3e50; border-color: #bdc3c7"
+                      (click)="reportChurch(church.emailContato)"
+                    ></button>
+                  </p-inputgroup>
                 </div>
               </div>
             </div>
@@ -228,7 +243,7 @@
             class="font-small text-xs text-surface-500 dark:text-surface-400 text-right"
           >
             Última alteração: {{ church.alteracao | date }} por
-            {{ church.usuario }}
+            {{ church.usuario.nome }}
           </div>
         </div>
       </div>

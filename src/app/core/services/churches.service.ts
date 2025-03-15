@@ -39,9 +39,16 @@ export class ChurchesService {
     return this.http.get(`Igreja/buscar-por-cep?cep=${cep}`);
   }
 
-  /** Busca cidades e bairros através da UF */
-  addressRange(uf: string): Observable<ResponseAddress> {
-    return this.http.get<ResponseAddress>(`Igreja/obter-enderecos?uf=${uf}`);
+  /** Busca cidades e bairros através da UF, Localidade e Bairro */
+  public addressRange(
+    uf: string,
+    localidade?: string,
+    bairro?: string
+  ): Observable<ResponseAddress> {
+    let params = new HttpParams().set("uf", uf);
+    if (localidade) params = params.set("localidade", localidade);
+    if (bairro) params = params.set("bairro", bairro);
+    return this.http.get<ResponseAddress>("Igreja/obter-enderecos", { params });
   }
 
   /** Busca igrejas filtradas pelos parâmetros informados */

@@ -22,6 +22,8 @@ import { PanelModule } from 'primeng/panel';
 import { CheckboxModule } from 'primeng/checkbox';
 import { InputOtpModule } from 'primeng/inputotp';
 import { DividerModule } from 'primeng/divider';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
 
 @NgModule({
   imports: [
@@ -45,7 +47,9 @@ import { DividerModule } from 'primeng/divider';
     ImageModule,
     CheckboxModule,
     InputOtpModule,
-    DividerModule
+    DividerModule,
+    InputIconModule,
+    IconFieldModule
   ],
   exports: [
     FieldsetModule,
@@ -67,7 +71,9 @@ import { DividerModule } from 'primeng/divider';
     ImageModule,
     CheckboxModule,
     InputOtpModule,
-    DividerModule
+    DividerModule,
+    InputIconModule,
+    IconFieldModule
   ]
 })
 export class PrimeNgModule { }
