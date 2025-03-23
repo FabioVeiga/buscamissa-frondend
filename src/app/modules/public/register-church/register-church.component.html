@@ -1,95 +1,111 @@
 <div class="hero">
-  <h1>Cadastro de igreja</h1>
+  <h1></h1>
+  <p></p>
 </div>
-<app-loading *ngIf="isLoading" />
+<!-- <app-loading *ngIf="isLoading" /> -->
 <p-panel class="p-1">
   <form [formGroup]="form">
     <p-fieldset legend="Endereço">
-      <div class="flex flex-wrap gap-4 w-full">
+      <div class="flex flex-col gap-2">
+        <label for="username">CEP</label>
         <p-inputmask
           formControlName="cep"
           mask="99999-999"
           placeholder="CEP"
           (onBlur)="getCEP()"
+          class="w-full"
         />
-        <input
-          pInputText
-          id="endereco"
-          formControlName="endereco"
-          placeholder="Endereço"
-          class="w-107"
-        />
-        <input
-          pInputText
-          formControlName="bairro"
-          placeholder="Bairro"
-          class="w-106"
-        />
-        <input pInputText formControlName="cidade" placeholder="Cidade" />
-        <input pInputText formControlName="estado" placeholder="Estado" />
-        <input
-          pInputText
-          formControlName="numero"
-          placeholder="Número"
-          pKeyFilter="int"
-        />
-        <input
-          pInputText
-          formControlName="complemento"
-          placeholder="Complemento"
-          class="w-95"
-        />
+      </div>
+      <br>
+      <div class="flex flex-wrap gap-4 w-full">
+
+        <div class="flex flex-col gap-2">
+          <label for="endereco">Endereço</label>
+          <input
+            pInputText
+            id="endereco"
+            formControlName="endereco"
+            placeholder="Endereço"
+            class="w-150"
+          />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label for="numero">Número</label>
+          <input
+            pInputText
+            formControlName="numero"
+            placeholder="Número"
+            pKeyFilter="int"
+          />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label for="bairro">Bairro</label>
+          <input pInputText formControlName="bairro" placeholder="Bairro" />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label for="cidade">Cidade</label>
+          <input pInputText formControlName="cidade" placeholder="Cidade" />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label for="estado">Estado</label>
+          <input pInputText formControlName="estado" placeholder="Estado" />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label for="complemento">Complemento</label>
+          <input
+            pInputText
+            formControlName="complemento"
+            placeholder="Complemento"
+          />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label for="telefone">Telefone</label>
+          <p-inputmask
+            formControlName="telefone"
+            mask="(99) 9999-9999"
+            placeholder="Telefone"
+          />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label for="whatsapp">WhatsApp</label>
+          <p-inputmask
+            formControlName="whatsapp"
+            mask="(99) 99999-9999"
+            placeholder="WhatsApp"
+          />
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label for="emailContato">E-mail de contato</label>
+          <input
+            pInputText
+            formControlName="emailContato"
+            placeholder="E-mail de contato"
+          />
+        </div>
       </div>
     </p-fieldset>
 
     <p-fieldset legend="Dados Igreja">
-      <div class="flex gap-4 w-full">
-        <input
-          pInputText
-          formControlName="nomeIgreja"
-          placeholder="Nome da Igreja"
-          class="w-full sm:w-1/2"
-        />
-        <input
-          pInputText
-          formControlName="nomeParoco"
-          placeholder="Nome do Pároco"
-          class="w-full sm:w-1/2"
-        />
-      </div>
-    </p-fieldset>
-    
-
-    <p-fieldset legend="Contatos">
       <div class="flex flex-wrap gap-4">
-        <p-inputmask
-          formControlName="telefone"
-          mask="(99) 9999-9999"
-          placeholder="Telefone"
-        />
-        <p-inputmask
-          formControlName="whatsapp"
-          mask="(99) 99999-9999"
-          placeholder="WhatsApp"
-        />
-        <input
-          pInputText
-          formControlName="emailContato"
-          placeholder="E-mail de contato"
-        />
-        <input
-          pInputText
-          formControlName="nomeIgreja"
-          placeholder="Nome da Igreja"
-        />
-        <input
-          pInputText
-          formControlName="nomeParoco"
-          placeholder="Nome do Pároco"
-        />
+        <div class="flex flex-1 flex-col gap-2">
+          <label for="nomeIgreja">Nome da Igreja</label>
+          <input pInputText formControlName="nomeIgreja" placeholder="Nome da Igreja" class="w-full" />
+        </div>
+
+        <div class="flex flex-1 flex-col gap-2">
+          <label for="nomeParoco">Nome do Pároco</label>
+          <input pInputText formControlName="nomeParoco" placeholder="Nome do Pároco" class="w-full" />
+        </div>
       </div>
     </p-fieldset>
-
     <p-fieldset legend="Horários">
       <div class="flex flex-wrap gap-4">
         <div formArrayName="missas">
@@ -201,7 +217,7 @@
     </p-fieldset>
     <div class="pt-4">
       <p-button *ngIf="!alter" (click)="submit()" type="submit"
-        >Cadastrar</p-button
+        >Enviar para avaliação</p-button
       >
       <p-button *ngIf="alter" (click)="save()" type="submit">Salvar</p-button>
     </div>

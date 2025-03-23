@@ -1,7 +1,7 @@
 .logo-container {
-  display: flex;
-  align-items: center;
-  gap: 8px;  // Ajuste o valor do gap conforme necessário
+  display: grid;
+  align-content: center;
+  justify-items: center;
 }
 
 .logo {
@@ -9,7 +9,7 @@
 }
 
 h2 {
-  margin: 0; 
+  margin: 0;
   font-weight: bold; // Remove qualquer margem padrão do h2
-  font-size: 1.5rem;  // Ajuste o tamanho da fonte conforme necessário
+  font-size: 1.5rem; // Ajuste o tamanho da fonte conforme necessário
 }

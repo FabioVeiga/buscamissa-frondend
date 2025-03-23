@@ -24,6 +24,7 @@ import { InputOtpModule } from 'primeng/inputotp';
 import { DividerModule } from 'primeng/divider';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { TooltipModule } from 'primeng/tooltip';
 
 @NgModule({
   imports: [
@@ -49,7 +50,8 @@ import { InputIconModule } from 'primeng/inputicon';
     InputOtpModule,
     DividerModule,
     InputIconModule,
-    IconFieldModule
+    IconFieldModule,
+    TooltipModule,
   ],
   exports: [
     FieldsetModule,
@@ -73,7 +75,8 @@ import { InputIconModule } from 'primeng/inputicon';
     InputOtpModule,
     DividerModule,
     InputIconModule,
-    IconFieldModule
+    IconFieldModule,
+    TooltipModule,
   ]
 })
 export class PrimeNgModule { }

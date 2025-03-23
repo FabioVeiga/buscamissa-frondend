@@ -1,6 +1,6 @@
 <div class="hero">
-  <h1>Encontre a casa do senhor</h1>
-  <p>Mais próxima de sua casa.</p>
+  <h1></h1>
+  <p></p>
 </div>
 <p-panel class="p-1" header="Selecione seus filtros">
   <!-- <app-loading *ngIf="isLoading" /> -->
@@ -39,11 +39,6 @@
         [loading]="isLoadingCities"
         (onChange)="getAddress(this.form.value.Uf, this.form.value.Localidade)"
       >
-        <ng-template #selectedItem let-cities>
-          <div class="flex items-center gap-2">
-            <div>{{ cities }}</div>
-          </div>
-        </ng-template>
       </p-select>
       <label for="Localidade">Localidade</label>
     </p-iftalabel>
@@ -61,11 +56,6 @@
         id="Bairro"
         [loading]="isLoadingDistricts"
       >
-        <ng-template #selectedItem let-districts>
-          <div class="flex items-center gap-2">
-            <div>{{ districts }}</div>
-          </div>
-        </ng-template>
       </p-select>
       <label for="Bairro">Bairros</label>
     </p-iftalabel>
@@ -83,28 +73,27 @@
         class="w-full"
         id="DiasSemana"
       >
-        <ng-template #selectedItem let-weakDays>
-          <div class="flex items-center gap-2">
-            <div>{{ weakDays.nome }}</div>
-          </div>
-        </ng-template>
       </p-select>
       <label for="DiasSemana">Dias da semana</label>
     </p-iftalabel>
 
-    <!-- <p-iftalabel class="flex-1">
+    <p-floatlabel class="flex-1" variant="in">
       <p-datepicker
-        inputId="calendar-timeonly"
         formControlName="Horario"
         [timeOnly]="true"
-        id="Horario"
+        inputId="Horario"
+        showIcon
+        iconDisplay="input"
+        [stepMinute]="15"
+        [readonlyInput]="true"
       />
       <label for="Horario">Horário</label>
-    </p-iftalabel> -->
+    </p-floatlabel>
   </form>
   <br />
-  <div class="flex">
-    <p-inputgroup>
+  <div class="flex justify-center w-full">
+    <p-toast position="top-right"></p-toast>
+    <p-inputgroup class="flex justify-center gap-2">
       <p-button
         label="Buscar"
         icon="pi pi-check"
@@ -117,7 +106,8 @@
         label="Limpar"
         icon="pi pi-eraser"
         [loading]="isLoading"
-        variant="outlined" severity="secondary"
+        variant="outlined"
+        severity="secondary"
         [disabled]="form.invalid || isLoading"
         (onClick)="clearFilter()"
       />
@@ -142,36 +132,40 @@
             <!-- Imagem -->
             <div class="bg-surface-50 flex justify-center rounded p-4">
               <div class="relative mx-auto">
-                <p-image
-                  class="rounded w-full"
-                  [src]="church.imagemUrl ?? '/assets/church/naodisponivel.png'"
-                  [alt]="church.nome"
-                  [preview]="true"
-                  width="200"
-                  height="200"
-                />
+                <div class="image-container">
+                  <p-image
+                    class="church-image"
+                    [src]="
+                      church.imagemUrl ?? '/assets/church/naodisponivel.png'
+                    "
+                    [alt]="church.nome"
+                    width="250"
+                  />
+                </div>
+                <!-- Redes Sociais -->
+                <!-- Redes Sociais (Somente se houver) -->
+                <div *ngIf="church.redesSociais?.length" class="social-icons">
+                  <a
+                    *ngFor="let rede of church.redesSociais"
+                    [href]="rede.url"
+                    target="_blank"
+                    class="icon-link"
+                  >
+                    <i [ngClass]="getSocialIcon(rede.url)"></i>
+                  </a>
+                </div>
+
                 <!-- Botão Editar -->
-                <div class="flex justify-center mt-1 md:mt-4">
-                  <p-inputgroup>
-                    <button
-                      pButton
-                      icon="pi pi-pencil"
-                      size="small"
-                      label="Editar"
-                      class="p-button-sm p-button-rounded p-button-outlined p-button-text text-sm"
-                      style="color: #2c3e50; border-color: #bdc3c7"
-                      (click)="editChurch()"
-                    ></button>
-                    <button
-                      pButton
-                      icon="pi pi-exclamation-circle"
-                      size="small"
-                      label="Denunciar"
-                      class="p-button-sm p-button-rounded p-button-outlined p-button-text text-sm"
-                      style="color: #2c3e50; border-color: #bdc3c7"
-                      (click)="reportChurch(church.emailContato)"
-                    ></button>
-                  </p-inputgroup>
+                <div class="flex justify-center">
+                  <button
+                    pButton
+                    icon="pi pi-pencil"
+                    size="small"
+                    label="Editar"
+                    class="p-button-sm p-button-outlined p-button-text text-sm"
+                    style="color: #2c3e50; border-color: #bdc3c7"
+                    (click)="editChurch()"
+                  ></button>
                 </div>
               </div>
             </div>
@@ -198,42 +192,42 @@
                     {{ church.endereco.uf }}/{{ church.endereco.estado }}
                   </div>
                   <div
+                    *ngIf="
+                      church.contato?.telefone ||
+                      church.contato?.telefoneWhatsApp
+                    "
                     class="font-small text-surface-900 dark:text-surface-0 mt-2"
                   >
-                    Telefone :({{ church.contato?.ddd }})
+                    Telefone: ({{ church.contato?.ddd }})
                     {{ church.contato?.telefone }} / WhatsApp: ({{
-                      church.contato?.dddWhatsapp
-                    }})
-                    {{ church.contato?.telefoneWhatsApp }}
+                      church.contato?.dddWhatsApp
+                    }}) {{ church.contato?.telefoneWhatsApp }}
                   </div>
                   <p-divider />
                   <!-- Lista de Horários -->
                   <div class="font-small mt-2">
-                    <div
-                      class="text-lg font-medium text-surface-900 dark:text-surface-0 mb-2"
-                    >
+                    <div class="text-lg font-medium text-surface-900 dark:text-surface-0 mb-2">
                       Horários:
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <!-- Looping pelos horários das missas -->
-                      <!-- Exibe os horários formatados -->
+                      <!-- Verifica se há missas -->
                       <div *ngIf="church.missas?.length">
-                        <div
-                          *ngFor="
-                            let formattedMass of getFormattedMasses(
-                              church.missas
-                            )
-                          "
-                        >
-                          <p
-                            class="font-small text-surface-900 dark:text-surface-0 mt-2"
-                          >
-                            {{ formattedMass }}
+                        <div *ngFor="let mass of getFormattedMasses(church.missas)">
+                          <p class="font-small text-surface-900 dark:text-surface-0 mt-2 flex items-center gap-2">
+                            {{ mass.horario }}
+                            <!-- Exibe ícone apenas se houver observação -->
+                            <i *ngIf="mass.observacao && mass.observacao !== 'Sem observação'"
+                               class="pi pi-info-circle text-blue-500 cursor-pointer"
+                               pTooltip="{{ mass.observacao }}"
+                               tooltipPosition="top">
+                            </i>
                           </p>
                         </div>
                       </div>
                     </div>
                   </div>
+                  
+                  
                 </div>
               </div>
             </div>

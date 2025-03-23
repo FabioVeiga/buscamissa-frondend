@@ -1,5 +1,5 @@
 import { Component, OnInit, inject } from "@angular/core";
-import { CommonModule } from "@angular/common";
+import { CommonModule, DatePipe } from "@angular/common";
 import {
   FormControl,
   FormGroup,
@@ -17,18 +17,20 @@ import {
   Mass,
   ResponseAddress,
 } from "../../../core/interfaces/church.interface";
+import { HttpErrorResponse } from "@angular/common/http";
 
 @Component({
   selector: "app-home",
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, PrimeNgModule],
-  providers: [MessageService],
+  providers: [MessageService, DatePipe],
   templateUrl: "./home.component.html",
   styleUrls: ["./home.component.scss"],
 })
 export class HomeComponent {
   private _churchService = inject(ChurchesService);
   private _toast = inject(MessageService);
+  private _datePipe = inject(DatePipe);
 
   public isLoading = false;
   public isLoadingAddress = false;
@@ -52,6 +54,17 @@ export class HomeComponent {
     DiaDaSemana: new FormControl(),
     Horario: new FormControl(),
   });
+
+  ngOnInit(): void {
+    // const currentTime = new Date();
+    // currentTime.setSeconds(0);
+    // currentTime.setMilliseconds(0);
+    // currentTime.setMinutes(0); // Define os minutos como 00
+  
+    // this.form.patchValue({
+    //   Horario: currentTime
+    // });
+  }
 
   public getAddress(uf: string, localidade?: string, bairro?: string): void {
     if (!uf) return;
@@ -92,27 +105,50 @@ export class HomeComponent {
   public searchFilter(): void {
     if (this.isLoading || this.form.invalid) return;
     this.isLoading = true;
+  
     const filters: FilterSearchChurch = {
       ...this.form.value,
+      Horario: this._datePipe.transform(this.form.value.Horario, "HH:mm"),
       "Paginacao.PageIndex": this.pageIndex,
       "Paginacao.PageSize": this.pageSize,
     };
+  
     this._churchService.searchByFilters(filters).subscribe({
       next: (data: any) => {
         this.churchInfo = data.data.items;
+  
+        // Se não encontrar nenhuma igreja, exibe um aviso
+        if (!this.churchInfo.length) {
+          this._toast.add({
+            severity: "warn",
+            summary: "Nenhuma igreja encontrada",
+            detail: "Não encontramos igrejas para os filtros aplicados.",
+          });
+        }
       },
-      error: () => {
-        this._toast.add({
-          severity: "error",
-          summary: "Erro na busca",
-          detail: "Não foi possível buscar igrejas.",
-        });
+      error: (err: HttpErrorResponse) => {
+        if (err.error.status === 404) {
+          this._toast.add({
+            severity: "warn",
+            summary: "Nenhuma igreja encontrada",
+            detail: "Não encontramos igrejas para os filtros aplicados.",
+          });
+          this.isLoading = false;
+        } else {
+          this._toast.add({
+            severity: "error",
+            summary: "Erro na busca",
+            detail: "Não foi possível buscar igrejas.",
+          });
+          this.isLoading = false;
+        }
       },
       complete: () => {
         this.isLoading = false;
-      },
+      }
     });
   }
+  
 
   clearFilter() {
     this.form.reset();
@@ -153,7 +189,7 @@ export class HomeComponent {
     return daysOfWeek[dia] || "Desconhecido";
   }
 
-  getFormattedMasses(missas: Mass[]): string[] {
+  getFormattedMasses(missas: Mass[]): { horario: string; observacao: string }[] {
     const daysOfWeek = [
       "Domingo",
       "Segunda-feira",
@@ -163,29 +199,25 @@ export class HomeComponent {
       "Sexta-feira",
       "Sábado",
     ];
-
+  
     return daysOfWeek
       .map((day, index) => {
-        const filteredMasses = missas.filter(
-          (missa) => missa.diaSemana === index
-        );
+        const filteredMasses = missas.filter((missa) => missa.diaSemana === index);
         if (filteredMasses.length > 0) {
-          const horarios = filteredMasses
-            .flatMap((missa) => missa.horario)
-            .map((hora: string) => this.formatTime(hora))
-            .join(", ");
-
-          return `${day}: ${horarios}`;
+          return filteredMasses.map((missa) => ({
+            horario: `${day}: ${this.formatTime(missa.horario)}`,
+            observacao: missa.observacao || "Sem observação", // Adiciona observação
+          }));
         }
-
-        return "";
+        return [];
       })
-      .filter(Boolean);
+      .flat();
   }
+  
 
   formatTime(timeString: string): string {
     const [hours, minutes] = timeString.split(":");
-    return `${parseInt(hours, 10)}:${minutes}h`;
+    return `${parseInt(hours, 10)}:${minutes}`;
   }
 
   private updateFormFields(): void {
@@ -203,4 +235,14 @@ export class HomeComponent {
       form.get("Bairro")?.disable();
     }
   }
+
+  getSocialIcon(url: string): string {
+    if (url.includes('facebook.com')) return 'pi pi-facebook';
+    if (url.includes('instagram.com')) return 'pi pi-instagram';
+    if (url.includes('youtube.com')) return 'pi pi-youtube';
+    if (url.includes('tiktok.com')) return 'pi pi-video'; // Não há ícone oficial do TikTok no PrimeIcons
+  
+    return 'pi pi-globe'; // Ícone padrão caso não encontre
+  }
+  
 }

@@ -19,7 +19,7 @@ import { LoadingComponent } from "../../../core/components/loading/loading.compo
 
 @Component({
   selector: "app-register-church",
-  imports: [CommonModule, ReactiveFormsModule, PrimeNgModule, LoadingComponent],
+  imports: [CommonModule, ReactiveFormsModule, PrimeNgModule],
   providers: [MessageService, DatePipe],
   templateUrl: "./register-church.component.html",
   styleUrls: ["./register-church.component.scss"],
@@ -72,6 +72,14 @@ export class RegisterChurchComponent implements OnInit {
       youtube: [""],
       imagem: [""],
     });
+    this.form.get('nomeParoco')?.valueChanges.subscribe(value => {
+      if (value === null || value.trim() === '') {
+        this.form.get('nomeParoco')?.setValue('', { emitEvent: false });
+      } else if (!value.startsWith('Pe. ')) {
+        this.form.get('nomeParoco')?.setValue('Pe. ' + value.replace(/^Pe\.\s*/, ''), { emitEvent: false });
+      }
+    });
+    
   }
 
   // Função para buscar o endereço pelo CEP.
@@ -102,7 +110,7 @@ export class RegisterChurchComponent implements OnInit {
             bairro: igreja.endereco.bairro,
             imagem: igreja.imagemUrl,
             cidade: igreja.endereco.localidade,
-            estado: igreja.endereco.uf,
+            estado: igreja.endereco.estado,
             uf: igreja.endereco.uf,
             regiao: igreja.endereco.regiao,
             telefone: `${igreja.contato.ddd}${igreja.contato.telefone}`,
@@ -142,6 +150,10 @@ export class RegisterChurchComponent implements OnInit {
           this.form.reset();
           this.form.patchValue({ cep: cepAtual });
 
+          const todosNulos = Object.values(endereco).every(
+            (valor) => valor === null || valor === undefined || valor === ""
+          );
+
           this.form.patchValue({
             endereco: endereco.logradouro,
             numero: endereco.complemento,
@@ -152,7 +164,10 @@ export class RegisterChurchComponent implements OnInit {
             regiao: endereco.regiao,
           });
 
-          this.disableAddressFields();
+          if (!todosNulos) {
+            this.disableAddressFields();
+          }
+
           this._toast.add({
             severity: "info",
             summary: "Informação",
@@ -270,12 +285,13 @@ export class RegisterChurchComponent implements OnInit {
       };
     }
   }
-  
 
   // Função de submissão
   submit(): void {
     this.isLoading = true;
     const formValues = this.form.getRawValue();
+    const telefoneLimpo = formValues.telefone?.replace(/\D/g, "");
+    const whatsappLimpo = formValues.whatsapp?.replace(/\D/g, "");
     const payload = {
       nome: formValues.nomeIgreja,
       paroco: formValues.nomeParoco,
@@ -291,16 +307,16 @@ export class RegisterChurchComponent implements OnInit {
         complemento: formValues.complemento,
         bairro: formValues.bairro,
         localidade: formValues.cidade,
-        uf: formValues.estado,
+        uf: formValues.uf,
         estado: formValues.estado,
         regiao: formValues.regiao,
+        numero: formValues.numero,
       },
       contato: {
-        emailContato: formValues.emailContato,
-        ddd: formValues.telefone?.substring(0, 2),
-        telefone: formValues.telefone?.substring(2),
-        dddWhatsApp: formValues.whatsapp?.substring(0, 2),
-        telefoneWhatsApp: formValues.whatsapp?.substring(2),
+        ddd: telefoneLimpo?.substring(0, 2), 
+        telefone: telefoneLimpo?.substring(2), 
+        dddWhatsApp: whatsappLimpo?.substring(0, 2),
+        telefoneWhatsApp: whatsappLimpo?.substring(2),
       },
       redeSociais: [
         { tipoRedeSocial: 1, nomeDoPerfil: formValues.facebook },
@@ -321,24 +337,28 @@ export class RegisterChurchComponent implements OnInit {
       },
       error: (error: HttpErrorResponse) => {
         this.isLoading = false;
-        let errorMessage = '';
-        if (error.error && error.error.errors && typeof error.error.errors === 'object') {
+        let errorMessage = "";
+        if (
+          error.error &&
+          error.error.errors &&
+          typeof error.error.errors === "object"
+        ) {
           for (const field in error.error.errors) {
             if (error.error.errors.hasOwnProperty(field)) {
               const fieldErrors = Array.isArray(error.error.errors[field])
-                ? error.error.errors[field].join(', ') 
-                : error.error.errors[field]; 
-        
+                ? error.error.errors[field].join(", ")
+                : error.error.errors[field];
+
               errorMessage += `${field}: ${fieldErrors}\n`;
             }
           }
         } else {
-          errorMessage = 'Erro desconhecido ao processar as informações.';
+          errorMessage = "Erro desconhecido ao processar as informações.";
         }
         this._toast.add({
           severity: "error",
           summary: "Erro de Validação",
-          detail: errorMessage || 'Erro de validação.',
+          detail: errorMessage || "Erro de validação.",
         });
       },
       complete: () => {
@@ -380,24 +400,28 @@ export class RegisterChurchComponent implements OnInit {
         }
       },
       error: (error: HttpErrorResponse) => {
-        let errorMessage = '';
-        if (error.error && error.error.errors && typeof error.error.errors === 'object') {
+        let errorMessage = "";
+        if (
+          error.error &&
+          error.error.errors &&
+          typeof error.error.errors === "object"
+        ) {
           for (const field in error.error.errors) {
             if (error.error.errors.hasOwnProperty(field)) {
               const fieldErrors = Array.isArray(error.error.errors[field])
-                ? error.error.errors[field].join(', ') 
-                : error.error.errors[field]; 
-        
+                ? error.error.errors[field].join(", ")
+                : error.error.errors[field];
+
               errorMessage += `${field}: ${fieldErrors}\n`;
             }
           }
         } else {
-          errorMessage = 'Erro desconhecido ao processar as informações.';
+          errorMessage = "Erro desconhecido ao processar as informações.";
         }
         this._toast.add({
           severity: "error",
           summary: "Erro de Validação",
-          detail: errorMessage || 'Erro de validação.',
+          detail: errorMessage || "Erro de validação.",
         });
       },
       complete: () => {
@@ -425,5 +449,12 @@ export class RegisterChurchComponent implements OnInit {
     this.form.get("complemento")?.disable();
     this.form.get("youtube")?.disable();
     this.form.get("nomeIgreja")?.disable();
+  }
+
+  addPrefix() {
+    let control = this.form.get('nomeParoco');
+    if (control && control.value && !control.value.startsWith('Pe. ')) {
+      control.setValue('Pe. ' + control.value);
+    }
   }
 }
