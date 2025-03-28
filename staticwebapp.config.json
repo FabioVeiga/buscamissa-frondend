@@ -1,10 +1,1 @@
-{
-  "routes": [
-    {
-      "route": "nova",
-      "methods": [
-        "get"
-      ]
-    }
-  ]
-}
+{}
