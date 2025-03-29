@@ -1,0 +1,33 @@
+{
+    "routes": [
+      {
+        "route": "/home",
+        "rewrite": "/index.html"
+      },
+      {
+        "route": "/nova",
+        "rewrite": "/index.html"
+      },
+      {
+        "route": "/enviar-codigo/{controleId}",
+        "rewrite": "/index.html"
+      },
+      {
+        "route": "/validar",
+        "rewrite": "/index.html"
+      },
+      {
+        "route": "/patrocinadores",
+        "rewrite": "/index.html"
+      },
+      {
+        "route": "/*",
+        "rewrite": "/index.html"
+      }
+    ],
+    "navigationFallback": {
+      "rewrite": "/index.html",
+      "exclude": ["/assets/*", "/favicon.ico"]
+    }
+  }
+  
