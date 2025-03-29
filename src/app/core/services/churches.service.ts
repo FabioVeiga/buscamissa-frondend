@@ -66,4 +66,8 @@ export class ChurchesService {
   searchUpdates(churchId: number) {
     return this.http.get(`Igreja/buscar-por-atualizacoes/${churchId}`);
   }
+
+  report(churchId: number, body: any) {
+    return this.http.post(`Igreja/denunciar/${churchId}`, body);
+  }
 }

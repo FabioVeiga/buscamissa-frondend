@@ -18,11 +18,12 @@ import {
   ResponseAddress,
 } from "../../../core/interfaces/church.interface";
 import { HttpErrorResponse } from "@angular/common/http";
+import { ModalComponent } from "../../../core/components/modal/modal.component";
 
 @Component({
   selector: "app-home",
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, PrimeNgModule],
+  imports: [CommonModule, ReactiveFormsModule, PrimeNgModule, ModalComponent],
   providers: [MessageService, DatePipe],
   templateUrl: "./home.component.html",
   styleUrls: ["./home.component.scss"],
@@ -36,6 +37,17 @@ export class HomeComponent {
   public isLoadingAddress = false;
   public isLoadingCities = false;
   public isLoadingDistricts = false;
+
+
+  public isModalVisible: boolean = false;
+  public modalHeader: string = 'Denunciar igreja';
+
+  public reportForm: FormGroup = new FormGroup({
+    titulo: new FormControl('', Validators.required),
+    descricao: new FormControl('', Validators.required),
+    nomeDenunciador: new FormControl('', Validators.required),
+    emailDenunciador: new FormControl('', [Validators.required, Validators.email]),
+  });
 
   public churchInfo: Church[] = [];
   public cities: any[] = [];
@@ -162,17 +174,31 @@ export class HomeComponent {
     console.log("ok");
   }
 
-  reportChurch(emailContato: string): void {
-    if (emailContato) {
-      // Aqui você pode abrir o cliente de email ou executar qualquer lógica necessária
-      window.location.href = `mailto:${emailContato}`;
+  reportChurch(idChurch: any): void { // Renomeie a função para usar os dados do form
+    if (this.reportForm.valid) {
+      const reportData = this.reportForm.value;
+      console.log('Dados da denúncia:', reportData);
+      this._churchService.report(idChurch.id, reportData)
+      this.isModalVisible = false;
+      this._toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Denúncia enviada com sucesso!' });
     } else {
-      this._toast.add({
-        severity: "warn",
-        summary: "Erro",
-        detail: "Email de contato não disponível.",
-      });
+      this._toast.add({ severity: 'error', summary: 'Erro', detail: 'Por favor, preencha todos os campos corretamente.' });
     }
+  }
+
+  abrirModalDenuncia(): void { // Crie uma função específica para abrir o modal de denúncia
+    this.isModalVisible = true;
+    this.reportForm.reset(); // Limpa o formulário ao abrir o modal
+  }
+
+  fecharModal(): void {
+    this.isModalVisible = false;
+    this.reportForm.reset(); // Limpa o formulário ao fechar o modal
+    console.log('Modal foi fechado.');
+  }
+
+  onModalShow(): void {
+    console.log('Modal foi aberto.');
   }
 
   // Converte dia da semana de número para nome
@@ -200,18 +226,41 @@ export class HomeComponent {
       "Sábado",
     ];
   
-    return daysOfWeek
-      .map((day, index) => {
-        const filteredMasses = missas.filter((missa) => missa.diaSemana === index);
-        if (filteredMasses.length > 0) {
-          return filteredMasses.map((missa) => ({
-            horario: `${day}: ${this.formatTime(missa.horario)}`,
-            observacao: missa.observacao || "Sem observação", // Adiciona observação
-          }));
+    const groupedMasses: { [key: number]: Mass[] } = {};
+    missas.forEach((missa) => {
+      if (missa.diaSemana !== undefined && !groupedMasses[missa.diaSemana]) {
+        if (missa.diaSemana !== undefined) {
+          groupedMasses[missa.diaSemana] = [];
         }
-        return [];
-      })
-      .flat();
+      }
+      if (missa.diaSemana !== undefined) {
+        groupedMasses[missa.diaSemana].push(missa);
+      }
+    });
+  
+    const formattedMasses: { horario: string; observacao: string }[] = [];
+    for (const dayIndex in groupedMasses) {
+      if (groupedMasses.hasOwnProperty(dayIndex)) {
+        const day = daysOfWeek[parseInt(dayIndex, 10)];
+        const massesOnDay = groupedMasses[dayIndex];
+        const times = massesOnDay.map((missa) => this.formatTime(missa.horario));
+        times.sort(); // Garante que os horários estejam em ordem crescente
+  
+        let horarioFormatado = `${day}: `;
+        if (times.length === 1) {
+          horarioFormatado += times[0];
+        } else if (times.length > 1) {
+          horarioFormatado += `${times[0]} - ${times[times.length - 1]}`;
+        }
+  
+        // Pegar a observação (se houver) - aqui assumo que a observação é a mesma para todas as missas no mesmo dia. Se precisar de uma lógica mais complexa, ajuste aqui.
+        const observacao = massesOnDay[0]?.observacao || "Sem observação";
+  
+        formattedMasses.push({ horario: horarioFormatado, observacao: observacao });
+      }
+    }
+  
+    return formattedMasses;
   }
   
 

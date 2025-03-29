@@ -1,0 +1,12 @@
+<p-dialog
+  [(visible)]="visible"
+  [header]="header"
+  [closable]="closable"
+  [dismissableMask]="dismissableMask"
+  [styleClass]="styleClass"
+  [contentStyle]="contentStyle"
+  (onHide)="onHide.emit()"
+  (onShow)="onShow.emit()"
+>
+  <ng-content></ng-content>
+</p-dialog>

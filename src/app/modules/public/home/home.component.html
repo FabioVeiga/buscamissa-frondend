@@ -130,43 +130,199 @@
             }"
           >
             <!-- Imagem -->
-            <div class="bg-surface-50 flex justify-center rounded p-4">
-              <div class="relative mx-auto">
-                <div class="image-container">
+            <div
+              class="bg-surface-50 flex justify-center items-center rounded p-4"
+            >
+              <div class="relative mx-auto text-center">
+                <div class="image-container flex justify-center">
                   <p-image
                     class="church-image"
                     [src]="
                       church.imagemUrl ?? '/assets/church/naodisponivel.png'
                     "
                     [alt]="church.nome"
-                    width="250"
+                    width="150"
+                    height="150"
                   />
                 </div>
-                <!-- Redes Sociais -->
-                <!-- Redes Sociais (Somente se houver) -->
-                <div *ngIf="church.redesSociais?.length" class="social-icons">
+                <div
+                  *ngIf="church.redesSociais?.length"
+                  class="social-icons flex justify-center mt-2"
+                >
                   <a
                     *ngFor="let rede of church.redesSociais"
                     [href]="rede.url"
                     target="_blank"
-                    class="icon-link"
+                    class="icon-link mr-2"
                   >
                     <i [ngClass]="getSocialIcon(rede.url)"></i>
                   </a>
                 </div>
 
-                <!-- Botão Editar -->
-                <div class="flex justify-center">
-                  <button
-                    pButton
-                    icon="pi pi-pencil"
-                    size="small"
-                    label="Editar"
-                    class="p-button-sm p-button-outlined p-button-text text-sm"
-                    style="color: #2c3e50; border-color: #bdc3c7"
-                    (click)="editChurch()"
-                  ></button>
+                <div class="flex justify-center mt-4">
+                  <p-inputgroup>
+                    <button
+                      pButton
+                      icon="pi pi-pencil"
+                      size="small"
+                      label="Editar"
+                      pTooltip="Em breve."
+                      disabled
+                      class="p-button-sm p-button-rounded p-button-outlined p-button-text text-sm"
+                      style="color: #2c3e50; border-color: #bdc3c7"
+                      (click)="editChurch()"
+                    ></button>
+                    <button
+                      pButton
+                      icon="pi pi-exclamation-circle"
+                      size="small"
+                      label="Denunciar"
+                      class="p-button-sm p-button-rounded p-button-outlined p-button-text text-sm"
+                      style="color: #2c3e50; border-color: #bdc3c7"
+                      (click)="abrirModalDenuncia()"
+                    ></button>
+                  </p-inputgroup>
                 </div>
+                <app-modal
+                  [visible]="isModalVisible"
+                  (visibleChange)="isModalVisible = $event"
+                  [header]="modalHeader"
+                  (onHide)="fecharModal()"
+                  (onShow)="onModalShow()"
+                  styleClass="w-full md:w-1/4"
+                >
+                  <form
+                    [formGroup]="reportForm"
+                    (ngSubmit)="reportChurch(churchInfo)"
+                  >
+                    <div class="mb-4">
+                      <label
+                        for="titulo"
+                        class="block text-gray-700 text-sm font-bold mb-2"
+                        >Título</label
+                      >
+                      <input
+                        type="text"
+                        id="titulo"
+                        formControlName="titulo"
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        placeholder="Título da denúncia"
+                      />
+                      <div
+                        *ngIf="
+                          reportForm.get('titulo')?.invalid &&
+                          (reportForm.get('titulo')?.dirty ||
+                            reportForm.get('titulo')?.touched)
+                        "
+                        class="text-red-500 text-xs italic"
+                      >
+                        Título é obrigatório.
+                      </div>
+                    </div>
+
+                    <div class="mb-4">
+                      <label
+                        for="descricao"
+                        class="block text-gray-700 text-sm font-bold mb-2"
+                        >Descrição</label
+                      >
+                      <textarea
+                        id="descricao"
+                        formControlName="descricao"
+                        rows="3"
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        placeholder="Descreva a denúncia"
+                      ></textarea>
+                      <div
+                        *ngIf="
+                          reportForm.get('descricao')?.invalid &&
+                          (reportForm.get('descricao')?.dirty ||
+                            reportForm.get('descricao')?.touched)
+                        "
+                        class="text-red-500 text-xs italic"
+                      >
+                        Descrição é obrigatória.
+                      </div>
+                    </div>
+
+                    <div class="mb-4">
+                      <label
+                        for="nomeDenunciador"
+                        class="block text-gray-700 text-sm font-bold mb-2"
+                        >Seu Nome</label
+                      >
+                      <input
+                        type="text"
+                        id="nomeDenunciador"
+                        formControlName="nomeDenunciador"
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        placeholder="Seu nome"
+                      />
+                      <div
+                        *ngIf="
+                          reportForm.get('nomeDenunciador')?.invalid &&
+                          (reportForm.get('nomeDenunciador')?.dirty ||
+                            reportForm.get('nomeDenunciador')?.touched)
+                        "
+                        class="text-red-500 text-xs italic"
+                      >
+                        Seu nome é obrigatório.
+                      </div>
+                    </div>
+
+                    <div class="mb-4">
+                      <label
+                        for="emailDenunciador"
+                        class="block text-gray-700 text-sm font-bold mb-2"
+                        >Seu Email</label
+                      >
+                      <input
+                        type="email"
+                        id="emailDenunciador"
+                        formControlName="emailDenunciador"
+                        class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+                        placeholder="seu@email.com"
+                      />
+                      <div
+                        *ngIf="
+                          reportForm.get('emailDenunciador')?.invalid &&
+                          (reportForm.get('emailDenunciador')?.dirty ||
+                            reportForm.get('emailDenunciador')?.touched)
+                        "
+                        class="text-red-500 text-xs italic"
+                      >
+                        <div
+                          *ngIf="
+                      reportForm.get('emailDenunciador')?.errors?.['required']
+                    "
+                        >
+                          Email é obrigatório.
+                        </div>
+                        <div
+                          *ngIf="reportForm.get('emailDenunciador')?.errors?.['email']"
+                        >
+                          Email inválido.
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="flex items-center justify-end">
+                      <button
+                        type="button"
+                        (click)="isModalVisible = false"
+                        class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2 focus:outline-none focus:shadow-outline"
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="submit"
+                        class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                      >
+                        Denunciar
+                      </button>
+                    </div>
+                  </form>
+                </app-modal>
               </div>
             </div>
 
@@ -206,28 +362,35 @@
                   <p-divider />
                   <!-- Lista de Horários -->
                   <div class="font-small mt-2">
-                    <div class="text-lg font-medium text-surface-900 dark:text-surface-0 mb-2">
+                    <div
+                      class="text-lg font-medium text-surface-900 dark:text-surface-0 mb-2"
+                    >
                       Horários:
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <!-- Verifica se há missas -->
                       <div *ngIf="church.missas?.length">
-                        <div *ngFor="let mass of getFormattedMasses(church.missas)">
-                          <p class="font-small text-surface-900 dark:text-surface-0 mt-2 flex items-center gap-2">
+                        <div
+                          *ngFor="let mass of getFormattedMasses(church.missas)"
+                        >
+                          <p
+                            class="font-small text-surface-900 dark:text-surface-0 mt-2 flex items-center gap-2"
+                          >
                             {{ mass.horario }}
-                            <!-- Exibe ícone apenas se houver observação -->
-                            <i *ngIf="mass.observacao && mass.observacao !== 'Sem observação'"
-                               class="pi pi-info-circle text-blue-500 cursor-pointer"
-                               pTooltip="{{ mass.observacao }}"
-                               tooltipPosition="top">
+                            <i
+                              *ngIf="
+                                mass.observacao &&
+                                mass.observacao !== 'Sem observação'
+                              "
+                              class="pi pi-info-circle text-blue-500 cursor-pointer"
+                              pTooltip="{{ mass.observacao }}"
+                              tooltipPosition="top"
+                            >
                             </i>
                           </p>
                         </div>
                       </div>
                     </div>
                   </div>
-                  
-                  
                 </div>
               </div>
             </div>
