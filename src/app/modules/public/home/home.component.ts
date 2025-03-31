@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from "@angular/core";
+import { Component, inject } from "@angular/core";
 import { CommonModule, DatePipe } from "@angular/common";
 import {
   FormControl,
@@ -19,6 +19,7 @@ import {
 } from "../../../core/interfaces/church.interface";
 import { HttpErrorResponse } from "@angular/common/http";
 import { ModalComponent } from "../../../core/components/modal/modal.component";
+import { Router } from "@angular/router";
 
 @Component({
   selector: "app-home",
@@ -32,6 +33,7 @@ export class HomeComponent {
   private _churchService = inject(ChurchesService);
   private _toast = inject(MessageService);
   private _datePipe = inject(DatePipe);
+  private _router = inject(Router);
 
   public isLoading = false;
   public isLoadingAddress = false;
@@ -170,8 +172,8 @@ export class HomeComponent {
     this.form.get("Bairro")?.disable();
   }
 
-  editChurch() {
-    console.log("ok");
+  editChurch(church: Church) { // Receba o objeto da igreja
+    this._router.navigate(['/nova', church.id]);
   }
 
   reportChurch(idChurch: any): void { // Renomeie a função para usar os dados do form

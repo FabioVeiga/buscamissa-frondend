@@ -26,6 +26,8 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { TooltipModule } from 'primeng/tooltip';
 import { DialogModule } from 'primeng/dialog';
+import { Select } from 'primeng/select';
+import { FormsModule } from '@angular/forms';
 
 @NgModule({
   imports: [
@@ -53,7 +55,9 @@ import { DialogModule } from 'primeng/dialog';
     InputIconModule,
     IconFieldModule,
     TooltipModule,
-    DialogModule
+    DialogModule,
+    Select,
+    FormsModule
   ],
   exports: [
     FieldsetModule,
@@ -79,7 +83,9 @@ import { DialogModule } from 'primeng/dialog';
     InputIconModule,
     IconFieldModule,
     TooltipModule,
-    DialogModule
+    DialogModule,
+    Select,
+    FormsModule
   ]
 })
 export class PrimeNgModule { }

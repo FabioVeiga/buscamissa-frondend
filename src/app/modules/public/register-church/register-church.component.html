@@ -4,7 +4,7 @@
 </div>
 <!-- <app-loading *ngIf="isLoading" /> -->
 <p-panel class="p-1">
-  <form [formGroup]="form">
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
     <p-fieldset legend="Endereço">
       <div class="flex flex-col gap-2">
         <label for="username">CEP</label>
@@ -63,38 +63,48 @@
             placeholder="Complemento"
           />
         </div>
-
-        <div class="flex flex-col gap-2">
-          <label for="telefone">Telefone</label>
-          <p-inputmask
-            formControlName="telefone"
-            mask="(99) 9999-9999"
-            placeholder="Telefone"
-          />
-        </div>
-
-        <div class="flex flex-col gap-2">
-          <label for="whatsapp">WhatsApp</label>
-          <p-inputmask
-            formControlName="whatsapp"
-            mask="(99) 99999-9999"
-            placeholder="WhatsApp"
-          />
-        </div>
-
-        <div class="flex flex-col gap-2">
-          <label for="emailContato">E-mail de contato</label>
-          <input
-            pInputText
-            formControlName="emailContato"
-            placeholder="E-mail de contato"
-          />
-        </div>
       </div>
+    </p-fieldset>
+
+    <p-fieldset legend="Contatos Igreja">
+      <div class="flex flex-wrap gap-4">
+      <div class="flex flex-col gap-2">
+        <label for="telefone">Telefone</label>
+        <p-inputmask
+          formControlName="telefone"
+          mask="(99) 9999-9999"
+          placeholder="Telefone"
+        />
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label for="whatsapp">WhatsApp</label>
+        <p-inputmask
+          formControlName="whatsapp"
+          mask="(99) 99999-9999"
+          placeholder="WhatsApp"
+        />
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <label for="emailContato">E-mail de contato</label>
+        <input
+          pInputText
+          formControlName="emailContato"
+          placeholder="E-mail de contato"
+        />
+      </div>
+    </div>
     </p-fieldset>
 
     <p-fieldset legend="Dados Igreja">
       <div class="flex flex-wrap gap-4">
+
+        <div class="flex flex-1 flex-col gap-2">
+          <label for="nomeIgreja">Tipo da Igreja</label>
+          <p-select formControlName="typeChurch" [options]="typeChurch" [(ngModel)]="selectedChurch" optionLabel="name" placeholder="Tipo da Igreja" class="w-full" />
+        </div>
+
         <div class="flex flex-1 flex-col gap-2">
           <label for="nomeIgreja">Nome da Igreja</label>
           <input pInputText formControlName="nomeIgreja" placeholder="Nome da Igreja" class="w-full" />
@@ -216,10 +226,7 @@
       </p-fileupload>
     </p-fieldset>
     <div class="pt-4">
-      <p-button *ngIf="!alter" (click)="submit()" type="submit"
-        >Enviar para avaliação</p-button
-      >
-      <p-button *ngIf="alter" (click)="save()" type="submit">Salvar</p-button>
+      <p-button type="submit" label="{{ isEditMode ? 'Salvar Alterações' : 'Cadastrar Igreja' }}"></p-button>
     </div>
   </form>
 </p-panel>

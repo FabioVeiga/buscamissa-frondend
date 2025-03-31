@@ -12,10 +12,15 @@ import {
 } from "@angular/forms";
 import { ChurchesService } from "../../../core/services/churches.service";
 import { HttpErrorResponse } from "@angular/common/http";
-import { Router } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { MessageService } from "primeng/api";
 import { PrimeNgModule } from "../../../core/shared/primeng.module";
 import { LoadingComponent } from "../../../core/components/loading/loading.component";
+
+interface typeChurch {
+  name: string;
+  value: string;
+}
 
 @Component({
   selector: "app-register-church",
@@ -28,14 +33,18 @@ export class RegisterChurchComponent implements OnInit {
   _toast = inject(MessageService);
   _church = inject(ChurchesService);
   _router = inject(Router);
+  _route = inject(ActivatedRoute); // Injete ActivatedRoute
   _datePipe = inject(DatePipe);
   form!: FormGroup;
 
   isLoading = false;
   diaSelecionado: number | null = null;
   imageName = "";
-  alter = false;
-  id: number = 0;
+  isEditMode = false; // Flag para indicar se estamos em modo de edição
+  churchId: number | null = null; // Para armazenar o ID da igreja em edição
+  typeChurch: typeChurch[] | undefined;
+
+  selectedChurch: typeChurch | undefined;
 
   diasSemana = [
     { key: 0, label: "Domingo" },
@@ -72,14 +81,110 @@ export class RegisterChurchComponent implements OnInit {
       youtube: [""],
       imagem: [""],
     });
-    this.form.get('nomeParoco')?.valueChanges.subscribe(value => {
-      if (value === null || value.trim() === '') {
-        this.form.get('nomeParoco')?.setValue('', { emitEvent: false });
-      } else if (!value.startsWith('Pe. ')) {
-        this.form.get('nomeParoco')?.setValue('Pe. ' + value.replace(/^Pe\.\s*/, ''), { emitEvent: false });
+    this.typeChurch = [
+      { name: 'Capela', value: 'Capela' },
+      { name: 'Comunidade', value: 'Comunidade' },
+      { name: 'Paróquia', value: 'Paróquia' },
+      { name: 'Santuário', value: 'Santuário' },
+      { name: 'Catedral', value: 'Catedral' },
+      { name: 'Basílica Maior', value: 'Basílica Maior' },
+      { name: 'Basílica Menor', value: 'Basílica Menor' },
+      { name: 'Arquidiocese', value: 'Arquidiocese' },
+      { name: 'Diocese', value: 'Diocese' },
+      { name: 'Outro', value: 'Outro' }
+    ];
+    this.form.get("nomeParoco")?.valueChanges.subscribe((value) => {
+      if (value === null || value.trim() === "") {
+        this.form.get("nomeParoco")?.setValue("", { emitEvent: false });
+      } else if (!value.startsWith("Pe. ")) {
+        this.form
+          .get("nomeParoco")
+          ?.setValue("Pe. " + value.replace(/^Pe\.\s*/, ""), {
+            emitEvent: false,
+          });
       }
     });
-    
+
+    // Verifica se estamos em modo de edição
+    this._route.params.subscribe((params) => {
+      this.churchId = +params["id"]; // O '+' converte a string para número
+      if (this.churchId) {
+        this.isEditMode = true;
+        this.loadChurchForEdit(this.churchId);
+        this.form.get("cep")?.disable();
+      }
+    });
+  }
+
+  // Função para carregar os dados da igreja para edição
+  loadChurchForEdit(id: number): void {
+    this.isLoading = true;
+    this._church.searchUpdates(id).subscribe({
+      next: (response: any) => {
+        console.log(response);
+        const igreja = response.data; // Ajuste conforme a sua API
+        if (igreja) {
+          this.form.patchValue({
+            nomeIgreja: igreja.nome,
+            nomeParoco: igreja.paroco,
+            cep: igreja.endereco?.cep || "",
+            endereco: igreja.endereco?.logradouro || "",
+            numero: igreja.endereco?.numero || "",
+            complemento: igreja.endereco?.complemento || "",
+            bairro: igreja.endereco?.bairro || "",
+            cidade: igreja.endereco?.localidade || "",
+            estado: igreja.endereco?.estado || "",
+            uf: igreja.endereco?.uf || "",
+            regiao: igreja.endereco?.regiao || "",
+            telefone: igreja.contato?.telefone
+              ? `${igreja.contato.ddd}${igreja.contato.telefone}`
+              : "",
+            whatsapp: igreja.contato?.telefoneWhatsApp
+              ? `${igreja.contato.dddWhatsApp}${igreja.contato.telefoneWhatsApp}`
+              : "",
+            emailContato: igreja.contato?.emailContato || "",
+            facebook: this.getSocialMedia(igreja.redesSociais, 1),
+            instagram: this.getSocialMedia(igreja.redesSociais, 2),
+            youtube: this.getSocialMedia(igreja.redesSociais, 3),
+            tiktok: this.getSocialMedia(igreja.redesSociais, 4),
+            imagem: igreja.imagemUrl, // Se a API retornar a URL da imagem
+          });
+          this.limparHorarios();
+          igreja.missas.forEach((missa: any) => {
+            const horario = missa.horario
+              ? this.stringParaDate(missa.horario)
+              : null;
+            this.horarios.push(
+              this.fb.group({
+                id: [missa.id], // Se a missa tiver um ID
+                diaSemana: [missa.diaSemana, Validators.required],
+                horario: [
+                  horario,
+                  [Validators.required, this.minutosValidos()],
+                ],
+                observacao: [missa.observacao],
+              })
+            );
+          });
+        } else {
+          this._toast.add({
+            severity: "error",
+            summary: "Erro",
+            detail: "Dados da igreja não encontrados.",
+          });
+        }
+        this.isLoading = false;
+      },
+      error: (error) => {
+        this.isLoading = false;
+        this._toast.add({
+          severity: "error",
+          summary: "Erro",
+          detail: "Erro ao carregar dados da igreja para edição.",
+        });
+        console.error(error);
+      },
+    });
   }
 
   // Função para buscar o endereço pelo CEP.
@@ -93,14 +198,13 @@ export class RegisterChurchComponent implements OnInit {
       next: (response: any) => {
         if (response.data.response) {
           const igreja = response.data.response;
-          this.alter = true;
 
           // Reseta o formulário mantendo o CEP
           this.form.reset();
           this.form.patchValue({ cep: cepAtual });
 
           // Preenche os dados no formulário
-          this.id = igreja.id;
+          this.churchId = igreja.id; // Guarda o ID para edição futura
           this.form.patchValue({
             nomeIgreja: igreja.nome,
             nomeParoco: igreja.paroco,
@@ -286,14 +390,14 @@ export class RegisterChurchComponent implements OnInit {
     }
   }
 
-  // Função de submissão
+  // Função de submissão (para novo registro)
   submit(): void {
     this.isLoading = true;
     const formValues = this.form.getRawValue();
     const telefoneLimpo = formValues.telefone?.replace(/\D/g, "");
     const whatsappLimpo = formValues.whatsapp?.replace(/\D/g, "");
     const payload = {
-      nome: formValues.nomeIgreja,
+      nome: this.typeChurch + formValues.nomeIgreja,
       paroco: formValues.nomeParoco,
       imagem: formValues.imagem,
       missas: formValues.missas.map((missa: any) => ({
@@ -313,8 +417,8 @@ export class RegisterChurchComponent implements OnInit {
         numero: formValues.numero,
       },
       contato: {
-        ddd: telefoneLimpo?.substring(0, 2), 
-        telefone: telefoneLimpo?.substring(2), 
+        ddd: telefoneLimpo?.substring(0, 2),
+        telefone: telefoneLimpo?.substring(2),
         dddWhatsApp: whatsappLimpo?.substring(0, 2),
         telefoneWhatsApp: whatsappLimpo?.substring(2),
       },
@@ -367,10 +471,14 @@ export class RegisterChurchComponent implements OnInit {
     });
   }
 
+  // Função para salvar as alterações (edição)
   save(): void {
+    this.isLoading = true;
     const formValues = this.form.getRawValue();
+    const telefoneLimpo = formValues.telefone?.replace(/\D/g, "");
+    const whatsappLimpo = formValues.whatsapp?.replace(/\D/g, "");
     const payload = {
-      id: this.id,
+      id: this.churchId ?? null, // Use o ID da igreja carregado
       paroco: formValues.nomeParoco,
       imagem: formValues.imagem,
       missas: formValues.missas.map((missa: any) => ({
@@ -384,22 +492,24 @@ export class RegisterChurchComponent implements OnInit {
       })),
       contato: {
         emailContato: formValues.emailContato,
-        ddd: formValues.telefone?.substring(0, 2),
-        telefone: formValues.telefone?.substring(2),
-        dddWhatsApp: formValues.whatsapp?.substring(0, 2),
-        telefoneWhatsApp: formValues.whatsapp?.substring(2),
+        ddd: telefoneLimpo?.substring(0, 2),
+        telefone: telefoneLimpo?.substring(2),
+        dddWhatsApp: whatsappLimpo?.substring(0, 2),
+        telefoneWhatsApp: whatsappLimpo?.substring(2),
       },
     };
     this._church.updateChurch(payload).subscribe({
       next: (response: any) => {
-        const controleId = response?.data?.response?.controleId;
-        if (controleId) {
-          this._router.navigate(["/enviar-codigo", controleId]);
-        } else {
-          console.log("Erro: controleId não encontrado na resposta");
-        }
+        this._toast.add({
+          severity: "success",
+          summary: "Sucesso",
+          detail: "Igreja atualizada com sucesso!",
+        });
+        this._router.navigate(["/"]); // Redireciona para a listagem ou outra página
+        this.isLoading = false;
       },
       error: (error: HttpErrorResponse) => {
+        this.isLoading = false;
         let errorMessage = "";
         if (
           error.error &&
@@ -430,13 +540,22 @@ export class RegisterChurchComponent implements OnInit {
     });
   }
 
+  // Função para lidar com o envio do formulário (chama submit ou save dependendo do modo)
+  onSubmit(): void {
+    if (this.isEditMode) {
+      this.save();
+    } else {
+      this.submit();
+    }
+  }
+
   // Função para buscar a URL de uma rede social específica
   private getSocialMedia(redes: any[], tipo: number): string {
     const rede = redes.find((r) => r.tipoRedeSocial === tipo);
     return rede ? rede.url : "";
   }
 
-  // Função para desabilitar os campos após preenchimento
+  // Função para desabilitar os campos após preenchimento (manter se necessário)
   private disableFields(): void {
     this.form.get("endereco")?.disable();
     this.form.get("numero")?.disable();
@@ -452,9 +571,9 @@ export class RegisterChurchComponent implements OnInit {
   }
 
   addPrefix() {
-    let control = this.form.get('nomeParoco');
-    if (control && control.value && !control.value.startsWith('Pe. ')) {
-      control.setValue('Pe. ' + control.value);
+    let control = this.form.get("nomeParoco");
+    if (control && control.value && !control.value.startsWith("Pe. ")) {
+      control.setValue("Pe. " + control.value);
     }
   }
 }

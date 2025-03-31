@@ -20,7 +20,7 @@ export interface Church {
 }
 
 export interface UpdateChurch {
-  id?: number;
+  id?: number | null;
   paroco: string;
   imagem: string;
   missas: Mass[];

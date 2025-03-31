@@ -13,6 +13,7 @@ export const routes: Routes = [
     children: [
       { path: "home", component: HomeComponent },
       { path: "nova", component: RegisterChurchComponent },
+      { path: 'nova/:id', component: RegisterChurchComponent }, // Rota para edição com ID
       { path: "enviar-codigo/:controleId", component: SendCodeComponent },
       { path: "validar", component: ValidateCodeComponent },
       { path: "patrocinadores", component: SponsorsComponent },
