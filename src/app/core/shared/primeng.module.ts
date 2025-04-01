@@ -28,6 +28,7 @@ import { TooltipModule } from 'primeng/tooltip';
 import { DialogModule } from 'primeng/dialog';
 import { Select } from 'primeng/select';
 import { FormsModule } from '@angular/forms';
+import { CardModule } from 'primeng/card';
 
 @NgModule({
   imports: [
@@ -57,7 +58,8 @@ import { FormsModule } from '@angular/forms';
     TooltipModule,
     DialogModule,
     Select,
-    FormsModule
+    FormsModule,
+    CardModule
   ],
   exports: [
     FieldsetModule,
@@ -85,7 +87,8 @@ import { FormsModule } from '@angular/forms';
     TooltipModule,
     DialogModule,
     Select,
-    FormsModule
+    FormsModule,
+    CardModule
   ]
 })
 export class PrimeNgModule { }

@@ -1,8 +1,9 @@
 import { Component } from '@angular/core';
+import { PrimeNgModule } from '../../../core/shared/primeng.module';
 
 @Component({
   selector: 'app-sponsors',
-  imports: [],
+  imports: [PrimeNgModule],
   templateUrl: './sponsors.component.html',
   styleUrl: './sponsors.component.scss'
 })
