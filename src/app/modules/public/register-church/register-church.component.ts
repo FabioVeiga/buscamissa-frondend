@@ -61,6 +61,7 @@ export class RegisterChurchComponent implements OnInit {
   ngOnInit(): void {
     this.form = this.fb.group({
       nomeIgreja: ["", Validators.required],
+      typeChurch: [""],
       nomeParoco: ["", Validators.required],
       cep: [""],
       endereco: [""],
@@ -557,6 +558,10 @@ export class RegisterChurchComponent implements OnInit {
 
   // Função para desabilitar os campos após preenchimento (manter se necessário)
   private disableFields(): void {
+    this.form.get('telefone')?.disable();
+    this.form.get('whatsapp')?.disable();
+    this.form.get('emailContato')?.disable();
+    this.form.get('typeChurch')?.disable();
     this.form.get("endereco")?.disable();
     this.form.get("numero")?.disable();
     this.form.get("bairro")?.disable();
