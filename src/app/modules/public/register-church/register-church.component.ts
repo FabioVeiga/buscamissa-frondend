@@ -268,7 +268,7 @@ export class RegisterChurchComponent implements OnInit {
             uf: endereco.uf,
             regiao: endereco.regiao,
           });
-
+          this.isEditMode = true;
           if (!todosNulos) {
             this.disableAddressFields();
           }

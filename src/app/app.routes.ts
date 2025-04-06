@@ -5,6 +5,7 @@ import { RegisterChurchComponent } from "./modules/public/register-church/regist
 import { SponsorsComponent } from "./modules/public/sponsors/sponsors.component";
 import { SendCodeComponent } from "./modules/public/register-church/send-code/send-code.component";
 import { ValidateCodeComponent } from "./modules/public/register-church/validate-code/validate-code.component";
+import { DetailsComponent } from "./modules/public/home/details/details.component";
 
 export const routes: Routes = [
   {
@@ -13,7 +14,8 @@ export const routes: Routes = [
     children: [
       { path: "home", component: HomeComponent },
       { path: "nova", component: RegisterChurchComponent },
-      { path: 'nova/:id', component: RegisterChurchComponent }, // Rota para edição com ID
+      { path: 'nova/:id', component: RegisterChurchComponent },
+      { path: 'detalhes/:id', component: DetailsComponent },
       { path: "enviar-codigo/:controleId", component: SendCodeComponent },
       { path: "validar", component: ValidateCodeComponent },
       { path: "patrocinadores", component: SponsorsComponent },

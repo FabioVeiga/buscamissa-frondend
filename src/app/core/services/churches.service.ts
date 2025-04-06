@@ -70,4 +70,8 @@ export class ChurchesService {
   report(churchId: number, body: any) {
     return this.http.post(`Igreja/denunciar/${churchId}`, body);
   }
+
+  getInfo() {
+    return this.http.get(`Igreja/infos`);
+  }
 }

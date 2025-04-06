@@ -19,12 +19,12 @@ import {
 } from "../../../core/interfaces/church.interface";
 import { HttpErrorResponse } from "@angular/common/http";
 import { ModalComponent } from "../../../core/components/modal/modal.component";
-import { Router } from "@angular/router";
+import { Router, RouterModule } from "@angular/router";
 
 @Component({
   selector: "app-home",
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, PrimeNgModule, ModalComponent],
+  imports: [CommonModule, ReactiveFormsModule, PrimeNgModule, ModalComponent, RouterModule],
   providers: [MessageService, DatePipe],
   templateUrl: "./home.component.html",
   styleUrls: ["./home.component.scss"],
@@ -179,7 +179,6 @@ export class HomeComponent {
   reportChurch(idChurch: any): void { // Renomeie a função para usar os dados do form
     if (this.reportForm.valid) {
       const reportData = this.reportForm.value;
-      console.log('Dados da denúncia:', reportData);
       this._churchService.report(idChurch.id, reportData)
       this.isModalVisible = false;
       this._toast.add({ severity: 'success', summary: 'Sucesso', detail: 'Denúncia enviada com sucesso!' });

@@ -336,7 +336,9 @@
                   <div
                     class="text-lg font-medium text-surface-900 dark:text-surface-0 mt-2"
                   >
-                    {{ church.nome }} - {{ church.paroco }}
+                    <a [routerLink]="['/detalhes', church.id]"
+                      >{{ church.nome }} - {{ church.paroco }}</a
+                    >
                   </div>
                   <div
                     class="font-small text-surface-900 dark:text-surface-0 mt-2"
@@ -400,6 +402,9 @@
             Última alteração: {{ church.alteracao | date }} por
             {{ church.usuario.nome }}
           </div>
+          <a href="https://api.whatsapp.com/send?phone=5511111111111&text=Olá,%20venha%20conheçer%20a%20{{church.nome}},%20clique%20no%20link%20abaixo%20para%20mais%20detalhes%20dela! https://www.igreja.com.br/detalhes/{{church.id}}" target="_blank" rel="noopener noreferrer" class="p-button font-bold">
+            Compartilhar
+        </a>
         </div>
       </div>
     </ng-template>
