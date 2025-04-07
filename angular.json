@@ -33,7 +33,11 @@
               },
               "src/favicon.ico",
               "src/assets",
-              "src/staticwebapp.config.json"
+              {
+                "glob": "staticwebapp.config.json",
+                "input": "src",
+                "output": "."
+              }
             ],
             "styles": [
               "src/styles.scss",
