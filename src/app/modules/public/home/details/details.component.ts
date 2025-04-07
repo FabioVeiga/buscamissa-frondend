@@ -29,7 +29,7 @@ export class DetailsComponent implements OnInit {
   _route = inject(ActivatedRoute);
   form!: FormGroup;
   isLoading = false;
-  churchId: number | null = null;
+  churchCep: any | null = null;
   diasSemana = [
     { key: 0, label: "Domingo" },
     { key: 1, label: "Segunda-feira" },
@@ -67,9 +67,9 @@ export class DetailsComponent implements OnInit {
     });
 
     this._route.params.subscribe((params) => {
-      this.churchId = +params["id"]; // O '+' converte a string para número
-      if (this.churchId) {
-        this.loadChurchForEdit(this.churchId);
+      this.churchCep = +params["cep"]; // O '+' converte a string para número
+      if (this.churchCep) {
+        this.loadChurchForEdit(this.churchCep);
         // this.loadInfo()
         // this.form.get("cep")?.disable();
       } else {
@@ -85,9 +85,9 @@ export class DetailsComponent implements OnInit {
   }
 
   // Função para carregar os dados da igreja para edição
-  loadChurchForEdit(id: number): void {
+  loadChurchForEdit(cep: any): void {
     this.isLoading = true;
-    this._church.searchUpdates(id).subscribe({
+    this._church.searchByCEP(cep).subscribe({
       next: (response: any) => {
         console.log(response);
         const igreja = response?.data; // Ajuste conforme a sua API

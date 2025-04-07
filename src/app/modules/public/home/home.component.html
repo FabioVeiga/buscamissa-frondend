@@ -336,8 +336,8 @@
                   <div
                     class="text-lg font-medium text-surface-900 dark:text-surface-0 mt-2"
                   >
-                    <a [routerLink]="['/detalhes', church.id]"
-                      >{{ church.nome }} - {{ church.paroco }}</a
+                    <a [routerLink]="['/detalhes', church.endereco.cep]"
+                      >{{ church.nome }} <br> {{ church.paroco }}</a
                     >
                   </div>
                   <div
