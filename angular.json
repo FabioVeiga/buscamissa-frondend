@@ -33,16 +33,10 @@
               },
               "src/favicon.ico",
               "src/assets",
-              {
-                "glob": "staticwebapp.config.json",
-                "input": "src",
-                "output": "."
-              }
+              "src/staticwebapp.config.json"
             ],
             "styles": [
-              "src/styles.scss",
-              "node_modules/ngx-sharebuttons/themes/modern.scss",
-              "node_modules/ngx-sharebuttons/themes/material.scss"
+              "src/styles.scss"
             ],
             "scripts": []
           },
@@ -103,9 +97,7 @@
               }
             ],
             "styles": [
-              "src/styles.scss",
-              "node_modules/ngx-sharebuttons/themes/modern.scss",
-              "node_modules/ngx-sharebuttons/themes/material.scss"
+              "src/styles.scss"
             ],
             "scripts": []
           }
