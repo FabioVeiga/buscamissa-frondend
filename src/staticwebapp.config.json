@@ -17,7 +17,7 @@
       "rewrite": "/index.html"
     },
     {
-      "route": "/anuncios",
+      "route": "/patrocinadores",
       "rewrite": "/index.html"
     },
     {
