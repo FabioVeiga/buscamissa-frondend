@@ -59,7 +59,7 @@ import { CardModule } from 'primeng/card';
     DialogModule,
     Select,
     FormsModule,
-    CardModule
+    CardModule,
   ],
   exports: [
     FieldsetModule,
@@ -88,7 +88,7 @@ import { CardModule } from 'primeng/card';
     DialogModule,
     Select,
     FormsModule,
-    CardModule
+    CardModule,
   ]
 })
 export class PrimeNgModule { }

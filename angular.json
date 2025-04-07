@@ -36,7 +36,9 @@
               "src/staticwebapp.config.json"
             ],
             "styles": [
-              "src/styles.scss"
+              "src/styles.scss",
+              "node_modules/ngx-sharebuttons/themes/modern.scss",
+              "node_modules/ngx-sharebuttons/themes/material.scss"
             ],
             "scripts": []
           },
@@ -97,7 +99,9 @@
               }
             ],
             "styles": [
-              "src/styles.scss"
+              "src/styles.scss",
+              "node_modules/ngx-sharebuttons/themes/modern.scss",
+              "node_modules/ngx-sharebuttons/themes/material.scss"
             ],
             "scripts": []
           }

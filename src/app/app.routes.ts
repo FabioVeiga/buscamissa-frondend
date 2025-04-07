@@ -14,7 +14,7 @@ export const routes: Routes = [
     children: [
       { path: "home", component: HomeComponent },
       { path: "nova", component: RegisterChurchComponent },
-      { path: 'nova/:id', component: RegisterChurchComponent },
+      { path: 'editar/:cep', component: RegisterChurchComponent },
       { path: 'detalhes/:id', component: DetailsComponent },
       { path: "enviar-codigo/:controleId", component: SendCodeComponent },
       { path: "validar", component: ValidateCodeComponent },

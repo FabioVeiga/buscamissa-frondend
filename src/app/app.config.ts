@@ -12,9 +12,14 @@ import { ApiBaseUrlInterceptor } from "./core/middleware/api-base.interceptor";
 import { provideEnvironmentNgxMask } from "ngx-mask";
 import { providePrimeNG } from "primeng/config";
 import BuscaMissa from './themes/mytheme';
+import { customShareButton, provideShareButtonsOptions, withConfig } from "ngx-sharebuttons";
+import { shareIcons } from 'ngx-sharebuttons/icons';
 
 export const appConfig: ApplicationConfig = {
   providers: [
+    provideShareButtonsOptions(
+      shareIcons(),
+    ),
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideAnimationsAsync(),

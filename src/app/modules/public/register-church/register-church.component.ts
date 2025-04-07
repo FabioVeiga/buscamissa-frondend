@@ -41,6 +41,7 @@ export class RegisterChurchComponent implements OnInit {
   diaSelecionado: number | null = null;
   imageName = "";
   isEditMode = false; // Flag para indicar se estamos em modo de edição
+  churchCep: any | null = null; // Para armazenar o CPF da igreja em edição
   churchId: number | null = null; // Para armazenar o ID da igreja em edição
   typeChurch: typeChurch[] | undefined;
 
@@ -83,16 +84,16 @@ export class RegisterChurchComponent implements OnInit {
       imagem: [""],
     });
     this.typeChurch = [
-      { name: 'Capela', value: 'Capela' },
-      { name: 'Comunidade', value: 'Comunidade' },
-      { name: 'Paróquia', value: 'Paróquia' },
-      { name: 'Santuário', value: 'Santuário' },
-      { name: 'Catedral', value: 'Catedral' },
-      { name: 'Basílica Maior', value: 'Basílica Maior' },
-      { name: 'Basílica Menor', value: 'Basílica Menor' },
-      { name: 'Arquidiocese', value: 'Arquidiocese' },
-      { name: 'Diocese', value: 'Diocese' },
-      { name: 'Outro', value: 'Outro' }
+      { name: "Capela", value: "Capela" },
+      { name: "Comunidade", value: "Comunidade" },
+      { name: "Paróquia", value: "Paróquia" },
+      { name: "Santuário", value: "Santuário" },
+      { name: "Catedral", value: "Catedral" },
+      { name: "Basílica Maior", value: "Basílica Maior" },
+      { name: "Basílica Menor", value: "Basílica Menor" },
+      { name: "Arquidiocese", value: "Arquidiocese" },
+      { name: "Diocese", value: "Diocese" },
+      { name: "Outro", value: "Outro" },
     ];
     this.form.get("nomeParoco")?.valueChanges.subscribe((value) => {
       if (value === null || value.trim() === "") {
@@ -108,22 +109,21 @@ export class RegisterChurchComponent implements OnInit {
 
     // Verifica se estamos em modo de edição
     this._route.params.subscribe((params) => {
-      this.churchId = +params["id"]; // O '+' converte a string para número
-      if (this.churchId) {
+      this.churchCep = +params["cep"]; // O '+' converte a string para número
+      if (this.churchCep) {
         this.isEditMode = true;
-        this.loadChurchForEdit(this.churchId);
+        this.loadChurchForEdit(this.churchCep);
         this.form.get("cep")?.disable();
       }
     });
   }
 
   // Função para carregar os dados da igreja para edição
-  loadChurchForEdit(id: number): void {
+  loadChurchForEdit(churchCep: any): void {
     this.isLoading = true;
-    this._church.searchUpdates(id).subscribe({
+    this._church.searchByCEP(churchCep).subscribe({
       next: (response: any) => {
-        console.log(response);
-        const igreja = response.data; // Ajuste conforme a sua API
+        const igreja = response.data.response; // Ajuste conforme a sua API
         if (igreja) {
           this.form.patchValue({
             nomeIgreja: igreja.nome,
@@ -197,6 +197,7 @@ export class RegisterChurchComponent implements OnInit {
     this.enableFields();
     this._church.searchByCEP(cepAtual).subscribe({
       next: (response: any) => {
+        // Verifica se a resposta contém os dados da igreja
         if (response.data.response) {
           const igreja = response.data.response;
 
@@ -258,6 +259,16 @@ export class RegisterChurchComponent implements OnInit {
           const todosNulos = Object.values(endereco).every(
             (valor) => valor === null || valor === undefined || valor === ""
           );
+
+          if (todosNulos) {
+            this.form.reset();
+            document.getElementById("cep")?.focus();
+            return this._toast.add({
+              severity: "info",
+              summary: "Erro",
+              detail: "CEP não encontrado ou inválido, por favor, informe outro.",
+            });
+          }
 
           this.form.patchValue({
             endereco: endereco.logradouro,
@@ -558,10 +569,10 @@ export class RegisterChurchComponent implements OnInit {
 
   // Função para desabilitar os campos após preenchimento (manter se necessário)
   private disableFields(): void {
-    this.form.get('telefone')?.disable();
-    this.form.get('whatsapp')?.disable();
-    this.form.get('emailContato')?.disable();
-    this.form.get('typeChurch')?.disable();
+    this.form.get("telefone")?.disable();
+    this.form.get("whatsapp")?.disable();
+    this.form.get("emailContato")?.disable();
+    this.form.get("typeChurch")?.disable();
     this.form.get("endereco")?.disable();
     this.form.get("numero")?.disable();
     this.form.get("bairro")?.disable();

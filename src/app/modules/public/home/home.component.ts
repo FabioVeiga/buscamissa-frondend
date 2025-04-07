@@ -20,11 +20,12 @@ import {
 import { HttpErrorResponse } from "@angular/common/http";
 import { ModalComponent } from "../../../core/components/modal/modal.component";
 import { Router, RouterModule } from "@angular/router";
+import { ShareButtons } from 'ngx-sharebuttons/buttons';
 
 @Component({
   selector: "app-home",
   standalone: true,
-  imports: [CommonModule, ReactiveFormsModule, PrimeNgModule, ModalComponent, RouterModule],
+  imports: [CommonModule, ReactiveFormsModule, PrimeNgModule, ModalComponent, RouterModule, ShareButtons],
   providers: [MessageService, DatePipe],
   templateUrl: "./home.component.html",
   styleUrls: ["./home.component.scss"],
@@ -173,7 +174,8 @@ export class HomeComponent {
   }
 
   editChurch(church: Church) { // Receba o objeto da igreja
-    this._router.navigate(['/nova', church.id]);
+    // Redireciona para a página de edição com o CPF da igreja
+    this._router.navigate(['/editar', church.endereco.cep]);
   }
 
   reportChurch(idChurch: any): void { // Renomeie a função para usar os dados do form

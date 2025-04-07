@@ -396,15 +396,33 @@
             </div>
           </div>
           <!-- Informações de Alteração -->
-          <div
-            class="font-small text-xs text-surface-500 dark:text-surface-400 text-right"
-          >
-            Última alteração: {{ church.alteracao | date }} por
-            {{ church.usuario.nome }}
-          </div>
-          <a href="https://api.whatsapp.com/send?phone=5511111111111&text=Olá,%20venha%20conheçer%20a%20{{church.nome}},%20clique%20no%20link%20abaixo%20para%20mais%20detalhes%20dela! https://www.igreja.com.br/detalhes/{{church.id}}" target="_blank" rel="noopener noreferrer" class="p-button font-bold">
+          <div class="flex justify-between items-center mt-4">
+            <div
+              class="font-small text-xs text-surface-500 dark:text-surface-400 text-left"
+            >
+              Compartilhar:
+              <share-buttons
+                [theme]="'modern-dark'"
+                [include]="['whatsapp']"
+                [show]="2"
+                [showText]="true"
+                description="Olá, venham conhecer a {{
+                  church.nome
+                }}, clique no link abaixo para mais detalhes dela! https://www.igreja.com.br/detalhes/{{
+                  church.id
+                }}"
+              ></share-buttons>
+            </div>
+            <div
+              class="font-small text-xs text-surface-500 dark:text-surface-400 text-right"
+            >
+              Última alteração: {{ church.alteracao | date }} por
+              {{ church.usuario.nome }}
+            </div>
+            <!-- <a href="https://api.whatsapp.com/send?phone=5511111111111&text=Olá,%20venha%20conheçer%20a%20{{church.nome}},%20clique%20no%20link%20abaixo%20para%20mais%20detalhes%20dela! https://www.igreja.com.br/detalhes/{{church.id}}" target="_blank" rel="noopener noreferrer" class="p-button font-bold">
             Compartilhar
-        </a>
+        </a> -->
+          </div>
         </div>
       </div>
     </ng-template>

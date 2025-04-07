@@ -14,6 +14,7 @@
           placeholder="CEP"
           (onBlur)="getCEP()"
           class="w-full"
+          id="cep"
         />
       </div>
       <br>
@@ -205,7 +206,7 @@
     <p-fieldset legend="Foto">
       <p-toast />
       <div *ngIf="form.get('imagem')?.value" class="flex justify-center">
-        <img
+        <img *ngIf="!form.get('imagem')?.value"
           [src]="'data:image/png;base64,' + form.get('imagem')?.value"
           alt="Imagem da Igreja"
           width="200"
