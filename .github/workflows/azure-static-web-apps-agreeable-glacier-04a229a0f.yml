@@ -42,7 +42,7 @@ jobs:
           output_location: "" # Built app content directory - optional
           skip_api_build: true
           skip_app_build: true
-          config_file_location: "/dist/busca-missa/browser/staticwebapp.config.json"
+          config_file_location: "/dist/busca-missa/browser"
           ###### End of Repository/Build Configurations ######
 
   close_pull_request_job:
