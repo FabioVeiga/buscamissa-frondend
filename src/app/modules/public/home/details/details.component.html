@@ -3,7 +3,8 @@
   <h1></h1>
   <p></p>
 </div>
-<p-panel class="p-1">
+<app-loading *ngIf="isLoading" />
+<p-panel class="p-1" *ngIf="!isLoading">
   <form [formGroup]="form">
     <p-fieldset legend="Endereço">
       <div class="flex flex-col gap-2">
@@ -13,6 +14,7 @@
           mask="99999-999"
           placeholder="CEP"
           class="w-full"
+          readonly
         />
         <small
           *ngIf="form.get('cep')?.invalid && form.get('cep')?.touched"
@@ -151,7 +153,7 @@
           <div
             *ngFor="let horarioCtrl of horarios.controls; let i = index"
             [formGroupName]="i"
-            class="inline-flex gap-4 pt-4"
+            class="flex gap-4 pt-4"
           >
             <p-select
               formControlName="diaSemana"
@@ -167,9 +169,9 @@
                 horarioCtrl.get('diaSemana')?.touched
               "
               class="p-error"
-              >Dia da semana é obrigatório</small
+            >Dia da semana é obrigatório</small
             >
-
+    
             <p-datepicker
               inputId="calendar-timeonly-{{ i }}"
               formControlName="horario"
@@ -186,7 +188,7 @@
                 !horarioCtrl.get('horario')?.hasError('minutosInvalidos')
               "
               class="p-error"
-              >Horário é obrigatório</small
+            >Horário é obrigatório</small
             >
             <small
               id="username-help-{{ i }}"
@@ -195,28 +197,13 @@
             >
               Os minutos devem ser 00, 15, 30 ou 45.
             </small>
-
             <input
               pInputText
               formControlName="observacao"
               placeholder="Observação"
               class="w-full"
             />
-            <button
-              pButton
-              type="button"
-              icon="pi pi-trash"
-              class="p-button-danger"
-              (click)="removerHorario(i)"
-            ></button>
           </div>
-          <button
-            pButton
-            type="button"
-            label="Adicionar Horário"
-            icon="pi pi-plus"
-            (click)="adicionarHorario()"
-          ></button>
         </div>
       </div>
     </p-fieldset>
@@ -256,13 +243,12 @@
       <p-toast />
       <div *ngIf="form.get('imagem')?.value" class="flex justify-center">
         <img
-          [src]="'data:image/png;base64,' + form.get('imagem')?.value"
-          alt="Imagem da Igreja"
+          [src]="form.get('imagem')?.value"
+          alt="{{form.value.nomeIgreja}}"
           width="200"
           height="200"
         />
       </div>
     </p-fieldset>
-    <button pButton type="submit" label="Salvar" [disabled]="form.invalid"></button>
   </form>
 </p-panel>

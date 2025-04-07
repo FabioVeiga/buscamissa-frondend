@@ -1,3 +1,4 @@
+import { routes } from './../../../../app.routes';
 import { Component, inject, OnInit } from "@angular/core";
 import {
   AbstractControl,
@@ -15,10 +16,11 @@ import { MessageService } from "primeng/api";
 import { PrimeNgModule } from "../../../../core/shared/primeng.module";
 import { CommonModule } from "@angular/common";
 import { ActivatedRoute } from "@angular/router";
+import { LoadingComponent } from "../../../../core/components/loading/loading.component";
 
 @Component({
   selector: "app-details",
-  imports: [PrimeNgModule, CommonModule, FormsModule, ReactiveFormsModule],
+  imports: [PrimeNgModule, CommonModule, FormsModule, ReactiveFormsModule, LoadingComponent],
   providers: [MessageService],
   templateUrl: "./details.component.html",
   styleUrl: "./details.component.scss",
@@ -71,17 +73,11 @@ export class DetailsComponent implements OnInit {
       if (this.churchCep) {
         this.loadChurchForEdit(this.churchCep);
         // this.loadInfo()
-        // this.form.get("cep")?.disable();
+        this.form.disable();
       } else {
         this.adicionarHorario(); // Add an initial empty horario for new churches
       }
     });
-  }
-
-  loadInfo(){
-    this._church.getInfo().subscribe({
-      next: (data: any) => { console.log(data)}
-    })
   }
 
   // Função para carregar os dados da igreja para edição
@@ -89,8 +85,8 @@ export class DetailsComponent implements OnInit {
     this.isLoading = true;
     this._church.searchByCEP(cep).subscribe({
       next: (response: any) => {
-        console.log(response);
-        const igreja = response?.data; // Ajuste conforme a sua API
+        console.log(response.data.response);
+        const igreja = response?.data.response; // Ajuste conforme a sua API
         if (igreja) {
           this.form?.patchValue({
             nomeIgreja: igreja.nome,
@@ -118,7 +114,7 @@ export class DetailsComponent implements OnInit {
             imagem: igreja.imagemUrl, // Se a API retornar a URL da imagem
           });
           this.limparHorarios();
-          igreja.missasTemporaria?.forEach((missa: any) => {
+          igreja.missas?.forEach((missa: any) => {
             const horario = missa.horario
               ? this.stringParaDate(missa.horario)
               : null;
@@ -133,6 +129,7 @@ export class DetailsComponent implements OnInit {
                 observacao: [missa.observacao],
               })
             );
+            this.horarios.disable();
           });
         } else {
           this._toast.add({
