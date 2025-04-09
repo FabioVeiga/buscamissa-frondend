@@ -26,16 +26,206 @@
     </p-inputgroup>
 
     <div class="flex items-center">
-      <p-checkbox id="termos" formControlName="aceitarTermo" [binary]="true" />
-      <label for="termos" class="ml-2"> Aceito os termos de uso </label>
+      <p-checkbox
+        id="termos"
+        formControlName="aceitarTermo"
+        [binary]="true"
+        (onChange)="showTermosModal = $event.checked"
+      />
+      <label for="termos" class="ml-2">
+        Aceito os
+        <a href="#" class="text-orange-500 font-bold cursor-pointer" (click)="openTermosModal($event)">termos de uso</a>
+      </label>
     </div>
 
     <div class="flex items-center">
-      <p-checkbox formControlName="aceitarPromocao" [binary]="true" />
-      <label for="termos" class="ml-2"> Aceito receber promoções </label>
+      <p-checkbox
+        formControlName="aceitarPromocao"
+        [binary]="true"
+        (onChange)="showPromocaoModal = $event.checked"
+      />
+      <label for="promocoes" class="ml-2">
+        Aceito receber
+        <a href="#" class="text-orange-500 font-bold cursor-pointer" (click)="openPromocaoModal($event)">promoções</a>
+      </label>
     </div>
   </form>
-  <p-button [disabled]="form.invalid" (click)="generateValidationCode()">
+  <p-button
+    [disabled]="form.invalid"
+    (click)="generateValidationCode()"
+  >
     Continuar
   </p-button>
+
+  <p-dialog
+    header="Termo de Aceite para Recebimento de Promoções e Comunicados"
+    [(visible)]="showPromocaoModal"
+    [modal]="true"
+    [style]="{ width: '50vw' }"
+    [baseZIndex]="10000"
+    [draggable]="false"
+    [resizable]="false"
+  >
+    <p>
+      <b>Termo de Aceite para Recebimento de Promoções e Comunicados</b>
+    </p>
+    <br />
+    <p>
+      Ao marcar a opção "Aceito receber promoções", você concorda com os
+      seguintes termos:
+    </p>
+    <br />
+    <p><b>Finalidade do Consentimento</b></p>
+    <p>
+      Você autoriza o envio de mensagens promocionais, informativas e
+      institucionais relacionadas ao site Busca Missa. Esses comunicados
+      podem incluir:
+    </p>
+    <ul>
+      <li>Ofertas e descontos exclusivos.</li>
+      <li>Novidades sobre eventos, produtos ou serviços religiosos.</li>
+      <li>
+        Informações relevantes para fortalecer sua experiência espiritual e
+        comunitária.
+      </li>
+    </ul>
+    <br />
+    <p><b>Meios de Comunicação</b></p>
+    <p>
+      As comunicações poderão ser enviadas por e-mail, SMS, WhatsApp ou outros
+      meios digitais disponibilizados por você.
+    </p>
+    <br />
+    <p><b>Privacidade e Proteção de Dados</b></p>
+    <p>
+      Os dados fornecidos para o envio das promoções serão tratados de acordo
+      com a nossa Política de Privacidade. Garantimos o compromisso de
+      proteger suas informações pessoais e utilizá-las exclusivamente para os
+      fins indicados neste termo.
+    </p>
+    <br />
+    <p><b>Alterações no Termo</b></p>
+    <p>
+      Reservamo-nos o direito de modificar este termo a qualquer momento. Caso
+      isso ocorra, você será notificado e poderá revisar os novos termos antes
+      de continuar recebendo nossas comunicações.
+    </p>
+    <br />
+    <p>
+      Ao aceitar este termo, você declara estar ciente e de acordo com as
+      condições acima descritas.
+    </p>
+    <br />
+    <p>Equipe Busca Missa</p>
+    <p>Que Deus abençoe sua caminhada de fé! 🙏</p>
+    <ng-template pTemplate="footer">
+      <p-button
+        icon="pi pi-check"
+        label="Entendi e Aceito"
+        (click)="showPromocaoModal = false"
+        styleClass="p-button-text"
+      ></p-button>
+    </ng-template>
+  </p-dialog>
+
+  <p-dialog
+    header="Termos de Uso - Busca Missa"
+    [(visible)]="showTermosModal"
+    [modal]="true"
+    [style]="{ width: '50vw' }"
+    [baseZIndex]="10000"
+    [draggable]="false"
+    [resizable]="false"
+  >
+    <p><b>Termos de Uso - Busca Missa</b></p>
+    <br />
+    <p>
+      Bem-vindo ao Busca Missa! Este Termo de Uso rege o uso de nossos
+      serviços. Leia atentamente antes de utilizar nossa plataforma. Ao acessar
+      ou utilizar nossos serviços, você concorda com os termos descritos
+      abaixo.
+    </p>
+    <br />
+    <p><b>1. Aceitação dos Termos</b></p>
+    <p>
+      Ao utilizar o site Busca Missa, você declara ter lido, compreendido e
+      aceitado este Termo de Uso em sua totalidade. Caso não concorde com
+      alguma parte, pedimos que não utilize nossos serviços.
+    </p>
+    <br />
+    <p><b>2. Descrição dos Serviços</b></p>
+    <p>O Busca Missa oferece ferramentas para:</p>
+    <ul>
+      <li>Localizar missas e eventos religiosos.</li>
+      <li>
+        Receber informações e promoções relacionadas à fé e espiritualidade.
+      </li>
+      <li>Conectar-se com comunidades religiosas.</li>
+    </ul>
+    <p>
+      O conteúdo disponibilizado é informativo e sujeito a alterações sem
+      aviso prévio.
+    </p>
+    <br />
+    <p><b>3. Uso Aceitável</b></p>
+    <p>Ao utilizar o Busca Missa, você concorda em:</p>
+    <ul>
+      <li>Não praticar atividades ilegais, ofensivas ou prejudiciais.</li>
+      <li>
+        Não utilizar a plataforma para enviar spam ou outros conteúdos
+        indesejados.
+      </li>
+      <li>Não tentar violar a segurança ou integridade do sistema.</li>
+    </ul>
+    <p>
+      Reservamo-nos o direito de suspender ou encerrar contas que violem
+      estas diretrizes.
+    </p>
+    <br />
+    <p><b>4. Direitos de Propriedade Intelectual</b></p>
+    <p>
+      Todos os direitos de propriedade intelectual do conteúdo do Busca Missa,
+      incluindo textos, imagens, logos e software, pertencem ao Busca Missa ou
+      aos seus licenciadores. Você não está autorizado a reproduzir,
+      distribuir ou modificar este conteúdo sem nossa permissão prévia.
+    </p>
+    <br />
+    <p><b>7. Limitação de Responsabilidade</b></p>
+    <p>
+      Embora nos esforcemos para fornecer informações precisas e atualizadas,
+      não garantimos que todos os conteúdos sejam livres de erros ou adequados
+      às suas necessidades específicas. O Busca Missa não se responsabiliza
+      por:
+    </p>
+    <ul>
+      <li>Erros ou omissões no conteúdo.</li>
+      <li>Problemas técnicos que impeçam o uso da plataforma.</li>
+      <li>
+        Danos diretos, indiretos ou incidentais resultantes do uso dos nossos
+        serviços.
+      </li>
+    </ul>
+    <br />
+    <p><b>8. Privacidade</b></p>
+    <p>
+      O uso de nossos serviços está sujeito à nossa Política de Privacidade,
+      que descreve como coletamos, utilizamos e protegemos suas informações.
+    </p>
+    <br />
+    <p><b>9. Modificações nos Termos</b></p>
+    <p>
+      Reservamo-nos o direito de alterar este Termo de Uso a qualquer momento.
+      Caso isso ocorra, notificaremos os usuários por meio do site ou e-mail.
+      O uso contínuo da plataforma após as alterações constitui sua aceitação
+      das novas condições.
+    </p>
+    <ng-template pTemplate="footer">
+      <p-button
+        icon="pi pi-check"
+        label="Entendi e Aceito"
+        (click)="showTermosModal = false"
+        styleClass="p-button-text"
+      ></p-button>
+    </ng-template>
+  </p-dialog>
 </div>

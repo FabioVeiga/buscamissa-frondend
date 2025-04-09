@@ -35,6 +35,8 @@ export class SendCodeComponent implements OnInit {
   isLoading = false;
   controleId!: number;
   form!: FormGroup;
+  showPromocaoModal = false;
+  showTermosModal = false;
 
   ngOnInit(): void {
     this.controleId = Number(this._route.snapshot.paramMap.get("controleId"));
@@ -79,5 +81,15 @@ export class SendCodeComponent implements OnInit {
         console.log("Erro ao gerar código", error);
       },
     });
+  }
+
+  openPromocaoModal(event: Event) {
+    event.preventDefault(); // Prevent default link behavior
+    this.showPromocaoModal = true;
+  }
+
+  openTermosModal(event: Event) {
+    event.preventDefault(); // Prevent default link behavior
+    this.showTermosModal = true;
   }
 }
