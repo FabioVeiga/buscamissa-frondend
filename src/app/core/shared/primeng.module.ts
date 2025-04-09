@@ -29,6 +29,7 @@ import { DialogModule } from 'primeng/dialog';
 import { Select } from 'primeng/select';
 import { FormsModule } from '@angular/forms';
 import { CardModule } from 'primeng/card';
+import { CarouselModule } from 'primeng/carousel';
 
 @NgModule({
   imports: [
@@ -60,6 +61,7 @@ import { CardModule } from 'primeng/card';
     Select,
     FormsModule,
     CardModule,
+    CarouselModule
   ],
   exports: [
     FieldsetModule,
@@ -89,6 +91,7 @@ import { CardModule } from 'primeng/card';
     Select,
     FormsModule,
     CardModule,
+    CarouselModule
   ]
 })
 export class PrimeNgModule { }

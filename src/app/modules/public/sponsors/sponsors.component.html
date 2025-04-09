@@ -1,61 +1,31 @@
-<div class="hero">
-    <h1></h1>
-    <p></p>
+<div class="">
+    <p-panel class="p-1 mt-4" header="Anunciantes">
+      <p-carousel
+        [value]="advertisementCategories"
+        [numVisible]="3"
+        [numScroll]="1"
+        [responsiveOptions]="responsiveOptions"
+        styleClass="custom-carousel"
+      >
+        <ng-template pTemplate="item" let-category>
+          <p-card
+            [style]="{ width: '25rem', overflow: 'hidden' }"
+            [header]="category.header"
+            [subheader]="category.subheader"
+          >
+            <div class="flex flex-column gap-2">
+              <a
+                *ngFor="let link of category.links"
+                [href]="link.url"
+                target="_blank"
+                rel="noopener noreferrer"
+                class="p-button font-bold w-full"
+              >
+                {{ link.label }}
+              </a>
+            </div>
+          </p-card>
+        </ng-template>
+      </p-carousel>
+    </p-panel>
   </div>
-  <p-panel class="p-1" header="Anunciantes"> 
-      <div class="flex justify-center">
-          <div class="flex flex-wrap gap-4 justify-center">
-              <p-card [style]="{ width: '25rem', overflow: 'hidden' }">
-                  <ng-template #header>
-                      <img alt="Card" class="w-full" src="https://primefaces.org/cdn/primeng/images/card-ng.jpg" />
-                  </ng-template>
-                  <ng-template #title> Patrocinador #01 </ng-template>
-                  <ng-template #subtitle> Lorem ipsum </ng-template>
-                  <p>
-                      Lorem ipsum dolor sit amet, consectetur adipisicing elit. Inventore sed consequuntur error repudiandae numquam deserunt
-                      quisquam repellat libero asperiores earum nam nobis, culpa ratione quam perferendis esse, cupiditate neque quas!
-                  </p>
-                  <ng-template #footer>
-                      <div class="flex gap-4 mt-1">
-                          <p-button label="Acessar" class="w-full" styleClass="w-full" />
-                      </div>
-                  </ng-template>
-              </p-card>
-  
-              <p-card [style]="{ width: '25rem', overflow: 'hidden' }">
-                  <ng-template #header>
-                      <img alt="Card" class="w-full" src="https://primefaces.org/cdn/primeng/images/card-ng.jpg" />
-                  </ng-template>
-                  <ng-template #title> Patrocinador #02 </ng-template>
-                  <ng-template #subtitle> Lorem ipsum </ng-template>
-                  <p>
-                      Lorem ipsum dolor sit amet, consectetur adipisicing elit. Inventore sed consequuntur error repudiandae numquam deserunt
-                      quisquam repellat libero asperiores earum nam nobis, culpa ratione quam perferendis esse, cupiditate neque quas!
-                  </p>
-                  <ng-template #footer>
-                      <div class="flex gap-4 mt-1">
-                          <p-button label="Acessar" class="w-full" styleClass="w-full" />
-                      </div>
-                  </ng-template>
-              </p-card>
-  
-              <p-card [style]="{ width: '25rem', overflow: 'hidden' }">
-                  <ng-template #header>
-                      <img alt="Card" class="w-full" src="https://primefaces.org/cdn/primeng/images/card-ng.jpg" />
-                  </ng-template>
-                  <ng-template #title> Patrocinador #03 </ng-template>
-                  <ng-template #subtitle> Lorem ipsum </ng-template>
-                  <p>
-                      Lorem ipsum dolor sit amet, consectetur adipisicing elit. Inventore sed consequuntur error repudiandae numquam deserunt
-                      quisquam repellat libero asperiores earum nam nobis, culpa ratione quam perferendis esse, cupiditate neque quas!
-                  </p>
-                  <ng-template #footer>
-                      <div class="flex gap-4 mt-1">
-                          <p-button label="Acessar" class="w-full" styleClass="w-full" />
-                      </div>
-                  </ng-template>
-              </p-card>
-          </div>
-      </div>
-  </p-panel>
-  
