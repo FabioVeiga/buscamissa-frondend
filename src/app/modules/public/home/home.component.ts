@@ -34,12 +34,13 @@ export class HomeComponent {
   private _churchService = inject(ChurchesService);
   private _toast = inject(MessageService);
   private _datePipe = inject(DatePipe);
-  private _router = inject(Router);
+  public _router = inject(Router);
 
   public isLoading = false;
   public isLoadingAddress = false;
   public isLoadingCities = false;
   public isLoadingDistricts = false;
+  public showNoChurchCard = false;
 
 
   public isModalVisible: boolean = false;
@@ -108,6 +109,10 @@ export class HomeComponent {
           summary: "Erro ao carregar dados",
           detail: "Não foi possível carregar as cidades e bairros.",
         });
+      
+        this.isLoadingAddress = false;
+        this.isLoadingCities = false;
+        this.isLoadingDistricts = false;
       },
       complete: () => {
         this.isLoadingAddress = false;
@@ -118,6 +123,7 @@ export class HomeComponent {
   }
 
   public searchFilter(): void {
+    this.churchInfo = [];
     if (this.isLoading || this.form.invalid) return;
     this.isLoading = true;
   
@@ -134,11 +140,14 @@ export class HomeComponent {
   
         // Se não encontrar nenhuma igreja, exibe um aviso
         if (!this.churchInfo.length) {
-          this._toast.add({
+            this._toast.add({
             severity: "warn",
             summary: "Nenhuma igreja encontrada",
             detail: "Não encontramos igrejas para os filtros aplicados.",
           });
+          this.showNoChurchCard = true;
+        } else {
+          this.showNoChurchCard = false;
         }
       },
       error: (err: HttpErrorResponse) => {
@@ -148,6 +157,7 @@ export class HomeComponent {
             summary: "Nenhuma igreja encontrada",
             detail: "Não encontramos igrejas para os filtros aplicados.",
           });
+          this.showNoChurchCard = true;
           this.isLoading = false;
         } else {
           this._toast.add({
@@ -155,6 +165,7 @@ export class HomeComponent {
             summary: "Erro na busca",
             detail: "Não foi possível buscar igrejas.",
           });
+          this.showNoChurchCard = false;
           this.isLoading = false;
         }
       },
@@ -171,6 +182,7 @@ export class HomeComponent {
     this.districts = [];
     this.form.get("Localidade")?.disable();
     this.form.get("Bairro")?.disable();
+    this.showNoChurchCard = false;
   }
 
   editChurch(church: Church) { // Receba o objeto da igreja

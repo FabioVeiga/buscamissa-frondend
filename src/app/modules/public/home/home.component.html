@@ -116,7 +116,7 @@
 </p-panel>
 
 <p-panel *ngIf="churchInfo && churchInfo.length > 0">
-  <p-dataview [value]="churchInfo" [rows]="3" [paginator]="true">
+  <p-dataview [value]="churchInfo" [rows]="10" [paginator]="true">
     <ng-template #list let-items>
       <div class="grid grid-cols-12 gap-4 grid-nogutter">
         <div
@@ -428,3 +428,7 @@
     </ng-template>
   </p-dataview>
 </p-panel>
+<p-card *ngIf="showNoChurchCard" class="mt-4 text-center">
+  <p>Não encontramos nenhuma igreja com os filtros aplicados.</p>
+  <p-button label="Inserir Igreja" icon="pi pi-plus" (click)="_router.navigate(['/nova'])"></p-button>
+</p-card>
