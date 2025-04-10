@@ -9,7 +9,7 @@ import {
 } from "@angular/forms";
 import { ChurchesService } from "../../../../core/services/churches.service";
 import { ActivatedRoute, Router } from "@angular/router";
-import { PrimeNgModule } from "../../../../core/shared/primeng.module";
+import { PrimeNgModule } from "../../../../shared/primeng.module";
 import { LoadingComponent } from "../../../../core/components/loading/loading.component";
 import { MessageService } from "primeng/api";
 

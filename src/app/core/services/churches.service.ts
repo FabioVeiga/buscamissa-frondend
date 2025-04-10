@@ -15,12 +15,12 @@ export class ChurchesService {
   private http = inject(HttpClient);
 
   /** Cria uma nova igreja */
-  newChurch(church: Church) {
+  newChurch(church: any) {
     return this.http.post(`Igreja`, church);
   }
 
   /** Atualiza os dados de uma igreja existente */
-  updateChurch(church: UpdateChurch) {
+  updateChurch(church: any) {
     return this.http.put(`Igreja`, church);
   }
 
@@ -44,15 +44,15 @@ export class ChurchesService {
     uf: string,
     localidade?: string,
     bairro?: string
-  ): Observable<ResponseAddress> {
+  ): Observable<any> {
     let params = new HttpParams().set("uf", uf);
     if (localidade) params = params.set("localidade", localidade);
     if (bairro) params = params.set("bairro", bairro);
-    return this.http.get<ResponseAddress>("Igreja/obter-enderecos", { params });
+    return this.http.get<any>("Igreja/obter-enderecos", { params });
   }
 
   /** Busca igrejas filtradas pelos parâmetros informados */
-  searchByFilters(filters: FilterSearchChurch) {
+  searchByFilters(filters: any) {
     let params = new HttpParams();
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== "") {

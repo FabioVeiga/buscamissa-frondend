@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Input, Output } from '@angular/core';
-import { PrimeNgModule } from '../../shared/primeng.module';
+import { PrimeNgModule } from '../../../shared/primeng.module';
 
 @Component({
   selector: 'app-modal',

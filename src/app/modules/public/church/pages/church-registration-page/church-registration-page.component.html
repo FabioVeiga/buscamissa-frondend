@@ -1,0 +1,31 @@
+<div class="hero">
+  <h1></h1>
+  <p></p>
+</div>
+<div class="pt-4">
+  <p-toast />
+  <!-- <h2>Cadastrar Nova Igreja</h2>
+  <p>Preencha os dados abaixo para registrar uma nova igreja no sistema.</p> -->
+  <p-confirmDialog></p-confirmDialog>
+  <p-progressBar
+    mode="indeterminate"
+    *ngIf="isLoading"
+    [style]="{ height: '6px' }"
+  ></p-progressBar>
+
+  <div *ngIf="isCepLoading" class="text-center mt-5">
+    <p-progressBar mode="indeterminate"></p-progressBar>
+    <p>Procurando informações do CEP...</p>
+  </div>
+
+  <p-panel header="Formulário de Cadastro" class="mb-4" *ngIf="!isCepLoading">
+    <app-church-form
+      [isSaving]="isLoading"
+      [isEditMode]="false"
+      (formSubmit)="handleFormSubmit($event)"
+      (formCancel)="cancel()"
+      (cepLookup)="handleCepLookup($event)"
+    >
+    </app-church-form>
+  </p-panel>
+</div>

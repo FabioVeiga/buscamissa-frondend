@@ -13,7 +13,7 @@ import {
 } from "@angular/forms";
 import { ChurchesService } from "../../../../core/services/churches.service";
 import { MessageService } from "primeng/api";
-import { PrimeNgModule } from "../../../../core/shared/primeng.module";
+import { PrimeNgModule } from "../../../../shared/primeng.module";
 import { CommonModule } from "@angular/common";
 import { ActivatedRoute } from "@angular/router";
 import { LoadingComponent } from "../../../../core/components/loading/loading.component";

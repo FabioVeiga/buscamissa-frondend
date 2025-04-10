@@ -1,0 +1,52 @@
+<div class="hero">
+  <h1></h1>
+  <p></p>
+</div>
+<div class="pt-4">
+  <p-toast />
+  <!-- <h2>Editar Igreja</h2> -->
+
+  <div *ngIf="isLoading" class="text-center mt-5">
+    <p-progressBar mode="indeterminate"></p-progressBar>
+    <p>Carregando dados da igreja...</p>
+  </div>
+
+  <p-progressBar
+    mode="indeterminate"
+    *ngIf="isSaving"
+    [style]="{
+      height: '6px',
+      position: 'absolute',
+      top: '0',
+      left: '0',
+      width: '100%'
+    }"
+  ></p-progressBar>
+
+  <ng-container
+    *ngIf="!isLoading && (churchDataForForm$ | async) as churchData"
+  >
+    <p-panel header="Formulário de Edição" class="mt-4">
+      <app-church-form
+        [initialData]="churchData"
+        [isSaving]="isSaving"
+        [isEditMode]="true"
+        (formSubmit)="handleFormSubmit($event)"
+        (formCancel)="cancel()"
+      >
+      </app-church-form>
+    </p-panel>
+  </ng-container>
+
+  <div *ngIf="!isLoading && !(churchDataForForm$ | async)">
+    <p-message
+      severity="error"
+      text="Não foi possível carregar os dados da igreja para edição."
+    ></p-message>
+    <p-button
+      label="Voltar para a lista"
+      styleClass="p-button-secondary mt-2"
+      (click)="router.navigate(['/igrejas'])"
+    ></p-button>
+  </div>
+</div>

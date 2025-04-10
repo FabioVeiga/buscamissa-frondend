@@ -10,7 +10,7 @@ import { ChurchesService } from "../../../core/services/churches.service";
 import { MessageService } from "primeng/api";
 import { STATES } from "../../../core/constants/states";
 import { WEEK_DAYS } from "../../../core/constants/weekdays";
-import { PrimeNgModule } from "../../../core/shared/primeng.module";
+import { PrimeNgModule } from "../../../shared/primeng.module";
 import {
   Church,
   FilterSearchChurch,

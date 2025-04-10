@@ -30,6 +30,9 @@ import { Select } from 'primeng/select';
 import { FormsModule } from '@angular/forms';
 import { CardModule } from 'primeng/card';
 import { CarouselModule } from 'primeng/carousel';
+import { ProgressBarModule } from 'primeng/progressbar';
+import { MessageModule } from 'primeng/message';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
 
 @NgModule({
   imports: [
@@ -61,7 +64,10 @@ import { CarouselModule } from 'primeng/carousel';
     Select,
     FormsModule,
     CardModule,
-    CarouselModule
+    CarouselModule,
+    ProgressBarModule,
+    MessageModule,
+    ConfirmDialogModule
   ],
   exports: [
     FieldsetModule,
@@ -91,7 +97,10 @@ import { CarouselModule } from 'primeng/carousel';
     Select,
     FormsModule,
     CardModule,
-    CarouselModule
+    CarouselModule,
+    ProgressBarModule,
+    MessageModule,
+    ConfirmDialogModule
   ]
 })
 export class PrimeNgModule { }

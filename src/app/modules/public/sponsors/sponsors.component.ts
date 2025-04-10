@@ -1,5 +1,5 @@
 import { Component, OnInit } from '@angular/core';
-import { PrimeNgModule } from '../../../core/shared/primeng.module';
+import { PrimeNgModule } from '../../../shared/primeng.module';
 import { CommonModule, NgIf } from '@angular/common';
 
 interface AdvertisementCategory {

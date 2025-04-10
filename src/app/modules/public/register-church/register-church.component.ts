@@ -14,7 +14,7 @@ import { ChurchesService } from "../../../core/services/churches.service";
 import { HttpErrorResponse } from "@angular/common/http";
 import { ActivatedRoute, Router } from "@angular/router";
 import { MessageService } from "primeng/api";
-import { PrimeNgModule } from "../../../core/shared/primeng.module";
+import { PrimeNgModule } from "../../../shared/primeng.module";
 import { LoadingComponent } from "../../../core/components/loading/loading.component";
 
 interface typeChurch {

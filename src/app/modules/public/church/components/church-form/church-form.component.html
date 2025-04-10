@@ -1,0 +1,307 @@
+<form [formGroup]="form" (ngSubmit)="onSubmitInternal()">
+  <p-fieldset legend="Endereço">
+    <div class="flex flex-col gap-2">
+      <div class="col-12 md:col-3 mb-3 pr-2">
+        <label for="cep" class="block mb-1">CEP*</label>
+        <p-inputmask
+          inputId="cep"
+          formControlName="cep"
+          mask="99999-999"
+          placeholder="99999-999"
+          (onBlur)="triggerCepLookup()"
+          class="w-full"
+          [ngClass]="{
+            'ng-invalid ng-dirty':
+              form.get('cep')?.invalid && form.get('cep')?.touched
+          }"
+        />
+        <small
+          class="p-error block"
+          *ngIf="form.get('cep')?.invalid && form.get('cep')?.touched"
+        >
+          CEP é obrigatório.
+        </small>
+      </div>
+    </div>
+
+    <div class="flex flex-wrap gap-4 w-full">
+      <div class="field col-12 md:col-6">
+        <label for="endereco">Endereço</label>
+        <input
+          pInputText
+          id="endereco"
+          formControlName="endereco"
+          class="w-full"
+        />
+      </div>
+      <div class="field col-12 md:col-2">
+        <label for="numero">Número*</label>
+        <input
+          pInputText
+          id="numero"
+          formControlName="numero"
+          class="w-full"
+          pKeyFilter="int"
+        />
+        <small
+          class="p-error block"
+          *ngIf="form.get('numero')?.invalid && form.get('numero')?.touched"
+        >
+          Número é obrigatório.
+        </small>
+      </div>
+      <div class="field col-12 md:col-4">
+        <label for="complemento">Complemento</label>
+        <input
+          pInputText
+          id="complemento"
+          formControlName="complemento"
+          class="w-full"
+        />
+      </div>
+      <div class="field col-12 md:col-4">
+        <label for="bairro">Bairro</label>
+        <input pInputText id="bairro" formControlName="bairro" class="w-full" />
+      </div>
+      <div class="field col-12 md:col-4">
+        <label for="cidade">Cidade</label>
+        <input pInputText id="cidade" formControlName="cidade" class="w-full" />
+      </div>
+      <div class="field col-12 md:col-4">
+        <label for="estado">Estado</label>
+        <input pInputText id="estado" formControlName="estado" class="w-full" />
+      </div>
+    </div>
+  </p-fieldset>
+
+  <p-fieldset legend="Contatos Igreja" class="mt-3">
+    <div class="flex flex-wrap gap-4">
+      <div class="flex flex-col gap-2">
+        <label for="telefone">Telefone</label>
+        <p-inputmask
+          inputId="telefone"
+          formControlName="telefone"
+          mask="(99) 9999-9999"
+          placeholder="(99) 9999-9999"
+          class="w-full"
+        />
+      </div>
+      <div class="flex flex-col gap-2">
+        <label for="whatsapp">WhatsApp</label>
+        <p-inputmask
+          inputId="whatsapp"
+          formControlName="whatsapp"
+          mask="(99) 99999-9999"
+          placeholder="(99) 99999-9999"
+          class="w-full"
+        />
+      </div>
+      <div class="flex flex-col gap-2">
+        <label for="emailContato">E-mail de contato</label>
+        <input
+          pInputText
+          inputId="emailContato"
+          type="email"
+          formControlName="emailContato"
+          placeholder="email@exemplo.com"
+          class="w-full"
+        />
+        <small
+          class="p-error block"
+          *ngIf="
+            form.get('emailContato')?.invalid &&
+            form.get('emailContato')?.touched
+          "
+        >
+          Email inválido.
+        </small>
+      </div>
+    </div>
+  </p-fieldset>
+
+  <p-fieldset legend="Dados Igreja" class="mt-3">
+    <div class="flex flex-wrap gap-4">
+      <div class="field col-12 md:col-4" *ngIf="!isEditMode">
+        <label for="typeChurchValue">Tipo da Igreja*</label>
+        <p-select
+          inputId="typeChurchValue"
+          formControlName="typeChurchValue"
+          [options]="typeChurchOptions"
+          optionLabel="name"
+          optionValue="value"
+          placeholder="Selecione o tipo"
+          class="w-full"
+        />
+        <small
+          class="p-error block"
+          *ngIf="
+            form.get('typeChurchValue')?.invalid &&
+            form.get('typeChurchValue')?.touched
+          "
+        >
+          Tipo é obrigatório.
+        </small>
+      </div>
+      <div class="field col-12 md:col-4">
+        <label for="nomeIgreja">Nome da Igreja*</label>
+        <input
+          pInputText
+          inputId="nomeIgreja"
+          formControlName="nomeIgreja"
+          placeholder="Ex: Santa Rita"
+          class="w-full"
+        />
+        <small
+          class="p-error block"
+          *ngIf="
+            form.get('nomeIgreja')?.invalid && form.get('nomeIgreja')?.touched
+          "
+        >
+          Nome é obrigatório.
+        </small>
+      </div>
+      <div class="field col-12 md:col-4">
+        <label for="nomeParoco">Nome do Pároco*</label>
+        <input
+          pInputText
+          inputId="nomeParoco"
+          formControlName="nomeParoco"
+          placeholder="Ex: Pe. João Silva"
+          class="w-full"
+        />
+        <small
+          class="p-error block"
+          *ngIf="
+            form.get('nomeParoco')?.invalid && form.get('nomeParoco')?.touched
+          "
+        >
+          Nome do pároco é obrigatório.
+        </small>
+      </div>
+    </div>
+  </p-fieldset>
+
+  <p-fieldset legend="Horários">
+    <div class="flex flex-wrap gap-4">
+      <div formArrayName="missas">
+        <div
+          *ngFor="let horarioCtrl of horarios.controls; let i = index"
+          [formGroupName]="i"
+          class="inline-flex gap-4 pt-4"
+        >
+          <p-select
+            formControlName="diaSemana"
+            [options]="diasSemana"
+            optionLabel="label"
+            optionValue="key"
+            placeholder="Selecione o dia"
+            class="w-100"
+          ></p-select>
+
+          <p-datepicker
+            inputId="calendar-timeonly"
+            formControlName="horario"
+            [timeOnly]="true"
+            [showTime]="true"
+            [placeholder]="'Selecione o horário'"
+            [appendTo]="'body'"
+          >
+          </p-datepicker>
+          <small
+            id="username-help"
+            *ngIf="horarioCtrl.get('horario')?.hasError('minutosInvalidos')"
+          >
+            Os minutos devem ser 00, 15, 30 ou 45.
+          </small>
+
+          <input
+            pInputText
+            formControlName="observacao"
+            placeholder="Observação"
+            class="w-full"
+          />
+
+          <p-button icon="pi pi-trash" (click)="removerHorario(i)"></p-button>
+        </div>
+      </div>
+    </div>
+    <div class="pt-4">
+      <p-button
+        label="Novo horário"
+        icon="pi pi-plus"
+        class="p-button-primary"
+        size="small"
+        (click)="adicionarHorario()"
+      ></p-button>
+    </div>
+  </p-fieldset>
+
+  <p-fieldset legend="Redes sociais">
+    <div class="card grid grid-cols-1 md:grid-cols-2 gap-4">
+      <p-inputgroup>
+        <p-inputgroup-addon>
+          <i class="pi pi-facebook"></i>
+        </p-inputgroup-addon>
+        <input pInputText formControlName="facebook" placeholder="Facebook" />
+      </p-inputgroup>
+      <p-inputgroup>
+        <p-inputgroup-addon>
+          <i class="pi pi-instagram"></i>
+        </p-inputgroup-addon>
+        <input pInputText formControlName="instagram" placeholder="Instagram" />
+      </p-inputgroup>
+      <p-inputgroup>
+        <p-inputgroup-addon>
+          <i class="pi pi-youtube"></i>
+        </p-inputgroup-addon>
+        <input pInputText formControlName="youtube" placeholder="YouTube" />
+      </p-inputgroup>
+      <p-inputgroup>
+        <p-inputgroup-addon>
+          <i class="pi pi-tiktok"></i>
+        </p-inputgroup-addon>
+        <input pInputText formControlName="tiktok" placeholder="TikTok" />
+      </p-inputgroup>
+    </div>
+  </p-fieldset>
+
+  <p-fieldset legend="Foto">
+    <p-toast />
+    <div class="flex justify-center" *ngIf="form.value.imagem">
+      <img
+        [src]="form.value.imagem"
+        alt="Imagem da Igreja"
+        width="200"
+        height="200"
+      />
+    </div>
+    <br />
+    <p-fileupload
+      mode="basic"
+      chooseIcon="pi pi-upload"
+      accept="image/*"
+      maxFileSize="1000000"
+      (onSelect)="onImageSelect($event)"
+      chooseLabel="{{
+        form.get('imagem')?.value ? 'Alterar imagem' : 'Selecionar foto'
+      }}"
+    >
+    </p-fileupload>
+  </p-fieldset>
+
+  <div class="flex justify-content-end mt-4 gap-2">
+    <p-button
+      type="button"
+      label="Cancelar"
+      styleClass="p-button-secondary"
+      (click)="onCancelInternal()"
+      *ngIf="formCancel.observed"
+    ></p-button>
+    <p-button
+      type="submit"
+      [label]="isEditMode ? 'Salvar Alterações' : 'Cadastrar Igreja'"
+      [loading]="isSaving"
+      [disabled]="isSaving"
+    ></p-button>
+  </div>
+</form>
