@@ -402,15 +402,10 @@
             >
               Compartilhar:
               <share-buttons
-                [theme]="'modern-dark'"
-                [include]="['whatsapp']"
-                [show]="2"
-                [showText]="true"
-                description="Olá, venham conhecer a {{
-                  church.nome
-                }}, clique no link abaixo para mais detalhes dela! https://www.igreja.com.br/detalhes/{{
-                  church.endereco.cep
-                }}"
+                [include]="['whatsapp', 'email', 'copy']"
+                [show]="4"
+                [showText]="false"
+                url="https://www.igreja.com.br/detalhes/{{ church.endereco.cep }}"
               ></share-buttons>
             </div>
             <div
