@@ -304,7 +304,7 @@ export class HomeComponent {
     if (url.includes('facebook.com')) return 'pi pi-facebook';
     if (url.includes('instagram.com')) return 'pi pi-instagram';
     if (url.includes('youtube.com')) return 'pi pi-youtube';
-    if (url.includes('tiktok.com')) return 'pi pi-video'; // Não há ícone oficial do TikTok no PrimeIcons
+    if (url.includes('tiktok.com')) return 'pi pi-tiktok';
   
     return 'pi pi-globe'; // Ícone padrão caso não encontre
   }
