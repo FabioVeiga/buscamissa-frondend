@@ -77,10 +77,10 @@ export class ValidateCodeComponent {
         this._toast.add({
           severity: "success",
           summary: "Aviso!",
-          detail: "Igreja cadastrada com sucesso",
+          detail: response.data?.mensagemTela,
         });
         setTimeout(() => {
-          this._router.navigate(["/detalhes", response.data.endereco.cep]);
+          this._router.navigate(["/detalhes", response.data.cep]);
         }, 2000);
         this.isLoading = false;
       },
