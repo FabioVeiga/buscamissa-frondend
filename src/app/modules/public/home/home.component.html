@@ -130,21 +130,14 @@
             }"
           >
             <!-- Imagem -->
-            <div
-              class="bg-surface-50 flex justify-center items-center rounded p-4"
-            >
+            <div class="bg-surface-50 flex justify-center items-center rounded p-4">
               <div class="relative mx-auto text-center">
-                <div class="image-container flex justify-center">
-                  <p-image
-                    class="church-image"
-                    [src]="
-                      church.imagemUrl ?? '/assets/church/naodisponivel.png'
-                    "
-                    [alt]="church.nome"
-                    width="150"
-                    height="150"
-                  />
+                <div
+                class="image-container"
+                [style.background-image]="'url(\'' + (church.imagemUrl ?? '/assets/church/naodisponivel.png') + '\')'"
+                role="img" [attr.aria-label]="church.nome" >
                 </div>
+            
                 <div
                   *ngIf="church.redesSociais?.length"
                   class="social-icons flex justify-center mt-2"
@@ -153,12 +146,11 @@
                     *ngFor="let rede of church.redesSociais"
                     [href]="rede.url"
                     target="_blank"
-                    class="icon-link mr-2"
-                  >
+                    class="icon-link mr-2 last:mr-0" >
                     <i [ngClass]="getSocialIcon(rede.url)"></i>
                   </a>
                 </div>
-
+            
                 <div class="flex justify-center mt-4">
                   <p-inputgroup>
                     <button
@@ -181,6 +173,7 @@
                     ></button>
                   </p-inputgroup>
                 </div>
+            
                 <app-modal
                   [visible]="isModalVisible"
                   (visibleChange)="isModalVisible = $event"
@@ -212,12 +205,12 @@
                           (reportForm.get('titulo')?.dirty ||
                             reportForm.get('titulo')?.touched)
                         "
-                        class="text-red-500 text-xs italic"
+                        class="text-red-500 text-xs italic mt-1"
                       >
                         Título é obrigatório.
                       </div>
                     </div>
-
+            
                     <div class="mb-4">
                       <label
                         for="descricao"
@@ -237,12 +230,12 @@
                           (reportForm.get('descricao')?.dirty ||
                             reportForm.get('descricao')?.touched)
                         "
-                        class="text-red-500 text-xs italic"
+                        class="text-red-500 text-xs italic mt-1"
                       >
                         Descrição é obrigatória.
                       </div>
                     </div>
-
+            
                     <div class="mb-4">
                       <label
                         for="nomeDenunciador"
@@ -262,12 +255,12 @@
                           (reportForm.get('nomeDenunciador')?.dirty ||
                             reportForm.get('nomeDenunciador')?.touched)
                         "
-                        class="text-red-500 text-xs italic"
+                        class="text-red-500 text-xs italic mt-1"
                       >
                         Seu nome é obrigatório.
                       </div>
                     </div>
-
+            
                     <div class="mb-4">
                       <label
                         for="emailDenunciador"
@@ -287,12 +280,10 @@
                           (reportForm.get('emailDenunciador')?.dirty ||
                             reportForm.get('emailDenunciador')?.touched)
                         "
-                        class="text-red-500 text-xs italic"
+                        class="text-red-500 text-xs italic mt-1"
                       >
                         <div
-                          *ngIf="
-                      reportForm.get('emailDenunciador')?.errors?.['required']
-                    "
+                          *ngIf="reportForm.get('emailDenunciador')?.errors?.['required']"
                         >
                           Email é obrigatório.
                         </div>
@@ -303,8 +294,8 @@
                         </div>
                       </div>
                     </div>
-
-                    <div class="flex items-center justify-end">
+            
+                    <div class="flex items-center justify-end mt-6">
                       <button
                         type="button"
                         (click)="isModalVisible = false"
@@ -314,15 +305,15 @@
                       </button>
                       <button
                         type="submit"
-                        class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+                        [disabled]="reportForm.invalid" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Denunciar
                       </button>
                     </div>
                   </form>
                 </app-modal>
-              </div>
-            </div>
+            
+              </div> </div>
 
             <!-- Conteúdo -->
             <div
