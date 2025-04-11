@@ -29,7 +29,7 @@ export interface Contact {
 
 export interface SocialMedia {
   id?: number;
-  tipoRedeSocial: number;
+  tipoRedeSocial?: number;
   nomeDoPerfil?: string;
   nomeRedeSocial?: string; // adicione isso se não tiver
   url?: string;
@@ -43,10 +43,11 @@ export interface ChurchApiData {
   paroco: string;
   imagem?: string; // Base64 ou URL? Ajuste conforme necessário
   imagemUrl?: string; // URL da imagem
-  missas: Omit<Mass, "horario"> & { horario: string }[]; // API espera string 'HH:mm:ss'
+  missas?: Omit<Mass, "horario"> & { horario: string }[]; // API espera string 'HH:mm:ss'
+  missasTemporaria?: Omit<Mass, "horario"> & { horario: string }[]; // API espera string 'HH:mm:ss'
   endereco: Address;
-  contato: Contact;
-  redesSociais: SocialMedia[];
+  contato?: Contact;
+  redesSociais?: SocialMedia[];
 }
 
 // Modelo da Igreja para o Formulário (pode ter tipos diferentes, ex: Date para horário)
@@ -67,7 +68,8 @@ export interface ChurchFormData {
   telefone?: string; // Com máscara
   whatsapp?: string; // Com máscara
   emailContato?: string;
-  missas: Mass[]; // Form usa Date para horário
+  missas?: Mass[]; // Form usa Date para horário
+  missasTemporaria?: Mass[]; // Form usa Date para horário
   facebook?: string;
   instagram?: string;
   tiktok?: string;

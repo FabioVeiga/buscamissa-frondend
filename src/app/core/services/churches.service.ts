@@ -1,12 +1,6 @@
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { inject, Injectable } from "@angular/core";
-import { catchError, Observable, throwError } from "rxjs";
-import {
-  Church,
-  FilterSearchChurch,
-  ResponseAddress,
-  UpdateChurch,
-} from "../interfaces/church.interface";
+import { Observable } from "rxjs";
 
 @Injectable({
   providedIn: "root",

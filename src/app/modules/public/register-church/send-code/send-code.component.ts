@@ -77,7 +77,7 @@ export class SendCodeComponent implements OnInit {
       },
       error: (error: any) => {
         this.isLoading = false;
-        this._toast.add({ severity: 'error', summary: 'Aviso!', detail: error });
+        this._toast.add({ severity: 'error', summary: 'Aviso!', detail: error.error.data.mensagemTela ?? error.error.data });
         console.log("Erro ao gerar código", error);
       },
     });

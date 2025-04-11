@@ -29,7 +29,7 @@ export const routes: Routes = [
           ).then((m) => m.ChurchRegistrationPageComponent),
       },
       {
-        path: "editar/:cep",
+        path: "editar/:id",
         loadComponent: () =>
           import(
             "./modules/public/church/pages/church-edit-page/church-edit-page.component"

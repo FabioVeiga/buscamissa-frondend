@@ -187,7 +187,7 @@ export class HomeComponent {
 
   editChurch(church: Church) { // Receba o objeto da igreja
     // Redireciona para a página de edição com o CPF da igreja
-    this._router.navigate(['/editar', church.endereco.cep]);
+    this._router.navigate(['/editar', church.id]);
   }
 
   reportChurch(idChurch: any): void { // Renomeie a função para usar os dados do form

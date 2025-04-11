@@ -223,7 +223,7 @@
       <p-button
         icon="pi pi-check"
         label="Entendi e Aceito"
-        (click)="showTermosModal = false"
+        (click)="showTermosModal = false && this.form.value.aceitarTermo = true"
         styleClass="p-button-text"
       ></p-button>
     </ng-template>

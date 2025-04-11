@@ -74,7 +74,7 @@
     </div>
   </p-fieldset>
 
-  <p-fieldset legend="Contatos Igreja" class="mt-3">
+  <p-fieldset legend="Contatos Igreja" *ngIf="!isEditMode" class="mt-3">
     <div class="flex flex-wrap gap-4">
       <div class="flex flex-col gap-2">
         <label for="telefone">Telefone</label>
@@ -236,7 +236,7 @@
     </div>
   </p-fieldset>
 
-  <p-fieldset legend="Redes sociais">
+  <p-fieldset *ngIf="!isEditMode" legend="Redes sociais">
     <div class="card grid grid-cols-1 md:grid-cols-2 gap-4">
       <p-inputgroup>
         <p-inputgroup-addon>
@@ -269,11 +269,11 @@
     <p-toast />
     <div class="flex justify-center" *ngIf="form.value.imagem">
       <img
-        [src]="form.value.imagem"
-        alt="Imagem da Igreja"
-        width="200"
-        height="200"
-      />
+      [src]="'data:image/jpeg;base64,' + form.value.imagem"
+      alt="Imagem da Igreja"
+      width="200"
+      height="200"
+    />
     </div>
     <br />
     <p-fileupload

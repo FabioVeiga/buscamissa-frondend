@@ -40,7 +40,6 @@ export class ChurchEditPageComponent implements OnInit {
   isLoading = false;
   isSaving = false;
   // Observable para os dados da igreja a serem passados para o form filho
-  churchCep: string | null = null;
   churchDataForForm$: Observable<ChurchFormData | null> | undefined;
   churchId: number | null = null; // Armazena o ID para o update
 
@@ -60,13 +59,13 @@ export class ChurchEditPageComponent implements OnInit {
   ngOnInit(): void {
     this.churchDataForForm$ = this.route.params.pipe(
       tap((params) => {
-        this.churchCep = params["cep"];
+        this.churchId = params["id"];
         this.isLoading = true;
       }),
       switchMap((params) =>
-        this.churchService.searchByCEP(params["cep"]).pipe(
+        this.churchService.searchUpdates(params["id"]).pipe(
           map((response: any) => {
-            const data = response.data.response;
+            const data = response.data;
             if (data) {
               this.churchId = data.id;
               return this.mapApiDataToFormData(data);
@@ -81,6 +80,7 @@ export class ChurchEditPageComponent implements OnInit {
           }),
           catchError((error: HttpErrorResponse) => {
             this.showErrorToast(error, "Erro ao carregar dados da igreja");
+            console.log(error);
             return of(null); // continua fluxo mesmo com erro
           }),
           finalize(() => {
@@ -89,38 +89,7 @@ export class ChurchEditPageComponent implements OnInit {
         )
       )
     );
-  }
-  
-  
-  private loadChurchData(cep: string): void {
-    this.isLoading = true;
-  
-    this.churchDataForForm$ = this.churchService.searchByCEP(cep).pipe(
-      map((response: any) => {
-        const data = response.data.response;
-        if (data) {
-          this.churchId = data.id;
-          return this.mapApiDataToFormData(data);
-        } else {
-          this.messageService.add({
-            severity: "error",
-            summary: "Erro",
-            detail: "Igreja não encontrada.",
-          });
-          return null;
-        }
-      }),
-      catchError((error: HttpErrorResponse) => {
-        this.showErrorToast(error, "Erro ao carregar dados da igreja");
-        return of(null);
-      }),
-      finalize(() => {
-        this.isLoading = false;
-        this.cd.markForCheck(); // Importante para detecção em OnPush
-      })
-    );
-  }
-  
+  }  
 
   // Lida com a submissão vinda do form filho
   handleFormSubmit(formData: ChurchFormData): void {
@@ -173,7 +142,6 @@ export class ChurchEditPageComponent implements OnInit {
 
     const formData: ChurchFormData = {
       id: apiData.id,
-      typeChurchValue: type || null, // Usa o tipo extraído ou null
       nomeIgreja: name, // Usa o nome sem o tipo
       nomeParoco: apiData.paroco,
       cep: apiData.endereco.cep, // Assumindo que a API retorna com máscara? Senão, aplicar máscara aqui ou no form.
@@ -186,33 +154,33 @@ export class ChurchEditPageComponent implements OnInit {
       uf: apiData.endereco.uf,
       regiao: apiData.endereco.regiao,
       // Recria telefone/whatsapp com máscara para o form
-      telefone:
-        apiData.contato.ddd && apiData.contato.telefone
-          ? `(${apiData.contato.ddd}) ${apiData.contato.telefone.substring(
-              0,
-              4
-            )}-${apiData.contato.telefone.substring(4)}` // Ajuste máscara
-          : "",
-      whatsapp:
-        apiData.contato.dddWhatsApp && apiData.contato.telefoneWhatsApp
-          ? `(${
-              apiData.contato.dddWhatsApp
-            }) ${apiData.contato.telefoneWhatsApp.substring(
-              0,
-              5
-            )}-${apiData.contato.telefoneWhatsApp.substring(5)}` // Ajuste máscara
-          : "",
-      emailContato: apiData.contato.emailContato,
-      missas: apiData.missas.map((missa) => ({
+      // telefone:
+      //   apiData.contato.ddd && apiData.contato.telefone
+      //     ? `(${apiData.contato.ddd}) ${apiData.contato.telefone.substring(
+      //         0,
+      //         4
+      //       )}-${apiData.contato.telefone.substring(4)}` // Ajuste máscara
+      //     : "",
+      // whatsapp:
+      //   apiData.contato.dddWhatsApp && apiData.contato.telefoneWhatsApp
+      //     ? `(${
+      //         apiData.contato.dddWhatsApp
+      //       }) ${apiData.contato.telefoneWhatsApp.substring(
+      //         0,
+      //         5
+      //       )}-${apiData.contato.telefoneWhatsApp.substring(5)}` // Ajuste máscara
+      //     : "",
+      // emailContato: apiData.contato.emailContato,
+      missas: apiData.missasTemporaria?.map((missa) => ({
         ...missa,
         // O form espera Date, mas addMissaControl/populateForm já convertem string->Date
         horario: missa.horario, // Passa a string 'HH:mm:ss' diretamente
       })),
       // Mapeia redes sociais de volta para campos individuais
-      facebook: this.findSocialMedia(apiData.redesSociais, 1),
-      instagram: this.findSocialMedia(apiData.redesSociais, 2),
-      youtube: this.findSocialMedia(apiData.redesSociais, 3),
-      tiktok: this.findSocialMedia(apiData.redesSociais, 4),
+      // facebook: this.findSocialMedia(apiData.redesSociais, 1),
+      // instagram: this.findSocialMedia(apiData.redesSociais, 2),
+      // youtube: this.findSocialMedia(apiData.redesSociais, 3),
+      // tiktok: this.findSocialMedia(apiData.redesSociais, 4),
       imagem: apiData.imagemUrl, // Assumindo que a API retorna base64 sem prefixo
     };
     return formData;
@@ -235,7 +203,7 @@ export class ChurchEditPageComponent implements OnInit {
       nome: formData.nomeIgreja, // Recria nome completo
       paroco: formData.nomeParoco,
       imagem: formData.imagemUrl, // Se a imagem for atualizada, envie o novo URL ou base64
-      missas: formData.missas.map((missa: any) => ({
+      missas: formData.missas?.map((missa: any) => ({
         diaSemana: missa.diaSemana,
         horario:
           missa.horario instanceof Date
@@ -258,27 +226,27 @@ export class ChurchEditPageComponent implements OnInit {
         regiao: formData.regiao,
         numero: formData.numero,
       },
-      contato: {
-        ddd: telefoneLimpo.substring(0, 2),
-        telefone: telefoneLimpo.substring(2),
-        dddWhatsApp: whatsappLimpo.substring(0, 2),
-        telefoneWhatsApp: whatsappLimpo.substring(2),
-        emailContato: formData.emailContato,
-      },
-      redesSociais: [
-        ...(formData.facebook
-          ? [{ tipoRedeSocial: 1, nomeDoPerfil: formData.facebook }]
-          : []),
-        ...(formData.instagram
-          ? [{ tipoRedeSocial: 2, nomeDoPerfil: formData.instagram }]
-          : []),
-        ...(formData.youtube
-          ? [{ tipoRedeSocial: 3, nomeDoPerfil: formData.youtube }]
-          : []),
-        ...(formData.tiktok
-          ? [{ tipoRedeSocial: 4, nomeDoPerfil: formData.tiktok }]
-          : []),
-      ].filter((rede) => rede.nomeDoPerfil),
+      // contato: {
+      //   ddd: telefoneLimpo.substring(0, 2),
+      //   telefone: telefoneLimpo.substring(2),
+      //   dddWhatsApp: whatsappLimpo.substring(0, 2),
+      //   telefoneWhatsApp: whatsappLimpo.substring(2),
+      //   emailContato: formData.emailContato,
+      // },
+      // redesSociais: [
+      //   ...(formData.facebook
+      //     ? [{ tipoRedeSocial: 1, nomeDoPerfil: formData.facebook }]
+      //     : []),
+      //   ...(formData.instagram
+      //     ? [{ tipoRedeSocial: 2, nomeDoPerfil: formData.instagram }]
+      //     : []),
+      //   ...(formData.youtube
+      //     ? [{ tipoRedeSocial: 3, nomeDoPerfil: formData.youtube }]
+      //     : []),
+      //   ...(formData.tiktok
+      //     ? [{ tipoRedeSocial: 4, nomeDoPerfil: formData.tiktok }]
+      //     : []),
+      // ].filter((rede) => rede.nomeDoPerfil),
     };
     return payload;
   }

@@ -62,6 +62,7 @@ export class ValidateCodeComponent {
         summary: "Aviso!",
         detail: "Código inválido.",
       });
+      this.isLoading = false;
       return;
     }
 
@@ -76,15 +77,18 @@ export class ValidateCodeComponent {
         this._toast.add({
           severity: "success",
           summary: "Aviso!",
-          detail: response,
+          detail: "Igreja cadastrada com sucesso",
         });
-        this._router.navigate(["/sucesso"]);
+        setTimeout(() => {
+          this._router.navigate(["/detalhes", response.data.endereco.cep]);
+        }, 2000);
+        this.isLoading = false;
       },
       error: (error) => {
         this._toast.add({
           severity: "info",
           summary: "Aviso!",
-          detail: error.error?.data?.mensagemTela,
+          detail: error.error?.data?.mensagemTela ?? error.error?.data,
         });
         this.isLoading = false;
       },

@@ -70,6 +70,7 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
         this.cd.markForCheck(); // Atualiza view
       },
       error: (error: HttpErrorResponse) => {
+        console.log(error);
         this.isLoading = false;
         this.showErrorToast(error, "Erro ao cadastrar igreja");
         this.cd.markForCheck(); // Atualiza view
@@ -87,8 +88,6 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
         this.isCepLoading = false;
         // Se encontrou uma IGREJA existente (inesperado no cadastro, mas tratar)
         if (response?.data?.response?.id) {
-          const address = response.data.response.endereco;
-          const cep = address?.cep || response.data.response?.cep;
 
           this.confirmationService.confirm({
             header: "Igreja já cadastrada",
@@ -98,7 +97,7 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
             acceptLabel: "Sim",
             rejectLabel: "Não",
             accept: () => {
-              this.router.navigate(["/editar", cep]);
+              this.router.navigate(["/editar", response?.data?.response?.id]);
             },
             reject: () => {
               this.churchFormComponent.form.reset(); // limpa o formulário
@@ -202,7 +201,7 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
       nome: `${formData.typeChurchValue} ${formData.nomeIgreja}`,
       paroco: formData.nomeParoco,
       imagem: formData.imagem,
-      missas: formData.missas.map((missa: any) => ({
+      missas: formData.missas?.map((missa: any) => ({
         diaSemana: missa.diaSemana,
         horario:
           missa.horario instanceof Date

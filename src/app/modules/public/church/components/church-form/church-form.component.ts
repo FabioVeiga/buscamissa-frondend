@@ -254,11 +254,14 @@ export class ChurchFormComponent implements OnInit, OnChanges {
     if (file) {
       const reader = new FileReader();
       reader.onload = () => {
-        this.form.get('imagem')?.setValue(reader.result);
+        const base64: string = reader.result as string;
+        const base64WithoutPrefix = base64.split(',')[1];
+        this.form.get('imagem')?.setValue(base64WithoutPrefix);
       };
       reader.readAsDataURL(file);
     }
   }
+  
 
   // Emite o evento de busca de CEP para o componente pai
   triggerCepLookup(): void {
