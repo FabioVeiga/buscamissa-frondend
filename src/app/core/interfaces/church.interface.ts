@@ -2,10 +2,11 @@
 export interface FilterSearchChurch {
   Uf: string;
   Localidade?: string;
+  Bairro?: string;
   Nome?: string;
   Ativo?: boolean;
   DiaDaSemana?: number;
-  Horario?: string;
+  Horario?: any;
   "Paginacao.PageIndex": number;
   "Paginacao.PageSize": number;
 }

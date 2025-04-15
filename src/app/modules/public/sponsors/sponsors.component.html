@@ -1,31 +1,37 @@
-<div class="">
-    <p-panel class="p-1 mt-4" header="Anunciantes">
-      <p-carousel
-        [value]="advertisementCategories"
-        [numVisible]="3"
-        [numScroll]="1"
-        [responsiveOptions]="responsiveOptions"
-        styleClass="custom-carousel"
-      >
-        <ng-template pTemplate="item" let-category>
-          <p-card
-            [style]="{ width: '25rem', overflow: 'hidden' }"
-            [header]="category.header"
-            [subheader]="category.subheader"
-          >
-            <div class="flex flex-column gap-2">
-              <a
-                *ngFor="let link of category.links"
-                [href]="link.url"
-                target="_blank"
-                rel="noopener noreferrer"
-                class="p-button font-bold w-full"
-              >
-                {{ link.label }}
-              </a>
-            </div>
-          </p-card>
-        </ng-template>
-      </p-carousel>
-    </p-panel>
-  </div>
+<div>
+  <p-panel class="p-1 mt-4" *ngFor="let category of advertisementCategories" [header]="category.header">
+    <p-carousel
+      [value]="category.links"
+      [numVisible]="3"
+      [numScroll]="1"
+      [responsiveOptions]="responsiveOptions"
+      styleClass="custom-carousel"
+    >
+      <ng-template pTemplate="item" let-link>
+        <p-card [style]="{ width: '25rem', overflow: 'hidden' }">
+          <ng-template #header>
+            <img alt="Card" class="w-full" [src]="link.image" />
+          </ng-template>
+
+          <div class="p-3 flex flex-col gap-2">
+            <!-- TÍTULO -->
+            <h3 class="text-lg font-semibold m-0">{{ link.title }}</h3>
+
+            <!-- DESCRIÇÃO -->
+            <p class="text-sm text-gray-700 m-0">{{ link.description }}</p>
+
+            <!-- BOTÃO -->
+            <a
+              [href]="link.url"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="p-button p-button-sm p-button-primary w-full mt-2"
+            >
+              {{ link.label }}
+            </a>
+          </div>
+        </p-card>
+      </ng-template>
+    </p-carousel>
+  </p-panel>
+</div>

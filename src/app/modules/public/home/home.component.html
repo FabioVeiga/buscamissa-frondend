@@ -8,18 +8,16 @@
     <!-- Estado -->
     <p-iftalabel class="flex-1">
       <p-select
-        [options]="states"
-        optionLabel="nome"
-        optionValue="sigla"
-        [filter]="true"
-        filterBy="nome"
-        [showClear]="!isLoadingAddress"
+        [options]="statesList"
+        (onChange)="onStateChange($event)"
+        [filter]="statesList"
+        [filterBy]="'label'"
+        [showClear]="!!form.get('Uf')?.value"
         formControlName="Uf"
         placeholder="Selecione um estado"
         class="w-full"
         [loading]="isLoadingAddress"
         id="Uf"
-        (onChange)="getAddress(this.form.value.Uf)"
       >
       </p-select>
       <label for="Uf">Estado</label>
@@ -28,33 +26,35 @@
     <!-- Cidade -->
     <p-iftalabel class="flex-1">
       <p-select
-        [options]="cities"
+        [options]="citiesList"
+        (onChange)="onCityChange($event)"
+        [disabled]="!form.get('Uf')?.value"
+        [showClear]="!!form.get('Localidade')?.value"
         [filter]="true"
-        filterBy="cities"
-        [showClear]="true"
+        filterBy="label"
         formControlName="Localidade"
         placeholder="Selecione uma cidade"
         class="w-full"
-        id="Localidade"
-        [loading]="isLoadingCities"
-        (onChange)="getAddress(this.form.value.Uf, this.form.value.Localidade)"
+        id="Cidade"
+        [loading]="isLoadingAddress"
       >
       </p-select>
-      <label for="Localidade">Localidade</label>
+      <label for="Localidade">Cidade</label>
     </p-iftalabel>
 
     <!-- Bairro -->
     <p-iftalabel class="flex-1">
       <p-select
-        [options]="districts"
+        [options]="districtsList"
+        [disabled]="!form.get('Localidade')?.value"
+        [showClear]="!!form.get('Bairro')?.value"
         [filter]="true"
-        filterBy="districts"
-        [showClear]="true"
+        filterBy="label"
         formControlName="Bairro"
         placeholder="Selecione um bairro"
         class="w-full"
         id="Bairro"
-        [loading]="isLoadingDistricts"
+        [loading]="isLoadingAddress"
       >
       </p-select>
       <label for="Bairro">Bairros</label>
@@ -130,14 +130,21 @@
             }"
           >
             <!-- Imagem -->
-            <div class="bg-surface-50 flex justify-center items-center rounded p-4">
+            <div
+              class="bg-surface-50 flex justify-center items-center rounded p-4"
+            >
               <div class="relative mx-auto text-center">
                 <div
-                class="image-container"
-                [style.background-image]="'url(\'' + (church.imagemUrl ?? '/assets/church/naodisponivel.png') + '\')'"
-                role="img" [attr.aria-label]="church.nome" >
-                </div>
-            
+                  class="image-container"
+                  [style.background-image]="
+                    'url(\'' +
+                    (church.imagemUrl ?? '/assets/church/naodisponivel.png') +
+                    '\')'
+                  "
+                  role="img"
+                  [attr.aria-label]="church.nome"
+                ></div>
+
                 <div
                   *ngIf="church.redesSociais?.length"
                   class="social-icons flex justify-center mt-2"
@@ -146,11 +153,12 @@
                     *ngFor="let rede of church.redesSociais"
                     [href]="rede.url"
                     target="_blank"
-                    class="icon-link mr-2 last:mr-0" >
+                    class="icon-link mr-2 last:mr-0"
+                  >
                     <i [ngClass]="getSocialIcon(rede.url)"></i>
                   </a>
                 </div>
-            
+
                 <div class="flex justify-center mt-4">
                   <p-inputgroup>
                     <button
@@ -173,7 +181,7 @@
                     ></button>
                   </p-inputgroup>
                 </div>
-            
+
                 <app-modal
                   [visible]="isModalVisible"
                   (visibleChange)="isModalVisible = $event"
@@ -189,7 +197,7 @@
                     <div class="mb-4">
                       <label
                         for="titulo"
-                        class="block text-gray-700 text-sm font-bold mb-2"
+                        class="flex text-gray-700 text-sm font-bold mb-2"
                         >Título</label
                       >
                       <input
@@ -210,11 +218,11 @@
                         Título é obrigatório.
                       </div>
                     </div>
-            
+
                     <div class="mb-4">
                       <label
                         for="descricao"
-                        class="block text-gray-700 text-sm font-bold mb-2"
+                        class="flex text-gray-700 text-sm font-bold mb-2"
                         >Descrição</label
                       >
                       <textarea
@@ -235,11 +243,11 @@
                         Descrição é obrigatória.
                       </div>
                     </div>
-            
+
                     <div class="mb-4">
                       <label
                         for="nomeDenunciador"
-                        class="block text-gray-700 text-sm font-bold mb-2"
+                        class="flex text-gray-700 text-sm font-bold mb-2"
                         >Seu Nome</label
                       >
                       <input
@@ -260,11 +268,11 @@
                         Seu nome é obrigatório.
                       </div>
                     </div>
-            
+
                     <div class="mb-4">
                       <label
                         for="emailDenunciador"
-                        class="block text-gray-700 text-sm font-bold mb-2"
+                        class="flex text-gray-700 text-sm font-bold mb-2"
                         >Seu Email</label
                       >
                       <input
@@ -294,7 +302,7 @@
                         </div>
                       </div>
                     </div>
-            
+
                     <div class="flex items-center justify-end mt-6">
                       <button
                         type="button"
@@ -305,15 +313,16 @@
                       </button>
                       <button
                         type="submit"
-                        [disabled]="reportForm.invalid" class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 disabled:cursor-not-allowed"
+                        [disabled]="reportForm.invalid"
+                        class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 disabled:cursor-not-allowed"
                       >
                         Denunciar
                       </button>
                     </div>
                   </form>
                 </app-modal>
-            
-              </div> </div>
+              </div>
+            </div>
 
             <!-- Conteúdo -->
             <div
@@ -328,7 +337,8 @@
                     class="text-lg font-medium text-surface-900 dark:text-surface-0 mt-2"
                   >
                     <a [routerLink]="['/detalhes', church.endereco.cep]"
-                      >{{ church.nome }} <br> {{ church.paroco }}</a
+                      >{{ church.nome }} <br />
+                      {{ church.paroco }}</a
                     >
                   </div>
                   <div
@@ -396,7 +406,9 @@
                 [include]="['whatsapp', 'email', 'copy']"
                 [show]="4"
                 [showText]="false"
-                url="https://www.igreja.com.br/detalhes/{{ church.endereco.cep }}"
+                url="https://www.igreja.com.br/detalhes/{{
+                  church.endereco.cep
+                }}"
               ></share-buttons>
             </div>
             <div
@@ -416,5 +428,9 @@
 </p-panel>
 <p-card *ngIf="showNoChurchCard" class="mt-4 text-center">
   <p>Não encontramos nenhuma igreja com os filtros aplicados.</p>
-  <p-button label="Inserir Igreja" icon="pi pi-plus" (click)="_router.navigate(['/nova'])"></p-button>
+  <p-button
+    label="Inserir Igreja"
+    icon="pi pi-plus"
+    (click)="_router.navigate(['/nova'])"
+  ></p-button>
 </p-card>

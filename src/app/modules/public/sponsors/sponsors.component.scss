@@ -1,0 +1,21 @@
+.custom-carousel .p-carousel-item {
+    padding: 10px;
+    margin: 0 10px;
+  }
+  
+  .p-card {
+    border-radius: 8px;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  }
+  
+  .p-button {
+    text-align: center;
+    margin: 5px 0;
+  }
+  
+  img {
+    border-radius: 8px; /* Adicionando bordas arredondadas nas imagens */
+    object-fit: cover; /* Faz a imagem preencher o espaço sem distorção */
+    max-height: 200px; /* Limita a altura da imagem */
+  }
+  
