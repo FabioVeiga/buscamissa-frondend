@@ -1,8 +1,26 @@
-<footer class="footer">
-  <nav>
-    <p-button [routerLink]="'/home'" label="INÍCIO" [link]="true" />
-    <p-button [routerLink]="'/nova'" label="INSERIR IGREJAS" [link]="true" />
-    <p-button [routerLink]="'/anuncios'" label="ANUNCIANTES" [link]="true" />
-    <p-button [routerLink]="'/contribuidores'" label="CONTRIBUIDOR" [link]="true" />
-  </nav>
+<footer class="py-6 px-4 mt-8">
+  <div
+    class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4"
+  >
+    <!-- Logo -->
+    <div class="flex items-center gap-2">
+      <a [routerLink]="['/']" class="flex items-center gap-2">
+        <img src="assets/logo.png" alt="Busca Missa" class="h-7 w-auto" />
+        <h5 class="text-lg font-semibold">Busca Missa</h5>
+      </a>
+    </div>
+
+    <!-- Navegação -->
+    <nav class="flex flex-wrap gap-4 text-sm font-medium">
+      <a routerLink="/home" class="hover:underline transition">INÍCIO</a>
+      <a routerLink="/nova" class="hover:underline transition">INSERIR IGREJAS</a>
+      <a routerLink="/anuncios" class="hover:underline transition">ANUNCIANTES</a>
+      <a routerLink="/contribuidores" class="hover:underline transition">CONTRIBUIDOR</a>
+    </nav>
+
+    <!-- Créditos -->
+    <div class="text-xs text-gray-400 mt-4 md:mt-0 text-center md:text-right">
+      © {{ currentYear }} BuscaMissa. Todos os direitos reservados.
+    </div>
+  </div>
 </footer>

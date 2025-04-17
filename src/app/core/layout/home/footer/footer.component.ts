@@ -9,5 +9,5 @@ import { PrimeNgModule } from '../../../../shared/primeng.module';
   styleUrl: './footer.component.scss'
 })
 export class FooterHomeComponent {
-
+  currentYear = new Date().getFullYear();
 }
