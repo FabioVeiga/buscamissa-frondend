@@ -90,16 +90,25 @@ export class HomeComponent {
     Localidade: new FormControl(null),
     Bairro: new FormControl(null),
     DiaDaSemana: new FormControl(),
-    Horario: new FormControl(),
+    Horario: new FormControl(null),
   });
 
   ngOnInit(): void {
     this.getAddress();
   }
 
+  setDefaultTimeIfNull() {
+    const currentValue = this.form.get("Horario")?.value;
+    if (!currentValue) {
+      const defaultTime = new Date();
+      defaultTime.setHours(0, 0, 0, 0);
+      this.form.get("Horario")?.setValue(defaultTime);
+    }
+  }
+
   public getAddress(): void {
     this.isLoadingAddress = true;
-    
+
     this._churchService.addressRange().subscribe({
       next: ({ data }: { data: AddressData }) => {
         this.fullAddressData = data;
@@ -130,22 +139,23 @@ export class HomeComponent {
       const cities = Object.keys(this.fullAddressData[this.selectedState]);
       this.citiesList = cities.map((city) => ({
         label: city,
-        value: city
+        value: city,
       }));
-  
+
       // Limpa e reseta os bairros
       this.districtsList = [];
-      this.selectedCity = '';
+      this.selectedCity = "";
     }
   }
 
   public onCityChange(event: any): void {
     this.selectedCity = event.value;
     if (this.selectedState && this.selectedCity) {
-      const districts = this.fullAddressData[this.selectedState][this.selectedCity];
+      const districts =
+        this.fullAddressData[this.selectedState][this.selectedCity];
       this.districtsList = districts.map((district) => ({
         label: district,
-        value: district
+        value: district,
       }));
     }
   }
@@ -156,10 +166,10 @@ export class HomeComponent {
     this.isLoading = true;
 
     const filters: FilterSearchChurch = {
-      Uf: this.form.get('Uf')?.value,  // Estado
-      Localidade: this.form.get('Localidade')?.value,  // Cidade
-      Bairro: this.form.get('Bairro')?.value,  // Bairro
-      DiaDaSemana: this.form.get('DiaDaSemana')?.value, 
+      Uf: this.form.get("Uf")?.value, // Estado
+      Localidade: this.form.get("Localidade")?.value, // Cidade
+      Bairro: this.form.get("Bairro")?.value, // Bairro
+      DiaDaSemana: this.form.get("DiaDaSemana")?.value,
       Horario: this._datePipe.transform(this.form.value.Horario, "HH:mm"),
       "Paginacao.PageIndex": this.pageIndex,
       "Paginacao.PageSize": this.pageSize,
@@ -219,21 +229,35 @@ export class HomeComponent {
   }
 
   reportChurch(idChurch: any): void {
+    console.log(idChurch);
     // Renomeie a função para usar os dados do form
     if (this.reportForm.valid) {
       const reportData = this.reportForm.value;
-      this._churchService.report(idChurch.id, reportData);
-      this.isModalVisible = false;
-      this._toast.add({
-        severity: "success",
-        summary: "Sucesso",
-        detail: "Denúncia enviada com sucesso!",
-      });
-    } else {
-      this._toast.add({
-        severity: "error",
-        summary: "Erro",
-        detail: "Por favor, preencha todos os campos corretamente.",
+      this._churchService.report(idChurch.id, reportData).subscribe({
+        next: (res: any) => {
+          if (!res.data.resultadoDenuncia) {
+            return this._toast.add({
+              severity: "warn",
+              summary: "Alerta",
+              detail: res.data.messagemAplicacao,
+            });
+          } else {
+            this.isModalVisible = false;
+            this._toast.add({
+              severity: "success",
+              summary: "Sucesso",
+              detail: "Denúncia enviada com sucesso!",
+            });
+          }
+        },
+        error: (err: HttpErrorResponse) => {
+          console.error(err);
+          this._toast.add({
+            severity: "warn",
+            summary: "Igreja não encontrada",
+            detail: "Igreja não encontrada.",
+          });
+        },
       });
     }
   }

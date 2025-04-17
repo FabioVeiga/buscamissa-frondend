@@ -86,6 +86,7 @@
         iconDisplay="input"
         [stepMinute]="15"
         [readonlyInput]="true"
+        (onFocus)="setDefaultTimeIfNull()"
       />
       <label for="Horario">Horário</label>
     </p-floatlabel>
@@ -192,7 +193,7 @@
                 >
                   <form
                     [formGroup]="reportForm"
-                    (ngSubmit)="reportChurch(churchInfo)"
+                    (ngSubmit)="reportChurch(church)"
                   >
                     <div class="mb-4">
                       <label

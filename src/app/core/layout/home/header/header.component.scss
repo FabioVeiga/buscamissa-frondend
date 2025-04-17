@@ -1,11 +1,11 @@
 .logo-container {
-  display: grid;
+  display: flex;
   align-content: center;
   justify-items: center;
 }
 
 .logo {
-  max-height: 30px; // Ajuste conforme o tamanho desejado para o logo
+  max-height: 40px; // Ajuste conforme o tamanho desejado para o logo
 }
 
 h2 {
