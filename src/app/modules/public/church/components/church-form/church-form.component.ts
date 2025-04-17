@@ -47,6 +47,7 @@ export class ChurchFormComponent implements OnInit, OnChanges {
   private fb = inject(FormBuilder);
   form!: FormGroup;
   imageName: string | null = null;
+  showAddressFields = false;
 
   typeChurchOptions: TypeChurchOption[] = [
     { name: "Capela", value: "Capela" },
@@ -73,7 +74,6 @@ export class ChurchFormComponent implements OnInit, OnChanges {
 
   ngOnInit(): void {
     this.initForm();
-    this.setupParocoPrefix();
 
     if (this.initialData) {
       this.populateForm(this.initialData);
@@ -220,31 +220,6 @@ export class ChurchFormComponent implements OnInit, OnChanges {
     } catch (e) {
       console.error("Erro ao converter string para Date:", timeString, e);
       return null;
-    }
-  }
-
-  // Lógica do prefixo "Pe."
-  private setupParocoPrefix(): void {
-    const control = this.form.get("nomeParoco");
-    if (control) {
-      control.valueChanges.subscribe((value) => {
-        if (
-          value &&
-          typeof value === "string" &&
-          value.trim() !== "" &&
-          !value.startsWith("Pe. ")
-        ) {
-          control.setValue("Pe. " + value.replace(/^Pe\.\s*/, ""), {
-            emitEvent: false,
-          });
-        } else if (
-          value === null ||
-          (typeof value === "string" && value.trim() === "")
-        ) {
-          // Opcional: Limpar se vazio
-          // control.setValue('', { emitEvent: false });
-        }
-      });
     }
   }
 

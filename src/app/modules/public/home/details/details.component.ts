@@ -1,4 +1,4 @@
-import { routes } from './../../../../app.routes';
+import { routes } from "./../../../../app.routes";
 import { Component, inject, OnInit } from "@angular/core";
 import {
   AbstractControl,
@@ -16,11 +16,18 @@ import { MessageService } from "primeng/api";
 import { PrimeNgModule } from "../../../../shared/primeng.module";
 import { CommonModule } from "@angular/common";
 import { ActivatedRoute } from "@angular/router";
-import { LoadingComponent } from "../../../../core/components/loading/loading.component";
+import { ShareButtons } from "ngx-sharebuttons/buttons";
+import { Mass } from "../../church/models/church.model";
 
 @Component({
   selector: "app-details",
-  imports: [PrimeNgModule, CommonModule, FormsModule, ReactiveFormsModule, LoadingComponent],
+  imports: [
+    PrimeNgModule,
+    CommonModule,
+    FormsModule,
+    ReactiveFormsModule,
+    ShareButtons,
+  ],
   providers: [MessageService],
   templateUrl: "./details.component.html",
   styleUrl: "./details.component.scss",
@@ -41,7 +48,7 @@ export class DetailsComponent implements OnInit {
     { key: 5, label: "Sexta-feira" },
     { key: 6, label: "Sábado" },
   ];
-
+  churchInfo: any;
   constructor(private fb: FormBuilder) {}
 
   ngOnInit(): void {
@@ -85,8 +92,8 @@ export class DetailsComponent implements OnInit {
     this.isLoading = true;
     this._church.searchByCEP(cep).subscribe({
       next: (response: any) => {
-        console.log(response.data.response);
         const igreja = response?.data.response; // Ajuste conforme a sua API
+        this.churchInfo = igreja;
         if (igreja) {
           this.form?.patchValue({
             nomeIgreja: igreja.nome,
@@ -209,7 +216,7 @@ export class DetailsComponent implements OnInit {
   }
 
   stringParaDate(horario: string): Date {
-    const [hourStr, minuteStr, secondStr = '00'] = horario?.split(":");
+    const [hourStr, minuteStr, secondStr = "00"] = horario?.split(":");
 
     const hours = parseInt(hourStr, 10);
     const minutes = parseInt(minuteStr, 10);
@@ -228,5 +235,78 @@ export class DetailsComponent implements OnInit {
     const seconds = date.getSeconds().toString().padStart(2, "0"); // Adiciona zero à esquerda se necessário
 
     return `${hours}:${minutes}:${seconds}`;
+  }
+
+  voltar() {
+    window.history.back();
+  }
+
+  getFormattedMasses(
+    missas: Mass[]
+  ): { horario: string; observacao: string }[] {
+    const daysOfWeek = [
+      "Domingo",
+      "Segunda-feira",
+      "Terça-feira",
+      "Quarta-feira",
+      "Quinta-feira",
+      "Sexta-feira",
+      "Sábado",
+    ];
+
+    const groupedMasses: { [key: number]: Mass[] } = {};
+    missas.forEach((missa) => {
+      if (missa.diaSemana !== undefined && !groupedMasses[missa.diaSemana]) {
+        if (missa.diaSemana !== undefined) {
+          groupedMasses[missa.diaSemana] = [];
+        }
+      }
+      if (missa.diaSemana !== undefined) {
+        groupedMasses[missa.diaSemana].push(missa);
+      }
+    });
+
+    const formattedMasses: { horario: string; observacao: string }[] = [];
+    for (const dayIndex in groupedMasses) {
+      if (groupedMasses.hasOwnProperty(dayIndex)) {
+        const day = daysOfWeek[parseInt(dayIndex, 10)];
+        const massesOnDay = groupedMasses[dayIndex];
+        const times = massesOnDay.map((missa) =>
+          this.formatTime(missa.horario)
+        );
+        times.sort(); // Garante que os horários estejam em ordem crescente
+
+        let horarioFormatado = `${day}: `;
+        if (times.length === 1) {
+          horarioFormatado += times[0];
+        } else if (times.length > 1) {
+          horarioFormatado += `${times[0]} - ${times[times.length - 1]}`;
+        }
+
+        // Pegar a observação (se houver) - aqui assumo que a observação é a mesma para todas as missas no mesmo dia. Se precisar de uma lógica mais complexa, ajuste aqui.
+        const observacao = massesOnDay[0]?.observacao || "Sem observação";
+
+        formattedMasses.push({
+          horario: horarioFormatado,
+          observacao: observacao,
+        });
+      }
+    }
+
+    return formattedMasses;
+  }
+
+  formatTime(timeString: string): string {
+    const [hours, minutes] = timeString.split(":");
+    return `${parseInt(hours, 10)}:${minutes}`;
+  }
+  
+  getSocialIcon(url: string): string {
+    if (url.includes("facebook.com")) return "pi pi-facebook";
+    if (url.includes("instagram.com")) return "pi pi-instagram";
+    if (url.includes("youtube.com")) return "pi pi-youtube";
+    if (url.includes("tiktok.com")) return "pi pi-tiktok";
+
+    return "pi pi-globe"; // Ícone padrão caso não encontre
   }
 }

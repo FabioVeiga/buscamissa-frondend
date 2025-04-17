@@ -88,8 +88,18 @@ export class SendCodeComponent implements OnInit {
     this.showPromocaoModal = true;
   }
 
+  aceitarPromocao() {
+    this.form.get('aceitarPromocao')?.setValue(true);
+    this.showPromocaoModal = false;
+  }
+
   openTermosModal(event: Event) {
     event.preventDefault(); // Prevent default link behavior
     this.showTermosModal = true;
+  }
+
+  aceitarTermos() {
+    this.form.get('aceitarTermo')?.setValue(true);
+    this.showTermosModal = false;
   }
 }

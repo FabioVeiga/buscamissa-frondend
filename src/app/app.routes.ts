@@ -1,13 +1,5 @@
 import { Routes } from "@angular/router";
-import { HomeComponent } from "./modules/public/home/home.component";
 import { LayoutHomeComponent } from "./core/layout/home/layout/layout.component";
-import { RegisterChurchComponent } from "./modules/public/register-church/register-church.component";
-import { SponsorsComponent } from "./modules/public/sponsors/sponsors.component";
-import { SendCodeComponent } from "./modules/public/register-church/send-code/send-code.component";
-import { ValidateCodeComponent } from "./modules/public/register-church/validate-code/validate-code.component";
-import { DetailsComponent } from "./modules/public/home/details/details.component";
-import { ChurchEditPageComponent } from "./modules/public/church/pages/church-edit-page/church-edit-page.component";
-import { ChurchRegistrationPageComponent } from "./modules/public/church/pages/church-registration-page/church-registration-page.component";
 
 export const routes: Routes = [
   {

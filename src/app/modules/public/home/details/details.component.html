@@ -1,254 +1,101 @@
-<p-toast position="top-right"></p-toast>
+<p-toast></p-toast>
 <div class="hero">
   <h1></h1>
   <p></p>
 </div>
-<app-loading *ngIf="isLoading" />
-<p-panel class="p-1" *ngIf="!isLoading">
-  <form [formGroup]="form">
-    <p-fieldset legend="Endereço">
-      <div class="flex flex-col gap-2">
-        <label for="cep">CEP</label>
-        <p-inputmask
-          formControlName="cep"
-          mask="99999-999"
-          placeholder="CEP"
-          class="w-full"
-          readonly
-        />
-        <small
-          *ngIf="form.get('cep')?.invalid && form.get('cep')?.touched"
-          class="p-error"
-          >CEP inválido (formato: 99999-999)</small
-        >
-      </div>
-      <br />
-      <div class="flex flex-wrap gap-4 w-full">
-        <div class="flex flex-col gap-2">
-          <label for="endereco">Endereço</label>
-          <input
-            pInputText
-            id="endereco"
-            formControlName="endereco"
-            placeholder="Endereço"
-            class="w-150"
-          />
-        </div>
-
-        <div class="flex flex-col gap-2">
-          <label for="numero">Número</label>
-          <input
-            pInputText
-            formControlName="numero"
-            placeholder="Número"
-            pKeyFilter="int"
-          />
-        </div>
-
-        <div class="flex flex-col gap-2">
-          <label for="bairro">Bairro</label>
-          <input pInputText formControlName="bairro" placeholder="Bairro" />
-        </div>
-
-        <div class="flex flex-col gap-2">
-          <label for="cidade">Cidade</label>
-          <input pInputText formControlName="cidade" placeholder="Cidade" />
-        </div>
-
-        <div class="flex flex-col gap-2">
-          <label for="estado">Estado</label>
-          <input pInputText formControlName="estado" placeholder="Estado" />
-        </div>
-
-        <div class="flex flex-col gap-2">
-          <label for="complemento">Complemento</label>
-          <input
-            pInputText
-            formControlName="complemento"
-            placeholder="Complemento"
-          />
-        </div>
-      </div>
-    </p-fieldset>
-
-    <p-fieldset legend="Contatos Igreja">
-      <div class="flex flex-wrap gap-4">
-        <div class="flex flex-col gap-2">
-          <label for="telefone">Telefone</label>
-          <p-inputmask
-            formControlName="telefone"
-            mask="(99) 9999-9999"
-            placeholder="Telefone"
-          />
-          <small
-            *ngIf="form.get('telefone')?.invalid && form.get('telefone')?.touched"
-            class="p-error"
-            >Telefone inválido (formato: (99) 9999-9999)</small
-          >
-        </div>
-
-        <div class="flex flex-col gap-2">
-          <label for="whatsapp">WhatsApp</label>
-          <p-inputmask
-            formControlName="whatsapp"
-            mask="(99) 99999-9999"
-            placeholder="WhatsApp"
-          />
-          <small
-            *ngIf="form.get('whatsapp')?.invalid && form.get('whatsapp')?.touched"
-            class="p-error"
-            >WhatsApp inválido (formato: (99) 99999-9999)</small
-          >
-        </div>
-
-        <div class="flex flex-col gap-2">
-          <label for="emailContato">E-mail de contato</label>
-          <input
-            pInputText
-            formControlName="emailContato"
-            placeholder="E-mail de contato"
-          />
-          <small
-            *ngIf="form.get('emailContato')?.invalid && form.get('emailContato')?.touched"
-            class="p-error"
-            >E-mail inválido</small
-          >
-        </div>
-      </div>
-    </p-fieldset>
-
-    <p-fieldset legend="Dados Igreja">
-      <div class="flex flex-wrap gap-4">
-        <div class="flex flex-1 flex-col gap-2">
-          <label for="nomeIgreja">Nome da Igreja</label>
-          <input
-            pInputText
-            formControlName="nomeIgreja"
-            placeholder="Nome da Igreja"
-            class="w-full"
-          />
-          <small
-            *ngIf="
-              form.get('nomeIgreja')?.invalid && form.get('nomeIgreja')?.touched
-            "
-            class="p-error"
-            >Nome da Igreja é obrigatório</small
-          >
-        </div>
-
-        <div class="flex flex-1 flex-col gap-2">
-          <label for="nomeParoco">Nome do Pároco</label>
-          <input
-            pInputText
-            formControlName="nomeParoco"
-            placeholder="Nome do Pároco"
-            class="w-full"
-          />
-        </div>
-      </div>
-    </p-fieldset>
-    <p-fieldset legend="Horários">
-      <div class="flex flex-wrap gap-4">
-        <div formArrayName="missas">
+<p-panel class="p-1" header="Detalhes da igreja">
+  <div class="grid grid-cols-1 md:grid-cols-12 gap-6 p-4">
+    <!-- Imagem lateral -->
+    <div class="md:col-span-4">
+      <div
+        class="bg-surface-50 flex justify-center items-center rounded p-4 h-full"
+      >
+        <div class="relative w-full">
           <div
-            *ngFor="let horarioCtrl of horarios.controls; let i = index"
-            [formGroupName]="i"
-            class="flex gap-4 pt-4"
+            class="w-full h-120 bg-cover bg-center rounded shadow"
+            [style.background-image]="
+              'url(\'' +
+              (!churchInfo?.imagemUrl ? '/assets/church/naodisponivel.png' : churchInfo?.imagemUrl) +
+              '\')'
+            "
+          ></div>
+
+          <!-- Redes Sociais -->
+          <div
+            *ngIf="churchInfo?.redesSociais?.length"
+            class="flex justify-center mt-4"
           >
-            <p-select
-              formControlName="diaSemana"
-              [options]="diasSemana"
-              optionLabel="label"
-              optionValue="key"
-              placeholder="Selecione o dia"
-              class="w-15rem"
-            ></p-select>
-            <small
-              *ngIf="
-                horarioCtrl.get('diaSemana')?.invalid &&
-                horarioCtrl.get('diaSemana')?.touched
-              "
-              class="p-error"
-            >Dia da semana é obrigatório</small
+            <a
+              *ngFor="let rede of churchInfo.redesSociais"
+              [href]="rede.url"
+              target="_blank"
+              class="mx-2 text-xl"
             >
-    
-            <p-datepicker
-              inputId="calendar-timeonly-{{ i }}"
-              formControlName="horario"
-              [timeOnly]="true"
-              [showTime]="true"
-              placeholder="Selecione o horário"
-              appendTo="body"
-            >
-            </p-datepicker>
-            <small
-              *ngIf="
-                horarioCtrl.get('horario')?.invalid &&
-                horarioCtrl.get('horario')?.touched &&
-                !horarioCtrl.get('horario')?.hasError('minutosInvalidos')
-              "
-              class="p-error"
-            >Horário é obrigatório</small
-            >
-            <small
-              id="username-help-{{ i }}"
-              *ngIf="horarioCtrl.get('horario')?.hasError('minutosInvalidos')"
-              class="p-error"
-            >
-              Os minutos devem ser 00, 15, 30 ou 45.
-            </small>
-            <input
-              pInputText
-              formControlName="observacao"
-              placeholder="Observação"
-              class="w-full"
-            />
+              <i [ngClass]="getSocialIcon(rede.url)"></i>
+            </a>
           </div>
         </div>
       </div>
-    </p-fieldset>
-    <p-fieldset legend="Redes sociais">
-      <div class="card grid grid-cols-1 md:grid-cols-2 gap-4">
-        <p-inputgroup>
-          <p-inputgroup-addon>
-            <i class="pi pi-facebook"></i>
-          </p-inputgroup-addon>
-          <input pInputText formControlName="facebook" placeholder="Facebook" />
-        </p-inputgroup>
-        <p-inputgroup>
-          <p-inputgroup-addon>
-            <i class="pi pi-instagram"></i>
-          </p-inputgroup-addon>
-          <input
-            pInputText
-            formControlName="instagram"
-            placeholder="Instagram"
-          />
-        </p-inputgroup>
-        <p-inputgroup>
-          <p-inputgroup-addon>
-            <i class="pi pi-youtube"></i>
-          </p-inputgroup-addon>
-          <input pInputText formControlName="youtube" placeholder="YouTube" />
-        </p-inputgroup>
-        <p-inputgroup>
-          <p-inputgroup-addon>
-            <i class="pi pi-tiktok"></i>
-          </p-inputgroup-addon>
-          <input pInputText formControlName="tiktok" placeholder="TikTok" />
-        </p-inputgroup>
+    </div>
+
+    <!-- Conteúdo -->
+    <div class="md:col-span-8">
+      <h2 class="text-2xl font-semibold mb-2">{{ churchInfo?.nome }}</h2>
+      <hr>
+      <h4 class="text-2xl text-gray-500 mb-4">{{ churchInfo?.paroco }}</h4>
+
+      <p class="text-gray-700 mb-2">
+        {{ churchInfo?.endereco?.logradouro }},
+        {{ churchInfo?.endereco?.numero }} -
+        {{ churchInfo?.endereco?.bairro }},
+        {{ churchInfo?.endereco?.cidade }}/{{ churchInfo?.endereco?.uf }}
+      </p>
+
+      <p
+        *ngIf="churchInfo?.contato?.telefone || churchInfo?.contato?.telefoneWhatsApp"
+        class="text-gray-700 mb-2"
+      >
+        <strong>Telefone:</strong> ({{ churchInfo?.contato?.ddd }})
+        {{ churchInfo?.contato?.telefone }} /
+        <strong>WhatsApp:</strong> ({{ churchInfo?.contato?.dddWhatsApp }})
+        {{ churchInfo?.contato?.telefoneWhatsApp }}
+      </p>
+
+      <p-divider></p-divider>
+
+      <div *ngIf="churchInfo?.missas?.length" class="mt-4">
+        <h3 class="text-lg font-medium mb-2">Horários das Missas</h3>
+        <ul class="list-disc list-inside space-y-1">
+          <li *ngFor="let mass of getFormattedMasses(churchInfo?.missas)">
+            {{ mass.horario }}
+            <i
+              *ngIf="mass.observacao && mass.observacao !== 'Sem observação'"
+              class="pi pi-info-circle text-blue-500 ml-2 cursor-pointer"
+              pTooltip="{{ mass.observacao }}"
+              tooltipPosition="top"
+            ></i>
+          </li>
+        </ul>
       </div>
-    </p-fieldset>
-    <p-fieldset legend="Foto">
-      <p-toast />
-      <div *ngIf="form.get('imagem')?.value" class="flex justify-center">
-        <img
-          [src]="form.get('imagem')?.value"
-          alt="{{form.value.nomeIgreja}}"
-          width="200"
-          height="200"
-        />
-      </div>
-    </p-fieldset>
-  </form>
+    </div>
+  </div>
+
+  <!-- Botões de Ação -->
+  <div class="flex justify-between items-center mt-6 px-4">
+    <button
+      pButton
+      type="button"
+      icon="pi pi-arrow-left"
+      label="Voltar"
+      class="p-button-text text-primary"
+      (click)="voltar()"
+    ></button>
+
+    <share-buttons
+      [include]="['whatsapp', 'email', 'copy']"
+      [show]="4"
+      [showText]="false"
+      [url]="'https://www.igreja.com.br/detalhes/' + churchInfo?.endereco?.cep"
+    ></share-buttons>
+  </div>
 </p-panel>
