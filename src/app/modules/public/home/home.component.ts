@@ -240,17 +240,18 @@ export class HomeComponent {
   }
 
   reportChurch(idChurch: any): void {
-    console.log(idChurch);
     // Renomeie a função para usar os dados do form
     if (this.reportForm.valid) {
       const reportData = this.reportForm.value;
       this._churchService.report(idChurch.id, reportData).subscribe({
         next: (res: any) => {
           if (!res.data.resultadoDenuncia) {
+            this.isModalVisible = false;
             return this._toast.add({
               severity: "warn",
               summary: "Alerta",
               detail: res.data.messagemAplicacao,
+              
             });
           } else {
             this.isModalVisible = false;

@@ -70,6 +70,10 @@ export class SendCodeComponent implements OnInit {
               controleId: body.controleId,
             },
           });
+          console.log('Enviando para /validar com:', {
+            email: body.email,
+            controleId: body.controleId,
+          });
         } else {
           this.isLoading = false;
           this._toast.add({ severity: 'error', summary: 'Aviso!', detail: response?.data?.mensagemTela });
@@ -77,7 +81,7 @@ export class SendCodeComponent implements OnInit {
       },
       error: (error: any) => {
         this.isLoading = false;
-        this._toast.add({ severity: 'error', summary: 'Aviso!', detail: error.error.data.mensagemTela ?? error.error.data });
+        this._toast.add({ severity: 'error', summary: 'Aviso!', detail: error.error.data.mensagemTela ?? error.error.data.mensagemInterno });
         console.log("Erro ao gerar código", error);
       },
     });

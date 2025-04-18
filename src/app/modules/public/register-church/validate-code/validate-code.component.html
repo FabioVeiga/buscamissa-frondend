@@ -10,7 +10,7 @@
       <h3>Confirmação de usuário</h3>
       <p class="text-muted-color block mb-8">
         Foi enviado para <strong>{{ email }}</strong> um código de confirmação,
-        por favor, insira o código recebido abaixo. <br>
+        por favor, insira o código recebido abaixo. <br />
         Caso não tenha recebido o código, verifique sua caixa de spam.
       </p>
       <p-inputotp
@@ -19,7 +19,12 @@
         [integerOnly]="true"
       />
       <div class="flex justify-between mt-8 self-stretch">
-        <p-button label="Reenviar código" [link]="true"  class="p-0" />
+        <p-button
+          label="Reenviar código"
+          [link]="true"
+          class="p-0"
+          (click)="resendCode()"
+        />
         <p-button label="Confirmar código" (click)="validateCode()" />
       </div>
     </div>

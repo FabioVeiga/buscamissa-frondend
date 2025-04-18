@@ -52,6 +52,7 @@ export class ValidateCodeComponent {
       this.email = params["email"];
       this.controleId = params["controleId"];
     });
+    console.log(this.controleId);
   }
 
   validateCode(): void {
@@ -96,5 +97,9 @@ export class ValidateCodeComponent {
         this.isLoading = false;
       },
     });
+  }
+
+  resendCode(): void {
+    this._router.navigateByUrl(`/enviar-codigo/${this.controleId}`);
   }
 }
