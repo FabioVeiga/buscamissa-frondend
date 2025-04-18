@@ -24,8 +24,6 @@
       </div>
     </div>
 
-
-    
     <div class="flex flex-wrap gap-4 w-full">
       <div class="field col-12 md:col-6">
         <label for="endereco">Endereço</label>
@@ -37,7 +35,11 @@
         />
       </div>
       <div class="field col-12 md:col-2">
-        <label for="numero">Número*</label>
+        <label for="numero">Número*</label>&nbsp;<i
+        class="pi pi-info-circle text-blue-500 cursor-pointer"
+        pTooltip="Se não houver número, informar 0."
+        tooltipPosition="top"
+      ></i>
         <input
           pInputText
           id="numero"
@@ -72,51 +74,6 @@
       <div class="field col-12 md:col-4">
         <label for="estado">Estado</label>
         <input pInputText id="estado" formControlName="estado" class="w-full" />
-      </div>
-    </div>
-  </p-fieldset>
-
-  <p-fieldset legend="Contatos Igreja" *ngIf="!isEditMode" class="mt-3">
-    <div class="flex flex-wrap gap-4">
-      <div class="flex flex-col gap-2">
-        <label for="telefone">Telefone</label>
-        <p-inputmask
-          inputId="telefone"
-          formControlName="telefone"
-          mask="(99) 9999-9999"
-          placeholder="(99) 9999-9999"
-          class="w-full"
-        />
-      </div>
-      <div class="flex flex-col gap-2">
-        <label for="whatsapp">WhatsApp</label>
-        <p-inputmask
-          inputId="whatsapp"
-          formControlName="whatsapp"
-          mask="(99) 99999-9999"
-          placeholder="(99) 99999-9999"
-          class="w-full"
-        />
-      </div>
-      <div class="flex flex-col gap-2">
-        <label for="emailContato">E-mail de contato</label>
-        <input
-          pInputText
-          inputId="emailContato"
-          type="email"
-          formControlName="emailContato"
-          placeholder="email@exemplo.com"
-          class="w-full"
-        />
-        <small
-          class="p-error block"
-          *ngIf="
-            form.get('emailContato')?.invalid &&
-            form.get('emailContato')?.touched
-          "
-        >
-          Email inválido.
-        </small>
       </div>
     </div>
   </p-fieldset>
@@ -183,6 +140,53 @@
     </div>
   </p-fieldset>
 
+
+  <p-fieldset legend="Contatos Igreja" *ngIf="!isEditMode" class="mt-3">
+    <div class="flex flex-wrap gap-4">
+      <div class="flex flex-col gap-2">
+        <label for="telefone">Telefone</label>
+        <p-inputmask
+          inputId="telefone"
+          formControlName="telefone"
+          mask="(99) 9999-9999"
+          placeholder="(99) 9999-9999"
+          class="w-full"
+        />
+      </div>
+      <div class="flex flex-col gap-2">
+        <label for="whatsapp">WhatsApp</label>
+        <p-inputmask
+          inputId="whatsapp"
+          formControlName="whatsapp"
+          mask="(99) 99999-9999"
+          placeholder="(99) 99999-9999"
+          class="w-full"
+        />
+      </div>
+      <div class="flex flex-col gap-2">
+        <label for="emailContato">E-mail de contato</label>
+        <input
+          pInputText
+          inputId="emailContato"
+          type="email"
+          formControlName="emailContato"
+          placeholder="email@exemplo.com"
+          class="w-full"
+        />
+        <small
+          class="p-error block"
+          *ngIf="
+            form.get('emailContato')?.invalid &&
+            form.get('emailContato')?.touched
+          "
+        >
+          Email inválido.
+        </small>
+      </div>
+    </div>
+  </p-fieldset>
+
+  
   <p-fieldset legend="Horários">
     <div class="flex flex-wrap gap-4">
       <div formArrayName="missas">
@@ -269,15 +273,20 @@
 
   <p-fieldset legend="Foto">
     <p-toast />
-    <div class="flex justify-center" *ngIf="form.value.imagem">
-      <img
-      [src]="'data:image/jpeg;base64,' + form.value.imagem"
-      alt="Imagem da Igreja"
-      width="200"
-      height="200"
-    />
+    <div class="flex justify-center" *ngIf="loading">
+      <p-progressSpinner styleClass="w-8 h-8" strokeWidth="4"></p-progressSpinner>
     </div>
-    <br />
+    
+    <div class="flex justify-center mb-2" *ngIf="!loading && imagePreview">
+      <img
+        [src]="imagePreview"
+        alt="Imagem da Igreja"
+        width="200"
+        height="200"
+      />
+    </div>
+    
+    
     <p-fileupload
       mode="basic"
       chooseIcon="pi pi-upload"

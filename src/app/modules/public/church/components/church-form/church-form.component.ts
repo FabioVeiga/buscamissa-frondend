@@ -1,5 +1,6 @@
 // src/app/features/church/components/church-form/church-form.component.ts
 import {
+  ChangeDetectorRef,
   Component,
   EventEmitter,
   Input,
@@ -48,6 +49,8 @@ export class ChurchFormComponent implements OnInit, OnChanges {
   form!: FormGroup;
   imageName: string | null = null;
   showAddressFields = false;
+  loading = false;
+  imagePreview: string | null = null; // Só para exibir a imagem
 
   typeChurchOptions: TypeChurchOption[] = [
     { name: "Capela", value: "Capela" },
@@ -83,6 +86,19 @@ export class ChurchFormComponent implements OnInit, OnChanges {
       this.disableFields(); // Desabilita campos se necessário
       this.form.get("cep")?.disable(); // Desabilita CEP na edição
     }
+
+    if (this.isEditMode && this.form.value.imagem) {
+      const imagem = this.form.value.imagem;
+
+      // Se já vem com prefixo base64, separa o prefixo
+      if (imagem.startsWith("data:image")) {
+        this.imagePreview = imagem; // mantemos a base64 para visualização
+        this.form.get("imagem")?.setValue(imagem.split(",")[1]); // salva sem prefixo para envio
+      } else {
+        // Caso seja uma URL externa, mostramos diretamente
+        this.imagePreview = imagem;
+      }
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -105,10 +121,12 @@ export class ChurchFormComponent implements OnInit, OnChanges {
     }
   }
 
+  constructor(private cd: ChangeDetectorRef) {}
+
   private initForm(): void {
     this.form = this.fb.group({
       id: [null], // Necessário para saber qual registro atualizar
-      typeChurchValue: [null, this.isEditMode ? '' : Validators.required], // Campo separado para o tipo
+      typeChurchValue: [null, this.isEditMode ? "" : Validators.required], // Campo separado para o tipo
       nomeIgreja: ["", Validators.required], // Apenas o nome
       nomeParoco: ["", Validators.required],
       cep: ["", Validators.required], // CEP é sempre obrigatório inicialmente
@@ -128,7 +146,7 @@ export class ChurchFormComponent implements OnInit, OnChanges {
       instagram: [""],
       tiktok: [""],
       youtube: [""],
-      imagem: [null], // Armazena base64
+      imagem: [""], // Armazena base64
     });
   }
 
@@ -227,16 +245,32 @@ export class ChurchFormComponent implements OnInit, OnChanges {
   onImageSelect(event: any): void {
     const file = event.files?.[0];
     if (file) {
+      this.loading = true;
+
       const reader = new FileReader();
+
       reader.onload = () => {
         const base64: string = reader.result as string;
-        const base64WithoutPrefix = base64.split(',')[1];
-        this.form.get('imagem')?.setValue(base64WithoutPrefix);
+        const base64WithoutPrefix = base64.split(",")[1];
+
+        this.imagePreview = reader.result as string; // com prefixo, pra mostrar no <img>
+        this.form.get("imagem")?.setValue(base64WithoutPrefix); // sem prefixo, pro backend
+
+        this.loading = false;
+
+        // Força a detecção de mudanças para atualizar o estado do formulário
+        this.cd.markForCheck();
+
+        console.log(this.form.get("imagem")?.value); // Verifica o valor atual da imagem
       };
+
+      reader.onerror = () => {
+        this.loading = false;
+      };
+
       reader.readAsDataURL(file);
     }
   }
-  
 
   // Emite o evento de busca de CEP para o componente pai
   triggerCepLookup(): void {

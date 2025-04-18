@@ -33,7 +33,9 @@ import { CarouselModule } from 'primeng/carousel';
 import { ProgressBarModule } from 'primeng/progressbar';
 import { MessageModule } from 'primeng/message';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
-
+import { TableModule } from 'primeng/table';
+import { PaginatorModule } from 'primeng/paginator';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 @NgModule({
   imports: [
     CommonModule,
@@ -67,7 +69,10 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
     CarouselModule,
     ProgressBarModule,
     MessageModule,
-    ConfirmDialogModule
+    ConfirmDialogModule,
+    TableModule,
+    PaginatorModule,
+    ProgressSpinnerModule
   ],
   exports: [
     FieldsetModule,
@@ -100,7 +105,10 @@ import { ConfirmDialogModule } from 'primeng/confirmdialog';
     CarouselModule,
     ProgressBarModule,
     MessageModule,
-    ConfirmDialogModule
+    ConfirmDialogModule,
+    TableModule,
+    PaginatorModule,
+    ProgressSpinnerModule
   ]
 })
 export class PrimeNgModule { }

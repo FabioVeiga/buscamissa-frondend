@@ -15,9 +15,10 @@ import { ChurchesService } from "../../../../core/services/churches.service";
 import { MessageService } from "primeng/api";
 import { PrimeNgModule } from "../../../../shared/primeng.module";
 import { CommonModule } from "@angular/common";
-import { ActivatedRoute } from "@angular/router";
+import { ActivatedRoute, Router } from "@angular/router";
 import { ShareButtons } from "ngx-sharebuttons/buttons";
 import { Mass } from "../../church/models/church.model";
+import { Church } from "../../../../core/interfaces/church.interface";
 
 @Component({
   selector: "app-details",
@@ -36,6 +37,7 @@ export class DetailsComponent implements OnInit {
   _toast = inject(MessageService);
   _church = inject(ChurchesService);
   _route = inject(ActivatedRoute);
+  _router = inject(Router);
   form!: FormGroup;
   isLoading = false;
   churchCep: any | null = null;
@@ -309,4 +311,8 @@ export class DetailsComponent implements OnInit {
 
     return "pi pi-globe"; // Ícone padrão caso não encontre
   }
+
+    editChurch(church: Church) {
+      this._router.navigate(["/editar", church.id]);
+    }
 }

@@ -39,9 +39,8 @@ export class ChurchEditPageComponent implements OnInit {
 
   isLoading = false;
   isSaving = false;
-  // Observable para os dados da igreja a serem passados para o form filho
   churchDataForForm$: Observable<ChurchFormData | null> | undefined;
-  churchId: number | null = null; // Armazena o ID para o update
+  churchId: number | null = null;
 
   typeChurchOptions = [
     { name: "Capela", value: "Capela" },
@@ -81,17 +80,17 @@ export class ChurchEditPageComponent implements OnInit {
           catchError((error: HttpErrorResponse) => {
             this.showErrorToast(error, "Erro ao carregar dados da igreja");
             console.log(error);
-            return of(null); // continua fluxo mesmo com erro
+            return of(null);
           }),
           finalize(() => {
-            this.isLoading = false; // aqui garante que desliga o loading no final, com sucesso ou erro
+            this.isLoading = false;
           })
         )
       )
     );
   }  
 
-  // Lida com a submissão vinda do form filho
+
   handleFormSubmit(formData: ChurchFormData): void {
     if (!this.churchId) {
       this.messageService.add({
@@ -106,20 +105,19 @@ export class ChurchEditPageComponent implements OnInit {
     this.churchService.updateChurch(payload).subscribe({
       next: (response: any) => {
         this.isSaving = false;
-        const controleId = response?.data?.response?.controleId; // Ajuste conforme sua API
+        const controleId = response?.data?.response?.controleId;
         this.messageService.add({
           severity: "success",
           summary: "Sucesso",
           detail: "Alteração de igreja em andamento! Verifique seu e-mail para validação.",
         });
         if (controleId) {
-          // Navega para a página de validação
-          this.router.navigate(["/enviar-codigo", controleId]); // Ajuste a rota se necessário
+          this.router.navigate(["/enviar-codigo", controleId]);
         } else {
           console.warn("Controle ID não recebido, navegando para a home.");
-          this.router.navigate(["/"]); // Fallback
+          this.router.navigate(["/"]);
         }
-        this.cd.markForCheck(); // Atualiza view
+        this.cd.markForCheck();
       },
       error: (error: HttpErrorResponse) => {
         this.isSaving = false;
@@ -129,22 +127,19 @@ export class ChurchEditPageComponent implements OnInit {
     });
   }
 
-  // Mapeia dados da API para o formato esperado pelo formulário
+
   private mapApiDataToFormData(
     apiData: ChurchApiData | null
   ): ChurchFormData | null {
     if (!apiData) return null;
-
-    // Extrair tipo do nome (ex: "Paróquia Santa Rita" -> tipo: "Paróquia", nome: "Santa Rita")
-    // Esta lógica pode precisar de ajuste dependendo de como o nome é formatado
     let type = "";
     let name = apiData.nome;
 
     const formData: ChurchFormData = {
       id: apiData.id,
-      nomeIgreja: name, // Usa o nome sem o tipo
+      nomeIgreja: name,
       nomeParoco: apiData.paroco,
-      cep: apiData.endereco.cep, // Assumindo que a API retorna com máscara? Senão, aplicar máscara aqui ou no form.
+      cep: apiData.endereco.cep,
       endereco: apiData.endereco.logradouro,
       numero: apiData.endereco.numero,
       complemento: apiData.endereco.complemento,
@@ -153,56 +148,24 @@ export class ChurchEditPageComponent implements OnInit {
       estado: apiData.endereco.estado,
       uf: apiData.endereco.uf,
       regiao: apiData.endereco.regiao,
-      // Recria telefone/whatsapp com máscara para o form
-      // telefone:
-      //   apiData.contato.ddd && apiData.contato.telefone
-      //     ? `(${apiData.contato.ddd}) ${apiData.contato.telefone.substring(
-      //         0,
-      //         4
-      //       )}-${apiData.contato.telefone.substring(4)}` // Ajuste máscara
-      //     : "",
-      // whatsapp:
-      //   apiData.contato.dddWhatsApp && apiData.contato.telefoneWhatsApp
-      //     ? `(${
-      //         apiData.contato.dddWhatsApp
-      //       }) ${apiData.contato.telefoneWhatsApp.substring(
-      //         0,
-      //         5
-      //       )}-${apiData.contato.telefoneWhatsApp.substring(5)}` // Ajuste máscara
-      //     : "",
-      // emailContato: apiData.contato.emailContato,
       missas: apiData.missasTemporaria?.map((missa) => ({
         ...missa,
-        // O form espera Date, mas addMissaControl/populateForm já convertem string->Date
-        horario: missa.horario, // Passa a string 'HH:mm:ss' diretamente
+        horario: missa.horario,
       })),
-      // Mapeia redes sociais de volta para campos individuais
-      // facebook: this.findSocialMedia(apiData.redesSociais, 1),
-      // instagram: this.findSocialMedia(apiData.redesSociais, 2),
-      // youtube: this.findSocialMedia(apiData.redesSociais, 3),
-      // tiktok: this.findSocialMedia(apiData.redesSociais, 4),
-      imagem: apiData.imagemUrl, // Assumindo que a API retorna base64 sem prefixo
+      imagem: apiData.imagemUrl,
     };
     return formData;
   }
 
-  // Mapeia os dados do formulário para o formato esperado pela API de ATUALIZAÇÃO
-  // Pode ser diferente da criação (ex: pode não precisar enviar endereço completo)
   private mapFormDataToApiUpdateData(
     formData: ChurchFormData,
     id: number
   ): ChurchApiData {
-    // Ou um tipo parcial<ChurchApiData> se a API aceitar
-    const telefoneLimpo = formData.telefone?.replace(/\D/g, "") ?? "";
-    const whatsappLimpo = formData.whatsapp?.replace(/\D/g, "") ?? "";
-
-    // Para atualização, talvez você só precise enviar os campos que mudaram
-    // ou a API pode esperar o objeto completo. Ajuste conforme necessário.
     const payload: ChurchApiData = {
-      id: id, // ID é crucial para update
-      nome: formData.nomeIgreja, // Recria nome completo
+      id: id,
+      nome: formData.nomeIgreja,
       paroco: formData.nomeParoco,
-      imagem: formData.imagemUrl, // Se a imagem for atualizada, envie o novo URL ou base64
+      imagem: formData.imagem,
       missas: formData.missas?.map((missa: any) => ({
         diaSemana: missa.diaSemana,
         horario:
@@ -211,10 +174,6 @@ export class ChurchEditPageComponent implements OnInit {
             : "00:00:00",
         observacao: missa.observacao,
       })),
-      // Se o endereço não pode ser alterado na edição (campos desabilitados),
-      // talvez não precise enviar o objeto 'endereco' inteiro ou envie apenas o CEP/Número/Complemento.
-      // Se PUDER alterar (campos habilitados), envie como na criação.
-      // Exemplo enviando completo (baseado no form que retorna valor bruto com getRawValue):
       endereco: {
         cep: formData.cep.replace(/\D/g, ""),
         logradouro: formData.endereco,
@@ -226,35 +185,8 @@ export class ChurchEditPageComponent implements OnInit {
         regiao: formData.regiao,
         numero: formData.numero,
       },
-      // contato: {
-      //   ddd: telefoneLimpo.substring(0, 2),
-      //   telefone: telefoneLimpo.substring(2),
-      //   dddWhatsApp: whatsappLimpo.substring(0, 2),
-      //   telefoneWhatsApp: whatsappLimpo.substring(2),
-      //   emailContato: formData.emailContato,
-      // },
-      // redesSociais: [
-      //   ...(formData.facebook
-      //     ? [{ tipoRedeSocial: 1, nomeDoPerfil: formData.facebook }]
-      //     : []),
-      //   ...(formData.instagram
-      //     ? [{ tipoRedeSocial: 2, nomeDoPerfil: formData.instagram }]
-      //     : []),
-      //   ...(formData.youtube
-      //     ? [{ tipoRedeSocial: 3, nomeDoPerfil: formData.youtube }]
-      //     : []),
-      //   ...(formData.tiktok
-      //     ? [{ tipoRedeSocial: 4, nomeDoPerfil: formData.tiktok }]
-      //     : []),
-      // ].filter((rede) => rede.nomeDoPerfil),
     };
     return payload;
-  }
-
-  // Helper para encontrar a URL/nome de usuário da rede social
-  private findSocialMedia(redes: SocialMedia[], tipo: number): string {
-    const rede = redes?.find((r) => r.tipoRedeSocial === tipo);
-    return rede?.nomeRedeSocial || rede?.url || "";
   }
 
   private showErrorToast(error: HttpErrorResponse, summary: string): void {

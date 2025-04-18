@@ -82,10 +82,10 @@
         formControlName="Horario"
         [timeOnly]="true"
         inputId="Horario"
+        [readonlyInput]="true"
         showIcon
         iconDisplay="input"
         [stepMinute]="15"
-        [readonlyInput]="true"
         (onFocus)="setDefaultTimeIfNull()"
       />
       <label for="Horario">Horário</label>
@@ -117,12 +117,15 @@
 </p-panel>
 
 <p-panel *ngIf="churchInfo && churchInfo.length > 0">
-  <p-dataview [value]="churchInfo" [rows]="10" [paginator]="true">
-    <ng-template #list let-items>
+  <p-dataview 
+  #dv
+  [value]="churchInfo"
+  [rows]="pageSize" >
+    <ng-template #list let-church>
       <div class="grid grid-cols-12 gap-4 grid-nogutter">
         <div
           class="col-span-12"
-          *ngFor="let church of items; let first = first"
+          *ngFor="let church of church; let first = first"
         >
           <div
             class="flex flex-col sm:flex-row sm:items-center p-6 gap-4"
@@ -334,13 +337,13 @@
               >
                 <!-- Detalhes da Igreja -->
                 <div>
-                  <div
-                    class="text-lg font-medium text-surface-900 dark:text-surface-0 mt-2"
-                  >
-                    <a [routerLink]="['/detalhes', church.endereco.cep]"
-                      >{{ church.nome }} <br />
-                      {{ church.paroco }}</a
-                    >
+                  <div class="text-lg font-bold text-surface-900 dark:text-surface-0">
+                    <h2 [routerLink]="['/detalhes', church.endereco.cep]">
+                      {{ church.nome }}
+                    </h2>
+                    <p class="font-medium text-surface-700 dark:text-surface-200">
+                      {{ church.paroco }}
+                    </p>
                   </div>
                   <div
                     class="font-small text-surface-900 dark:text-surface-0 mt-2"
@@ -426,6 +429,13 @@
       </div>
     </ng-template>
   </p-dataview>
+  <p-paginator 
+  [rows]="pageSize" 
+  [first]="(pageIndex - 1) * pageSize" 
+  [totalRecords]="totalRecords" 
+  [rowsPerPageOptions]="[5, 10, 20]"
+  (onPageChange)="onPageChange($event)">
+</p-paginator>
 </p-panel>
 <p-card *ngIf="showNoChurchCard" class="mt-4 text-center">
   <p>Não encontramos nenhuma igreja com os filtros aplicados.</p>

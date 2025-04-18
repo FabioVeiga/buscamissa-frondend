@@ -5,6 +5,7 @@ import {
   FormGroup,
   Validators,
   ReactiveFormsModule,
+  FormBuilder,
 } from "@angular/forms";
 import { ChurchesService } from "../../../core/services/churches.service";
 import { MessageService } from "primeng/api";
@@ -47,6 +48,7 @@ export class HomeComponent {
   private _churchService = inject(ChurchesService);
   private _toast = inject(MessageService);
   private _datePipe = inject(DatePipe);
+  private _fb = inject(FormBuilder);
   public _router = inject(Router);
 
   public isLoading = false;
@@ -57,6 +59,7 @@ export class HomeComponent {
 
   public isModalVisible: boolean = false;
   public modalHeader: string = "Denunciar igreja";
+  public totalRecords: any;
 
   public reportForm: FormGroup = new FormGroup({
     titulo: new FormControl("", Validators.required),
@@ -85,16 +88,17 @@ export class HomeComponent {
   pageSize: number = 10;
   pageIndex: number = 1;
 
-  public form: FormGroup = new FormGroup({
-    Uf: new FormControl(null, Validators.required),
-    Localidade: new FormControl(null),
-    Bairro: new FormControl(null),
-    DiaDaSemana: new FormControl(),
-    Horario: new FormControl(null),
-  });
+  public form!: FormGroup;
 
   ngOnInit(): void {
     this.getAddress();
+    this.form = this._fb.group({
+      Uf: [null, Validators.required],
+      Localidade: [null],
+      Bairro: [null],
+      DiaDaSemana: [null],
+      Horario: [null],
+    });
   }
 
   setDefaultTimeIfNull() {
@@ -161,9 +165,10 @@ export class HomeComponent {
   }
 
   public searchFilter(): void {
-    this.churchInfo = [];
     if (this.isLoading || this.form.invalid) return;
-    this.isLoading = true;
+
+    this.isLoading = true; // Marca o início do carregamento
+    this.churchInfo = []; // Limpa os dados anteriores
 
     const filters: FilterSearchChurch = {
       Uf: this.form.get("Uf")?.value, // Estado
@@ -178,8 +183,9 @@ export class HomeComponent {
     this._churchService.searchByFilters(filters).subscribe({
       next: (data: any) => {
         this.churchInfo = data.data.items;
+        this.totalRecords = data.data.totalItems;
+        this.isLoading = false;
 
-        // Se não encontrar nenhuma igreja, exibe um aviso
         if (!this.churchInfo.length) {
           this._toast.add({
             severity: "warn",
@@ -192,6 +198,7 @@ export class HomeComponent {
         }
       },
       error: (err: HttpErrorResponse) => {
+        this.isLoading = false;
         if (err.error.status === 404) {
           this._toast.add({
             severity: "warn",
@@ -199,7 +206,6 @@ export class HomeComponent {
             detail: "Não encontramos igrejas para os filtros aplicados.",
           });
           this.showNoChurchCard = true;
-          this.isLoading = false;
         } else {
           this._toast.add({
             severity: "error",
@@ -207,13 +213,18 @@ export class HomeComponent {
             detail: "Não foi possível buscar igrejas.",
           });
           this.showNoChurchCard = false;
-          this.isLoading = false;
         }
       },
       complete: () => {
-        this.isLoading = false;
+        this.isLoading = false; // Marca o final do carregamento
       },
     });
+  }
+
+  onPageChange(event: any) {
+    this.pageIndex = Math.floor(event.first / event.rows) + 1; 
+    this.pageSize = event.rows;
+    this.searchFilter();
   }
 
   clearFilter() {
