@@ -13,8 +13,8 @@ import { RouterModule } from "@angular/router";
     RouterModule,
   ],
   template: `<div class="layout-wrapper container">
-    <app-header-home></app-header-home>
     <div class="layout-main-container">
+    <app-header-home></app-header-home>
       <div class="layout-main">
         <div class="card"><router-outlet></router-outlet></div>
       </div>
