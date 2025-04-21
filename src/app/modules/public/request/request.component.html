@@ -1,1 +1,118 @@
-<p>request works!</p>
+<div class="hero">
+  <h1></h1>
+  <p></p>
+</div>
+<p-panel header="Nova Solicitação" class="container">
+  <p>Preencha o formulário abaixo para enviar sua solicitação.</p>
+  <form [formGroup]="form" (ngSubmit)="sendSubject()">
+    <div class="p-fluid">
+      <div class="field">
+        <p-iftalabel>
+          <p-select
+            id="tipo"
+            [options]="tipos"
+            formControlName="tipo"
+            optionValue="id"
+            optionLabel="nome"
+            placeholder="Selecione o tipo"
+          ></p-select>
+          <label htmlFor="tipo">Tipo de Solicitação</label>
+        </p-iftalabel>
+        <small
+          class="p-error block"
+          *ngIf="form.controls['tipo'].invalid && form.controls['tipo'].dirty"
+          >O tipo de solicitação é obrigatório.</small
+        >
+      </div>
+
+      <div class="field">
+        <p-iftalabel>
+          <input
+            type="text"
+            pInputText
+            id="assunto"
+            formControlName="assunto"
+          />
+          <label htmlFor="assunto">Assunto</label>
+        </p-iftalabel>
+        <small
+          class="p-error block"
+          *ngIf="
+            form.controls['assunto'].invalid && form.controls['assunto'].dirty
+          "
+          >O assunto é obrigatório.</small
+        >
+      </div>
+
+      <div class="field">
+        <p-iftalabel>
+          <textarea
+            id="mensagem"
+            rows="5"
+            cols="30"
+            pTextarea
+            formControlName="mensagem"
+          ></textarea>
+          <label htmlFor="mensagem">Mensagem</label>
+        </p-iftalabel>
+        <small
+          class="p-error block"
+          *ngIf="
+            form.controls['mensagem'].invalid && form.controls['mensagem'].dirty
+          "
+          >A mensagem é obrigatória.</small
+        >
+      </div>
+
+      <div class="field">
+        <p-iftalabel>
+          <input
+            type="text"
+            id="nomeSolicitante"
+            pInputText
+            formControlName="nomeSolicitante"
+          />
+          <label htmlFor="nomeSolicitante">Nome do Solicitante</label>
+        </p-iftalabel>
+        <small
+          class="p-error block"
+          *ngIf="
+            form.controls['nomeSolicitante'].invalid &&
+            form.controls['nomeSolicitante'].dirty
+          "
+          >O nome do solicitante é obrigatório.</small
+        >
+      </div>
+
+      <div class="field">
+        <p-iftalabel>
+          <input
+            type="email"
+            id="emailSolicitante"
+            pInputText
+            formControlName="emailSolicitante"
+          />
+          <label htmlFor="emailSolicitante">Email do Solicitante</label>
+        </p-iftalabel>
+        <small
+          class="p-error block"
+          *ngIf="
+            form.controls['emailSolicitante'].invalid &&
+            form.controls['emailSolicitante'].dirty
+          "
+          >O email do solicitante é obrigatório e deve ser válido.</small
+        >
+      </div>
+
+      <div class="field">
+        <button
+          pButton
+          type="submit"
+          label="Enviar Solicitação"
+          [disabled]="form.invalid"
+        ></button>
+      </div>
+    </div>
+  </form>
+</p-panel>
+<p-toast></p-toast>

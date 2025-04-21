@@ -1,0 +1,19 @@
+.field {
+    margin-bottom: 1rem; /* Adiciona um espaço abaixo de cada grupo de campo */
+  }
+  
+  .field label {
+    display: block; /* Faz o label ocupar a largura total e ir para a próxima linha */
+    font-weight: bold;
+    margin-bottom: 0.25rem; /* Adiciona um pequeno espaço entre o label e o input */
+  }
+  
+  .field input[type="text"],
+  .field input[type="email"],
+  .field textarea,
+  .field .p-select { /* Estilizando elementos PrimeNG dentro do field */
+    width: 100%; /* Faz os inputs ocuparem a largura do field */
+    box-sizing: border-box; /* Garante que padding e border não aumentem a largura total */
+  }
+  
+  /* Outros estilos conforme necessário */
