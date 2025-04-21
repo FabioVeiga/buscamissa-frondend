@@ -1,0 +1,45 @@
+.container {
+    padding-top: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    /* Center horizontally */
+}
+
+.qrcode-container {
+    margin: 0 auto;
+    width: 150px;
+    /* Adjust the size as needed */
+    height: 150px;
+    /* Maintain aspect ratio */
+    margin-bottom: 20px;
+    /* Add some space below the QR code */
+}
+
+.qrcode-container img {
+    max-width: 100%;
+    height: auto;
+}
+
+.info-table {
+    width: 100%;
+    /* Adjust table width as needed */
+    border-collapse: collapse;
+    /* Remove spacing between table cells */
+    margin-top: 20px;
+    /* Add some space above the table */
+}
+
+.info-table th,
+.info-table td {
+    border: 1px solid #ddd;
+    /* Add a light border to cells */
+    padding: 8px;
+    text-align: left;
+}
+
+.info-table th {
+    font-weight: bold;
+    background-color: #f2f2f2;
+    /* Light background for header */
+}

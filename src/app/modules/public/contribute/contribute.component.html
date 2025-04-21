@@ -1,1 +1,46 @@
-<p>contribute works!</p>
+<div class="hero">
+  <h1></h1>
+  <p></p>
+</div>
+<p-panel class="container">
+  <div class="qrcode-container">
+    <img src="/assets/qrcode.png" alt="QR Code" />
+  </div>
+
+  <table class="info-table">
+    <tbody>
+      <tr>
+        <th>Nome</th>
+        <td>Fabio Luiz Veiga</td>
+      </tr>
+      <tr>
+        <th>CPF</th>
+        <td>•••.876.788-••</td>
+      </tr>
+      <tr>
+        <th>Banco</th>
+        <td>260 - Nu Pagamentos S.A. - Instituição de Pagamento</td>
+      </tr>
+      <tr>
+        <th>Identificador</th>
+        <td>cqkS2WDKIL</td>
+      </tr>
+    </tbody>
+  </table>
+  <p class="pt-4">
+    Ao contribuir com o Busca Missa, iremos colocar seu nome durante todo o mês
+    nas intenções das missas.
+  </p>
+  <p-panel class="pt-4">
+    <div>
+      <h4>Lista de contribuidores</h4>
+      <ul class="info-table">
+          <li *ngFor="let contribuitor of contribuitors" class="mb-2">
+              {{contribuitor.nome}} - <b>Data de contribuição:</b> {{contribuitor.dataContribuicao | date}}
+          </li>
+      </ul>
+    </div>
+  </p-panel>
+</p-panel>
+<hr />
+
