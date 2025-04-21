@@ -55,6 +55,20 @@ export const routes: Routes = [
             (m) => m.SponsorsComponent
           ),
       },
+      {
+        path: "contribuir",
+        loadComponent: () =>
+          import("./modules/public/contribute/contribute.component").then(
+            (m) => m.ContributeComponent
+          ),
+      },
+      {
+        path: "solicitar",
+        loadComponent: () =>
+          import("./modules/public/request/request.component").then(
+            (m) => m.RequestComponent
+          ),
+      },
       { path: "", redirectTo: "home", pathMatch: "full" },
     ],
   },
