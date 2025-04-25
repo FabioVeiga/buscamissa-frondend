@@ -350,7 +350,7 @@
                     class="font-small text-surface-900 dark:text-surface-0 mt-2"
                   >
                     {{ church.endereco.logradouro }},
-                    {{ church.endereco.numero }} {{ church.endereco.bairro }} -
+                    {{ church.endereco.numero === 0 ? 'S/N' : church.endereco.numero }} {{ church.endereco.bairro }} -
                     {{ church.endereco.uf }}/{{ church.endereco.estado }}
                   </div>
                   <div

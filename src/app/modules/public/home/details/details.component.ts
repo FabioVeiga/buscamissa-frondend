@@ -240,7 +240,7 @@ export class DetailsComponent implements OnInit {
   }
 
   voltar() {
-    this._router.navigate(['/']);
+    this._router.navigate(['/home']);
   }
 
   getFormattedMasses(

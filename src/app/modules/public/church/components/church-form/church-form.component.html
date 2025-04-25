@@ -188,47 +188,45 @@
 
   
   <p-fieldset legend="Horários">
-    <div class="flex flex-wrap gap-4">
-      <div formArrayName="missas">
-        <div
-          *ngFor="let horarioCtrl of horarios.controls; let i = index"
-          [formGroupName]="i"
-          class="inline-flex gap-4 pt-4"
+    <div formArrayName="missas" class="w-full">
+      <div
+        *ngFor="let horarioCtrl of horarios.controls; let i = index"
+        [formGroupName]="i"
+        class="flex flex-col md:flex-row gap-4 pt-4 items-center"
+      >
+        <p-select
+          formControlName="diaSemana"
+          [options]="diasSemana"
+          optionLabel="label"
+          optionValue="key"
+          placeholder="Selecione o dia"
+          class="w-full md:flex-grow"
+        ></p-select>
+  
+        <p-datepicker
+          class="w-full md:flex-grow" formControlName="horario"
+          [timeOnly]="true"
+          [showClear]="true"
+          inputId="Horario"
+          [readonlyInput]="true"
+          showIcon
+          iconDisplay="input"
+        />
+        <small class="w-full md:flex-grow"
+          id="username-help"
+          *ngIf="horarioCtrl.get('horario')?.hasError('minutosInvalidos')"
         >
-          <p-select
-            formControlName="diaSemana"
-            [options]="diasSemana"
-            optionLabel="label"
-            optionValue="key"
-            placeholder="Selecione o dia"
-            class="w-100"
-          ></p-select>
-
-          <p-datepicker
-            inputId="calendar-timeonly"
-            formControlName="horario"
-            [timeOnly]="true"
-            [showTime]="true"
-            [placeholder]="'Selecione o horário'"
-            [appendTo]="'body'"
-          >
-          </p-datepicker>
-          <small
-            id="username-help"
-            *ngIf="horarioCtrl.get('horario')?.hasError('minutosInvalidos')"
-          >
-            Os minutos devem ser 00, 15, 30 ou 45.
-          </small>
-
-          <input
-            pInputText
-            formControlName="observacao"
-            placeholder="Observação"
-            class="w-full"
-          />
-
-          <p-button icon="pi pi-trash" (click)="removerHorario(i)"></p-button>
-        </div>
+          Os minutos devem ser 00, 15, 30 ou 45.
+        </small>
+  
+        <input
+          pInputText
+          formControlName="observacao"
+          placeholder="Observação"
+          class="w-full md:flex-grow"
+        />
+  
+        <p-button icon="pi pi-trash" (click)="removerHorario(i)"></p-button>
       </div>
     </div>
     <div class="pt-4">

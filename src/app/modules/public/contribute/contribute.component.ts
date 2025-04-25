@@ -2,11 +2,11 @@ import { finalize } from "rxjs/operators";
 import { Component, inject } from "@angular/core";
 import { PrimeNgModule } from "../../../shared/primeng.module";
 import { ContributeService } from "../../../core/services/contribute.service";
-import { DatePipe, NgFor } from "@angular/common";
+import { NgFor } from "@angular/common";
 
 @Component({
   selector: "app-contribute",
-  imports: [PrimeNgModule, NgFor, DatePipe],
+  imports: [PrimeNgModule, NgFor],
   templateUrl: "./contribute.component.html",
   styleUrl: "./contribute.component.scss",
 })
