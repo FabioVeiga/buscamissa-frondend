@@ -316,48 +316,46 @@ export class HomeComponent {
       "Sexta-feira",
       "Sábado",
     ];
-
+  
     const groupedMasses: { [key: number]: Mass[] } = {};
     missas.forEach((missa) => {
-      if (missa.diaSemana !== undefined && !groupedMasses[missa.diaSemana]) {
-        if (missa.diaSemana !== undefined) {
+      if (missa.diaSemana !== undefined) {
+        if (!groupedMasses[missa.diaSemana]) {
           groupedMasses[missa.diaSemana] = [];
         }
-      }
-      if (missa.diaSemana !== undefined) {
         groupedMasses[missa.diaSemana].push(missa);
       }
     });
-
+  
     const formattedMasses: { horario: string; observacao: string }[] = [];
     for (const dayIndex in groupedMasses) {
       if (groupedMasses.hasOwnProperty(dayIndex)) {
         const day = daysOfWeek[parseInt(dayIndex, 10)];
         const massesOnDay = groupedMasses[dayIndex];
-        const times = massesOnDay.map((missa) =>
-          this.formatTime(missa.horario)
-        );
-        times.sort(); // Garante que os horários estejam em ordem crescente
-
-        let horarioFormatado = `${day}: `;
-        if (times.length === 1) {
-          horarioFormatado += times[0];
-        } else if (times.length > 1) {
-          horarioFormatado += `${times[0]} - ${times[times.length - 1]}`;
-        }
-
-        // Pegar a observação (se houver) - aqui assumo que a observação é a mesma para todas as missas no mesmo dia. Se precisar de uma lógica mais complexa, ajuste aqui.
+  
+        const times = massesOnDay
+          .map((missa) => this.formatTime(missa.horario))
+          .sort((a, b) => {
+            // Ordena por hora real
+            const [h1, m1] = a.split(":").map(Number);
+            const [h2, m2] = b.split(":").map(Number);
+            return h1 - h2 || m1 - m2;
+          });
+  
+        const horarioFormatado = `${day}: ${times.join(", ")}`;
+  
         const observacao = massesOnDay[0]?.observacao || "Sem observação";
-
+  
         formattedMasses.push({
           horario: horarioFormatado,
           observacao: observacao,
         });
       }
     }
-
+  
     return formattedMasses;
   }
+  
 
   formatTime(timeString: string): string {
     const [hours, minutes] = timeString.split(":");
