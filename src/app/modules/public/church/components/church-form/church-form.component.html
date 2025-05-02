@@ -203,21 +203,26 @@
           class="w-full md:flex-grow"
         ></p-select>
   
-        <p-datepicker
-          class="w-full md:flex-grow" formControlName="horario"
-          [timeOnly]="true"
-          [showClear]="true"
-          inputId="Horario"
-          [readonlyInput]="true"
-          showIcon
-          iconDisplay="input"
-        />
-        <small class="w-full md:flex-grow"
-          id="username-help"
-          *ngIf="horarioCtrl.get('horario')?.hasError('minutosInvalidos')"
-        >
-          Os minutos devem ser 00, 15, 30 ou 45.
-        </small>
+        <div class="relative w-full md:flex-grow">
+          <p-datepicker
+            formControlName="horario"
+            [timeOnly]="true"
+            [showClear]="true"
+            inputId="Horario"
+            [readonlyInput]="true"
+            showIcon
+            iconDisplay="input"
+            [stepMinute]="15"
+            (onFocus)="setDefaultTimeIfNull()"
+            class="w-full"
+          />
+          <div
+            *ngIf="horarioCtrl.get('horario')?.hasError('minutosInvalidos')"
+            class="absolute text-red-600 text-sm mt-1"
+          >
+            Os minutos devem ser 00, 15, 30 ou 45.
+          </div>
+        </div>
   
         <input
           pInputText

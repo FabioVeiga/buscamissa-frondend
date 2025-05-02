@@ -204,6 +204,15 @@ export class ChurchFormComponent implements OnInit, OnChanges {
     this.horarios.removeAt(index);
   }
 
+  setDefaultTimeIfNull() {
+    const currentValue = this.form.get("Horario")?.value;
+    if (!currentValue) {
+      const defaultTime = new Date();
+      defaultTime.setHours(0, 0, 0, 0);
+      this.form.get("Horario")?.setValue(defaultTime);
+    }
+  }
+
   // Validador customizado para minutos
   private minutosValidos(): ValidatorFn {
     return (control: AbstractControl): ValidationErrors | null => {
