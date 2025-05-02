@@ -42,6 +42,12 @@
           },
           "configurations": {
             "production": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.production.ts"
+                }
+              ],
               "budgets": [
                 {
                   "type": "initial",
@@ -56,6 +62,18 @@
               ],
               "outputHashing": "all"
             },
+            "staging": {
+              "fileReplacements": [
+                {
+                  "replace": "src/environments/environment.ts",
+                  "with": "src/environments/environment.staging.ts"
+                }
+              ],
+              "outputHashing": "all",
+              "optimization": true,
+              "sourceMap": false,
+              "extractLicenses": true
+            },
             "development": {
               "optimization": false,
               "extractLicenses": false,
@@ -69,6 +87,9 @@
           "configurations": {
             "production": {
               "buildTarget": "busca-missa:build:production"
+            },
+            "staging": {
+              "buildTarget": "busca-missa:build:staging"
             },
             "development": {
               "buildTarget": "busca-missa:build:development",

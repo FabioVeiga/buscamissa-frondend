@@ -194,6 +194,7 @@ export class ChurchFormComponent implements OnInit, OnChanges {
       })
     );
   }
+  
 
   // Adiciona um novo grupo de missa vazio
   adicionarHorario(): void {
@@ -202,6 +203,14 @@ export class ChurchFormComponent implements OnInit, OnChanges {
 
   removerHorario(index: number): void {
     this.horarios.removeAt(index);
+  }
+
+  setDefaultTimeIfNull(control: AbstractControl | null): void {
+    if (control && !control.value) {
+      const defaultTime = new Date();
+      defaultTime.setHours(0, 0, 0, 0);
+      control.setValue(defaultTime);
+    }
   }
 
   // Validador customizado para minutos
