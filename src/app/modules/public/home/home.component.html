@@ -350,8 +350,8 @@
                     class="font-small text-surface-900 dark:text-surface-0 mt-2"
                   >
                     {{ church.endereco.logradouro }},
-                    {{ church.endereco.numero === 0 ? 'S/N' : church.endereco.numero }} {{ church.endereco.bairro }} -
-                    {{ church.endereco.uf }}/{{ church.endereco.estado }}
+                    {{ church.endereco.numero === 0 ? 'S/N' : church.endereco.numero }}, {{church.endereco.complemento}} {{ church.endereco.bairro }} -
+                    {{ church.endereco.localidade }}/{{ church.endereco.uf }}
                   </div>
                   <div
                     *ngIf="
@@ -411,7 +411,7 @@
                 [include]="['whatsapp', 'email', 'copy']"
                 [show]="4"
                 [showText]="false"
-                url="https://www.igreja.com.br/detalhes/{{
+                url="detalhes/{{
                   church.endereco.cep
                 }}"
               ></share-buttons>
