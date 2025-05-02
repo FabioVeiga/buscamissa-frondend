@@ -416,7 +416,7 @@
                 }}"
               ></share-buttons>
             </div>
-            <div
+            <div *ngIf="church.usuario.nome"
               class="font-small text-xs text-surface-500 dark:text-surface-400 text-right"
             >
               Última alteração: {{ church.alteracao | date: 'dd/MM/yyyy' }} por
