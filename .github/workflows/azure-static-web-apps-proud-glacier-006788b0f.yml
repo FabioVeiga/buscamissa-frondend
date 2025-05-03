@@ -34,6 +34,7 @@ jobs:
           app_location: "/" # App source code path
           api_location: "" # API source code path - Optional
           output_location: "dist/busca-missa/browser" # Built app content directory - Optional
+          app_build_command: "npm run build:staging"
           ###### End of Repository/Build Configurations ######
 
   close_pull_request_job:
