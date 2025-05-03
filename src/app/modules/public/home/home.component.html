@@ -353,18 +353,12 @@
                     {{ church.endereco.numero === 0 ? 'S/N' : church.endereco.numero }}, {{church.endereco.complemento}} {{ church.endereco.bairro }} -
                     {{ church.endereco.localidade }}/{{ church.endereco.uf }}
                   </div>
-                  <div
-                    *ngIf="
-                      church.contato?.telefone ||
-                      church.contato?.telefoneWhatsApp
-                    "
-                    class="font-small text-surface-900 dark:text-surface-0 mt-2"
-                  >
-                    Telefone: ({{ church.contato?.ddd }})
-                    {{ church.contato?.telefone }} / WhatsApp: ({{
-                      church.contato?.dddWhatsApp
-                    }}) {{ church.contato?.telefoneWhatsApp }}
-                  </div>
+                  <p *ngIf="church?.contato?.telefone || church?.contato?.telefoneWhatsApp" class="text-gray-700 mb-2">
+                    <strong>Telefone:</strong> ({{ church?.contato?.ddd }}) {{ church?.contato?.telefone }}
+                    <ng-container *ngIf="church?.contato?.telefoneWhatsApp">
+                      / <strong>WhatsApp:</strong> ({{ church?.contato?.dddWhatsApp }}) {{ church?.contato?.telefoneWhatsApp }}
+                    </ng-container>
+                  </p>
                   <p-divider />
                   <!-- Lista de Horários -->
                   <div class="font-small mt-2">
