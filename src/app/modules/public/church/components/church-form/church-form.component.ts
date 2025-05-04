@@ -23,6 +23,7 @@ import {
 import { CommonModule, DatePipe } from "@angular/common";
 import { PrimeNgModule } from "../../../../../shared/primeng.module";
 import { ChurchFormData, Mass } from "../../models/church.model";
+import { MessageService } from "primeng/api";
 
 interface TypeChurchOption {
   name: string;
@@ -33,11 +34,12 @@ interface TypeChurchOption {
   selector: "app-church-form",
   standalone: true, // Considere usar standalone components
   imports: [CommonModule, ReactiveFormsModule, PrimeNgModule],
-  providers: [DatePipe], // DatePipe aqui se não for providedIn: 'root'
+  providers: [DatePipe, MessageService], // DatePipe aqui se não for providedIn: 'root'
   templateUrl: "./church-form.component.html",
   styleUrls: ["./church-form.component.scss"],
 })
 export class ChurchFormComponent implements OnInit, OnChanges {
+  private messageService = inject(MessageService);
   @Input() initialData: ChurchFormData | null = null;
   @Input() isSaving: boolean = false;
   @Input() isEditMode: boolean = false; // Para desabilitar CEP na edição
@@ -290,16 +292,33 @@ export class ChurchFormComponent implements OnInit, OnChanges {
     }
   }
 
-  // Submissão do Formulário
   onSubmitInternal(): void {
     if (this.form.valid) {
-      // Retorna os valores brutos, incluindo campos desabilitados como o CEP na edição
       this.formSubmit.emit(this.form.getRawValue() as ChurchFormData);
     } else {
       this.form.markAllAsTouched();
-      // Opcional: Focar no primeiro campo inválido ou mostrar toast
-      console.error("Formulário inválido:", this.findInvalidControls());
+      const invalidFields = this.findInvalidControls()
+        .map((key) => this.mapKeyToLabel(key))
+        .join(', ');
+  
+      this.messageService.add({
+        severity: 'error',
+        summary: 'Erro de Validação',
+        detail: `Verifique os campos obrigatórios: ${invalidFields}`,
+      });
     }
+  }
+  
+  private mapKeyToLabel(key: string): string {
+    const labels: Record<string, string> = {
+      nomeIgreja: 'Nome da Igreja',
+      cep: 'CEP',
+      numero: 'Número',
+      typeChurchValue: 'Tipo de Igreja',
+      missas: 'Horário das Missas',
+    };
+  
+    return labels[key] ?? key;
   }
 
   // Helper para debug: encontrar campos inválidos
