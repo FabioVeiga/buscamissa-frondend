@@ -69,9 +69,11 @@
                   "with": "src/environments/environment.staging.ts"
                 }
               ],
-              "outputHashing": "all",
               "optimization": true,
+              "outputHashing": "all",
               "sourceMap": false,
+              "namedChunks": false,
+              "aot": true,
               "extractLicenses": true
             },
             "development": {

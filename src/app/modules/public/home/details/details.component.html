@@ -48,21 +48,16 @@
 
       <p class="text-gray-700 mb-2">
         {{ churchInfo?.endereco?.logradouro }},
-        {{ churchInfo?.endereco?.numero === 0 ? 'S/N' : churchInfo?.endereco?.numero }}, {{churchInfo.endereco.complemento}} - {{ churchInfo?.endereco?.bairro }},
+        {{ churchInfo?.endereco?.numero === 0 ? 'S/N' : churchInfo?.endereco?.numero }} - {{ churchInfo?.endereco?.bairro }},
         {{ churchInfo?.endereco?.localidade }}/{{ churchInfo?.endereco?.uf }}
       </p>
+      <p>{{churchInfo.endereco.complemento}}</p>
 
-      <p
-        *ngIf="
-          churchInfo?.contato?.telefone || churchInfo?.contato?.telefoneWhatsApp
-        "
-        class="text-gray-700 mb-2"
-      >
-        <strong>Telefone:</strong> ({{ churchInfo?.contato?.ddd }})
-        {{ churchInfo?.contato?.telefone }} / <strong>WhatsApp:</strong> ({{
-          churchInfo?.contato?.dddWhatsApp
-        }})
-        {{ churchInfo?.contato?.telefoneWhatsApp }}
+      <p *ngIf="churchInfo?.contato?.telefone || churchInfo?.contato?.telefoneWhatsApp" class="text-gray-700 mb-2">
+        <strong>Telefone:</strong> ({{ churchInfo?.contato?.ddd }}) {{ churchInfo?.contato?.telefone }}
+        <ng-container *ngIf="churchInfo?.contato?.telefoneWhatsApp">
+          / <strong>WhatsApp:</strong> ({{ churchInfo?.contato?.dddWhatsApp }}) {{ churchInfo?.contato?.telefoneWhatsApp }}
+        </ng-container>
       </p>
 
       <p-divider></p-divider>
