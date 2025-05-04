@@ -58,6 +58,9 @@
         <ng-container *ngIf="churchInfo?.contato?.telefoneWhatsApp">
           / <strong>WhatsApp:</strong> ({{ churchInfo?.contato?.dddWhatsApp }}) {{ churchInfo?.contato?.telefoneWhatsApp }}
         </ng-container>
+        <ng-container *ngIf="churchInfo?.contato?.emailContato">
+          / <strong>E-mail para contato:</strong> {{ churchInfo?.contato?.emailContato }}
+        </ng-container>
       </p>
 
       <p-divider></p-divider>
