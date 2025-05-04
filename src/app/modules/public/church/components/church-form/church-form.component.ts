@@ -128,7 +128,7 @@ export class ChurchFormComponent implements OnInit, OnChanges {
       id: [null], // Necessário para saber qual registro atualizar
       typeChurchValue: [null, this.isEditMode ? "" : Validators.required], // Campo separado para o tipo
       nomeIgreja: ["", Validators.required], // Apenas o nome
-      nomeParoco: ["", Validators.required],
+      nomeParoco: [""],
       cep: ["", Validators.required], // CEP é sempre obrigatório inicialmente
       endereco: [{ value: "", disabled: true }], // Habilitado por padrão
       numero: ["", Validators.required],
