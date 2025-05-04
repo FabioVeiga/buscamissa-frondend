@@ -350,8 +350,9 @@
                     class="font-small text-surface-900 dark:text-surface-0 mt-2"
                   >
                     {{ church.endereco.logradouro }},
-                    {{ church.endereco.numero === 0 ? 'S/N' : church.endereco.numero }}, {{church.endereco.complemento}} {{ church.endereco.bairro }} -
+                    {{ church.endereco.numero === 0 ? 'S/N' : church.endereco.numero }}, {{ church.endereco.bairro }} -
                     {{ church.endereco.localidade }}/{{ church.endereco.uf }}
+                    <p>{{church.endereco.complemento}}</p>
                   </div>
                   <p *ngIf="church?.contato?.telefone || church?.contato?.telefoneWhatsApp" class="text-gray-700 mb-2">
                     <strong>Telefone:</strong> ({{ church?.contato?.ddd }}) {{ church?.contato?.telefone }}
