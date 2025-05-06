@@ -20,7 +20,7 @@
         id="Uf"
       >
       </p-select>
-      <label for="Uf">Estado</label>
+      <label for="Uf">Estado *</label>
     </p-iftalabel>
 
     <!-- Cidade -->
@@ -439,7 +439,7 @@
 <p-card *ngIf="showNoChurchCard" class="mt-4 text-center">
   <p>Não encontramos nenhuma igreja com os filtros aplicados.</p>
   <p-button
-    label="Inserir Igreja"
+    label="Cadastrar missa"
     icon="pi pi-plus"
     (click)="_router.navigate(['/nova'])"
   ></p-button>
