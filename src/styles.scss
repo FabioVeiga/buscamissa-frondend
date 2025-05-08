@@ -19,10 +19,13 @@
   border-top-right-radius: 100px;
   position: relative;
   min-height: 360px;
-
+  display: block;
+  align-items: center;
+  align-content: center;
   h1 {
     font-size: 36px;
     font-weight: bold;
+    color: #fff;
     position: relative;
     z-index: 2;
   }
@@ -37,4 +40,5 @@
     position: relative;
     z-index: 2;
   }
+  
 }

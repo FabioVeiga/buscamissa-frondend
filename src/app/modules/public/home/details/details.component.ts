@@ -146,6 +146,7 @@ export class DetailsComponent implements OnInit {
             summary: "Erro",
             detail: "Dados da igreja não encontrados.",
           });
+          this._router.navigate(['/nova']);
         }
         this.isLoading = false;
       },
