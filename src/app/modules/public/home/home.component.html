@@ -436,6 +436,14 @@
   (onPageChange)="onPageChange($event)">
 </p-paginator>
 </p-panel>
+<p-card *ngIf="churchInfo?.length === 0 && !showNoChurchCard" class="mt-4 text-center">
+  <p>Gostaria de cadastrar uma nova missa?</p>
+  <p>Você pode cadastrar uma nova missa ou igreja.</p>
+  <p-button
+    label="Cadastrar missa"
+    icon="pi pi-plus"
+    (click)="_router.navigate(['/nova'])"
+  ></p-button>
 <p-card *ngIf="showNoChurchCard" class="mt-4 text-center">
   <p>Não encontramos nenhuma igreja com os filtros aplicados.</p>
   <p-button
