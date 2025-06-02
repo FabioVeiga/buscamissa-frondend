@@ -69,6 +69,27 @@ export const routes: Routes = [
             (m) => m.RequestComponent
           ),
       },
+      {
+        path: "cookies",
+        loadComponent: () =>
+          import("./modules/public/terms/cookies/cookies.component").then(
+            (m) => m.CookiesComponent
+          ),
+      },
+      {
+        path: "privacidade",
+        loadComponent: () =>
+          import("./modules/public/terms/privacy/privacy.component").then(
+            (m) => m.PrivacyComponent
+          ),
+      },
+      {
+        path: "termos",
+        loadComponent: () =>
+          import("./modules/public/terms/terms/terms.component").then(
+            (m) => m.TermsComponent
+          ),
+      },
       { path: "", redirectTo: "home", pathMatch: "full" },
     ],
   },
