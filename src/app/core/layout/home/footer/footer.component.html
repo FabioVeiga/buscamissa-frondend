@@ -1,35 +1,50 @@
 <footer class="py-6 px-4 mt-8">
-  <div class="max-w-7xl mx-auto flex flex-col gap-4">
-    <!-- Linha de cima: logo + navegação principal -->
-    <div class="flex flex-col md:flex-row items-center justify-between gap-4">
-      <!-- Logo -->
-      <div class="flex items-center gap-2">
-        <a [routerLink]="['/']" class="flex items-center gap-2">
-          <img src="assets/logo.png" alt="Busca Missa" class="h-7 w-auto" />
-          <h5 class="text-lg font-semibold">Busca Missa</h5>
-        </a>
-      </div>
-
-      <!-- Navegação principal -->
-      <nav class="flex flex-wrap gap-4 text-sm font-medium justify-center">
-        <a routerLink="/home" class="hover:underline transition">INÍCIO</a>
-        <a routerLink="/solicitar" class="hover:underline transition">ENTRE EM CONTATO</a>
-        <a routerLink="/nova" class="hover:underline transition">CADASTRAR MISSA</a>
-        <a routerLink="/anuncios" class="hover:underline transition">ANUNCIANTES</a>
-        <a routerLink="/contribuir" class="hover:underline transition">CONTRIBUIR</a>
-      </nav>
+  <div
+    class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4"
+  >
+    <!-- Logo -->
+    <div class="flex items-center gap-2">
+      <a [routerLink]="['/']" class="flex items-center gap-2">
+        <img src="assets/logo.png" alt="Busca Missa" class="h-7 w-auto" />
+        <h5 class="text-lg font-semibold">Busca Missa</h5>
+      </a>
     </div>
 
-    <!-- Links menores: cookies, termos, privacidade -->
-    <div class="flex justify-center gap-4 text-xs text-gray-500 flex-wrap">
-      <a routerLink="/cookies" class="hover:underline transition">Cookies</a>
-      <a routerLink="/termos" class="hover:underline transition">Termos de Uso</a>
-      <a routerLink="/privacidade" class="hover:underline transition">Política de Privacidade</a>
-    </div>
+    <!-- Navegação -->
+    <!-- Navegação -->
+    <nav class="flex flex-wrap gap-4 text-sm font-medium">
+      <a routerLink="/home" class="hover:underline transition">INÍCIO</a>
+      <a routerLink="/solicitar" class="hover:underline transition"
+        >ENTRE EM CONTATO</a
+      >
+      <a routerLink="/nova" class="hover:underline transition"
+        >CADASTRAR MISSA</a
+      >
+      <a routerLink="/anuncios" class="hover:underline transition"
+        >ANUNCIANTES</a
+      >
+      <a routerLink="/contribuir" class="hover:underline transition"
+        >CONTRIBUIR</a
+      >
+    </nav>
+    
 
     <!-- Créditos -->
-    <div class="text-xs text-gray-400 text-center mt-2">
+    <div class="text-xs text-gray-400 mt-4 md:mt-0 text-center md:text-right">
       © {{ currentYear }} BuscaMissa. Todos os direitos reservados.
     </div>
+    
   </div>
+      <!-- Links menores abaixo -->
+    <div
+      class="flex flex-wrap gap-3 text-xs text-gray-500 justify-center md:justify-center"
+    >
+      <a routerLink="/cookies" class="hover:underline transition">Cookies</a>
+      <a routerLink="/termos" class="hover:underline transition"
+        >Termos de Uso</a
+      >
+      <a routerLink="/privacidade" class="hover:underline transition"
+        >Política de Privacidade</a
+      >
+    </div>
 </footer>
