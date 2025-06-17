@@ -19,6 +19,15 @@ declare var adsbygoogle: any[];
     <div class="layout-main-container">
       <app-header-home></app-header-home>
       <div class="layout-main">
+        <div class="text-center">
+          <ins
+            class="adsbygoogle ads_resp"
+            style="display: inline-block"
+            data-ad-client="ca-pub-id"
+            data-ad-slot="ad-slot-id"
+            data-full-width-responsive="true"
+          ></ins>
+        </div>
         <div class="card"><router-outlet></router-outlet></div>
       </div>
       <app-footer-home></app-footer-home>
