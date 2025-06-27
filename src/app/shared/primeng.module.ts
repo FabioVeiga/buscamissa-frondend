@@ -37,6 +37,7 @@ import { TableModule } from "primeng/table";
 import { PaginatorModule } from "primeng/paginator";
 import { ProgressSpinnerModule } from "primeng/progressspinner";
 import { TextareaModule } from "primeng/textarea";
+import { AdsenseBannerComponent } from "./components/adsense-banner/adsense-banner.component";
 @NgModule({
   imports: [
     CommonModule,
@@ -75,6 +76,7 @@ import { TextareaModule } from "primeng/textarea";
     PaginatorModule,
     ProgressSpinnerModule,
     TextareaModule,
+    AdsenseBannerComponent
   ],
   exports: [
     FieldsetModule,
@@ -112,6 +114,7 @@ import { TextareaModule } from "primeng/textarea";
     PaginatorModule,
     ProgressSpinnerModule,
     TextareaModule,
+    AdsenseBannerComponent
   ],
 })
 export class PrimeNgModule {}
