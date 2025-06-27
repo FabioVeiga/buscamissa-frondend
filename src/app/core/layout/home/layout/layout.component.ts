@@ -3,10 +3,7 @@ import { CommonModule } from "@angular/common";
 import { HeaderHomeComponent } from "../header/header.component";
 import { FooterHomeComponent } from "../footer/footer.component";
 import { RouterModule } from "@angular/router";
-declare interface Window {
-  adsbygoogle: any[];
-}
-declare var adsbygoogle: any[];
+
 @Component({
   selector: "app-layout-home",
   imports: [
@@ -27,17 +24,5 @@ declare var adsbygoogle: any[];
   </div> `,
 })
 export class LayoutHomeComponent {
-  patrocinioDireita = "";
-  patrocinioEsquerda = "";
 
-  ngAfterViewInit() {
-    setTimeout(() => {
-      try {
-        (window as any).adsbygoogle = (window as any).adsbygoogle || [];
-        (window as any).adsbygoogle.push({});
-      } catch (e) {
-        console.error("ads", e);
-      }
-    }, 900);
-  }
 }
