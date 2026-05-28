@@ -9,10 +9,10 @@ export class RequestService {
   private http = inject(HttpClient);
 
   public getSubject(): Observable<any> {
-    return this.http.get<any>("Solicitacao/tipos");
+    return this.http.get<any>("v1/Solicitacao/tipos");
   }
 
   public sendRequest(body: any): Observable<any> {
-    return this.http.post<any>("Solicitacao", body);
+    return this.http.post<any>("v1/Solicitacao", body);
   }
 }
