@@ -9,6 +9,6 @@ export class ContributeService {
   private http = inject(HttpClient);
 
   public getContributors(): Observable<any> {
-    return this.http.get<any>("Contribuidor/do-mes-vigente");
+    return this.http.get<any>("v1/Contribuidor/do-mes-vigente");
   }
 }
