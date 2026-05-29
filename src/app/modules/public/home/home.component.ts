@@ -19,7 +19,7 @@ import {
 } from "../../../core/interfaces/church.interface";
 import { HttpErrorResponse } from "@angular/common/http";
 import { ModalComponent } from "../../../core/components/modal/modal.component";
-import { Router, RouterModule } from "@angular/router";
+import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import { ShareButtons } from "ngx-sharebuttons/buttons";
 import { STATES } from "../../../core/constants/states";
 
@@ -50,6 +50,7 @@ export class HomeComponent {
   private _datePipe = inject(DatePipe);
   private _fb = inject(FormBuilder);
   public _router = inject(Router);
+  private _route = inject(ActivatedRoute);
 
   public isLoading = false;
   public isLoadingAddress = false;
@@ -91,7 +92,6 @@ export class HomeComponent {
   public form!: FormGroup;
 
   ngOnInit(): void {
-    this.getAddress();
     this.form = this._fb.group({
       Uf: [null, Validators.required],
       Localidade: [null],
@@ -99,6 +99,7 @@ export class HomeComponent {
       DiaDaSemana: [null],
       Horario: [null],
     });
+    this.getAddress();
   }
 
   setDefaultTimeIfNull() {
@@ -133,8 +134,35 @@ export class HomeComponent {
       },
       complete: () => {
         this.isLoadingAddress = false;
+        this._restoreFromQueryParams();
       },
     });
+  }
+
+  private _restoreFromQueryParams(): void {
+    const p = this._route.snapshot.queryParams;
+    if (!p['uf']) return;
+
+    // Restaura UF e popula cidades
+    this.form.get('Uf')?.setValue(p['uf']);
+    this.onStateChange({ value: p['uf'] });
+
+    if (p['cidade']) {
+      this.form.get('Localidade')?.setValue(p['cidade']);
+      this.onCityChange({ value: p['cidade'] });
+    }
+
+    if (p['bairro']) this.form.get('Bairro')?.setValue(p['bairro']);
+    if (p['dia'] != null) this.form.get('DiaDaSemana')?.setValue(Number(p['dia']));
+    if (p['horario']) {
+      const [h, m] = p['horario'].split(':').map(Number);
+      const t = new Date();
+      t.setHours(h, m, 0, 0);
+      this.form.get('Horario')?.setValue(t);
+    }
+    if (p['pagina']) this.pageIndex = Number(p['pagina']);
+
+    this.searchFilter();
   }
 
   public onStateChange(event: any): void {

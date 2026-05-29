@@ -17,6 +17,7 @@ import { MessageService } from "primeng/api";
 import { PrimeNgModule } from "../../../../shared/primeng.module";
 import { CommonModule } from "@angular/common";
 import { ActivatedRoute, Router } from "@angular/router";
+import { Location } from "@angular/common";
 import { ShareButtons } from "ngx-sharebuttons/buttons";
 import { Mass } from "../../church/models/church.model";
 import { Church } from "../../../../core/interfaces/church.interface";
@@ -41,6 +42,7 @@ export class DetailsComponent implements OnInit {
   _seo = inject(SeoService);
   _route = inject(ActivatedRoute);
   _router = inject(Router);
+  _location = inject(Location);
   form!: FormGroup;
   isLoading = false;
   churchCep: any | null = null;
@@ -81,7 +83,7 @@ export class DetailsComponent implements OnInit {
     });
 
     this._route.params.subscribe((params) => {
-      this.churchCep = +params["cep"]; // O '+' converte a string para número
+      this.churchCep = String(params["cep"]).replace('-', '');
       if (this.churchCep) {
         this.loadChurchForEdit(this.churchCep);
         // this.loadInfo()
@@ -248,7 +250,7 @@ export class DetailsComponent implements OnInit {
   }
 
   voltar() {
-    this._router.navigate(['/home']);
+    this._location.back();
   }
 
   getFormattedMasses(
