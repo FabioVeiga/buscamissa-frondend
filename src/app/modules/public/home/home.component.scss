@@ -2,6 +2,10 @@
     font-size: 1.5rem;
 }
 
+h2[routerlink]:hover {
+  text-decoration: underline;
+}
+
 .image-container {
   width: 150px;
   height: 200px;
