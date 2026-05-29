@@ -218,7 +218,6 @@ export class HomeComponent {
         horario: horario || null,
         pagina: this.pageIndex,
       },
-      queryParamsHandling: 'merge',
       replaceUrl: true,
     });
 
