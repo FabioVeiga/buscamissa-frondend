@@ -10,6 +10,7 @@ import {
   ValidatorFn,
   Validators,
 } from "@angular/forms";
+import { finalize } from "rxjs/operators";
 import { ChurchesService } from "../../../../core/services/churches.service";
 import { SeoService } from "../../../../core/services/seo.service";
 import { SkeletonModule } from "primeng/skeleton";
@@ -97,7 +98,9 @@ export class DetailsComponent implements OnInit {
   // Função para carregar os dados da igreja para edição
   loadChurchForEdit(cep: any): void {
     this.isLoading = true;
-    this._church.searchByCEP(cep).subscribe({
+    this._church.searchByCEP(cep).pipe(
+      finalize(() => { this.isLoading = false; })
+    ).subscribe({
       next: (response: any) => {
         const igreja = response?.data.response;
         this.churchInfo = igreja;
@@ -129,26 +132,25 @@ export class DetailsComponent implements OnInit {
             instagram: this.getSocialMedia(igreja.redesSociais, 2),
             youtube: this.getSocialMedia(igreja.redesSociais, 3),
             tiktok: this.getSocialMedia(igreja.redesSociais, 4),
-            imagem: igreja.imagemUrl, // Se a API retornar a URL da imagem
+            imagem: igreja.imagemUrl,
           });
           this.limparHorarios();
-          igreja.missas?.forEach((missa: any) => {
+          (igreja.missas ?? []).forEach((missa: any) => {
             const horario = missa.horario
               ? this.stringParaDate(missa.horario)
               : null;
             this.horarios.push(
               this.fb.group({
-                id: [missa.id], // Se a missa tiver um ID
+                id: [missa.id],
                 diaSemana: [missa.diaSemana, Validators.required],
-                horario: [
-                  horario,
-                  [Validators.required, this.minutosValidos()],
-                ],
+                horario: [horario, [Validators.required, this.minutosValidos()]],
                 observacao: [missa.observacao],
               })
             );
-            this.horarios.disable();
           });
+          if (this.horarios.length > 0) {
+            this.horarios.disable();
+          }
         } else {
           this._toast.add({
             severity: "error",
@@ -157,10 +159,8 @@ export class DetailsComponent implements OnInit {
           });
           this._router.navigate(['/nova']);
         }
-        this.isLoading = false;
       },
       error: (error) => {
-        this.isLoading = false;
         this._toast.add({
           severity: "error",
           summary: "Erro",

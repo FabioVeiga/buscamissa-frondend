@@ -162,7 +162,7 @@ export class HomeComponent {
     }
     if (p['pagina']) this.pageIndex = Number(p['pagina']);
 
-    this.searchFilter();
+    this.searchFilter(false);
   }
 
   public onStateChange(event: any): void {
@@ -197,8 +197,10 @@ export class HomeComponent {
     this.form.get('Bairro')?.setValue(null);
   }
 
-  public searchFilter(): void {
+  public searchFilter(resetPage = true): void {
     if (this.isLoading || this.form.invalid) return;
+
+    if (resetPage) this.pageIndex = 1;
 
     this.isLoading = true;
     this.churchInfo = [];
@@ -273,9 +275,9 @@ export class HomeComponent {
   }
 
   onPageChange(event: any) {
-    this.pageIndex = Math.floor(event.first / event.rows) + 1; 
+    this.pageIndex = Math.floor(event.first / event.rows) + 1;
     this.pageSize = event.rows;
-    this.searchFilter();
+    this.searchFilter(false);
   }
 
   clearFilter() {
