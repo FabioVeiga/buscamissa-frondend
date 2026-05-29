@@ -173,11 +173,13 @@ export class HomeComponent {
         label: city,
         value: city,
       })).sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
-
-      // Limpa e reseta os bairros
-      this.districtsList = [];
-      this.selectedCity = "";
+    } else {
+      this.citiesList = [];
     }
+    this.districtsList = [];
+    this.selectedCity = "";
+    this.form.get('Localidade')?.setValue(null);
+    this.form.get('Bairro')?.setValue(null);
   }
 
   public onCityChange(event: any): void {
@@ -189,7 +191,10 @@ export class HomeComponent {
         label: district,
         value: district,
       })).sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
+    } else {
+      this.districtsList = [];
     }
+    this.form.get('Bairro')?.setValue(null);
   }
 
   public searchFilter(): void {
