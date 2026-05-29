@@ -81,7 +81,7 @@ export class DetailsComponent implements OnInit {
     });
 
     this._route.params.subscribe((params) => {
-      this.churchCep = +params["cep"]; // O '+' converte a string para número
+      this.churchCep = String(params["cep"]).replace('-', '');
       if (this.churchCep) {
         this.loadChurchForEdit(this.churchCep);
         // this.loadInfo()
