@@ -335,10 +335,8 @@
               >
                 <!-- Detalhes da Igreja -->
                 <div>
-                  <div
-                    class="text-lg font-bold text-surface-900 dark:text-surface-0"
-                  >
-                    <h2 [routerLink]="['/detalhes', church.endereco.cep]">
+                  <div class="text-lg font-bold text-surface-900 dark:text-surface-0">
+                    <h2 [routerLink]="['/detalhes', church.endereco.cep]" class="church-name-link">
                       {{ church.nome }}
                     </h2>
                     <p
