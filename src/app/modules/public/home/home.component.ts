@@ -167,15 +167,34 @@ export class HomeComponent {
   public searchFilter(): void {
     if (this.isLoading || this.form.invalid) return;
 
-    this.isLoading = true; // Marca o início do carregamento
-    this.churchInfo = []; // Limpa os dados anteriores
+    this.isLoading = true;
+    this.churchInfo = [];
+
+    const uf = this.form.get("Uf")?.value;
+    const localidade = this.form.get("Localidade")?.value;
+    const bairro = this.form.get("Bairro")?.value;
+    const diaDaSemana = this.form.get("DiaDaSemana")?.value;
+    const horario = this._datePipe.transform(this.form.value.Horario, "HH:mm");
+
+    this._router.navigate([], {
+      queryParams: {
+        uf: uf || null,
+        cidade: localidade || null,
+        bairro: bairro || null,
+        dia: diaDaSemana ?? null,
+        horario: horario || null,
+        pagina: this.pageIndex,
+      },
+      queryParamsHandling: 'merge',
+      replaceUrl: true,
+    });
 
     const filters: FilterSearchChurch = {
-      Uf: this.form.get("Uf")?.value, // Estado
-      Localidade: this.form.get("Localidade")?.value, // Cidade
-      Bairro: this.form.get("Bairro")?.value, // Bairro
-      DiaDaSemana: this.form.get("DiaDaSemana")?.value,
-      Horario: this._datePipe.transform(this.form.value.Horario, "HH:mm"),
+      Uf: uf,
+      Localidade: localidade,
+      Bairro: bairro,
+      DiaDaSemana: diaDaSemana,
+      Horario: horario,
       "Paginacao.PageIndex": this.pageIndex,
       "Paginacao.PageSize": this.pageSize,
     };

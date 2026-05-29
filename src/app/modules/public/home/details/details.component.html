@@ -4,7 +4,27 @@
   <p></p>
 </div>
 <p-panel class="p-1" header="Detalhes da igreja">
-  <div class="grid grid-cols-1 md:grid-cols-12 gap-6 p-4">
+
+  <!-- Skeleton enquanto carrega -->
+  <div *ngIf="isLoading" class="grid grid-cols-1 md:grid-cols-12 gap-6 p-4">
+    <div class="md:col-span-4">
+      <p-skeleton height="20rem" borderRadius="8px"></p-skeleton>
+      <p-skeleton height="1.5rem" width="60%" class="mt-4 mx-auto block"></p-skeleton>
+    </div>
+    <div class="md:col-span-8 flex flex-col gap-3">
+      <p-skeleton height="2rem" width="50%"></p-skeleton>
+      <p-skeleton height="1rem" width="30%"></p-skeleton>
+      <p-skeleton height="1rem" width="70%"></p-skeleton>
+      <p-skeleton height="1rem" width="55%"></p-skeleton>
+      <p-divider></p-divider>
+      <p-skeleton height="1rem" width="40%"></p-skeleton>
+      <p-skeleton height="1rem" width="60%"></p-skeleton>
+      <p-skeleton height="1rem" width="50%"></p-skeleton>
+    </div>
+  </div>
+
+  <!-- Conteúdo após carregamento -->
+  <div *ngIf="!isLoading && churchInfo" class="grid grid-cols-1 md:grid-cols-12 gap-6 p-4">
     <!-- Imagem lateral -->
     <div class="md:col-span-4">
       <div
@@ -83,7 +103,7 @@
   </div>
 
   <!-- Botões de Ação -->
-  <div class="flex justify-between items-center mt-6 px-4">
+  <div *ngIf="!isLoading && churchInfo" class="flex justify-between items-center mt-6 px-4">
     <button
       pButton
       type="button"
@@ -92,7 +112,7 @@
       class="p-button-text text-primary"
       (click)="voltar()"
     ></button>
-    
+
     <share-buttons
       [include]="['whatsapp', 'email', 'copy']"
       [show]="4"

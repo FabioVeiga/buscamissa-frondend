@@ -66,8 +66,8 @@ export const routes: Routes = [
       {
         path: "validar",
         data: {
-          title: 'Validar Código | BuscaMissa',
-          description: 'Valide seu código de confirmação para concluir o cadastro da igreja.',
+          title: 'Confirmação de Cadastro | BuscaMissa',
+          description: 'Confirme seu cadastro inserindo o código de verificação recebido por e-mail.',
           canonical: 'https://buscamissa.com.br/validar',
         },
         loadComponent: () =>
@@ -102,8 +102,8 @@ export const routes: Routes = [
       {
         path: "solicitar",
         data: {
-          title: 'Solicitar Funcionalidade | BuscaMissa',
-          description: 'Envie sua sugestão ou solicite uma nova funcionalidade para o BuscaMissa.',
+          title: 'Fale Conosco | BuscaMissa',
+          description: 'Entre em contato com o BuscaMissa. Envie sua dúvida, sugestão ou solicitação.',
           canonical: 'https://buscamissa.com.br/solicitar',
         },
         loadComponent: () =>
