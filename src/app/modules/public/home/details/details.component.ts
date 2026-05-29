@@ -12,6 +12,7 @@ import {
 } from "@angular/forms";
 import { ChurchesService } from "../../../../core/services/churches.service";
 import { SeoService } from "../../../../core/services/seo.service";
+import { SkeletonModule } from "primeng/skeleton";
 import { MessageService } from "primeng/api";
 import { PrimeNgModule } from "../../../../shared/primeng.module";
 import { CommonModule } from "@angular/common";
@@ -28,6 +29,7 @@ import { Church } from "../../../../core/interfaces/church.interface";
     FormsModule,
     ReactiveFormsModule,
     ShareButtons,
+    SkeletonModule,
   ],
   providers: [MessageService],
   templateUrl: "./details.component.html",
