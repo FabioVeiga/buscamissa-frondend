@@ -83,11 +83,10 @@
         [timeOnly]="true"
         [showClear]="true"
         inputId="Horario"
-        [readonlyInput]="true"
+        [readonlyInput]="false"
         showIcon
         iconDisplay="input"
         [stepMinute]="15"
-        (onFocus)="setDefaultTimeIfNull()"
       />
       <label for="Horario">Horário</label>
     </p-floatlabel>
