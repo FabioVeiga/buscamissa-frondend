@@ -123,7 +123,7 @@ export class HomeComponent {
             label: estado?.nome || sigla,
             value: sigla,
           };
-        });
+        }).sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
       },
       error: () => {
         this._toast.add({
@@ -172,7 +172,7 @@ export class HomeComponent {
       this.citiesList = cities.map((city) => ({
         label: city,
         value: city,
-      }));
+      })).sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
 
       // Limpa e reseta os bairros
       this.districtsList = [];
@@ -188,7 +188,7 @@ export class HomeComponent {
       this.districtsList = districts.map((district) => ({
         label: district,
         value: district,
-      }));
+      })).sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
     }
   }
 
