@@ -6,6 +6,7 @@ import {
   ChangeDetectorRef,
 } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
+import { Location } from "@angular/common";
 import { CommonModule, DatePipe } from "@angular/common";
 import { HttpErrorResponse } from "@angular/common/http";
 import { MessageService } from "primeng/api";
@@ -35,6 +36,7 @@ export class ChurchEditPageComponent implements OnInit {
   private messageService = inject(MessageService);
   private datePipe = inject(DatePipe);
   private cd = inject(ChangeDetectorRef);
+  private location = inject(Location);
   public router = inject(Router);
 
   isLoading = false;
@@ -208,12 +210,7 @@ export class ChurchEditPageComponent implements OnInit {
     });
   }
 
-  // Navega de volta para detalhes ou lista
   cancel(): void {
-    if (this.churchId) {
-      this.router.navigate(["/igrejas", this.churchId]);
-    } else {
-      this.router.navigate(["/igrejas"]);
-    }
+    this.location.back();
   }
 }
