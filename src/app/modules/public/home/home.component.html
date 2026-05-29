@@ -118,10 +118,7 @@
 </p-panel>
 
 <p-panel *ngIf="churchInfo && churchInfo.length > 0">
-  <p-dataview 
-  #dv
-  [value]="churchInfo"
-  [rows]="pageSize" >
+  <p-dataview #dv [value]="churchInfo" [rows]="pageSize">
     <ng-template #list let-church>
       <div class="grid grid-cols-12 gap-4 grid-nogutter">
         <div
@@ -342,7 +339,9 @@
                     <h2 [routerLink]="['/detalhes', church.endereco.cep]" class="church-name-link">
                       {{ church.nome }}
                     </h2>
-                    <p class="font-medium text-surface-700 dark:text-surface-200">
+                    <p
+                      class="font-medium text-surface-700 dark:text-surface-200"
+                    >
                       {{ church.paroco }}
                     </p>
                   </div>
@@ -350,17 +349,31 @@
                     class="font-small text-surface-900 dark:text-surface-0 mt-2"
                   >
                     {{ church.endereco.logradouro }},
-                    {{ church.endereco.numero === 0 ? 'S/N' : church.endereco.numero }}, {{ church.endereco.bairro }} -
+                    {{
+                      church.endereco.numero === 0
+                        ? "S/N"
+                        : church.endereco.numero
+                    }}, {{ church.endereco.bairro }} -
                     {{ church.endereco.localidade }}/{{ church.endereco.uf }}
-                    <p>{{church.endereco.complemento}}</p>
+                    <p>{{ church.endereco.complemento }}</p>
                   </div>
-                  <p *ngIf="church?.contato?.telefone || church?.contato?.telefoneWhatsApp" class="text-gray-700 mb-2">
-                    <strong>Telefone:</strong> ({{ church?.contato?.ddd }}) {{ church?.contato?.telefone }}
+                  <p
+                    *ngIf="
+                      church?.contato?.telefone ||
+                      church?.contato?.telefoneWhatsApp
+                    "
+                    class="text-gray-700 mb-2"
+                  >
+                    <strong>Telefone:</strong> ({{ church?.contato?.ddd }})
+                    {{ church?.contato?.telefone }}
                     <ng-container *ngIf="church?.contato?.telefoneWhatsApp">
-                      / <strong>WhatsApp:</strong> ({{ church?.contato?.dddWhatsApp }}) {{ church?.contato?.telefoneWhatsApp }}
+                      / <strong>WhatsApp:</strong> ({{
+                        church?.contato?.dddWhatsApp
+                      }}) {{ church?.contato?.telefoneWhatsApp }}
                     </ng-container>
                     <ng-container *ngIf="church?.contato?.emailContato">
-                      / <strong>E-mail para contato:</strong> {{ church?.contato?.emailContato }}
+                      / <strong>E-mail para contato:</strong>
+                      {{ church?.contato?.emailContato }}
                     </ng-container>
                   </p>
                   <p-divider />
@@ -414,10 +427,11 @@
                 }}"
               ></share-buttons>
             </div>
-            <div *ngIf="church.usuario.nome"
+            <div
+              *ngIf="church.usuario.nome"
               class="font-small text-xs text-surface-500 dark:text-surface-400 text-right"
             >
-              Última alteração: {{ church.alteracao | date: 'dd/MM/yyyy' }} por
+              Última alteração: {{ church.alteracao | date : "dd/MM/yyyy" }} por
               {{ church.usuario.nome }}
             </div>
             <!-- <a href="https://api.whatsapp.com/send?phone=5511111111111&text=Olá,%20venha%20conheçer%20a%20{{church.nome}},%20clique%20no%20link%20abaixo%20para%20mais%20detalhes%20dela! https://www.igreja.com.br/detalhes/{{church.id}}" target="_blank" rel="noopener noreferrer" class="p-button font-bold">
@@ -428,27 +442,40 @@
       </div>
     </ng-template>
   </p-dataview>
-  <p-paginator 
-  [rows]="pageSize" 
-  [first]="(pageIndex - 1) * pageSize" 
-  [totalRecords]="totalRecords" 
-  [rowsPerPageOptions]="[5, 10, 20]"
-  (onPageChange)="onPageChange($event)">
-</p-paginator>
+  <p-paginator
+    [rows]="pageSize"
+    [first]="(pageIndex - 1) * pageSize"
+    [totalRecords]="totalRecords"
+    [rowsPerPageOptions]="[5, 10, 20]"
+    (onPageChange)="onPageChange($event)"
+  >
+  </p-paginator>
 </p-panel>
-<p-card *ngIf="churchInfo?.length === 0 && !showNoChurchCard" class="mt-4 text-center">
+<div class="flex justify-center w-full">
+  <app-adsense-banner></app-adsense-banner> <!-- AdSense entre filtros e resultados -->
+</div>
+<p-card
+  *ngIf="churchInfo?.length === 0 && !showNoChurchCard"
+  class="mt-4 text-center"
+>
   <p>Gostaria de cadastrar uma nova missa?</p>
-  <p>Você pode cadastrar uma nova missa ou igreja.</p>
+  <p>
+    Encontre horários e locais de missas da Igreja Católica Apostólica Romana de
+    forma rápida e fácil. Além disso, você pode contribuir atualizando
+    informações como horários de missas, fotos das igrejas e nomes dos párocos,
+    ajudando toda a comunidade a se conectar melhor com sua fé.
+  </p>
   <p-button
     label="Cadastrar missa"
     icon="pi pi-plus"
     (click)="_router.navigate(['/nova'])"
   ></p-button>
-<p-card *ngIf="showNoChurchCard" class="mt-4 text-center">
-  <p>Não encontramos nenhuma igreja com os filtros aplicados.</p>
-  <p-button
-    label="Cadastrar missa"
-    icon="pi pi-plus"
-    (click)="_router.navigate(['/nova'])"
-  ></p-button>
+  <p-card *ngIf="showNoChurchCard" class="mt-4 text-center">
+    <p>Não encontramos nenhuma igreja com os filtros aplicados.</p>
+    <p-button
+      label="Cadastrar missa"
+      icon="pi pi-plus"
+      (click)="_router.navigate(['/nova'])"
+    ></p-button>
+  </p-card>
 </p-card>

@@ -14,7 +14,7 @@ import { RouterModule } from "@angular/router";
   ],
   template: `<div class="layout-wrapper container">
     <div class="layout-main-container">
-    <app-header-home></app-header-home>
+      <app-header-home></app-header-home>
       <div class="layout-main">
         <div class="card"><router-outlet></router-outlet></div>
       </div>
@@ -24,6 +24,5 @@ import { RouterModule } from "@angular/router";
   </div> `,
 })
 export class LayoutHomeComponent {
-  patrocinioDireita = '';
-  patrocinioEsquerda = '';
+
 }

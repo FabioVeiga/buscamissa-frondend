@@ -54,7 +54,7 @@ export class ChurchEditPageComponent implements OnInit {
     { name: "Basílica Menor", value: "Basílica Menor" },
     { name: "Arquidiocese", value: "Arquidiocese" },
     { name: "Diocese", value: "Diocese" },
-    { name: "Outro", value: "Outro" },
+    { name: "Outro", value: "" },
   ];
 
   ngOnInit(): void {
