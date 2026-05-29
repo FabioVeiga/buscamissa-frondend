@@ -19,7 +19,7 @@ import {
 } from "../../../core/interfaces/church.interface";
 import { HttpErrorResponse } from "@angular/common/http";
 import { ModalComponent } from "../../../core/components/modal/modal.component";
-import { Router, RouterModule } from "@angular/router";
+import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import { ShareButtons } from "ngx-sharebuttons/buttons";
 import { STATES } from "../../../core/constants/states";
 
@@ -50,6 +50,7 @@ export class HomeComponent {
   private _datePipe = inject(DatePipe);
   private _fb = inject(FormBuilder);
   public _router = inject(Router);
+  private _route = inject(ActivatedRoute);
 
   public isLoading = false;
   public isLoadingAddress = false;
@@ -91,7 +92,6 @@ export class HomeComponent {
   public form!: FormGroup;
 
   ngOnInit(): void {
-    this.getAddress();
     this.form = this._fb.group({
       Uf: [null, Validators.required],
       Localidade: [null],
@@ -99,15 +99,16 @@ export class HomeComponent {
       DiaDaSemana: [null],
       Horario: [null],
     });
+    this.getAddress();
   }
 
   setDefaultTimeIfNull() {
-    const currentValue = this.form.get("Horario")?.value;
-    if (!currentValue) {
-      const defaultTime = new Date();
-      defaultTime.setHours(0, 0, 0, 0);
-      this.form.get("Horario")?.setValue(defaultTime);
-    }
+    const current = this.form.get("Horario")?.value;
+    const d = current ? new Date(current) : new Date();
+    const snapped = Math.round(d.getMinutes() / 15) * 15;
+    d.setMinutes(snapped % 60, 0, 0);
+    if (snapped === 60) d.setHours(d.getHours() + 1);
+    this.form.get("Horario")?.setValue(d);
   }
 
   public getAddress(): void {
@@ -122,7 +123,7 @@ export class HomeComponent {
             label: estado?.nome || sigla,
             value: sigla,
           };
-        });
+        }).sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
       },
       error: () => {
         this._toast.add({
@@ -133,8 +134,35 @@ export class HomeComponent {
       },
       complete: () => {
         this.isLoadingAddress = false;
+        this._restoreFromQueryParams();
       },
     });
+  }
+
+  private _restoreFromQueryParams(): void {
+    const p = this._route.snapshot.queryParams;
+    if (!p['uf']) return;
+
+    // Restaura UF e popula cidades
+    this.form.get('Uf')?.setValue(p['uf']);
+    this.onStateChange({ value: p['uf'] });
+
+    if (p['cidade']) {
+      this.form.get('Localidade')?.setValue(p['cidade']);
+      this.onCityChange({ value: p['cidade'] });
+    }
+
+    if (p['bairro']) this.form.get('Bairro')?.setValue(p['bairro']);
+    if (p['dia'] != null) this.form.get('DiaDaSemana')?.setValue(Number(p['dia']));
+    if (p['horario']) {
+      const [h, m] = p['horario'].split(':').map(Number);
+      const t = new Date();
+      t.setHours(h, m, 0, 0);
+      this.form.get('Horario')?.setValue(t);
+    }
+    if (p['pagina']) this.pageIndex = Number(p['pagina']);
+
+    this.searchFilter(false);
   }
 
   public onStateChange(event: any): void {
@@ -144,12 +172,14 @@ export class HomeComponent {
       this.citiesList = cities.map((city) => ({
         label: city,
         value: city,
-      }));
-
-      // Limpa e reseta os bairros
-      this.districtsList = [];
-      this.selectedCity = "";
+      })).sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
+    } else {
+      this.citiesList = [];
     }
+    this.districtsList = [];
+    this.selectedCity = "";
+    this.form.get('Localidade')?.setValue(null);
+    this.form.get('Bairro')?.setValue(null);
   }
 
   public onCityChange(event: any): void {
@@ -160,22 +190,45 @@ export class HomeComponent {
       this.districtsList = districts.map((district) => ({
         label: district,
         value: district,
-      }));
+      })).sort((a, b) => a.label.localeCompare(b.label, 'pt-BR'));
+    } else {
+      this.districtsList = [];
     }
+    this.form.get('Bairro')?.setValue(null);
   }
 
-  public searchFilter(): void {
+  public searchFilter(resetPage = true): void {
     if (this.isLoading || this.form.invalid) return;
 
-    this.isLoading = true; // Marca o início do carregamento
-    this.churchInfo = []; // Limpa os dados anteriores
+    if (resetPage) this.pageIndex = 1;
+
+    this.isLoading = true;
+    this.churchInfo = [];
+
+    const uf = this.form.get("Uf")?.value;
+    const localidade = this.form.get("Localidade")?.value;
+    const bairro = this.form.get("Bairro")?.value;
+    const diaDaSemana = this.form.get("DiaDaSemana")?.value;
+    const horario = this._datePipe.transform(this.form.value.Horario, "HH:mm");
+
+    this._router.navigate([], {
+      queryParams: {
+        uf: uf || null,
+        cidade: localidade || null,
+        bairro: bairro || null,
+        dia: diaDaSemana ?? null,
+        horario: horario || null,
+        pagina: this.pageIndex,
+      },
+      replaceUrl: true,
+    });
 
     const filters: FilterSearchChurch = {
-      Uf: this.form.get("Uf")?.value, // Estado
-      Localidade: this.form.get("Localidade")?.value, // Cidade
-      Bairro: this.form.get("Bairro")?.value, // Bairro
-      DiaDaSemana: this.form.get("DiaDaSemana")?.value,
-      Horario: this._datePipe.transform(this.form.value.Horario, "HH:mm"),
+      Uf: uf,
+      Localidade: localidade,
+      Bairro: bairro,
+      DiaDaSemana: diaDaSemana,
+      Horario: horario,
       "Paginacao.PageIndex": this.pageIndex,
       "Paginacao.PageSize": this.pageSize,
     };
@@ -222,9 +275,9 @@ export class HomeComponent {
   }
 
   onPageChange(event: any) {
-    this.pageIndex = Math.floor(event.first / event.rows) + 1; 
+    this.pageIndex = Math.floor(event.first / event.rows) + 1;
     this.pageSize = event.rows;
-    this.searchFilter();
+    this.searchFilter(false);
   }
 
   clearFilter() {

@@ -1,4 +1,3 @@
-import { routes } from "./../../../../app.routes";
 import { Component, inject, OnInit } from "@angular/core";
 import {
   AbstractControl,
@@ -11,11 +10,15 @@ import {
   ValidatorFn,
   Validators,
 } from "@angular/forms";
+import { finalize } from "rxjs/operators";
 import { ChurchesService } from "../../../../core/services/churches.service";
+import { SeoService } from "../../../../core/services/seo.service";
+import { SkeletonModule } from "primeng/skeleton";
 import { MessageService } from "primeng/api";
 import { PrimeNgModule } from "../../../../shared/primeng.module";
 import { CommonModule } from "@angular/common";
 import { ActivatedRoute, Router } from "@angular/router";
+import { Location } from "@angular/common";
 import { ShareButtons } from "ngx-sharebuttons/buttons";
 import { Mass } from "../../church/models/church.model";
 import { Church } from "../../../../core/interfaces/church.interface";
@@ -28,6 +31,7 @@ import { Church } from "../../../../core/interfaces/church.interface";
     FormsModule,
     ReactiveFormsModule,
     ShareButtons,
+    SkeletonModule,
   ],
   providers: [MessageService],
   templateUrl: "./details.component.html",
@@ -36,8 +40,10 @@ import { Church } from "../../../../core/interfaces/church.interface";
 export class DetailsComponent implements OnInit {
   _toast = inject(MessageService);
   _church = inject(ChurchesService);
+  _seo = inject(SeoService);
   _route = inject(ActivatedRoute);
   _router = inject(Router);
+  _location = inject(Location);
   form!: FormGroup;
   isLoading = false;
   churchCep: any | null = null;
@@ -78,7 +84,7 @@ export class DetailsComponent implements OnInit {
     });
 
     this._route.params.subscribe((params) => {
-      this.churchCep = +params["cep"]; // O '+' converte a string para número
+      this.churchCep = String(params["cep"]).replace('-', '');
       if (this.churchCep) {
         this.loadChurchForEdit(this.churchCep);
         // this.loadInfo()
@@ -92,11 +98,17 @@ export class DetailsComponent implements OnInit {
   // Função para carregar os dados da igreja para edição
   loadChurchForEdit(cep: any): void {
     this.isLoading = true;
-    this._church.searchByCEP(cep).subscribe({
+    this._church.searchByCEP(cep).pipe(
+      finalize(() => { this.isLoading = false; })
+    ).subscribe({
       next: (response: any) => {
-        const igreja = response?.data.response; // Ajuste conforme a sua API
+        const igreja = response?.data.response;
         this.churchInfo = igreja;
         if (igreja) {
+          this._seo.update({
+            title: `${igreja.nome} | BuscaMissa`,
+            description: `Veja os horários de missa, endereço e contato de ${igreja.nome}. Encontre missas perto de você no BuscaMissa.`,
+          });
           this.form?.patchValue({
             nomeIgreja: igreja.nome,
             nomeParoco: igreja.paroco,
@@ -120,26 +132,25 @@ export class DetailsComponent implements OnInit {
             instagram: this.getSocialMedia(igreja.redesSociais, 2),
             youtube: this.getSocialMedia(igreja.redesSociais, 3),
             tiktok: this.getSocialMedia(igreja.redesSociais, 4),
-            imagem: igreja.imagemUrl, // Se a API retornar a URL da imagem
+            imagem: igreja.imagemUrl,
           });
           this.limparHorarios();
-          igreja.missas?.forEach((missa: any) => {
+          (igreja.missas ?? []).forEach((missa: any) => {
             const horario = missa.horario
               ? this.stringParaDate(missa.horario)
               : null;
             this.horarios.push(
               this.fb.group({
-                id: [missa.id], // Se a missa tiver um ID
+                id: [missa.id],
                 diaSemana: [missa.diaSemana, Validators.required],
-                horario: [
-                  horario,
-                  [Validators.required, this.minutosValidos()],
-                ],
+                horario: [horario, [Validators.required, this.minutosValidos()]],
                 observacao: [missa.observacao],
               })
             );
-            this.horarios.disable();
           });
+          if (this.horarios.length > 0) {
+            this.horarios.disable();
+          }
         } else {
           this._toast.add({
             severity: "error",
@@ -148,10 +159,8 @@ export class DetailsComponent implements OnInit {
           });
           this._router.navigate(['/nova']);
         }
-        this.isLoading = false;
       },
       error: (error) => {
-        this.isLoading = false;
         this._toast.add({
           severity: "error",
           summary: "Erro",
@@ -241,7 +250,7 @@ export class DetailsComponent implements OnInit {
   }
 
   voltar() {
-    this._router.navigate(['/home']);
+    this._location.back();
   }
 
   getFormattedMasses(

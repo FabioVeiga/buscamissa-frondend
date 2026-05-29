@@ -208,11 +208,13 @@ export class ChurchFormComponent implements OnInit, OnChanges {
   }
 
   setDefaultTimeIfNull(control: AbstractControl | null): void {
-    if (control && !control.value) {
-      const defaultTime = new Date();
-      defaultTime.setHours(0, 0, 0, 0);
-      control.setValue(defaultTime);
-    }
+    if (!control) return;
+    const current = control.value;
+    const d = current ? new Date(current) : new Date();
+    const snapped = Math.round(d.getMinutes() / 15) * 15;
+    d.setMinutes(snapped % 60, 0, 0);
+    if (snapped === 60) d.setHours(d.getHours() + 1);
+    control.setValue(d);
   }
 
   // Validador customizado para minutos
