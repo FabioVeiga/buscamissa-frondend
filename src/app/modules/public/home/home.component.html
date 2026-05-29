@@ -87,6 +87,7 @@
         showIcon
         iconDisplay="input"
         [stepMinute]="15"
+        (onFocus)="setDefaultTimeIfNull()"
       />
       <label for="Horario">Horário</label>
     </p-floatlabel>

@@ -103,12 +103,12 @@ export class HomeComponent {
   }
 
   setDefaultTimeIfNull() {
-    const currentValue = this.form.get("Horario")?.value;
-    if (!currentValue) {
-      const defaultTime = new Date();
-      defaultTime.setHours(0, 0, 0, 0);
-      this.form.get("Horario")?.setValue(defaultTime);
-    }
+    const current = this.form.get("Horario")?.value;
+    const d = current ? new Date(current) : new Date();
+    const snapped = Math.round(d.getMinutes() / 15) * 15;
+    d.setMinutes(snapped % 60, 0, 0);
+    if (snapped === 60) d.setHours(d.getHours() + 1);
+    this.form.get("Horario")?.setValue(d);
   }
 
   public getAddress(): void {
