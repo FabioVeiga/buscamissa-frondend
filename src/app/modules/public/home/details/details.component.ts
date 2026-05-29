@@ -1,4 +1,3 @@
-import { routes } from "./../../../../app.routes";
 import { Component, inject, OnInit } from "@angular/core";
 import {
   AbstractControl,
@@ -12,6 +11,7 @@ import {
   Validators,
 } from "@angular/forms";
 import { ChurchesService } from "../../../../core/services/churches.service";
+import { SeoService } from "../../../../core/services/seo.service";
 import { MessageService } from "primeng/api";
 import { PrimeNgModule } from "../../../../shared/primeng.module";
 import { CommonModule } from "@angular/common";
@@ -36,6 +36,7 @@ import { Church } from "../../../../core/interfaces/church.interface";
 export class DetailsComponent implements OnInit {
   _toast = inject(MessageService);
   _church = inject(ChurchesService);
+  _seo = inject(SeoService);
   _route = inject(ActivatedRoute);
   _router = inject(Router);
   form!: FormGroup;
@@ -94,9 +95,13 @@ export class DetailsComponent implements OnInit {
     this.isLoading = true;
     this._church.searchByCEP(cep).subscribe({
       next: (response: any) => {
-        const igreja = response?.data.response; // Ajuste conforme a sua API
+        const igreja = response?.data.response;
         this.churchInfo = igreja;
         if (igreja) {
+          this._seo.update({
+            title: `${igreja.nome} | BuscaMissa`,
+            description: `Veja os horários de missa, endereço e contato de ${igreja.nome}. Encontre missas perto de você no BuscaMissa.`,
+          });
           this.form?.patchValue({
             nomeIgreja: igreja.nome,
             nomeParoco: igreja.paroco,
