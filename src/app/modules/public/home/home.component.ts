@@ -100,6 +100,15 @@ export class HomeComponent {
       Horario: [null],
     });
     this.getAddress();
+
+    // Limpa resultados quando o usuário navega para home sem filtros (ex: clique no logo)
+    this._route.queryParams.subscribe(params => {
+      if (!params['Uf']) {
+        this.churchInfo = [];
+        this.showNoChurchCard = false;
+        this.form.reset();
+      }
+    });
   }
 
   setDefaultTimeIfNull() {
@@ -429,9 +438,9 @@ export class HomeComponent {
       3: '✓ Confirmado',
       2: '~ Não confirmado',
       1: '⚠ Desatualizado',
-      0: '? Sem validação',
+      0: 'Sem validação',
     };
-    return labels[status] ?? '? Sem validação';
+    return labels[status] ?? 'Sem validação';
   }
 
   getConfiancaTooltip(status: number): string {

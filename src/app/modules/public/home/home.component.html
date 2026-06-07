@@ -184,6 +184,21 @@
                   </p-inputgroup>
                 </div>
 
+                <!-- Badge de confiança -->
+                <div class="flex justify-center mt-2">
+                  <span [ngClass]="{
+                    'bg-green-100 text-green-800':   church.statusConfianca === 3,
+                    'bg-yellow-100 text-yellow-800': church.statusConfianca === 2,
+                    'bg-red-100 text-red-800':       church.statusConfianca === 1,
+                    'bg-gray-100 text-gray-500':     !church.statusConfianca || church.statusConfianca === 0
+                  }"
+                    class="text-xs font-semibold px-2 py-1 rounded-full cursor-default"
+                    [pTooltip]="getConfiancaTooltip(church.statusConfianca)"
+                    tooltipPosition="top">
+                    {{ getConfiancaLabel(church.statusConfianca) }}
+                  </span>
+                </div>
+
                 <app-modal
                   [visible]="isModalVisible"
                   (visibleChange)="isModalVisible = $event"
@@ -336,22 +351,9 @@
                 <!-- Detalhes da Igreja -->
                 <div>
                   <div class="text-lg font-bold text-surface-900 dark:text-surface-0">
-                    <div class="flex items-center gap-2 flex-wrap">
-                      <h2 [routerLink]="['/igrejas', church.nomeUnico]" class="church-name-link">
-                        {{ church.nome }}
-                      </h2>
-                      <span [ngClass]="{
-                        'bg-green-100 text-green-800':  church.statusConfianca === 3,
-                        'bg-yellow-100 text-yellow-800': church.statusConfianca === 2,
-                        'bg-red-100 text-red-800':    church.statusConfianca === 1,
-                        'bg-gray-100 text-gray-500':   !church.statusConfianca || church.statusConfianca === 0
-                      }"
-                        class="text-xs font-semibold px-2 py-0.5 rounded-full"
-                        [pTooltip]="getConfiancaTooltip(church.statusConfianca)"
-                        tooltipPosition="top">
-                        {{ getConfiancaLabel(church.statusConfianca) }}
-                      </span>
-                    </div>
+                    <h2 [routerLink]="['/igrejas', church.nomeUnico]" class="church-name-link">
+                      {{ church.nome }}
+                    </h2>
                     <p class="font-medium text-surface-700 dark:text-surface-200">
                       {{ church.paroco }}
                     </p>

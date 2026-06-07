@@ -328,9 +328,9 @@ export class DetailsComponent implements OnInit {
       3: '✓ Confirmado',
       2: '~ Não confirmado',
       1: '⚠ Desatualizado',
-      0: '? Sem validação',
+      0: 'Sem validação',
     };
-    return labels[status] ?? '? Sem validação';
+    return labels[status] ?? 'Sem validação';
   }
 
   getConfiancaTooltip(status: number): string {
