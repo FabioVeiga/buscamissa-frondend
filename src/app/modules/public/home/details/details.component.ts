@@ -46,7 +46,7 @@ export class DetailsComponent implements OnInit {
   _location = inject(Location);
   form!: FormGroup;
   isLoading = false;
-  churchCep: any | null = null;
+  nomeUnico: string | null = null;
   diasSemana = [
     { key: 0, label: "Domingo" },
     { key: 1, label: "Segunda-feira" },
@@ -84,25 +84,23 @@ export class DetailsComponent implements OnInit {
     });
 
     this._route.params.subscribe((params) => {
-      this.churchCep = String(params["cep"]).replace('-', '');
-      if (this.churchCep) {
-        this.loadChurchForEdit(this.churchCep);
-        // this.loadInfo()
+      this.nomeUnico = params["nomeUnico"] ?? null;
+      if (this.nomeUnico) {
+        this.loadChurch(this.nomeUnico);
         this.form.disable();
       } else {
-        this.adicionarHorario(); // Add an initial empty horario for new churches
+        this.adicionarHorario();
       }
     });
   }
 
-  // Função para carregar os dados da igreja para edição
-  loadChurchForEdit(cep: any): void {
+  loadChurch(nomeUnico: string): void {
     this.isLoading = true;
-    this._church.searchByCEP(cep).pipe(
+    this._church.getByNomeUnico(nomeUnico).pipe(
       finalize(() => { this.isLoading = false; })
     ).subscribe({
       next: (response: any) => {
-        const igreja = response?.data.response;
+        const igreja = response?.data?.igreja ?? response?.data;
         this.churchInfo = igreja;
         if (igreja) {
           this._seo.update({
@@ -320,7 +318,28 @@ export class DetailsComponent implements OnInit {
     return "pi pi-globe"; // Ícone padrão caso não encontre
   }
 
-    editChurch(church: Church) {
-      this._router.navigate(["/editar", church.id]);
-    }
+  editChurch(church: Church) {
+    this._router.navigate(["/editar", church.id]);
+  }
+
+  // 0=Desconhecida, 1=Baixa, 2=Media, 3=Alta
+  getConfiancaLabel(status: number): string {
+    const labels: Record<number, string> = {
+      3: '✓ Confirmado',
+      2: '~ Não confirmado',
+      1: '⚠ Desatualizado',
+      0: '? Sem validação',
+    };
+    return labels[status] ?? '? Sem validação';
+  }
+
+  getConfiancaTooltip(status: number): string {
+    const tips: Record<number, string> = {
+      3: 'Horário validado nos últimos 30 dias ou confirmado pela paróquia',
+      2: 'Horário validado entre 30 e 90 dias atrás',
+      1: 'Horário não validado há mais de 90 dias — pode estar desatualizado',
+      0: 'Horário nunca validado — confirme antes de ir',
+    };
+    return tips[status] ?? 'Horário nunca validado — confirme antes de ir';
+  }
 }

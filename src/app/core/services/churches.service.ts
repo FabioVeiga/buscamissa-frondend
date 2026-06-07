@@ -61,4 +61,9 @@ export class ChurchesService {
   getInfo() {
     return this.http.get(`v1/Igreja/infos`);
   }
+
+  /** Busca paróquia pelo slug (nomeUnico) — endpoint público v2 */
+  getByNomeUnico(nomeUnico: string) {
+    return this.http.get(`v2/Igreja/${nomeUnico}`);
+  }
 }

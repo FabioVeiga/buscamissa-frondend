@@ -62,7 +62,21 @@
 
     <!-- Conteúdo -->
     <div class="md:col-span-8">
-      <h2 class="text-2xl font-semibold mb-2">{{ churchInfo?.nome }}</h2>
+      <div class="flex items-center gap-3 flex-wrap mb-2">
+        <h2 class="text-2xl font-semibold">{{ churchInfo?.nome }}</h2>
+        <span *ngIf="churchInfo?.statusConfianca !== undefined"
+          [ngClass]="{
+            'bg-green-100 text-green-800':  churchInfo.statusConfianca === 3,
+            'bg-yellow-100 text-yellow-800': churchInfo.statusConfianca === 2,
+            'bg-red-100 text-red-800':    churchInfo.statusConfianca === 1,
+            'bg-gray-100 text-gray-500':   churchInfo.statusConfianca === 0
+          }"
+          class="text-xs font-semibold px-2 py-1 rounded-full"
+          [pTooltip]="getConfiancaTooltip(churchInfo.statusConfianca)"
+          tooltipPosition="top">
+          {{ getConfiancaLabel(churchInfo.statusConfianca) }}
+        </span>
+      </div>
       <hr />
       <h4 class="text-2xl text-gray-500 mb-4">{{ churchInfo?.paroco }}</h4>
 
