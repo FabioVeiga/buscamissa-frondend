@@ -1,144 +1,172 @@
 <p-toast></p-toast>
-<div class="hero">
-  <h1></h1>
-  <p></p>
-</div>
+<div class="hero"><h1></h1><p></p></div>
+
 <p-panel class="p-1" header="Detalhes da igreja">
 
-  <!-- Skeleton enquanto carrega -->
+  <!-- Skeleton -->
   <div *ngIf="isLoading" class="grid grid-cols-1 md:grid-cols-12 gap-6 p-4">
-    <div class="md:col-span-4">
+    <div class="md:col-span-3">
       <p-skeleton height="20rem" borderRadius="8px"></p-skeleton>
-      <p-skeleton height="1.5rem" width="60%" class="mt-4 mx-auto block"></p-skeleton>
     </div>
-    <div class="md:col-span-8 flex flex-col gap-3">
-      <p-skeleton height="2rem" width="50%"></p-skeleton>
-      <p-skeleton height="1rem" width="30%"></p-skeleton>
-      <p-skeleton height="1rem" width="70%"></p-skeleton>
-      <p-skeleton height="1rem" width="55%"></p-skeleton>
-      <p-divider></p-divider>
-      <p-skeleton height="1rem" width="40%"></p-skeleton>
-      <p-skeleton height="1rem" width="60%"></p-skeleton>
+    <div class="md:col-span-6 flex flex-col gap-3">
+      <p-skeleton height="2rem" width="60%"></p-skeleton>
+      <p-skeleton height="1rem" width="80%"></p-skeleton>
       <p-skeleton height="1rem" width="50%"></p-skeleton>
+      <p-divider></p-divider>
+      <p-skeleton height="1rem" *ngFor="let i of [1,2,3,4,5,6]" width="70%"></p-skeleton>
+    </div>
+    <div class="md:col-span-3">
+      <p-skeleton height="12rem" borderRadius="8px"></p-skeleton>
     </div>
   </div>
 
-  <!-- Conteúdo após carregamento -->
+  <!-- Conteúdo principal -->
   <div *ngIf="!isLoading && churchInfo" class="grid grid-cols-1 md:grid-cols-12 gap-6 p-4">
-    <!-- Imagem lateral -->
-    <div class="md:col-span-4">
-      <div
-        class="bg-surface-50 flex justify-center items-center rounded p-4 h-full"
-      >
-        <div class="relative w-full">
-          <div
-            class="w-full h-120 bg-cover bg-center rounded shadow"
-            [style.background-image]="
-              'url(\'' +
-              (!churchInfo?.imagemUrl
-                ? '/assets/church/naodisponivel.png'
-                : churchInfo?.imagemUrl) +
-              '\')'
-            "
-          ></div>
 
-          <!-- Redes Sociais -->
-          <div
-            *ngIf="churchInfo?.redesSociais?.length"
-            class="flex justify-center mt-4"
-          >
-            <a
-              *ngFor="let rede of churchInfo.redesSociais"
-              [href]="rede.url"
-              target="_blank"
-              class="mx-2 text-xl"
-            >
-              <i [ngClass]="getSocialIcon(rede.url)"></i>
-            </a>
-          </div>
+    <!-- Col 1: Imagem + botões -->
+    <div class="md:col-span-3 flex flex-col gap-4">
+      <div
+        class="w-full h-64 bg-cover bg-center rounded-lg shadow"
+        [style.background-image]="'url(\'' + (!churchInfo?.imagemUrl ? '/assets/church/naodisponivel.png' : churchInfo?.imagemUrl) + '\')'"
+      ></div>
+
+      <div *ngIf="churchInfo?.redesSociais?.length" class="flex justify-center gap-3">
+        <a *ngFor="let rede of churchInfo.redesSociais" [href]="rede.url" target="_blank" class="text-xl text-gray-600 hover:text-gray-900">
+          <i [ngClass]="getSocialIcon(rede.url)"></i>
+        </a>
+      </div>
+
+      <button pButton icon="pi pi-pencil" label="Editar" class="w-full p-button-outlined p-button-sm" (click)="editChurch(churchInfo)"></button>
+    </div>
+
+    <!-- Col 2: Nome, endereço, horários -->
+    <div class="md:col-span-6">
+      <h2 class="text-2xl font-bold text-gray-900 mb-1">{{ churchInfo?.nome }}</h2>
+      <h4 class="text-base text-gray-500 mb-3">{{ churchInfo?.paroco }}</h4>
+
+      <p class="flex items-start gap-1 text-gray-700 text-sm mb-1">
+        <i class="pi pi-map-marker mt-0.5 text-gray-400"></i>
+        {{ churchInfo?.endereco?.logradouro }},
+        {{ churchInfo?.endereco?.numero === 0 ? 'S/N' : churchInfo?.endereco?.numero }} -
+        {{ churchInfo?.endereco?.bairro }},
+        {{ churchInfo?.endereco?.localidade }}/{{ churchInfo?.endereco?.uf }}
+      </p>
+      <p *ngIf="churchInfo?.endereco?.complemento" class="text-gray-500 text-sm mb-2 ml-5">{{ churchInfo.endereco.complemento }}</p>
+
+      <p *ngIf="churchInfo?.contato?.telefone || churchInfo?.contato?.telefoneWhatsApp" class="text-gray-700 text-sm mb-3">
+        <strong>Tel:</strong> ({{ churchInfo?.contato?.ddd }}) {{ churchInfo?.contato?.telefone }}
+        <ng-container *ngIf="churchInfo?.contato?.telefoneWhatsApp">
+          &nbsp;·&nbsp;<strong>WhatsApp:</strong> ({{ churchInfo?.contato?.dddWhatsApp }}) {{ churchInfo?.contato?.telefoneWhatsApp }}
+        </ng-container>
+      </p>
+
+      <p-divider></p-divider>
+
+      <!-- Horários das Missas -->
+      <div *ngIf="churchInfo?.missas?.length" class="mt-3">
+        <h3 class="flex items-center gap-2 text-base font-semibold text-gray-800 mb-3">
+          <i class="pi pi-clock text-gray-500"></i> Horários das Missas
+        </h3>
+        <table class="w-full text-sm">
+          <tbody>
+            <tr *ngFor="let mass of getFormattedMasses(churchInfo?.missas)" class="border-b border-gray-100 last:border-0">
+              <td class="py-2 font-medium text-gray-700 w-40">{{ mass.diaLabel }}:</td>
+              <td class="py-2 text-gray-600">{{ mass.horarios }}</td>
+              <td class="py-2 text-right">
+                <i *ngIf="mass.observacao && mass.observacao !== 'Sem observação'"
+                   class="pi pi-info-circle text-blue-400 cursor-pointer"
+                   [pTooltip]="mass.observacao" tooltipPosition="top"></i>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Col 3: Card de confiança -->
+    <div class="md:col-span-3">
+      <div class="border border-gray-200 rounded-xl p-4 bg-white shadow-sm" *ngIf="churchInfo?.missas?.length">
+        <!-- Título -->
+        <div class="flex items-center gap-2 mb-3">
+          <span [ngClass]="getConfiancaIconClass(getBestMissa(churchInfo.missas))"
+                class="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm">
+            <i [ngClass]="getConfiancaIcon(getBestMissa(churchInfo.missas))"></i>
+          </span>
+          <span class="font-semibold text-gray-800 text-sm">Informações das missas</span>
+        </div>
+
+        <!-- Status -->
+        <div class="flex items-center gap-2 mb-2">
+          <span [ngClass]="getConfiancaDotClass(getBestMissa(churchInfo.missas))"
+                class="w-2.5 h-2.5 rounded-full flex-shrink-0"></span>
+          <span [ngClass]="getConfiancaTextClass(getBestMissa(churchInfo.missas))"
+                class="text-sm font-semibold">
+            {{ getBestMissa(churchInfo.missas)?.nivelConfianca ?? 'Horário não confirmado' }}
+          </span>
+        </div>
+
+        <!-- Descrição -->
+        <p class="text-xs text-gray-500 mb-3">
+          {{ getBestMissa(churchInfo.missas)?.descricaoConfianca ?? 'Essas informações podem estar desatualizadas.' }}
+        </p>
+
+        <!-- Fonte -->
+        <div *ngIf="getBestMissa(churchInfo.missas)?.fonteLabel" class="text-xs text-gray-600 mb-1">
+          <span class="text-gray-400">Fonte: </span>
+          <span class="text-green-600 font-medium">{{ getBestMissa(churchInfo.missas)?.fonteLabel }}</span>
+        </div>
+
+        <!-- Última validação -->
+        <div *ngIf="getUltimaValidacao(churchInfo.missas)" class="text-xs text-gray-500">
+          Última validação:
+          <strong>{{ getUltimaValidacao(churchInfo.missas) | date:'dd/MM/yyyy' }}</strong>
+          <i class="pi pi-info-circle ml-1 text-gray-300 cursor-pointer"
+             pTooltip="Data em que os horários foram confirmados" tooltipPosition="top"></i>
         </div>
       </div>
     </div>
+  </div>
 
-    <!-- Conteúdo -->
-    <div class="md:col-span-8">
-      <div class="flex items-center gap-3 flex-wrap mb-2">
-        <h2 class="text-2xl font-semibold">{{ churchInfo?.nome }}</h2>
-        <span *ngIf="churchInfo?.statusConfianca !== undefined"
-          [ngClass]="{
-            'bg-green-100 text-green-800':  churchInfo.statusConfianca === 3,
-            'bg-yellow-100 text-yellow-800': churchInfo.statusConfianca === 2,
-            'bg-red-100 text-red-800':    churchInfo.statusConfianca === 1,
-            'bg-gray-100 text-gray-500':   churchInfo.statusConfianca === 0
-          }"
-          class="text-xs font-semibold px-2 py-1 rounded-full"
-          [pTooltip]="getConfiancaTooltip(churchInfo.statusConfianca)"
-          tooltipPosition="top">
-          {{ getConfiancaLabel(churchInfo.statusConfianca) }}
-        </span>
+  <!-- Seção de crowdsourcing -->
+  <div *ngIf="!isLoading && churchInfo" class="mx-4 mt-2 mb-4 border border-gray-200 rounded-xl p-4 bg-gray-50">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+      <div class="flex items-start gap-3">
+        <i class="pi pi-users text-2xl text-gray-400 mt-0.5"></i>
+        <div>
+          <p class="font-semibold text-gray-800 text-sm">Nos ajude a manter essas informações atualizadas!</p>
+          <p class="text-gray-500 text-xs mt-0.5">Os horários das missas continuam corretos?</p>
+        </div>
       </div>
-      <hr />
-      <h4 class="text-2xl text-gray-500 mb-4">{{ churchInfo?.paroco }}</h4>
-
-      <p class="text-gray-700 mb-2">
-        {{ churchInfo?.endereco?.logradouro }},
-        {{ churchInfo?.endereco?.numero === 0 ? 'S/N' : churchInfo?.endereco?.numero }} - {{ churchInfo?.endereco?.bairro }},
-        {{ churchInfo?.endereco?.localidade }}/{{ churchInfo?.endereco?.uf }}
-      </p>
-      <p>{{churchInfo.endereco.complemento}}</p>
-
-      <p *ngIf="churchInfo?.contato?.telefone || churchInfo?.contato?.telefoneWhatsApp" class="text-gray-700 mb-2">
-        <strong>Telefone:</strong> ({{ churchInfo?.contato?.ddd }}) {{ churchInfo?.contato?.telefone }}
-        <ng-container *ngIf="churchInfo?.contato?.telefoneWhatsApp">
-          / <strong>WhatsApp:</strong> ({{ churchInfo?.contato?.dddWhatsApp }}) {{ churchInfo?.contato?.telefoneWhatsApp }}
-        </ng-container>
-        <ng-container *ngIf="churchInfo?.contato?.emailContato">
-          / <strong>E-mail para contato:</strong> {{ churchInfo?.contato?.emailContato }}
-        </ng-container>
-      </p>
-
-      <p-divider></p-divider>
-
-      <div *ngIf="churchInfo?.missas?.length" class="mt-4">
-        <h3 class="text-lg font-medium mb-2">Horários das Missas</h3>
-        <ul class="list-none list-inside space-y-1">
-          <li *ngFor="let mass of getFormattedMasses(churchInfo?.missas)">
-            {{ mass.horario }}
-            <i
-              *ngIf="mass.observacao && mass.observacao !== 'Sem observação'"
-              class="pi pi-info-circle text-blue-500 ml-2 cursor-pointer"
-              pTooltip="{{ mass.observacao }}"
-              tooltipPosition="top"
-            ></i>
-          </li>
-        </ul>
+      <div class="flex flex-col items-end gap-2">
+        <div class="flex gap-2">
+          <button pButton icon="pi pi-thumbs-up" label="Sim, estão corretos"
+            class="p-button-success p-button-outlined p-button-sm"
+            (click)="confirmarHorarios()"></button>
+          <button pButton icon="pi pi-thumbs-down" label="Não, informar erro"
+            class="p-button-danger p-button-outlined p-button-sm"
+            (click)="reportarErro()"></button>
+        </div>
+        <p class="text-xs text-gray-400">Sua resposta ajuda outras pessoas da comunidade.</p>
       </div>
     </div>
   </div>
 
-  <!-- Botões de Ação -->
-  <div *ngIf="!isLoading && churchInfo" class="flex justify-between items-center mt-6 px-4">
-    <button
-      pButton
-      type="button"
-      icon="pi pi-arrow-left"
-      label="Voltar"
-      class="p-button-text text-primary"
-      (click)="voltar()"
-    ></button>
+  <!-- Disclaimer -->
+  <div *ngIf="!isLoading && churchInfo" class="mx-4 mb-4 flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 text-xs text-blue-700">
+    <i class="pi pi-info-circle mt-0.5 flex-shrink-0"></i>
+    <span>Horários sujeitos a alterações. Recomendamos confirmar com a secretaria da paróquia.</span>
+  </div>
 
+  <!-- Botões de navegação -->
+  <div *ngIf="!isLoading && churchInfo" class="flex justify-between items-center px-4 pb-4">
+    <button pButton type="button" icon="pi pi-arrow-left" label="Voltar"
+      class="p-button-text text-primary" (click)="voltar()"></button>
     <share-buttons
       [include]="['whatsapp', 'email', 'copy']"
       [show]="4"
       [showText]="false"
-      [url]="'https://buscamissa.com.br/detalhes/' + churchInfo?.endereco?.cep?.replace('-', '')"
-    ></share-buttons>
-    <button
-    pButton
-    icon="pi pi-pencil"
-    size="small"
-    label="Editar"
-    (click)="editChurch(churchInfo)"
-  ></button>
+      [url]="'https://buscamissa.com.br/igrejas/' + churchInfo?.nomeUnico">
+    </share-buttons>
   </div>
+
 </p-panel>
