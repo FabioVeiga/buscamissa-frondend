@@ -76,18 +76,6 @@ export class ChurchesService {
     });
   }
 
-  /** Reporta erro nos horários de uma paróquia */
-  reportarHorario(igrejaId: number, body: {
-    motivos: number;
-    descricao?: string;
-    fonteInformacao?: string;
-  }) {
-    return this.http.post(`v2/Confiabilidade/${igrejaId}/reportar`, {
-      fingerprint: this.gerarFingerprint(),
-      ...body
-    });
-  }
-
   /** Gera fingerprint a partir de características do browser */
   gerarFingerprint(): string {
     const data = [
