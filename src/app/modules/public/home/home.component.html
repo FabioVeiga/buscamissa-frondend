@@ -184,6 +184,7 @@
                   </p-inputgroup>
                 </div>
 
+
                 <app-modal
                   [visible]="isModalVisible"
                   (visibleChange)="isModalVisible = $event"
@@ -335,15 +336,11 @@
               >
                 <!-- Detalhes da Igreja -->
                 <div>
-                  <div
-                    class="text-lg font-bold text-surface-900 dark:text-surface-0"
-                  >
-                    <h2 [routerLink]="['/detalhes', church.endereco.cep]">
+                  <div class="text-lg font-bold text-surface-900 dark:text-surface-0">
+                    <h2 [routerLink]="['/igrejas', church.nomeUnico]" class="church-name-link">
                       {{ church.nome }}
                     </h2>
-                    <p
-                      class="font-medium text-surface-700 dark:text-surface-200"
-                    >
+                    <p class="font-medium text-surface-700 dark:text-surface-200">
                       {{ church.paroco }}
                     </p>
                   </div>

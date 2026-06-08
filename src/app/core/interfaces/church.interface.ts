@@ -11,13 +11,17 @@ export interface FilterSearchChurch {
   "Paginacao.PageSize": number;
 }
 
+export type StatusConfianca = 'Alta' | 'Media' | 'Baixa' | 'Desconhecida';
+
 export interface Church {
   id?: number;
+  nomeUnico?: string;
   nome: string;
   paroco: string;
   imagem?: string;
   missas: Mass[];
   endereco: Address;
+  statusConfianca?: StatusConfianca;
 }
 
 export interface UpdateChurch {
@@ -33,6 +37,14 @@ export interface Mass {
   diaSemana?: number;
   horario: string;
   observacao?: string;
+  // Confiança (preenchida pelo backend)
+  fontePrincipal?: number;
+  ultimaValidacao?: string | null;
+  scoreConfianca?: number;
+  statusConfianca?: number;
+  nivelConfianca?: string;
+  fonteLabel?: string;
+  descricaoConfianca?: string;
 }
 
 export interface Address {
