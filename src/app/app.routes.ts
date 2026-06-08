@@ -42,7 +42,7 @@ export const routes: Routes = [
           ).then((m) => m.ChurchEditPageComponent),
       },
       {
-        path: "detalhes/:cep",
+        path: "igrejas/:nomeUnico",
         data: {
           title: 'Detalhes da Igreja | BuscaMissa',
           description: 'Veja os horários de missa, endereço e contato desta paróquia ou comunidade católica.',
@@ -51,6 +51,12 @@ export const routes: Routes = [
           import("./modules/public/home/details/details.component").then(
             (m) => m.DetailsComponent
           ),
+      },
+      // Redirect da rota antiga para manter links existentes funcionando
+      {
+        path: "detalhes/:cep",
+        redirectTo: "home",
+        pathMatch: "full"
       },
       {
         path: "enviar-codigo/:controleId",

@@ -46,7 +46,11 @@ export class DetailsComponent implements OnInit {
   _location = inject(Location);
   form!: FormGroup;
   isLoading = false;
-  churchCep: any | null = null;
+  nomeUnico: string | null = null;
+
+  // ── Confirmação ────────────────────────────────────────────────────────────
+  confirmacaoEnviada = false;
+  confirmandoHorarios = false;
   diasSemana = [
     { key: 0, label: "Domingo" },
     { key: 1, label: "Segunda-feira" },
@@ -84,25 +88,23 @@ export class DetailsComponent implements OnInit {
     });
 
     this._route.params.subscribe((params) => {
-      this.churchCep = String(params["cep"]).replace('-', '');
-      if (this.churchCep) {
-        this.loadChurchForEdit(this.churchCep);
-        // this.loadInfo()
+      this.nomeUnico = params["nomeUnico"] ?? null;
+      if (this.nomeUnico) {
+        this.loadChurch(this.nomeUnico);
         this.form.disable();
       } else {
-        this.adicionarHorario(); // Add an initial empty horario for new churches
+        this.adicionarHorario();
       }
     });
   }
 
-  // Função para carregar os dados da igreja para edição
-  loadChurchForEdit(cep: any): void {
+  loadChurch(nomeUnico: string): void {
     this.isLoading = true;
-    this._church.searchByCEP(cep).pipe(
+    this._church.getByNomeUnico(nomeUnico).pipe(
       finalize(() => { this.isLoading = false; })
     ).subscribe({
       next: (response: any) => {
-        const igreja = response?.data.response;
+        const igreja = response?.data?.igreja ?? response?.data;
         this.churchInfo = igreja;
         if (igreja) {
           this._seo.update({
@@ -253,74 +255,127 @@ export class DetailsComponent implements OnInit {
     this._location.back();
   }
 
-  getFormattedMasses(
-    missas: Mass[]
-  ): { horario: string; observacao: string }[] {
-    const daysOfWeek = [
-      "Domingo",
-      "Segunda-feira",
-      "Terça-feira",
-      "Quarta-feira",
-      "Quinta-feira",
-      "Sexta-feira",
-      "Sábado",
-    ];
-  
-    const groupedMasses: { [key: number]: Mass[] } = {};
-    missas.forEach((missa) => {
-      if (missa.diaSemana !== undefined) {
-        if (!groupedMasses[missa.diaSemana]) {
-          groupedMasses[missa.diaSemana] = [];
-        }
-        groupedMasses[missa.diaSemana].push(missa);
+  getFormattedMasses(missas: Mass[]): { diaLabel: string; horarios: string; observacao: string }[] {
+    const days = ["Domingo","Segunda-feira","Terça-feira","Quarta-feira","Quinta-feira","Sexta-feira","Sábado"];
+    const grouped: { [key: number]: Mass[] } = {};
+    missas.forEach(m => {
+      if (m.diaSemana !== undefined) {
+        grouped[m.diaSemana] = grouped[m.diaSemana] || [];
+        grouped[m.diaSemana].push(m);
       }
     });
-  
-    const formattedMasses: { horario: string; observacao: string }[] = [];
-    for (const dayIndex in groupedMasses) {
-      if (groupedMasses.hasOwnProperty(dayIndex)) {
-        const day = daysOfWeek[parseInt(dayIndex, 10)];
-        const massesOnDay = groupedMasses[dayIndex];
-  
-        const times = massesOnDay
-          .map((missa) => this.formatTime(missa.horario))
+    return Object.keys(grouped)
+      .map(Number)
+      .sort((a, b) => a - b)
+      .map(day => {
+        const ms = grouped[day];
+        const horarios = ms
+          .map(m => this.formatTime(m.horario))
           .sort((a, b) => {
-            // Ordena por hora real
-            const [h1, m1] = a.split(":").map(Number);
-            const [h2, m2] = b.split(":").map(Number);
+            const [h1, m1] = a.split(':').map(Number);
+            const [h2, m2] = b.split(':').map(Number);
             return h1 - h2 || m1 - m2;
-          });
-  
-        const horarioFormatado = `${day}: ${times.join(", ")}`;
-  
-        const observacao = massesOnDay[0]?.observacao || "Sem observação";
-  
-        formattedMasses.push({
-          horario: horarioFormatado,
-          observacao: observacao,
-        });
-      }
-    }
-  
-    return formattedMasses;
+          })
+          .join(', ');
+        return { diaLabel: days[day], horarios, observacao: ms[0]?.observacao || 'Sem observação' };
+      });
   }
-  
 
-  formatTime(timeString: string): string {
-    const [hours, minutes] = timeString.split(":");
-    return `${parseInt(hours, 10)}:${minutes}`;
+  formatTime(t: string): string {
+    const [h, m] = t.split(':');
+    return `${parseInt(h, 10)}:${m}`;
   }
-  
+
   getSocialIcon(url: string): string {
-    if (url.includes("facebook.com")) return "pi pi-facebook";
-    if (url.includes("instagram.com")) return "pi pi-instagram";
-    if (url.includes("youtube.com")) return "pi pi-youtube";
-    if (url.includes("tiktok.com")) return "pi pi-tiktok";
-
-    return "pi pi-globe"; // Ícone padrão caso não encontre
+    if (url.includes('facebook.com')) return 'pi pi-facebook';
+    if (url.includes('instagram.com')) return 'pi pi-instagram';
+    if (url.includes('youtube.com')) return 'pi pi-youtube';
+    if (url.includes('tiktok.com')) return 'pi pi-tiktok';
+    return 'pi pi-globe';
   }
 
-    editChurch(church: Church) {
-      this._router.navigate(["/editar", church.id]);
+  editChurch(church: any) {
+    this._router.navigate(['/editar', church.id]);
+  }
+
+  confirmarHorarios() {
+    if (!this.churchInfo?.id) return;
+
+    // Dedup local: evita chamada dupla sem recarregar a página
+    const localKey = `buscamissa_confirmacao_${this.churchInfo.id}`;
+    if (localStorage.getItem(localKey)) {
+      this._toast.add({ severity: 'info', summary: 'Já confirmado', detail: 'Você já confirmou os horários desta paróquia.' });
+      return;
     }
+
+    this.confirmandoHorarios = true;
+    this._church.confirmarHorarios(this.churchInfo.id).subscribe({
+      next: () => {
+        localStorage.setItem(localKey, '1');
+        this.confirmacaoEnviada = true;
+        this._toast.add({ severity: 'success', summary: 'Obrigado!', detail: 'Sua confirmação ajuda outras pessoas da comunidade.' });
+      },
+      error: (err) => {
+        if (err.status === 409) {
+          localStorage.setItem(localKey, '1');
+          this.confirmacaoEnviada = true;
+          this._toast.add({ severity: 'info', summary: 'Já registrado', detail: 'Você já confirmou os horários desta paróquia.' });
+        } else {
+          this._toast.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível enviar sua confirmação. Tente novamente.' });
+        }
+      },
+      complete: () => { this.confirmandoHorarios = false; }
+    });
+  }
+
+  reportarErro() {
+    if (this.churchInfo?.id) {
+      this._router.navigate(['/editar', this.churchInfo.id]);
+    }
+  }
+
+  jaConfirmou(): boolean {
+    if (!this.churchInfo?.id) return false;
+    return !!localStorage.getItem(`buscamissa_confirmacao_${this.churchInfo.id}`);
+  }
+
+  // ── Helpers do card de confiança ──────────────────────────────────────────
+
+  /** Retorna a missa com maior score de confiança */
+  getBestMissa(missas: Mass[]): Mass | null {
+    if (!missas?.length) return null;
+    return missas.reduce((best, m) =>
+      (m.scoreConfianca ?? 0) > (best.scoreConfianca ?? 0) ? m : best
+    );
+  }
+
+  /** Retorna a data de última validação mais recente */
+  getUltimaValidacao(missas: Mass[]): string | null {
+    if (!missas?.length) return null;
+    const datas = missas
+      .filter(m => m.ultimaValidacao)
+      .map(m => new Date(m.ultimaValidacao!));
+    if (!datas.length) return null;
+    return datas.reduce((a, b) => (a > b ? a : b)).toISOString();
+  }
+
+  getConfiancaDotClass(missa: Mass | null): string {
+    const s = missa?.statusConfianca ?? 0;
+    return s === 3 ? 'bg-green-500' : s === 2 ? 'bg-yellow-500' : s === 1 ? 'bg-orange-500' : 'bg-red-400';
+  }
+
+  getConfiancaIconClass(missa: Mass | null): string {
+    const s = missa?.statusConfianca ?? 0;
+    return s === 3 ? 'bg-green-500' : s === 2 ? 'bg-yellow-500' : s === 1 ? 'bg-orange-500' : 'bg-gray-400';
+  }
+
+  getConfiancaIcon(missa: Mass | null): string {
+    const s = missa?.statusConfianca ?? 0;
+    return s === 3 ? 'pi pi-check' : s === 2 ? 'pi pi-clock' : s === 1 ? 'pi pi-exclamation-triangle' : 'pi pi-question';
+  }
+
+  getConfiancaTextClass(missa: Mass | null): string {
+    const s = missa?.statusConfianca ?? 0;
+    return s === 3 ? 'text-green-700' : s === 2 ? 'text-yellow-700' : s === 1 ? 'text-orange-700' : 'text-red-600';
+  }
 }

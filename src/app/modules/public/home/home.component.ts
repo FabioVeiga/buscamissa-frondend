@@ -100,6 +100,15 @@ export class HomeComponent {
       Horario: [null],
     });
     this.getAddress();
+
+    // Limpa resultados quando o usuário navega para home sem filtros (ex: clique no logo)
+    this._route.queryParams.subscribe(params => {
+      if (!params['Uf']) {
+        this.churchInfo = [];
+        this.showNoChurchCard = false;
+        this.form.reset();
+      }
+    });
   }
 
   setDefaultTimeIfNull() {
@@ -420,7 +429,27 @@ export class HomeComponent {
     if (url.includes("instagram.com")) return "pi pi-instagram";
     if (url.includes("youtube.com")) return "pi pi-youtube";
     if (url.includes("tiktok.com")) return "pi pi-tiktok";
+    return "pi pi-globe";
+  }
 
-    return "pi pi-globe"; // Ícone padrão caso não encontre
+  // 0=Desconhecida, 1=Baixa, 2=Media, 3=Alta
+  getConfiancaLabel(status: number): string {
+    const labels: Record<number, string> = {
+      3: '✓ Confirmado',
+      2: '~ Não confirmado',
+      1: '⚠ Desatualizado',
+      0: 'Sem validação',
+    };
+    return labels[status] ?? 'Sem validação';
+  }
+
+  getConfiancaTooltip(status: number): string {
+    const tips: Record<number, string> = {
+      3: 'Horário validado nos últimos 30 dias ou confirmado pela paróquia',
+      2: 'Horário validado entre 30 e 90 dias atrás',
+      1: 'Horário não validado há mais de 90 dias — pode estar desatualizado',
+      0: 'Horário nunca validado — confirme antes de ir',
+    };
+    return tips[status] ?? 'Horário nunca validado — confirme antes de ir';
   }
 }

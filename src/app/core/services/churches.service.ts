@@ -61,4 +61,36 @@ export class ChurchesService {
   getInfo() {
     return this.http.get(`v1/Igreja/infos`);
   }
+
+  /** Busca paróquia pelo slug (nomeUnico) — endpoint público v2 */
+  getByNomeUnico(nomeUnico: string) {
+    return this.http.get(`v2/Igreja/${nomeUnico}`);
+  }
+
+  // ── Confiabilidade de Horários ─────────────────────────────────────────────
+
+  /** Confirma que os horários de uma paróquia estão corretos */
+  confirmarHorarios(igrejaId: number) {
+    return this.http.post(`v2/Confiabilidade/${igrejaId}/confirmar`, {
+      fingerprint: this.gerarFingerprint()
+    });
+  }
+
+  /** Gera fingerprint a partir de características do browser */
+  gerarFingerprint(): string {
+    const data = [
+      navigator.userAgent,
+      navigator.language,
+      screen.width.toString(),
+      screen.height.toString(),
+      new Date().getTimezoneOffset().toString(),
+      (navigator as any).hardwareConcurrency?.toString() ?? ''
+    ].join('|');
+    let hash = 0;
+    for (let i = 0; i < data.length; i++) {
+      hash = ((hash << 5) - hash) + data.charCodeAt(i);
+      hash |= 0;
+    }
+    return Math.abs(hash).toString(16).padStart(8, '0') + Date.now().toString(36);
+  }
 }

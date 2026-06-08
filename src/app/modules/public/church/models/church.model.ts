@@ -5,6 +5,14 @@ export interface Mass {
   diaSemana?: number;
   horario: string;
   observacao?: string;
+  // Confiança (preenchida pelo backend)
+  fontePrincipal?: number;
+  ultimaValidacao?: string | null;
+  scoreConfianca?: number;
+  statusConfianca?: number;
+  nivelConfianca?: string;
+  fonteLabel?: string;
+  descricaoConfianca?: string;
 }
 
 export interface Address {
