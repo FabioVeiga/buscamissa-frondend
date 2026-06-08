@@ -139,17 +139,159 @@
       </div>
       <div class="flex flex-col items-end gap-2">
         <div class="flex gap-2">
-          <button pButton icon="pi pi-thumbs-up" label="Sim, estão corretos"
+          <!-- Botão confirmar -->
+          <button pButton
+            [icon]="confirmacaoEnviada || jaConfirmou() ? 'pi pi-check' : 'pi pi-thumbs-up'"
+            [label]="confirmacaoEnviada || jaConfirmou() ? 'Confirmado!' : 'Sim, estão corretos'"
+            [disabled]="confirmacaoEnviada || jaConfirmou() || confirmandoHorarios"
+            [loading]="confirmandoHorarios"
             class="p-button-success p-button-outlined p-button-sm"
-            (click)="confirmarHorarios()"></button>
-          <button pButton icon="pi pi-thumbs-down" label="Não, informar erro"
+            (click)="confirmarHorarios()">
+          </button>
+          <!-- Botão reportar -->
+          <button pButton
+            icon="pi pi-thumbs-down"
+            label="Não, informar erro"
             class="p-button-danger p-button-outlined p-button-sm"
-            (click)="reportarErro()"></button>
+            (click)="reportarErro()">
+          </button>
         </div>
         <p class="text-xs text-gray-400">Sua resposta ajuda outras pessoas da comunidade.</p>
       </div>
     </div>
   </div>
+
+  <!-- Modal de reporte de erro -->
+  <p-dialog
+    [(visible)]="modalReporteVisivel"
+    [modal]="true"
+    [draggable]="false"
+    [resizable]="false"
+    [style]="{ width: '580px', maxWidth: '95vw' }"
+    (onHide)="fecharModalReporte()">
+
+    <!-- Header customizado -->
+    <ng-template pTemplate="header">
+      <div class="flex items-center gap-3">
+        <span class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+          <i class="pi pi-thumbs-down text-red-500 text-lg"></i>
+        </span>
+        <div>
+          <p class="font-bold text-gray-900 text-base">Informar erro nos horários</p>
+          <p class="text-gray-500 text-xs">Obrigado por nos ajudar a manter as informações atualizadas!</p>
+        </div>
+      </div>
+    </ng-template>
+
+    <!-- Corpo do modal -->
+    <div class="flex flex-col gap-5 py-2">
+
+      <!-- O que está incorreto? -->
+      <div>
+        <p class="font-semibold text-gray-900 text-sm mb-1">O que está incorreto?</p>
+        <p class="text-gray-400 text-xs mb-3">Selecione todas as opções que se aplicam.</p>
+        <div class="grid grid-cols-2 gap-2">
+
+          <!-- Horário incorreto -->
+          <label class="flex items-center justify-between gap-3 border rounded-lg p-3 cursor-pointer transition-colors"
+            [ngClass]="motivoHorarioIncorreto ? 'border-red-400 bg-red-50' : 'border-gray-200 hover:bg-gray-50'">
+            <div class="flex items-center gap-3">
+              <i class="pi pi-clock text-gray-400 text-lg"></i>
+              <div>
+                <p class="text-sm font-medium text-gray-800">Horário incorreto</p>
+                <p class="text-xs text-gray-400">Um ou mais horários estão errados.</p>
+              </div>
+            </div>
+            <p-checkbox [(ngModel)]="motivoHorarioIncorreto" [binary]="true"></p-checkbox>
+          </label>
+
+          <!-- Missa não ocorre mais -->
+          <label class="flex items-center justify-between gap-3 border rounded-lg p-3 cursor-pointer transition-colors"
+            [ngClass]="motivoMissaNaoOcorre ? 'border-red-400 bg-red-50' : 'border-gray-200 hover:bg-gray-50'">
+            <div class="flex items-center gap-3">
+              <i class="pi pi-calendar-times text-gray-400 text-lg"></i>
+              <div>
+                <p class="text-sm font-medium text-gray-800">Missa não ocorre mais</p>
+                <p class="text-xs text-gray-400">Este horário ou dia não existe mais.</p>
+              </div>
+            </div>
+            <p-checkbox [(ngModel)]="motivoMissaNaoOcorre" [binary]="true"></p-checkbox>
+          </label>
+
+          <!-- Informação desatualizada -->
+          <label class="flex items-center justify-between gap-3 border rounded-lg p-3 cursor-pointer transition-colors"
+            [ngClass]="motivoDesatualizado ? 'border-red-400 bg-red-50' : 'border-gray-200 hover:bg-gray-50'">
+            <div class="flex items-center gap-3">
+              <i class="pi pi-history text-gray-400 text-lg"></i>
+              <div>
+                <p class="text-sm font-medium text-gray-800">Informação desatualizada</p>
+                <p class="text-xs text-gray-400">Os horários mudaram.</p>
+              </div>
+            </div>
+            <p-checkbox [(ngModel)]="motivoDesatualizado" [binary]="true"></p-checkbox>
+          </label>
+
+          <!-- Outro motivo -->
+          <label class="flex items-center justify-between gap-3 border rounded-lg p-3 cursor-pointer transition-colors"
+            [ngClass]="motivoOutro ? 'border-red-400 bg-red-50' : 'border-gray-200 hover:bg-gray-50'">
+            <div class="flex items-center gap-3">
+              <i class="pi pi-info-circle text-gray-400 text-lg"></i>
+              <div>
+                <p class="text-sm font-medium text-gray-800">Outro motivo</p>
+                <p class="text-xs text-gray-400">Quero informar algo diferente.</p>
+              </div>
+            </div>
+            <p-checkbox [(ngModel)]="motivoOutro" [binary]="true"></p-checkbox>
+          </label>
+
+        </div>
+      </div>
+
+      <!-- Como está correto? -->
+      <div>
+        <p class="font-semibold text-gray-900 text-sm mb-1">Como está correto?</p>
+        <p class="text-gray-400 text-xs mb-2">Informe os horários corretos ou detalhes adicionais.</p>
+        <textarea pTextarea
+          [(ngModel)]="reporteDescricao"
+          rows="3"
+          class="w-full text-sm"
+          placeholder="Exemplo: A missa de domingo às 10h não existe mais. O horário correto é 9h.">
+        </textarea>
+      </div>
+
+      <!-- Você tem uma fonte? -->
+      <div>
+        <p class="font-semibold text-gray-900 text-sm mb-1">Você tem uma fonte para confirmar?</p>
+        <p class="text-gray-400 text-xs mb-2">Compartilhe onde podemos conferir essa informação (opcional).</p>
+        <input pInputText
+          [(ngModel)]="reporteFonte"
+          class="w-full text-sm"
+          placeholder="Site da paróquia, link, nome da secretaria, etc." />
+      </div>
+
+      <!-- Disclaimer -->
+      <div class="flex items-center gap-2 text-xs text-gray-400 border-t pt-3">
+        <i class="pi pi-lock flex-shrink-0"></i>
+        <span>Sua contribuição será analisada antes de qualquer publicação.</span>
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <ng-template pTemplate="footer">
+      <div class="flex justify-end gap-2">
+        <button pButton label="Cancelar" class="p-button-text p-button-sm text-gray-600" (click)="fecharModalReporte()"></button>
+        <button pButton
+          icon="pi pi-send"
+          label="Enviar informação"
+          class="p-button-danger p-button-sm"
+          [loading]="reporteEnviando"
+          (click)="enviarReporte()">
+        </button>
+      </div>
+    </ng-template>
+
+  </p-dialog>
 
   <!-- Disclaimer -->
   <div *ngIf="!isLoading && churchInfo" class="mx-4 mb-4 flex items-start gap-2 bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 text-xs text-blue-700">

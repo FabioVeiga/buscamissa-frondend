@@ -47,6 +47,20 @@ export class DetailsComponent implements OnInit {
   form!: FormGroup;
   isLoading = false;
   nomeUnico: string | null = null;
+
+  // ── Modal de reporte ───────────────────────────────────────────────────────
+  modalReporteVisivel = false;
+  reporteEnviando = false;
+  motivoHorarioIncorreto = false;
+  motivoMissaNaoOcorre = false;
+  motivoDesatualizado = false;
+  motivoOutro = false;
+  reporteDescricao = '';
+  reporteFonte = '';
+
+  // ── Confirmação ────────────────────────────────────────────────────────────
+  confirmacaoEnviada = false;
+  confirmandoHorarios = false;
   diasSemana = [
     { key: 0, label: "Domingo" },
     { key: 1, label: "Segunda-feira" },
@@ -295,13 +309,92 @@ export class DetailsComponent implements OnInit {
   }
 
   confirmarHorarios() {
-    // R3 — placeholder para endpoint POST /horarios/confirmar
-    this._toast.add({ severity: 'success', summary: 'Obrigado!', detail: 'Sua confirmação ajuda outras pessoas da comunidade.' });
+    if (!this.churchInfo?.id) return;
+
+    // Dedup local: evita chamada dupla sem recarregar a página
+    const localKey = `buscamissa_confirmacao_${this.churchInfo.id}`;
+    if (localStorage.getItem(localKey)) {
+      this._toast.add({ severity: 'info', summary: 'Já confirmado', detail: 'Você já confirmou os horários desta paróquia.' });
+      return;
+    }
+
+    this.confirmandoHorarios = true;
+    this._church.confirmarHorarios(this.churchInfo.id).subscribe({
+      next: () => {
+        localStorage.setItem(localKey, '1');
+        this.confirmacaoEnviada = true;
+        this._toast.add({ severity: 'success', summary: 'Obrigado!', detail: 'Sua confirmação ajuda outras pessoas da comunidade.' });
+      },
+      error: (err) => {
+        if (err.status === 409) {
+          localStorage.setItem(localKey, '1');
+          this.confirmacaoEnviada = true;
+          this._toast.add({ severity: 'info', summary: 'Já registrado', detail: 'Você já confirmou os horários desta paróquia.' });
+        } else {
+          this._toast.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível enviar sua confirmação. Tente novamente.' });
+        }
+      },
+      complete: () => { this.confirmandoHorarios = false; }
+    });
   }
 
   reportarErro() {
-    // R3 — placeholder para fluxo de reporte
-    this._toast.add({ severity: 'info', summary: 'Obrigado pelo aviso!', detail: 'Vamos verificar as informações em breve.' });
+    this.resetarFormReporte();
+    this.modalReporteVisivel = true;
+  }
+
+  fecharModalReporte() {
+    this.modalReporteVisivel = false;
+  }
+
+  enviarReporte() {
+    if (!this.churchInfo?.id) return;
+
+    const motivos =
+      (this.motivoHorarioIncorreto  ? 1 : 0) |
+      (this.motivoMissaNaoOcorre    ? 2 : 0) |
+      (this.motivoDesatualizado     ? 4 : 0) |
+      (this.motivoOutro             ? 8 : 0);
+
+    if (motivos === 0) {
+      this._toast.add({ severity: 'warn', summary: 'Atenção', detail: 'Selecione ao menos um motivo.' });
+      return;
+    }
+
+    this.reporteEnviando = true;
+    this._church.reportarHorario(this.churchInfo.id, {
+      motivos,
+      descricao: this.reporteDescricao || undefined,
+      fonteInformacao: this.reporteFonte || undefined
+    }).subscribe({
+      next: () => {
+        this.modalReporteVisivel = false;
+        this._toast.add({ severity: 'success', summary: 'Reporte enviado!', detail: 'Sua contribuição será analisada antes de qualquer publicação.' });
+      },
+      error: (err) => {
+        if (err.status === 409) {
+          this.modalReporteVisivel = false;
+          this._toast.add({ severity: 'info', summary: 'Já reportado', detail: 'Você já enviou um reporte para esta paróquia recentemente.' });
+        } else {
+          this._toast.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível enviar o reporte. Tente novamente.' });
+        }
+      },
+      complete: () => { this.reporteEnviando = false; }
+    });
+  }
+
+  private resetarFormReporte() {
+    this.motivoHorarioIncorreto = false;
+    this.motivoMissaNaoOcorre   = false;
+    this.motivoDesatualizado    = false;
+    this.motivoOutro            = false;
+    this.reporteDescricao       = '';
+    this.reporteFonte           = '';
+  }
+
+  jaConfirmou(): boolean {
+    if (!this.churchInfo?.id) return false;
+    return !!localStorage.getItem(`buscamissa_confirmacao_${this.churchInfo.id}`);
   }
 
   // ── Helpers do card de confiança ──────────────────────────────────────────
