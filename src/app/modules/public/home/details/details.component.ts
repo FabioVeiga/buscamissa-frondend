@@ -48,16 +48,6 @@ export class DetailsComponent implements OnInit {
   isLoading = false;
   nomeUnico: string | null = null;
 
-  // ── Modal de reporte ───────────────────────────────────────────────────────
-  modalReporteVisivel = false;
-  reporteEnviando = false;
-  motivoHorarioIncorreto = false;
-  motivoMissaNaoOcorre = false;
-  motivoDesatualizado = false;
-  motivoOutro = false;
-  reporteDescricao = '';
-  reporteFonte = '';
-
   // ── Confirmação ────────────────────────────────────────────────────────────
   confirmacaoEnviada = false;
   confirmandoHorarios = false;
@@ -339,57 +329,9 @@ export class DetailsComponent implements OnInit {
   }
 
   reportarErro() {
-    this.resetarFormReporte();
-    this.modalReporteVisivel = true;
-  }
-
-  fecharModalReporte() {
-    this.modalReporteVisivel = false;
-  }
-
-  enviarReporte() {
-    if (!this.churchInfo?.id) return;
-
-    const motivos =
-      (this.motivoHorarioIncorreto  ? 1 : 0) |
-      (this.motivoMissaNaoOcorre    ? 2 : 0) |
-      (this.motivoDesatualizado     ? 4 : 0) |
-      (this.motivoOutro             ? 8 : 0);
-
-    if (motivos === 0) {
-      this._toast.add({ severity: 'warn', summary: 'Atenção', detail: 'Selecione ao menos um motivo.' });
-      return;
+    if (this.churchInfo?.id) {
+      this._router.navigate(['/editar', this.churchInfo.id]);
     }
-
-    this.reporteEnviando = true;
-    this._church.reportarHorario(this.churchInfo.id, {
-      motivos,
-      descricao: this.reporteDescricao || undefined,
-      fonteInformacao: this.reporteFonte || undefined
-    }).subscribe({
-      next: () => {
-        this.modalReporteVisivel = false;
-        this._toast.add({ severity: 'success', summary: 'Reporte enviado!', detail: 'Sua contribuição será analisada antes de qualquer publicação.' });
-      },
-      error: (err) => {
-        if (err.status === 409) {
-          this.modalReporteVisivel = false;
-          this._toast.add({ severity: 'info', summary: 'Já reportado', detail: 'Você já enviou um reporte para esta paróquia recentemente.' });
-        } else {
-          this._toast.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível enviar o reporte. Tente novamente.' });
-        }
-      },
-      complete: () => { this.reporteEnviando = false; }
-    });
-  }
-
-  private resetarFormReporte() {
-    this.motivoHorarioIncorreto = false;
-    this.motivoMissaNaoOcorre   = false;
-    this.motivoDesatualizado    = false;
-    this.motivoOutro            = false;
-    this.reporteDescricao       = '';
-    this.reporteFonte           = '';
   }
 
   jaConfirmou(): boolean {
