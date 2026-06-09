@@ -102,4 +102,12 @@ export class CityComponent implements OnInit {
     const l: Record<number, string> = { 3: "Confirmado", 2: "Validado", 1: "Aguardando confirmação", 0: "Não confirmado" };
     return l[status] ?? "Não confirmado";
   }
+
+  getSocialIcon(url: string): string {
+    if (url.includes("facebook.com")) return "pi pi-facebook";
+    if (url.includes("instagram.com")) return "pi pi-instagram";
+    if (url.includes("youtube.com")) return "pi pi-youtube";
+    if (url.includes("tiktok.com")) return "pi pi-tiktok";
+    return "pi pi-globe";
+  }
 }
