@@ -128,6 +128,7 @@ export class DetailsComponent implements OnInit {
             canonical: seo?.canonicalUrl,
           });
           this.aplicarBreadcrumbSchema(igreja);
+          this.aplicarPlaceSchema(igreja);
           this.form?.patchValue({
             nomeIgreja: igreja.nome,
             nomeParoco: igreja.paroco,
@@ -321,6 +322,70 @@ export class DetailsComponent implements OnInit {
     const cidadeSlug = this.churchInfo?.endereco?.cidadeSlug;
     if (uf && cidadeSlug) return ["/missas", uf.toLowerCase(), cidadeSlug];
     return ["/home"];
+  }
+
+  // Schema.org Church (Place) + horários de missa como eventos recorrentes
+  private aplicarPlaceSchema(igreja: any): void {
+    const base = "https://buscamissa.com.br";
+    const end = igreja?.endereco ?? {};
+    const uf = end.uf?.toLowerCase();
+    const url = (uf && end.cidadeSlug && igreja.slug)
+      ? `${base}/paroquia/${uf}/${end.cidadeSlug}/${igreja.slug}`
+      : `${base}/igrejas/${igreja.nomeUnico}`;
+
+    const address = {
+      "@type": "PostalAddress",
+      streetAddress: [end.logradouro, end.numero && end.numero !== 0 ? end.numero : null]
+        .filter(Boolean).join(", "),
+      addressLocality: end.localidade,
+      addressRegion: end.uf,
+      postalCode: end.cep,
+      addressCountry: "BR",
+    };
+
+    const dias = [
+      "https://schema.org/Sunday", "https://schema.org/Monday", "https://schema.org/Tuesday",
+      "https://schema.org/Wednesday", "https://schema.org/Thursday", "https://schema.org/Friday",
+      "https://schema.org/Saturday",
+    ];
+
+    const eventos = (igreja.missas ?? [])
+      .filter((m: any) => m.diaSemana !== undefined && m.diaSemana !== null && dias[m.diaSemana])
+      .map((m: any) => {
+        const hora = (m.horario ?? "").slice(0, 5); // HH:mm
+        const diaNome = ["Domingo","Segunda-feira","Terça-feira","Quarta-feira","Quinta-feira","Sexta-feira","Sábado"][m.diaSemana];
+        return {
+          "@type": "Event",
+          name: `Missa - ${diaNome}`,
+          eventSchedule: {
+            "@type": "Schedule",
+            byDay: dias[m.diaSemana],
+            startTime: hora,
+            repeatFrequency: "P1W",
+          },
+          eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
+          location: { "@type": "Church", name: igreja.nome, address },
+        };
+      });
+
+    const place: any = {
+      "@context": "https://schema.org",
+      "@type": "Church",
+      name: igreja.nome,
+      url,
+      address,
+    };
+    if (igreja.paroco) place.description = `Pároco: ${igreja.paroco}`;
+    if (end.latitude && end.longitude) {
+      place.geo = { "@type": "GeoCoordinates", latitude: end.latitude, longitude: end.longitude };
+    }
+    if (igreja.contato?.telefone) {
+      place.telephone = `+55${igreja.contato.ddd ?? ""}${igreja.contato.telefone}`;
+    }
+    if (igreja.imagemUrl) place.image = igreja.imagemUrl;
+    if (eventos.length) place.event = eventos;
+
+    this._seo.setJsonLd("place", place);
   }
 
   // Schema.org BreadcrumbList para rich result no Google
