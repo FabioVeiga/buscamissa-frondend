@@ -88,9 +88,18 @@ export class DetailsComponent implements OnInit {
     });
 
     this._route.params.subscribe((params) => {
+      const uf = params["uf"];
+      const cidade = params["cidade"];
+      const slug = params["slug"];
       this.nomeUnico = params["nomeUnico"] ?? null;
-      if (this.nomeUnico) {
-        this.loadChurch(this.nomeUnico);
+
+      if (uf && cidade && slug) {
+        // Rota canônica nova: /paroquia/:uf/:cidade/:slug
+        this.carregar(this._church.getByCidadeESlug(uf, cidade, slug));
+        this.form.disable();
+      } else if (this.nomeUnico) {
+        // Rota legada: /igrejas/:nomeUnico
+        this.carregar(this._church.getByNomeUnico(this.nomeUnico));
         this.form.disable();
       } else {
         this.adicionarHorario();
@@ -99,17 +108,23 @@ export class DetailsComponent implements OnInit {
   }
 
   loadChurch(nomeUnico: string): void {
+    this.carregar(this._church.getByNomeUnico(nomeUnico));
+  }
+
+  private carregar(req: import("rxjs").Observable<any>): void {
     this.isLoading = true;
-    this._church.getByNomeUnico(nomeUnico).pipe(
+    req.pipe(
       finalize(() => { this.isLoading = false; })
     ).subscribe({
       next: (response: any) => {
         const igreja = response?.data?.igreja ?? response?.data;
+        const seo = response?.data?.seo;
         this.churchInfo = igreja;
         if (igreja) {
           this._seo.update({
-            title: `${igreja.nome} | BuscaMissa`,
-            description: `Veja os horários de missa, endereço e contato de ${igreja.nome}. Encontre missas perto de você no BuscaMissa.`,
+            title: seo?.title ?? `${igreja.nome} | BuscaMissa`,
+            description: seo?.description ?? `Veja os horários de missa, endereço e contato de ${igreja.nome}. Encontre missas perto de você no BuscaMissa.`,
+            canonical: seo?.canonicalUrl,
           });
           this.form?.patchValue({
             nomeIgreja: igreja.nome,

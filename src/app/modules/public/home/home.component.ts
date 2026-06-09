@@ -432,6 +432,16 @@ export class HomeComponent {
     return "pi pi-globe";
   }
 
+  // Usa a URL canônica nova se houver slug+cidade; senão cai no legado /igrejas
+  linkParoquia(church: any): string[] {
+    const uf = church?.endereco?.uf;
+    const cidadeSlug = church?.endereco?.cidadeSlug;
+    if (uf && cidadeSlug && church?.slug) {
+      return ["/paroquia", uf.toLowerCase(), cidadeSlug, church.slug];
+    }
+    return ["/igrejas", church?.nomeUnico];
+  }
+
   // 0=Desconhecida, 1=Baixa, 2=Media, 3=Alta
   getConfiancaLabel(status: number): string {
     const labels: Record<number, string> = {
