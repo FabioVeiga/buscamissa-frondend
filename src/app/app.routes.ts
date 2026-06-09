@@ -52,6 +52,30 @@ export const routes: Routes = [
             (m) => m.DetailsComponent
           ),
       },
+      // Página de cidade (SEO): /missas/sp/sao-jose-dos-campos
+      {
+        path: "missas/:uf/:cidade",
+        data: {
+          title: 'Horários de Missa | BuscaMissa',
+          description: 'Encontre horários de missa nesta cidade. Paróquias, endereços e horários atualizados.',
+        },
+        loadComponent: () =>
+          import("./modules/public/home/city/city.component").then(
+            (m) => m.CityComponent
+          ),
+      },
+      // Paróquia (URL canônica): /paroquia/sp/sao-jose-dos-campos/paroquia-sao-joao-bosco
+      {
+        path: "paroquia/:uf/:cidade/:slug",
+        data: {
+          title: 'Detalhes da Igreja | BuscaMissa',
+          description: 'Veja os horários de missa, endereço e contato desta paróquia ou comunidade católica.',
+        },
+        loadComponent: () =>
+          import("./modules/public/home/details/details.component").then(
+            (m) => m.DetailsComponent
+          ),
+      },
       // Redirect da rota antiga para manter links existentes funcionando
       {
         path: "detalhes/:cep",

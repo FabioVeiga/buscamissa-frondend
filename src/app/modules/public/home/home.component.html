@@ -337,7 +337,7 @@
                 <!-- Detalhes da Igreja -->
                 <div>
                   <div class="text-lg font-bold text-surface-900 dark:text-surface-0">
-                    <h2 [routerLink]="['/igrejas', church.nomeUnico]" class="church-name-link">
+                    <h2 [routerLink]="linkParoquia(church)" class="church-name-link">
                       {{ church.nome }}
                     </h2>
                     <p class="font-medium text-surface-700 dark:text-surface-200">

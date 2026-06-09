@@ -1,0 +1,114 @@
+<div class="hero"><h1></h1><p></p></div>
+
+<p-panel class="p-1">
+  <ng-template pTemplate="header">
+    <div class="flex items-center gap-2">
+      <i class="pi pi-map-marker text-primary"></i>
+      <h1 class="text-xl font-bold text-gray-900">
+        Missas em {{ cidadeNome }}<span *ngIf="uf">/{{ uf.toUpperCase() }}</span>
+      </h1>
+    </div>
+  </ng-template>
+
+  <!-- Skeleton -->
+  <div *ngIf="isLoading" class="flex flex-col gap-3 p-4">
+    <p-skeleton height="8rem" *ngFor="let i of [1,2,3,4]" borderRadius="8px"></p-skeleton>
+  </div>
+
+  <!-- Texto contextual (bom para SEO) -->
+  <p *ngIf="!isLoading && igrejas.length" class="text-gray-600 text-sm px-6 pt-3">
+    Encontre os horários de missa das paróquias e comunidades católicas de
+    <strong>{{ cidadeNome }}/{{ uf.toUpperCase() }}</strong>.
+    São <strong>{{ igrejas.length }}</strong> paróquia(s) com endereço, contato e horários.
+  </p>
+
+  <!-- Lista de paróquias (layout de card, igual à busca) -->
+  <div *ngIf="!isLoading && igrejas.length" class="grid grid-cols-12 gap-4 grid-nogutter">
+    <div class="col-span-12" *ngFor="let igreja of igrejas; let first = first">
+      <article
+        class="flex flex-col sm:flex-row sm:items-center p-6 gap-4"
+        [ngClass]="{ 'border-t border-surface-200 dark:border-surface-700': !first }">
+
+        <!-- Imagem + redes sociais -->
+        <div class="bg-surface-50 flex justify-center items-center rounded p-4">
+          <div class="relative mx-auto text-center">
+            <a [routerLink]="linkParoquia(igreja)">
+              <div
+                class="w-44 h-44 bg-cover bg-center rounded shadow"
+                [style.background-image]="'url(\'' + (igreja.imagemUrl ?? '/assets/church/naodisponivel.png') + '\')'"
+                role="img"
+                [attr.aria-label]="igreja.nome">
+              </div>
+            </a>
+            <div *ngIf="igreja.redesSociais?.length" class="flex justify-center mt-2 gap-2">
+              <a *ngFor="let rede of igreja.redesSociais" [href]="rede.url" target="_blank"
+                 class="text-lg text-gray-600 hover:text-gray-900">
+                <i [ngClass]="getSocialIcon(rede.url)"></i>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Conteúdo -->
+        <div class="flex flex-col flex-1 gap-1">
+          <!-- Nome + confiança -->
+          <div class="flex items-center gap-2 flex-wrap">
+            <a [routerLink]="linkParoquia(igreja)"
+               class="text-lg font-bold text-surface-900 hover:text-primary hover:underline">
+              {{ igreja.nome }}
+            </a>
+            <span class="flex items-center gap-1 text-xs text-gray-500">
+              <span [ngClass]="confiancaDot(igreja.statusConfianca)" class="w-2 h-2 rounded-full"></span>
+              {{ confiancaLabel(igreja.statusConfianca) }}
+            </span>
+          </div>
+
+          <p *ngIf="igreja.paroco" class="font-medium text-surface-700">{{ igreja.paroco }}</p>
+
+          <!-- Endereço -->
+          <p class="font-small text-surface-900 mt-1">
+            {{ igreja.endereco?.logradouro }},
+            {{ igreja.endereco?.numero === 0 ? 'S/N' : igreja.endereco?.numero }},
+            {{ igreja.endereco?.bairro }} - {{ igreja.endereco?.localidade }}/{{ igreja.endereco?.uf }}
+          </p>
+
+          <!-- Telefone -->
+          <p *ngIf="igreja?.contato?.telefone || igreja?.contato?.telefoneWhatsApp" class="text-gray-700 text-sm">
+            <strong>Telefone:</strong> ({{ igreja?.contato?.ddd }}) {{ igreja?.contato?.telefone }}
+            <ng-container *ngIf="igreja?.contato?.telefoneWhatsApp">
+              / <strong>WhatsApp:</strong> ({{ igreja?.contato?.dddWhatsApp }}) {{ igreja?.contato?.telefoneWhatsApp }}
+            </ng-container>
+          </p>
+
+          <p-divider />
+
+          <!-- Horários -->
+          <div *ngIf="igreja.missas?.length" class="font-small mt-1">
+            <div class="text-base font-medium text-surface-900 mb-1">Horários:</div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
+              <div *ngFor="let r of resumoMissas(igreja.missas)" class="text-surface-800 text-sm">
+                <span class="font-medium">{{ r.dia }}:</span> {{ r.horarios }}
+              </div>
+            </div>
+          </div>
+
+          <a [routerLink]="linkParoquia(igreja)" class="text-sm text-primary hover:underline mt-2 self-start">
+            Ver detalhes →
+          </a>
+        </div>
+      </article>
+    </div>
+  </div>
+
+  <!-- Vazio -->
+  <div *ngIf="!isLoading && naoEncontrado" class="text-center py-12 px-4">
+    <i class="pi pi-search text-4xl text-gray-300 mb-3"></i>
+    <p class="text-gray-600 font-medium">Nenhuma paróquia cadastrada nesta cidade ainda.</p>
+    <p class="text-gray-400 text-sm mt-1">Conhece uma missa em {{ cidadeNome }}? Ajude a comunidade cadastrando.</p>
+    <a routerLink="/nova" class="inline-block mt-4 text-primary hover:underline">Cadastrar paróquia</a>
+  </div>
+</p-panel>
+
+<div class="flex justify-center w-full">
+  <app-adsense-banner></app-adsense-banner>
+</div>

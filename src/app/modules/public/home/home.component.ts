@@ -101,9 +101,11 @@ export class HomeComponent {
     });
     this.getAddress();
 
-    // Limpa resultados quando o usuário navega para home sem filtros (ex: clique no logo)
+    // Limpa resultados quando o usuário navega para home sem filtros (ex: clique no logo).
+    // Usa a key 'uf' (minúscula) — a mesma gravada por searchFilter — senão o form
+    // seria resetado a cada busca/paginação, deixando-o inválido e travando a paginação.
     this._route.queryParams.subscribe(params => {
-      if (!params['Uf']) {
+      if (!params['uf']) {
         this.churchInfo = [];
         this.showNoChurchCard = false;
         this.form.reset();
@@ -430,6 +432,16 @@ export class HomeComponent {
     if (url.includes("youtube.com")) return "pi pi-youtube";
     if (url.includes("tiktok.com")) return "pi pi-tiktok";
     return "pi pi-globe";
+  }
+
+  // Usa a URL canônica nova se houver slug+cidade; senão cai no legado /igrejas
+  linkParoquia(church: any): string[] {
+    const uf = church?.endereco?.uf;
+    const cidadeSlug = church?.endereco?.cidadeSlug;
+    if (uf && cidadeSlug && church?.slug) {
+      return ["/paroquia", uf.toLowerCase(), cidadeSlug, church.slug];
+    }
+    return ["/igrejas", church?.nomeUnico];
   }
 
   // 0=Desconhecida, 1=Baixa, 2=Media, 3=Alta
