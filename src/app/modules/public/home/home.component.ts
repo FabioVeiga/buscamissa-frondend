@@ -101,9 +101,11 @@ export class HomeComponent {
     });
     this.getAddress();
 
-    // Limpa resultados quando o usuário navega para home sem filtros (ex: clique no logo)
+    // Limpa resultados quando o usuário navega para home sem filtros (ex: clique no logo).
+    // Usa a key 'uf' (minúscula) — a mesma gravada por searchFilter — senão o form
+    // seria resetado a cada busca/paginação, deixando-o inválido e travando a paginação.
     this._route.queryParams.subscribe(params => {
-      if (!params['Uf']) {
+      if (!params['uf']) {
         this.churchInfo = [];
         this.showNoChurchCard = false;
         this.form.reset();
