@@ -35,4 +35,25 @@ export class SeoService {
     }
     link.setAttribute('href', canonicalUrl);
   }
+
+  /**
+   * Injeta (ou substitui) um bloco de dados estruturados Schema.org (JSON-LD).
+   * O `id` identifica o bloco para permitir atualização/remoção entre navegações.
+   */
+  setJsonLd(id: string, data: unknown): void {
+    const elId = `ld-${id}`;
+    let script = this._doc.getElementById(elId) as HTMLScriptElement | null;
+    if (!script) {
+      script = this._doc.createElement('script');
+      script.id = elId;
+      script.type = 'application/ld+json';
+      this._doc.head.appendChild(script);
+    }
+    script.textContent = JSON.stringify(data);
+  }
+
+  removeJsonLd(id: string): void {
+    const el = this._doc.getElementById(`ld-${id}`);
+    if (el) el.remove();
+  }
 }

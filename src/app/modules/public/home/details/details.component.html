@@ -20,6 +20,18 @@
     </div>
   </div>
 
+  <!-- Breadcrumb navegável -->
+  <nav *ngIf="!isLoading && churchInfo" aria-label="Breadcrumb"
+       class="flex items-center flex-wrap gap-1 text-sm text-gray-500 px-4 pt-3">
+    <a routerLink="/home" class="hover:text-primary hover:underline">Início</a>
+    <span class="text-gray-300">›</span>
+    <a [routerLink]="linkCidade()" class="hover:text-primary hover:underline">
+      {{ churchInfo.endereco?.localidade }}<span *ngIf="churchInfo.endereco?.uf">/{{ churchInfo.endereco.uf }}</span>
+    </a>
+    <span class="text-gray-300">›</span>
+    <span class="text-gray-700 font-medium">{{ churchInfo.nome }}</span>
+  </nav>
+
   <!-- Conteúdo principal -->
   <div *ngIf="!isLoading && churchInfo" class="grid grid-cols-1 md:grid-cols-12 gap-6 p-4">
 

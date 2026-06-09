@@ -17,7 +17,7 @@ import { SkeletonModule } from "primeng/skeleton";
 import { MessageService } from "primeng/api";
 import { PrimeNgModule } from "../../../../shared/primeng.module";
 import { CommonModule } from "@angular/common";
-import { ActivatedRoute, Router } from "@angular/router";
+import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { Location } from "@angular/common";
 import { ShareButtons } from "ngx-sharebuttons/buttons";
 import { Mass } from "../../church/models/church.model";
@@ -32,6 +32,7 @@ import { Church } from "../../../../core/interfaces/church.interface";
     ReactiveFormsModule,
     ShareButtons,
     SkeletonModule,
+    RouterLink,
   ],
   providers: [MessageService],
   templateUrl: "./details.component.html",
@@ -126,6 +127,7 @@ export class DetailsComponent implements OnInit {
             description: seo?.description ?? `Veja os horários de missa, endereço e contato de ${igreja.nome}. Encontre missas perto de você no BuscaMissa.`,
             canonical: seo?.canonicalUrl,
           });
+          this.aplicarBreadcrumbSchema(igreja);
           this.form?.patchValue({
             nomeIgreja: igreja.nome,
             nomeParoco: igreja.paroco,
@@ -311,6 +313,40 @@ export class DetailsComponent implements OnInit {
 
   editChurch(church: any) {
     this._router.navigate(['/editar', church.id]);
+  }
+
+  // Link para a página da cidade (/missas/uf/cidadeSlug)
+  linkCidade(): string[] {
+    const uf = this.churchInfo?.endereco?.uf;
+    const cidadeSlug = this.churchInfo?.endereco?.cidadeSlug;
+    if (uf && cidadeSlug) return ["/missas", uf.toLowerCase(), cidadeSlug];
+    return ["/home"];
+  }
+
+  // Schema.org BreadcrumbList para rich result no Google
+  private aplicarBreadcrumbSchema(igreja: any): void {
+    const base = "https://buscamissa.com.br";
+    const uf = igreja?.endereco?.uf?.toLowerCase();
+    const cidadeSlug = igreja?.endereco?.cidadeSlug;
+    const itens: any[] = [
+      { "@type": "ListItem", position: 1, name: "Início", item: `${base}/home` },
+    ];
+    if (uf && cidadeSlug) {
+      itens.push({
+        "@type": "ListItem",
+        position: 2,
+        name: `${igreja.endereco.localidade}/${igreja.endereco.uf}`,
+        item: `${base}/missas/${uf}/${cidadeSlug}`,
+      });
+      itens.push({ "@type": "ListItem", position: 3, name: igreja.nome });
+    } else {
+      itens.push({ "@type": "ListItem", position: 2, name: igreja.nome });
+    }
+    this._seo.setJsonLd("breadcrumb", {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: itens,
+    });
   }
 
   confirmarHorarios() {
