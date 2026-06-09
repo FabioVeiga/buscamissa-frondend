@@ -62,9 +62,19 @@ export class ChurchesService {
     return this.http.get(`v1/Igreja/infos`);
   }
 
-  /** Busca paróquia pelo slug (nomeUnico) — endpoint público v2 */
+  /** Busca paróquia pelo slug (nomeUnico) — endpoint público v2 (legado) */
   getByNomeUnico(nomeUnico: string) {
     return this.http.get(`v2/Igreja/${nomeUnico}`);
+  }
+
+  /** Lista paróquias de uma cidade — página /missas/{uf}/{cidade} */
+  getByCidade(uf: string, cidade: string) {
+    return this.http.get(`v2/Igreja/cidade/${uf}/${cidade}`);
+  }
+
+  /** Busca paróquia pela URL canônica /paroquia/{uf}/{cidade}/{slug} */
+  getByCidadeESlug(uf: string, cidade: string, slug: string) {
+    return this.http.get(`v2/Igreja/paroquia/${uf}/${cidade}/${slug}`);
   }
 
   // ── Confiabilidade de Horários ─────────────────────────────────────────────
