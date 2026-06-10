@@ -4,7 +4,7 @@ import { dirname, join } from 'path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-const API_URL = (process.env.API_URL ?? 'https://busca-missa.azurewebsites.net/api').replace(/\/$/, '');
+const API_URL = (process.env.API_URL ?? 'https://busca-missa.azurewebsites.net').replace(/\/$/, '');
 const BASE_URL = 'https://buscamissa.com.br';
 
 const STATIC_PAGES = [
