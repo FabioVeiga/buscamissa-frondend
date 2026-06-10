@@ -324,6 +324,33 @@ export class DetailsComponent implements OnInit {
     return ["/home"];
   }
 
+  // Próxima data (futura) em que a missa ocorre, em ISO 8601 com fuso de Brasília (-03:00).
+  // Recalculado a cada visita, então o startDate nunca fica no passado.
+  private proximaOcorrencia(diaSemana: number, horaMin: string): string {
+    const [h, m] = (horaMin || "00:00").split(":").map(Number);
+    const agora = new Date();
+    const diasAte = (diaSemana - agora.getDay() + 7) % 7;
+    const d = new Date(agora);
+    d.setDate(agora.getDate() + diasAte);
+    d.setHours(h, m, 0, 0);
+    if (diasAte === 0 && d.getTime() <= agora.getTime()) {
+      d.setDate(d.getDate() + 7); // hoje, mas já passou → próxima semana
+    }
+    return this.toIsoBrasilia(d);
+  }
+
+  private somarHora(iso: string, horas: number): string {
+    const d = new Date(iso);
+    d.setHours(d.getHours() + horas);
+    return this.toIsoBrasilia(d);
+  }
+
+  // Monta "YYYY-MM-DDTHH:mm:00-03:00" a partir dos componentes locais
+  private toIsoBrasilia(d: Date): string {
+    const p = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:00-03:00`;
+  }
+
   // Schema.org Church (Place) + horários de missa como eventos recorrentes
   private aplicarPlaceSchema(igreja: any): void {
     const base = "https://buscamissa.com.br";
@@ -354,18 +381,26 @@ export class DetailsComponent implements OnInit {
       .map((m: any) => {
         const hora = (m.horario ?? "").slice(0, 5); // HH:mm
         const diaNome = ["Domingo","Segunda-feira","Terça-feira","Quarta-feira","Quinta-feira","Sexta-feira","Sábado"][m.diaSemana];
-        return {
+        const inicio = this.proximaOcorrencia(m.diaSemana, hora);   // ISO da próxima ocorrência
+        const fim = this.somarHora(inicio, 1);                       // missa ~1h
+        const ev: any = {
           "@type": "Event",
           name: `Missa - ${diaNome}`,
+          startDate: inicio,                                          // obrigatório p/ Google
+          endDate: fim,
           eventSchedule: {
             "@type": "Schedule",
             byDay: dias[m.diaSemana],
             startTime: hora,
             repeatFrequency: "P1W",
           },
+          eventStatus: "https://schema.org/EventScheduled",
           eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
           location: { "@type": "Church", name: igreja.nome, address },
+          description: `Missa ${diaNome.toLowerCase()} às ${hora} na ${igreja.nome}, ${end.localidade}/${end.uf}.`,
         };
+        if (igreja.imagemUrl) ev.image = igreja.imagemUrl;
+        return ev;
       });
 
     const place: any = {
