@@ -1,10 +1,29 @@
-import { writeFileSync } from 'fs';
+import { writeFileSync, readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const ROOT = join(__dirname, '..');
 
-const API_URL = (process.env.API_URL ?? 'https://busca-missa.azurewebsites.net').replace(/\/$/, '');
+// Argumento: "staging" ou "prod" (default: prod)
+const ENV = process.argv[2] ?? 'prod';
+
+function lerApiUrl() {
+  if (process.env.API_URL) return process.env.API_URL.replace(/\/$/, '');
+
+  const envFile = ENV === 'staging'
+    ? join(ROOT, 'src/environments/environment.staging.ts')
+    : join(ROOT, 'src/environments/environment.production.ts');
+
+  const conteudo = readFileSync(envFile, 'utf-8');
+  const match = conteudo.match(/apiURL\s*:\s*["']([^"']+)["']/);
+  if (!match) throw new Error(`apiURL não encontrado em ${envFile}`);
+
+  // Remove /api/ do caminho — o endpoint /v2/seo/routes é rota absoluta
+  return match[1].replace(/\/api\/?$/, '').replace(/\/$/, '');
+}
+
+const API_URL = lerApiUrl();
 const BASE_URL = 'https://buscamissa.com.br';
 
 const STATIC_PAGES = [
@@ -69,7 +88,7 @@ ${urlEntries.join('\n\n')}
 </urlset>
 `;
 
-  const dest = join(__dirname, '..', 'public', 'sitemap.xml');
+  const dest = join(ROOT, 'public', 'sitemap.xml');
   writeFileSync(dest, xml, 'utf-8');
   console.log(`✓ sitemap.xml gerado: ${cities.length} cidades, ${parishes.length} paróquias`);
 }
