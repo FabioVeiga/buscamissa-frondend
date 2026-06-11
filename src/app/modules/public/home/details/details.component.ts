@@ -398,8 +398,19 @@ export class DetailsComponent implements OnInit {
           eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
           location: { "@type": "Church", name: igreja.nome, address },
           description: `Missa ${diaNome.toLowerCase()} às ${hora} na ${igreja.nome}, ${end.localidade}/${end.uf}.`,
+          organizer: { "@type": "Organization", name: igreja.nome },
+          performer: igreja.paroco
+            ? { "@type": "Person", name: igreja.paroco }
+            : { "@type": "Organization", name: igreja.nome },
+          offers: {
+            "@type": "Offer",
+            price: "0",
+            priceCurrency: "BRL",
+            availability: "https://schema.org/InStock",
+            url,
+          },
         };
-        if (igreja.imagemUrl) ev.image = igreja.imagemUrl;
+        ev.image = igreja.imagemUrl || `${base}/assets/images/og-image.jpg`;
         return ev;
       });
 
