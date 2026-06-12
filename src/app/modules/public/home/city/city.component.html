@@ -17,9 +17,10 @@
 
   <!-- Texto contextual (bom para SEO) -->
   <p *ngIf="!isLoading && igrejas.length" class="text-gray-600 text-sm px-6 pt-3">
-    Encontre os horários de missa das paróquias e comunidades católicas de
-    <strong>{{ cidadeNome }}/{{ uf.toUpperCase() }}</strong>.
-    São <strong>{{ igrejas.length }}</strong> paróquia(s) com endereço, contato e horários.
+    Encontre os horários de missa em <strong>{{ cidadeNome }}/{{ uf.toUpperCase() }}</strong>.
+    Consulte <strong>missa hoje</strong>, <strong>missa de domingo</strong> e as celebrações
+    das <strong>{{ igrejas.length }}</strong> paróquia(s) e comunidades católicas da cidade,
+    com endereço, contato e horários atualizados pela comunidade.
   </p>
 
   <!-- Lista de paróquias (layout de card, igual à busca) -->
@@ -99,6 +100,15 @@
       </article>
     </div>
   </div>
+
+  <!-- FAQ (visível + FAQPage schema, bom para rich result) -->
+  <section *ngIf="!isLoading && faqs.length" class="px-6 py-6 border-t border-surface-200">
+    <h2 class="text-lg font-bold text-surface-900 mb-3">Perguntas frequentes</h2>
+    <details *ngFor="let f of faqs" class="mb-2 border-b border-surface-100 pb-2">
+      <summary class="cursor-pointer font-medium text-surface-800">{{ f.pergunta }}</summary>
+      <p class="text-gray-600 text-sm mt-2">{{ f.resposta }}</p>
+    </details>
+  </section>
 
   <!-- Vazio -->
   <div *ngIf="!isLoading && naoEncontrado" class="text-center py-12 px-4">
