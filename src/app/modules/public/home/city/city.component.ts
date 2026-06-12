@@ -1,4 +1,4 @@
-import { Component, inject, OnInit } from "@angular/core";
+import { Component, inject, OnDestroy, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { ActivatedRoute, RouterLink } from "@angular/router";
 import { finalize } from "rxjs/operators";
@@ -13,7 +13,7 @@ import { SeoService } from "../../../../core/services/seo.service";
   templateUrl: "./city.component.html",
   styleUrl: "./city.component.scss",
 })
-export class CityComponent implements OnInit {
+export class CityComponent implements OnInit, OnDestroy {
   private _route = inject(ActivatedRoute);
   private _church = inject(ChurchesService);
   private _seo = inject(SeoService);
@@ -24,6 +24,7 @@ export class CityComponent implements OnInit {
   cidadeNome = "";
   igrejas: any[] = [];
   naoEncontrado = false;
+  faqs: { pergunta: string; resposta: string }[] = [];
 
   ngOnInit(): void {
     this._route.params.subscribe((params) => {
@@ -52,6 +53,11 @@ export class CityComponent implements OnInit {
           description: seo?.description ?? `Horários de missa em ${this.cidadeNome}/${this.uf?.toUpperCase()}.`,
           canonical: seo?.canonicalUrl,
         });
+        if (this.igrejas.length) {
+          this.aplicarBreadcrumbSchema();
+          this.montarFaqs();
+          this.aplicarFaqSchema();
+        }
       },
       error: () => {
         this.naoEncontrado = true;
@@ -62,9 +68,64 @@ export class CityComponent implements OnInit {
     });
   }
 
+  ngOnDestroy(): void {
+    this._seo.removeJsonLd("breadcrumb");
+    this._seo.removeJsonLd("faq");
+  }
+
   // Monta a URL canônica da paróquia
   linkParoquia(igreja: any): string[] {
     return ["/paroquia", this.uf, this.cidade, igreja.slug];
+  }
+
+  // Schema.org BreadcrumbList: Início > Cidade/UF
+  private aplicarBreadcrumbSchema(): void {
+    const base = "https://buscamissa.com.br";
+    this._seo.setJsonLd("breadcrumb", {
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: [
+        { "@type": "ListItem", position: 1, name: "Início", item: `${base}/home` },
+        {
+          "@type": "ListItem",
+          position: 2,
+          name: `${this.cidadeNome}/${this.uf.toUpperCase()}`,
+          item: `${base}/missas/${this.uf}/${this.cidade}`,
+        },
+      ],
+    });
+  }
+
+  // Perguntas frequentes geradas a partir da cidade (alinhadas ao FAQ visível)
+  private montarFaqs(): void {
+    const local = `${this.cidadeNome}/${this.uf.toUpperCase()}`;
+    this.faqs = [
+      {
+        pergunta: `Que horas é a missa hoje em ${this.cidadeNome}?`,
+        resposta: `Consulte nesta página os horários de missa das ${this.igrejas.length} paróquia(s) de ${local}, organizados por dia da semana. Selecione uma paróquia para ver os horários de hoje.`,
+      },
+      {
+        pergunta: `Tem missa de domingo em ${this.cidadeNome}?`,
+        resposta: `Sim. Diversas paróquias de ${local} celebram missas aos domingos. Veja a lista de igrejas nesta página e os respectivos horários de domingo.`,
+      },
+      {
+        pergunta: `Como encontrar uma igreja católica perto de mim em ${this.cidadeNome}?`,
+        resposta: `Liste abaixo as paróquias e comunidades católicas de ${local} com endereço, contato e horários de missa atualizados pela comunidade.`,
+      },
+    ];
+  }
+
+  // Schema.org FAQPage (rich result) — espelha o FAQ visível na página
+  private aplicarFaqSchema(): void {
+    this._seo.setJsonLd("faq", {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: this.faqs.map((f) => ({
+        "@type": "Question",
+        name: f.pergunta,
+        acceptedAnswer: { "@type": "Answer", text: f.resposta },
+      })),
+    });
   }
 
   // Agrupa missas por dia: "Domingo: 7:00, 10:00, 18:00"
