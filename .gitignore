@@ -44,3 +44,7 @@ ajuda/*
 
 # Sitemap gerado em build — não versionar
 /public/sitemap.xml
+
+# Python
+__pycache__/
+*.pyc
