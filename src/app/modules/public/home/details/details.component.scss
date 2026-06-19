@@ -9,3 +9,50 @@
     transform: scale(1.15);
   }
 }
+
+// ── Scoreboard "Próxima missa" — elemento dominante da página ──────────────────
+.scoreboard {
+  border-radius: 1rem;
+  padding: 1.25rem 1.5rem;
+  background: linear-gradient(135deg, #fff4ea 0%, #ffe8d2 100%);
+  border: 1px solid #f3d3b3;
+}
+
+.scoreboard-label {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #b06a2c;
+}
+
+.scoreboard-time {
+  font-size: 3rem;
+  line-height: 1;
+  font-weight: 800;
+  color: #bc5d10;
+
+  @media (min-width: 640px) {
+    font-size: 3.5rem;
+  }
+}
+
+.scoreboard-day {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #8a4a12;
+  padding-bottom: 0.35rem;
+}
+
+// Destaca o contador só no contexto do scoreboard (componente compartilhado
+// permanece pequeno/cinza nos cards de resultado)
+.scoreboard-countdown {
+  color: #bc5d10;
+
+  ::ng-deep .countdown-chip {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: #bc5d10;
+  }
+}

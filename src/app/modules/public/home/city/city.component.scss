@@ -1,0 +1,7 @@
+// Destaca a distância no card de resultado (dado-chave para a meta de TTM < 10s).
+// O componente compartilhado segue discreto em outros contextos.
+app-distance-chip ::ng-deep .distance-chip {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #475569;
+}
