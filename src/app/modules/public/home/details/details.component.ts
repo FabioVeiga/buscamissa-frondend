@@ -1,15 +1,4 @@
 import { Component, inject, OnInit } from "@angular/core";
-import {
-  AbstractControl,
-  FormArray,
-  FormBuilder,
-  FormGroup,
-  FormsModule,
-  ReactiveFormsModule,
-  ValidationErrors,
-  ValidatorFn,
-  Validators,
-} from "@angular/forms";
 import { finalize } from "rxjs/operators";
 import { ChurchesService } from "../../../../core/services/churches.service";
 import { SeoService } from "../../../../core/services/seo.service";
@@ -19,20 +8,23 @@ import { PrimeNgModule } from "../../../../shared/primeng.module";
 import { CommonModule } from "@angular/common";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { Location } from "@angular/common";
+import { DomSanitizer, SafeResourceUrl } from "@angular/platform-browser";
 import { ShareButtons } from "ngx-sharebuttons/buttons";
 import { Mass } from "../../church/models/church.model";
-import { Church } from "../../../../core/interfaces/church.interface";
+import { ConfidenceBadgeComponent } from "../../../../shared/components/confidence-badge/confidence-badge.component";
+import { CountdownChipComponent } from "../../../../shared/components/countdown-chip/countdown-chip.component";
+import { getNextOccurrenceMinutes, formatMassTime } from "../../../../shared/utils/mass-time.utils";
 
 @Component({
   selector: "app-details",
   imports: [
     PrimeNgModule,
     CommonModule,
-    FormsModule,
-    ReactiveFormsModule,
     ShareButtons,
     SkeletonModule,
     RouterLink,
+    ConfidenceBadgeComponent,
+    CountdownChipComponent,
   ],
   providers: [MessageService],
   templateUrl: "./details.component.html",
@@ -45,49 +37,21 @@ export class DetailsComponent implements OnInit {
   _route = inject(ActivatedRoute);
   _router = inject(Router);
   _location = inject(Location);
-  form!: FormGroup;
+  _sanitizer = inject(DomSanitizer);
+
   isLoading = false;
   nomeUnico: string | null = null;
+  churchInfo: any;
 
-  // ── Confirmação ────────────────────────────────────────────────────────────
+  // Prova social
+  totalConfirmacoes = 0;
+  ultimaConfirmacao: string | null = null;
+
+  // Confirmação de horários
   confirmacaoEnviada = false;
   confirmandoHorarios = false;
-  diasSemana = [
-    { key: 0, label: "Domingo" },
-    { key: 1, label: "Segunda-feira" },
-    { key: 2, label: "Terça-feira" },
-    { key: 3, label: "Quarta-feira" },
-    { key: 4, label: "Quinta-feira" },
-    { key: 5, label: "Sexta-feira" },
-    { key: 6, label: "Sábado" },
-  ];
-  churchInfo: any;
-  constructor(private fb: FormBuilder) {}
 
   ngOnInit(): void {
-    this.form = this.fb.group({
-      nomeIgreja: ["", Validators.required],
-      nomeParoco: [""],
-      cep: ["", Validators.pattern(/^\d{5}-\d{3}$/)],
-      endereco: [""],
-      numero: [""],
-      complemento: [""],
-      bairro: [""],
-      cidade: [""],
-      estado: [""],
-      uf: [""],
-      regiao: [""],
-      telefone: ["", Validators.pattern(/^\(\d{2}\) \d{4}-\d{4}$/)],
-      whatsapp: ["", Validators.pattern(/^\(\d{2}\) \d{5}-\d{4}$/)],
-      emailContato: ["", Validators.email],
-      facebook: [""],
-      instagram: [""],
-      youtube: [""],
-      tiktok: [""],
-      imagem: [""],
-      missas: this.fb.array([]),
-    });
-
     this._route.params.subscribe((params) => {
       const uf = params["uf"];
       const cidade = params["cidade"];
@@ -97,19 +61,11 @@ export class DetailsComponent implements OnInit {
       if (uf && cidade && slug) {
         // Rota canônica nova: /paroquia/:uf/:cidade/:slug
         this.carregar(this._church.getByCidadeESlug(uf, cidade, slug));
-        this.form.disable();
       } else if (this.nomeUnico) {
         // Rota legada: /igrejas/:nomeUnico
         this.carregar(this._church.getByNomeUnico(this.nomeUnico));
-        this.form.disable();
-      } else {
-        this.adicionarHorario();
       }
     });
-  }
-
-  loadChurch(nomeUnico: string): void {
-    this.carregar(this._church.getByNomeUnico(nomeUnico));
   }
 
   private carregar(req: import("rxjs").Observable<any>): void {
@@ -121,187 +77,175 @@ export class DetailsComponent implements OnInit {
         const igreja = response?.data?.igreja ?? response?.data;
         const seo = response?.data?.seo;
         this.churchInfo = igreja;
-        if (igreja) {
-          this._seo.update({
-            title: seo?.title ?? `${igreja.nome} | BuscaMissa`,
-            description: seo?.description ?? `Veja os horários de missa, endereço e contato de ${igreja.nome}. Encontre missas perto de você no BuscaMissa.`,
-            canonical: seo?.canonicalUrl,
-          });
-          this.aplicarBreadcrumbSchema(igreja);
-          this.aplicarPlaceSchema(igreja);
-          this.form?.patchValue({
-            nomeIgreja: igreja.nome,
-            nomeParoco: igreja.paroco,
-            cep: igreja.endereco?.cep || "",
-            endereco: igreja.endereco?.logradouro || "",
-            numero: igreja.endereco?.numero || "",
-            complemento: igreja.endereco?.complemento || "",
-            bairro: igreja.endereco?.bairro || "",
-            cidade: igreja.endereco?.localidade || "",
-            estado: igreja.endereco?.estado || "",
-            uf: igreja.endereco?.uf || "",
-            regiao: igreja.endereco?.regiao || "",
-            telefone: igreja.contato?.telefone
-              ? `${igreja.contato.ddd}${igreja.contato.telefone}`
-              : "",
-            whatsapp: igreja.contato?.telefoneWhatsApp
-              ? `${igreja.contato.dddWhatsApp}${igreja.contato.telefoneWhatsApp}`
-              : "",
-            emailContato: igreja.contato?.emailContato || "",
-            facebook: this.getSocialMedia(igreja.redesSociais, 1),
-            instagram: this.getSocialMedia(igreja.redesSociais, 2),
-            youtube: this.getSocialMedia(igreja.redesSociais, 3),
-            tiktok: this.getSocialMedia(igreja.redesSociais, 4),
-            imagem: igreja.imagemUrl,
-          });
-          this.limparHorarios();
-          (igreja.missas ?? []).forEach((missa: any) => {
-            const horario = missa.horario
-              ? this.stringParaDate(missa.horario)
-              : null;
-            this.horarios.push(
-              this.fb.group({
-                id: [missa.id],
-                diaSemana: [missa.diaSemana, Validators.required],
-                horario: [horario, [Validators.required, this.minutosValidos()]],
-                observacao: [missa.observacao],
-              })
-            );
-          });
-          if (this.horarios.length > 0) {
-            this.horarios.disable();
-          }
-        } else {
-          this._toast.add({
-            severity: "error",
-            summary: "Erro",
-            detail: "Dados da igreja não encontrados.",
-          });
-          this._router.navigate(['/nova']);
+
+        if (!igreja) {
+          this._toast.add({ severity: "error", summary: "Erro", detail: "Dados da igreja não encontrados." });
+          this._router.navigate(['/home']);
+          return;
         }
+
+        if (igreja.id) this.carregarResumoConfirmacoes(igreja.id);
+
+        this._seo.update({
+          title: seo?.title ?? `${igreja.nome} | BuscaMissa`,
+          description: seo?.description ?? `Veja os horários de missa, endereço e contato de ${igreja.nome}. Encontre missas perto de você no BuscaMissa.`,
+          canonical: seo?.canonicalUrl,
+        });
+        this.aplicarBreadcrumbSchema(igreja);
+        this.aplicarPlaceSchema(igreja);
       },
       error: (error) => {
-        this._toast.add({
-          severity: "error",
-          summary: "Erro",
-          detail: "Erro ao carregar dados da igreja para edição.",
-        });
+        this._toast.add({ severity: "error", summary: "Erro", detail: "Erro ao carregar dados da igreja." });
         console.error(error);
       },
     });
   }
 
-  // Função para buscar a URL de uma rede social específica
-  private getSocialMedia(redes: any[], tipo: number): string {
-    const rede = redes?.find((r) => r.tipoRedeSocial === tipo);
-    return rede ? rede.url : "";
+  // ── Próxima missa (scoreboard) ─────────────────────────────────────────────
+
+  /** Próxima missa que vai acontecer (menor tempo até o início) */
+  get proximaMissa(): Mass | null {
+    const missas: Mass[] = this.churchInfo?.missas ?? [];
+    if (!missas.length) return null;
+    return missas.reduce((melhor, m) => {
+      const min = getNextOccurrenceMinutes(m.diaSemana!, m.horario);
+      const melhorMin = getNextOccurrenceMinutes(melhor.diaSemana!, melhor.horario);
+      return min < melhorMin ? m : melhor;
+    });
   }
 
-  minutosValidos(): ValidatorFn {
-    return (control: AbstractControl): ValidationErrors | null => {
-      if (control.value) {
-        let horario = control.value;
+  /** Minutos até a próxima missa */
+  get minutosProximaMissa(): number | null {
+    const pm = this.proximaMissa;
+    return pm ? getNextOccurrenceMinutes(pm.diaSemana!, pm.horario) : null;
+  }
 
-        // Se for um objeto Date, converta para string no formato "HH:mm:ss"
-        if (horario instanceof Date) {
-          const hours = horario.getHours().toString().padStart(2, "0");
-          const minutes = horario.getMinutes().toString().padStart(2, "0");
-          const seconds = horario.getSeconds().toString().padStart(2, "0");
-          horario = `${hours}:${minutes}:${seconds}`; // Converte para "HH:mm:ss"
-        }
+  /** Só mostra o contador regressivo quando cria urgência real (até 3h) — evita redundância com o dia */
+  get mostrarContador(): boolean {
+    const min = this.minutosProximaMissa;
+    return min !== null && min <= 180;
+  }
 
-        const [hours, minutes] = horario
-          .split(":")
-          .map((val: string) => parseInt(val, 10));
+  /** Rótulo curto do dia da próxima missa: "Hoje" / "Amanhã" / "Sábado" */
+  get proximaMissaDiaLabel(): string {
+    const pm = this.proximaMissa;
+    if (!pm) return "";
+    const min = getNextOccurrenceMinutes(pm.diaSemana!, pm.horario);
+    const alvo = new Date(Date.now() + min * 60_000);
 
-        if (![0, 15, 30, 45].includes(minutes)) {
-          return { minutosInvalidos: true };
-        }
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+    const dAlvo = new Date(alvo); dAlvo.setHours(0, 0, 0, 0);
+    const diff = Math.round((dAlvo.getTime() - hoje.getTime()) / 86_400_000);
+
+    if (diff === 0) return "Hoje";
+    if (diff === 1) return "Amanhã";
+    return ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"][pm.diaSemana!] ?? "";
+  }
+
+  /** Data completa da próxima ocorrência: "quinta-feira, 15 de maio" */
+  get proximaMissaData(): string {
+    const pm = this.proximaMissa;
+    if (!pm) return "";
+    const min = getNextOccurrenceMinutes(pm.diaSemana!, pm.horario);
+    const data = new Date(Date.now() + min * 60_000);
+    return data.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
+  }
+
+  formatarHorario(horario: string): string {
+    return formatMassTime(horario);
+  }
+
+  isHoje(diaSemana: number): boolean {
+    return new Date().getDay() === diaSemana;
+  }
+
+  /** CEP só é exibível se não for placeholder/zerado dos imports */
+  get cepValido(): boolean {
+    const cep = (this.churchInfo?.endereco?.cep ?? "").replace(/\D/g, "");
+    return cep.length === 8 && cep !== "00000000";
+  }
+
+  /** Missas agrupadas por dia da semana, ordenadas por horário */
+  get missasPorDia(): { dia: number; label: string; missas: Mass[] }[] {
+    const labels = ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
+    const missas: Mass[] = this.churchInfo?.missas ?? [];
+    const grupos: Record<number, Mass[]> = {};
+    missas.forEach((m) => {
+      if (m.diaSemana !== undefined && m.diaSemana !== null) {
+        (grupos[m.diaSemana] = grupos[m.diaSemana] ?? []).push(m);
       }
-      return null;
-    };
+    });
+    return Object.keys(grupos)
+      .map(Number)
+      .sort((a, b) => a - b)
+      .map((dia) => ({
+        dia,
+        label: labels[dia],
+        missas: grupos[dia].sort((a, b) => a.horario.localeCompare(b.horario)),
+      }));
   }
 
-  get horarios(): FormArray {
-    return this.form.get("missas") as FormArray;
+  // ── Prova social + mapa ────────────────────────────────────────────────────
+
+  private carregarResumoConfirmacoes(igrejaId: number): void {
+    this.totalConfirmacoes = 0;
+    this.ultimaConfirmacao = null;
+    this._church.getResumoConfirmacoes(igrejaId).subscribe({
+      next: (res: any) => {
+        this.totalConfirmacoes = res?.data?.totalConfirmacoes ?? 0;
+        this.ultimaConfirmacao = res?.data?.ultimaConfirmacao ?? null;
+      },
+      error: () => { /* prova social é opcional — silencioso */ },
+    });
   }
 
-  limparHorarios(): void {
-    while (this.horarios.length !== 0) {
-      this.horarios.removeAt(0); // Remove um por um
-    }
-  }
-
-  adicionarHorario(): void {
-    this.horarios.push(
-      this.fb.group({
-        id: [null],
-        diaSemana: [null, Validators.required],
-        horario: [null, [Validators.required, this.minutosValidos()]],
-        observacao: [""],
-      })
+  /** Mapa embarcado (Google Maps embed, sem API key) */
+  get mapEmbedUrl(): SafeResourceUrl | null {
+    const e = this.churchInfo?.endereco;
+    if (!e) return null;
+    const q = e.latitude && e.longitude
+      ? `${e.latitude},${e.longitude}`
+      : encodeURIComponent(`${this.churchInfo.nome}, ${e.logradouro}, ${e.localidade} ${e.uf}`);
+    return this._sanitizer.bypassSecurityTrustResourceUrl(
+      `https://maps.google.com/maps?q=${q}&z=16&output=embed`
     );
   }
 
-  removerHorario(index: number): void {
-    this.horarios.removeAt(index);
+  // ── Navegação / compartilhamento ───────────────────────────────────────────
+
+  get linkGoogleMaps(): string {
+    const e = this.churchInfo?.endereco;
+    if (!e) return '#';
+    if (e.latitude && e.longitude)
+      return `https://www.google.com/maps/search/?api=1&query=${e.latitude},${e.longitude}`;
+    const q = encodeURIComponent(`${this.churchInfo.nome}, ${e.logradouro}, ${e.localidade} ${e.uf}`);
+    return `https://www.google.com/maps/search/?api=1&query=${q}`;
   }
 
-  stringParaDate(horario: string): Date {
-    const [hourStr, minuteStr, secondStr = "00"] = horario?.split(":");
-
-    const hours = parseInt(hourStr, 10);
-    const minutes = parseInt(minuteStr, 10);
-    const seconds = parseInt(secondStr, 10);
-
-    // Criamos um objeto Date com a data padrão e apenas alteramos as horas, minutos e segundos
-    const date = new Date();
-    date.setHours(hours, minutes, seconds, 0); // Setando a hora, minutos e segundos
-
-    return date;
+  get linkWaze(): string {
+    const e = this.churchInfo?.endereco;
+    if (!e) return '#';
+    if (e.latitude && e.longitude)
+      return `https://waze.com/ul?ll=${e.latitude},${e.longitude}&navigate=yes`;
+    const q = encodeURIComponent(`${this.churchInfo.nome}, ${e.logradouro}, ${e.localidade}`);
+    return `https://waze.com/ul?q=${q}&navigate=yes`;
   }
 
-  dateParaString(date: Date): string {
-    const hours = date.getHours().toString().padStart(2, "0"); // Adiciona zero à esquerda se necessário
-    const minutes = date.getMinutes().toString().padStart(2, "0"); // Adiciona zero à esquerda se necessário
-    const seconds = date.getSeconds().toString().padStart(2, "0"); // Adiciona zero à esquerda se necessário
-
-    return `${hours}:${minutes}:${seconds}`;
+  get shareUrl(): string {
+    const base = 'https://buscamissa.com.br';
+    const ig = this.churchInfo;
+    const end = ig?.endereco;
+    const uf = end?.uf?.toLowerCase();
+    if (uf && end?.cidadeSlug && ig?.slug)
+      return `${base}/paroquia/${uf}/${end.cidadeSlug}/${ig.slug}`;
+    return `${base}/igrejas/${ig?.nomeUnico}`;
   }
 
-  voltar() {
-    this._location.back();
-  }
-
-  getFormattedMasses(missas: Mass[]): { diaLabel: string; horarios: string; observacao: string }[] {
-    const days = ["Domingo","Segunda-feira","Terça-feira","Quarta-feira","Quinta-feira","Sexta-feira","Sábado"];
-    const grouped: { [key: number]: Mass[] } = {};
-    missas.forEach(m => {
-      if (m.diaSemana !== undefined) {
-        grouped[m.diaSemana] = grouped[m.diaSemana] || [];
-        grouped[m.diaSemana].push(m);
-      }
-    });
-    return Object.keys(grouped)
-      .map(Number)
-      .sort((a, b) => a - b)
-      .map(day => {
-        const ms = grouped[day];
-        const horarios = ms
-          .map(m => this.formatTime(m.horario))
-          .sort((a, b) => {
-            const [h1, m1] = a.split(':').map(Number);
-            const [h2, m2] = b.split(':').map(Number);
-            return h1 - h2 || m1 - m2;
-          })
-          .join(', ');
-        return { diaLabel: days[day], horarios, observacao: ms[0]?.observacao || 'Sem observação' };
-      });
-  }
-
-  formatTime(t: string): string {
-    const [h, m] = t.split(':');
-    return `${parseInt(h, 10)}:${m}`;
+  linkCidade(): string[] {
+    const uf = this.churchInfo?.endereco?.uf;
+    const cidadeSlug = this.churchInfo?.endereco?.cidadeSlug;
+    if (uf && cidadeSlug) return ["/missas", uf.toLowerCase(), cidadeSlug];
+    return ["/home"];
   }
 
   getSocialIcon(url: string): string {
@@ -312,20 +256,62 @@ export class DetailsComponent implements OnInit {
     return 'pi pi-globe';
   }
 
-  editChurch(church: any) {
+  voltar(): void {
+    this._location.back();
+  }
+
+  scrollToHorarios(): void {
+    document.getElementById("horarios")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  editChurch(church: any): void {
     this._router.navigate(['/editar', church.id]);
   }
 
-  // Link para a página da cidade (/missas/uf/cidadeSlug)
-  linkCidade(): string[] {
-    const uf = this.churchInfo?.endereco?.uf;
-    const cidadeSlug = this.churchInfo?.endereco?.cidadeSlug;
-    if (uf && cidadeSlug) return ["/missas", uf.toLowerCase(), cidadeSlug];
-    return ["/home"];
+  reportarErro(): void {
+    if (this.churchInfo?.id) this._router.navigate(['/editar', this.churchInfo.id]);
   }
 
-  // Próxima data (futura) em que a missa ocorre, em ISO 8601 com fuso de Brasília (-03:00).
-  // Recalculado a cada visita, então o startDate nunca fica no passado.
+  // ── Confirmação de horários ─────────────────────────────────────────────────
+
+  confirmarHorarios(): void {
+    if (!this.churchInfo?.id) return;
+
+    const localKey = `buscamissa_confirmacao_${this.churchInfo.id}`;
+    if (localStorage.getItem(localKey)) {
+      this._toast.add({ severity: 'info', summary: 'Já confirmado', detail: 'Você já confirmou os horários desta paróquia.' });
+      return;
+    }
+
+    this.confirmandoHorarios = true;
+    this._church.confirmarHorarios(this.churchInfo.id).subscribe({
+      next: () => {
+        localStorage.setItem(localKey, '1');
+        this.confirmacaoEnviada = true;
+        this.totalConfirmacoes++;
+        this._toast.add({ severity: 'success', summary: 'Obrigado!', detail: 'Sua confirmação ajuda outras pessoas da comunidade.' });
+      },
+      error: (err) => {
+        if (err.status === 409) {
+          localStorage.setItem(localKey, '1');
+          this.confirmacaoEnviada = true;
+          this._toast.add({ severity: 'info', summary: 'Já registrado', detail: 'Você já confirmou os horários desta paróquia.' });
+        } else {
+          this._toast.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível enviar sua confirmação. Tente novamente.' });
+        }
+      },
+      complete: () => { this.confirmandoHorarios = false; }
+    });
+  }
+
+  jaConfirmou(): boolean {
+    if (!this.churchInfo?.id) return false;
+    return !!localStorage.getItem(`buscamissa_confirmacao_${this.churchInfo.id}`);
+  }
+
+  // ── SEO / Schema.org ────────────────────────────────────────────────────────
+
+  // Próxima ocorrência futura em ISO 8601 com fuso de Brasília (-03:00)
   private proximaOcorrencia(diaSemana: number, horaMin: string): string {
     const [h, m] = (horaMin || "00:00").split(":").map(Number);
     const agora = new Date();
@@ -333,9 +319,7 @@ export class DetailsComponent implements OnInit {
     const d = new Date(agora);
     d.setDate(agora.getDate() + diasAte);
     d.setHours(h, m, 0, 0);
-    if (diasAte === 0 && d.getTime() <= agora.getTime()) {
-      d.setDate(d.getDate() + 7); // hoje, mas já passou → próxima semana
-    }
+    if (diasAte === 0 && d.getTime() <= agora.getTime()) d.setDate(d.getDate() + 7);
     return this.toIsoBrasilia(d);
   }
 
@@ -345,13 +329,11 @@ export class DetailsComponent implements OnInit {
     return this.toIsoBrasilia(d);
   }
 
-  // Monta "YYYY-MM-DDTHH:mm:00-03:00" a partir dos componentes locais
   private toIsoBrasilia(d: Date): string {
     const p = (n: number) => String(n).padStart(2, "0");
     return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:00-03:00`;
   }
 
-  // Schema.org Church (Place) + horários de missa como eventos recorrentes
   private aplicarPlaceSchema(igreja: any): void {
     const base = "https://buscamissa.com.br";
     const end = igreja?.endereco ?? {};
@@ -379,14 +361,14 @@ export class DetailsComponent implements OnInit {
     const eventos = (igreja.missas ?? [])
       .filter((m: any) => m.diaSemana !== undefined && m.diaSemana !== null && dias[m.diaSemana])
       .map((m: any) => {
-        const hora = (m.horario ?? "").slice(0, 5); // HH:mm
+        const hora = (m.horario ?? "").slice(0, 5);
         const diaNome = ["Domingo","Segunda-feira","Terça-feira","Quarta-feira","Quinta-feira","Sexta-feira","Sábado"][m.diaSemana];
-        const inicio = this.proximaOcorrencia(m.diaSemana, hora);   // ISO da próxima ocorrência
-        const fim = this.somarHora(inicio, 1);                       // missa ~1h
+        const inicio = this.proximaOcorrencia(m.diaSemana, hora);
+        const fim = this.somarHora(inicio, 1);
         const ev: any = {
           "@type": "Event",
           name: `Missa - ${diaNome}`,
-          startDate: inicio,                                          // obrigatório p/ Google
+          startDate: inicio,
           endDate: fim,
           eventSchedule: {
             "@type": "Schedule",
@@ -434,7 +416,6 @@ export class DetailsComponent implements OnInit {
     this._seo.setJsonLd("place", place);
   }
 
-  // Schema.org BreadcrumbList para rich result no Google
   private aplicarBreadcrumbSchema(igreja: any): void {
     const base = "https://buscamissa.com.br";
     const uf = igreja?.endereco?.uf?.toLowerCase();
@@ -458,86 +439,5 @@ export class DetailsComponent implements OnInit {
       "@type": "BreadcrumbList",
       itemListElement: itens,
     });
-  }
-
-  confirmarHorarios() {
-    if (!this.churchInfo?.id) return;
-
-    // Dedup local: evita chamada dupla sem recarregar a página
-    const localKey = `buscamissa_confirmacao_${this.churchInfo.id}`;
-    if (localStorage.getItem(localKey)) {
-      this._toast.add({ severity: 'info', summary: 'Já confirmado', detail: 'Você já confirmou os horários desta paróquia.' });
-      return;
-    }
-
-    this.confirmandoHorarios = true;
-    this._church.confirmarHorarios(this.churchInfo.id).subscribe({
-      next: () => {
-        localStorage.setItem(localKey, '1');
-        this.confirmacaoEnviada = true;
-        this._toast.add({ severity: 'success', summary: 'Obrigado!', detail: 'Sua confirmação ajuda outras pessoas da comunidade.' });
-      },
-      error: (err) => {
-        if (err.status === 409) {
-          localStorage.setItem(localKey, '1');
-          this.confirmacaoEnviada = true;
-          this._toast.add({ severity: 'info', summary: 'Já registrado', detail: 'Você já confirmou os horários desta paróquia.' });
-        } else {
-          this._toast.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível enviar sua confirmação. Tente novamente.' });
-        }
-      },
-      complete: () => { this.confirmandoHorarios = false; }
-    });
-  }
-
-  reportarErro() {
-    if (this.churchInfo?.id) {
-      this._router.navigate(['/editar', this.churchInfo.id]);
-    }
-  }
-
-  jaConfirmou(): boolean {
-    if (!this.churchInfo?.id) return false;
-    return !!localStorage.getItem(`buscamissa_confirmacao_${this.churchInfo.id}`);
-  }
-
-  // ── Helpers do card de confiança ──────────────────────────────────────────
-
-  /** Retorna a missa com maior score de confiança */
-  getBestMissa(missas: Mass[]): Mass | null {
-    if (!missas?.length) return null;
-    return missas.reduce((best, m) =>
-      (m.scoreConfianca ?? 0) > (best.scoreConfianca ?? 0) ? m : best
-    );
-  }
-
-  /** Retorna a data de última validação mais recente */
-  getUltimaValidacao(missas: Mass[]): string | null {
-    if (!missas?.length) return null;
-    const datas = missas
-      .filter(m => m.ultimaValidacao)
-      .map(m => new Date(m.ultimaValidacao!));
-    if (!datas.length) return null;
-    return datas.reduce((a, b) => (a > b ? a : b)).toISOString();
-  }
-
-  getConfiancaDotClass(missa: Mass | null): string {
-    const s = missa?.statusConfianca ?? 0;
-    return s === 3 ? 'bg-green-500' : s === 2 ? 'bg-yellow-500' : s === 1 ? 'bg-orange-500' : 'bg-red-400';
-  }
-
-  getConfiancaIconClass(missa: Mass | null): string {
-    const s = missa?.statusConfianca ?? 0;
-    return s === 3 ? 'bg-green-500' : s === 2 ? 'bg-yellow-500' : s === 1 ? 'bg-orange-500' : 'bg-gray-400';
-  }
-
-  getConfiancaIcon(missa: Mass | null): string {
-    const s = missa?.statusConfianca ?? 0;
-    return s === 3 ? 'pi pi-check' : s === 2 ? 'pi pi-clock' : s === 1 ? 'pi pi-exclamation-triangle' : 'pi pi-question';
-  }
-
-  getConfiancaTextClass(missa: Mass | null): string {
-    const s = missa?.statusConfianca ?? 0;
-    return s === 3 ? 'text-green-700' : s === 2 ? 'text-yellow-700' : s === 1 ? 'text-orange-700' : 'text-red-600';
   }
 }

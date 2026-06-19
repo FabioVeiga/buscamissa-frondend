@@ -1,0 +1,130 @@
+.mass-time-card {
+  display: block;
+  border: 1px solid #e2e8f0;
+  border-left: 4px solid transparent;
+  border-radius: 12px;
+  background: #fff;
+  overflow: hidden;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+
+  &:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  // Urgency variants — usados pela tela /missa-agora (Sprint 4)
+  &--urgent {
+    border-left-color: #16a34a;
+  }
+
+  &--soon {
+    border-left-color: #ca8a04;
+  }
+
+  &--later {
+    border-left-color: #94a3b8;
+  }
+
+  &__body {
+    display: block;
+    padding: 1rem 1rem 0.75rem;
+    text-decoration: none;
+    color: inherit;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-bottom: 6px;
+  }
+
+  &__time {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #bc5d10;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  &__name {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 0 0 4px;
+    line-height: 1.3;
+  }
+
+  &__location {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.875rem;
+    color: #64748b;
+    flex-wrap: wrap;
+  }
+
+  &__bairro {
+    &::after {
+      content: '·';
+      margin-left: 8px;
+    }
+  }
+
+  &__actions {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 0.75rem 1rem;
+    border-top: 1px solid #f1f5f9;
+  }
+
+  &__btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #334155;
+    transition: background 0.15s, border-color 0.15s;
+
+    &:hover {
+      background: #f8fafc;
+    }
+
+    &--navigate {
+      flex: 1;
+      color: #bc5d10;
+      border-color: #bc5d10;
+
+      &:hover {
+        background: #fcf7f3;
+      }
+    }
+
+    &--favorite {
+      padding: 7px 12px;
+
+      .pi {
+        font-size: 1rem;
+        color: #94a3b8;
+        transition: color 0.15s;
+      }
+
+      &:hover .pi {
+        color: #bc5d10;
+      }
+    }
+  }
+}

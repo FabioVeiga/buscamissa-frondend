@@ -1,0 +1,55 @@
+import { Component, EventEmitter, Input, OnChanges, Output } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterModule } from '@angular/router';
+import { MassCardData, MassUrgency } from '../../models/mass-card.model';
+import { formatMassTime } from '../../utils/mass-time.utils';
+import { ConfidenceBadgeComponent } from '../confidence-badge/confidence-badge.component';
+import { CountdownChipComponent } from '../countdown-chip/countdown-chip.component';
+import { DistanceChipComponent } from '../distance-chip/distance-chip.component';
+
+@Component({
+  selector: 'app-mass-time-card',
+  standalone: true,
+  imports: [
+    CommonModule,
+    RouterModule,
+    ConfidenceBadgeComponent,
+    CountdownChipComponent,
+    DistanceChipComponent,
+  ],
+  templateUrl: './mass-time-card.component.html',
+  styleUrl: './mass-time-card.component.scss',
+})
+export class MassTimeCardComponent implements OnChanges {
+  @Input({ required: true }) data!: MassCardData;
+  /** Usado na tela /missa-agora para colorir a borda por urgência */
+  @Input() urgency: MassUrgency = null;
+
+  @Output() navigateClick = new EventEmitter<MassCardData>();
+  @Output() favoriteClick = new EventEmitter<MassCardData>();
+
+  formattedTime = '';
+  parishRoute: string[] = [];
+
+  ngOnChanges(): void {
+    this.formattedTime = formatMassTime(this.data.mass.horario);
+    this.parishRoute = [
+      '/paroquia',
+      this.data.uf,
+      this.data.cidadeSlug,
+      this.data.slug,
+    ];
+  }
+
+  onNavigate(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.navigateClick.emit(this.data);
+  }
+
+  onFavorite(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    this.favoriteClick.emit(this.data);
+  }
+}

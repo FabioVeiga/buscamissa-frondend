@@ -86,6 +86,11 @@ export class ChurchesService {
     });
   }
 
+  /** Resumo de prova social: total de confirmações + última confirmação */
+  getResumoConfirmacoes(igrejaId: number) {
+    return this.http.get(`v2/Confiabilidade/${igrejaId}/resumo`);
+  }
+
   /** Gera fingerprint a partir de características do browser */
   gerarFingerprint(): string {
     const data = [

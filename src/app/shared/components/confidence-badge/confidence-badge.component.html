@@ -1,0 +1,17 @@
+@switch (level) {
+  @case ('parish') {
+    <span class="confidence-badge confidence-badge--parish">
+      <i class="pi pi-check-circle"></i> Pela paróquia
+    </span>
+  }
+  @case ('confirmed') {
+    <span class="confidence-badge confidence-badge--confirmed">
+      <i class="pi pi-check"></i> Confirmado
+    </span>
+  }
+  @default {
+    <span class="confidence-badge confidence-badge--unverified">
+      <i class="pi pi-exclamation-circle"></i> Não validado
+    </span>
+  }
+}
