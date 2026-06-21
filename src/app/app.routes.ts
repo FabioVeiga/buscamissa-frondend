@@ -76,6 +76,19 @@ export const routes: Routes = [
             (m) => m.DetailsComponent
           ),
       },
+      // Página de todas as cidades
+      {
+        path: 'cidades',
+        data: {
+          title: 'Todas as cidades | BuscaMissa',
+          description: 'Encontre horários de missa em qualquer cidade do Brasil. Paróquias e comunidades católicas por estado.',
+          canonical: 'https://buscamissa.com.br/cidades',
+        },
+        loadComponent: () =>
+          import('./modules/public/cidades/cidades.component').then(
+            (m) => m.CidadesComponent
+          ),
+      },
       // Redirect da rota antiga para manter links existentes funcionando
       {
         path: "detalhes/:cep",

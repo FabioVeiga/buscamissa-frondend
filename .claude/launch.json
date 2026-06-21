@@ -4,8 +4,9 @@
     {
       "name": "buscamissa-frontend",
       "runtimeExecutable": "npx",
-      "runtimeArgs": ["ng", "serve", "--port", "4200", "--no-open"],
-      "port": 4200
+      "runtimeArgs": ["ng", "serve", "--no-open"],
+      "port": 4200,
+      "autoPort": true
     }
   ]
 }

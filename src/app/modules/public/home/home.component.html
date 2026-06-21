@@ -117,6 +117,94 @@
   </div>
 </p-panel>
 
+<!-- ══ BANNER: AJUDE A MANTER OS HORÁRIOS ══ -->
+<div class="confirmar-banner mx-1">
+  <div class="confirmar-banner__art" aria-hidden="true">
+    <svg viewBox="0 0 80 72" xmlns="http://www.w3.org/2000/svg">
+      <rect x="22" y="36" width="36" height="30" rx="2" fill="#f0e2d3"/>
+      <rect x="35" y="15" width="10" height="51" rx="1.5" fill="#f5ede3"/>
+      <polygon points="22,36 40,22 58,36" fill="#e6c9a8"/>
+      <polygon points="40,7 32,17 48,17" fill="#e6c9a8"/>
+      <rect x="38" y="2" width="4" height="7" rx="1" fill="#d4a97a"/>
+      <rect x="36" y="5" width="8" height="3" rx="1" fill="#d4a97a"/>
+      <rect x="37.5" y="48" width="5" height="18" rx="1" fill="#d4a97a"/>
+      <rect x="26" y="42" width="7" height="10" rx="1.5" fill="#d4a97a"/>
+      <rect x="47" y="42" width="7" height="10" rx="1.5" fill="#d4a97a"/>
+    </svg>
+  </div>
+  <div class="confirmar-banner__text flex-1 min-w-0">
+    <p class="font-bold text-gray-800 text-sm leading-snug">Ajude a manter os horários sempre atualizados</p>
+    <p class="text-gray-500 text-xs mt-1 leading-relaxed">
+      Sua confirmação faz toda a diferença para que todos encontrem a missa certa, na hora certa.
+    </p>
+  </div>
+  <a routerLink="/cidades" class="confirmar-banner__btn shrink-0">
+    <i class="pi pi-thumbs-up"></i> Quero confirmar horários
+  </a>
+</div>
+
+<!-- ══ MISSAS POR CIDADE ══ -->
+<section class="cidades-section mx-1">
+  <div class="flex items-center gap-2 mb-3">
+    <i class="pi pi-map-marker" style="color: #bc5d10;"></i>
+    <h2 class="text-lg font-bold text-gray-800">Missas por cidade</h2>
+    <!-- Indicador de localização -->
+    <span *ngIf="geoStatus === 'loading'" class="geo-badge geo-badge--loading">
+      <i class="pi pi-spin pi-spinner text-xs"></i> Detectando...
+    </span>
+    <span *ngIf="geoStatus === 'found' && cidadeDetectada" class="geo-badge geo-badge--found">
+      <i class="pi pi-map-marker text-xs"></i> Perto de você
+    </span>
+  </div>
+
+  <!-- Cidade detectada em destaque -->
+  <a *ngIf="geoStatus === 'found' && cidadeDetectada"
+     [routerLink]="['/missas', cidadeDetectada.uf.toLowerCase(), cidadeDetectada.slug]"
+     class="cidade-destaque mb-3">
+    <div class="cidade-destaque__icon" aria-hidden="true">
+      <i class="pi pi-map-marker"></i>
+    </div>
+    <div class="cidade-destaque__info">
+      <span class="cidade-destaque__label">Sua cidade</span>
+      <span class="cidade-destaque__nome">{{ cidadeDetectada.nome }}</span>
+    </div>
+    <span class="cidade-destaque__estado">{{ cidadeDetectada.uf }}</span>
+    <i class="pi pi-arrow-right cidade-destaque__arrow"></i>
+  </a>
+
+  <!-- Grid de cidades -->
+  <div class="cidades-grid">
+    <a *ngFor="let c of cidadesFeatured; let i = index"
+       [routerLink]="['/missas', c.uf.toLowerCase(), c.slug]"
+       class="cidade-card"
+       [class.cidade-card--skip]="geoStatus === 'found' && i === 0">
+      <div class="cidade-card__icon">
+        <svg viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="14" y="22" width="20" height="18" rx="1" fill="#f3d5ba"/>
+          <rect x="21" y="10" width="6" height="30" rx="1" fill="#f0e2d3"/>
+          <polygon points="14,22 24,14 34,22" fill="#e6c9a8"/>
+          <polygon points="24,6 20,12 28,12" fill="#e6c9a8"/>
+          <rect x="22.5" y="2" width="3" height="6" rx="1" fill="#d4a97a"/>
+          <rect x="20.5" y="4.5" width="7" height="2.5" rx="1" fill="#d4a97a"/>
+          <rect x="22" y="30" width="4" height="10" rx="1" fill="#d4a97a"/>
+          <rect x="17" y="26" width="4" height="6" rx="1" fill="#d4a97a"/>
+          <rect x="27" y="26" width="4" height="6" rx="1" fill="#d4a97a"/>
+        </svg>
+      </div>
+      <div class="cidade-card__info">
+        <span class="cidade-card__nome">{{ c.nome }}</span>
+        <span class="cidade-card__uf">{{ c.uf }}</span>
+      </div>
+    </a>
+  </div>
+
+  <div class="mt-4 text-center">
+    <a routerLink="/cidades" class="text-sm font-semibold" style="color: #bc5d10;">
+      Ver todas as cidades <i class="pi pi-arrow-right text-xs"></i>
+    </a>
+  </div>
+</section>
+
 <p-panel *ngIf="churchInfo && churchInfo.length > 0">
   <p-dataview #dv [value]="churchInfo" [rows]="pageSize">
     <ng-template #list let-church>
@@ -457,12 +545,12 @@
   *ngIf="churchInfo?.length === 0 && !showNoChurchCard"
   class="mt-4 text-center"
 >
-  <p>Gostaria de cadastrar uma nova missa?</p>
+  <p class="font-semibold text-lg mb-2">Gostaria de cadastrar uma nova missa?</p>
   <p>
-    Encontre horários e locais de missas da Igreja Católica Apostólica Romana de
-    forma rápida e fácil. Além disso, você pode contribuir atualizando
-    informações como horários de missas, fotos das igrejas e nomes dos párocos,
-    ajudando toda a comunidade a se conectar melhor com sua fé.
+    Encontre horários e locais de missas da Igreja Católica Apostólica Romana de forma rápida e simples.
+    Você também pode colaborar com a comunidade informando novos horários, corrigindo dados,
+    adicionando fotos das igrejas e atualizando informações paroquiais, ajudando milhares de fiéis
+    a encontrar uma missa perto de você.
   </p>
   <p-button
     label="Cadastrar missa"

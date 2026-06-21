@@ -52,6 +52,31 @@ export class HomeComponent {
   public _router = inject(Router);
   private _route = inject(ActivatedRoute);
 
+  /** Cidades em destaque (fallback quando sem geolocalização) */
+  readonly cidadesFallback = [
+    { nome: 'São Paulo',           uf: 'SP', slug: 'sao-paulo' },
+    { nome: 'Campinas',            uf: 'SP', slug: 'campinas' },
+    { nome: 'São José dos Campos', uf: 'SP', slug: 'sao-jose-dos-campos' },
+    { nome: 'Ribeirão Preto',      uf: 'SP', slug: 'ribeirao-preto' },
+    { nome: 'Santos',              uf: 'SP', slug: 'santos' },
+    { nome: 'Sorocaba',            uf: 'SP', slug: 'sorocaba' },
+    { nome: 'Taubaté',             uf: 'SP', slug: 'taubate' },
+    { nome: 'Brasília',            uf: 'DF', slug: 'brasilia' },
+  ];
+
+  /** Status da geolocalização */
+  geoStatus: 'idle' | 'loading' | 'found' | 'denied' | 'error' = 'idle';
+
+  /** Cidade detectada por geoloc */
+  cidadeDetectada: { nome: string; uf: string; slug: string } | null = null;
+
+  /** Cidades dinâmicas (por geoloc) ou fallback */
+  cidadesGrid: { nome: string; uf: string; slug: string }[] = [];
+
+  get cidadesFeatured() {
+    return this.cidadesGrid.length ? this.cidadesGrid : this.cidadesFallback;
+  }
+
   public isLoading = false;
   public isLoadingAddress = false;
   public isLoadingCities = false;
@@ -146,8 +171,59 @@ export class HomeComponent {
       complete: () => {
         this.isLoadingAddress = false;
         this._restoreFromQueryParams();
+        this._requestGeolocation();
       },
     });
+  }
+
+  private _requestGeolocation(): void {
+    if (!navigator.geolocation) return;
+    this.geoStatus = 'loading';
+    navigator.geolocation.getCurrentPosition(
+      pos => this._reverseGeocode(pos.coords.latitude, pos.coords.longitude),
+      () => { this.geoStatus = 'denied'; }
+    );
+  }
+
+  private _reverseGeocode(lat: number, lng: number): void {
+    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=pt-BR`)
+      .then(r => r.json())
+      .then((data: any) => {
+        const addr = data.address ?? {};
+        const nomeCidade = addr.city || addr.town || addr.village || addr.municipality || '';
+        const nomeEstado = addr.state || '';
+        const estado = STATES.find(s =>
+          this._norm(nomeEstado).includes(this._norm(s.nome)) ||
+          this._norm(s.nome).includes(this._norm(nomeEstado))
+        );
+        if (!estado || !nomeCidade) { this.geoStatus = 'error'; return; }
+
+        const uf = estado.sigla;
+        const cidadesDoEstado = this.fullAddressData[uf] ? Object.keys(this.fullAddressData[uf]) : [];
+        const match = cidadesDoEstado.find(c => this._norm(c) === this._norm(nomeCidade));
+
+        if (!match) { this.geoStatus = 'error'; return; }
+
+        const slug = this._slugify(match);
+        this.cidadeDetectada = { nome: match, uf, slug };
+
+        const outras = cidadesDoEstado
+          .filter(c => this._norm(c) !== this._norm(match))
+          .slice(0, 7)
+          .map(c => ({ nome: c, uf, slug: this._slugify(c) }));
+
+        this.cidadesGrid = [{ nome: match, uf, slug }, ...outras];
+        this.geoStatus = 'found';
+      })
+      .catch(() => { this.geoStatus = 'error'; });
+  }
+
+  private _norm(s: string): string {
+    return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+  }
+
+  private _slugify(s: string): string {
+    return this._norm(s).replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
   }
 
   private _restoreFromQueryParams(): void {

@@ -9,10 +9,10 @@ import { CommonModule } from "@angular/common";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { Location } from "@angular/common";
 import { DomSanitizer, SafeResourceUrl } from "@angular/platform-browser";
-import { ShareButtons } from "ngx-sharebuttons/buttons";
 import { Mass } from "../../church/models/church.model";
 import { ConfidenceBadgeComponent } from "../../../../shared/components/confidence-badge/confidence-badge.component";
 import { CountdownChipComponent } from "../../../../shared/components/countdown-chip/countdown-chip.component";
+import { ChurchPlaceholderComponent } from "../../../../shared/components/church-placeholder/church-placeholder.component";
 import { getNextOccurrenceMinutes, formatMassTime } from "../../../../shared/utils/mass-time.utils";
 
 @Component({
@@ -20,11 +20,11 @@ import { getNextOccurrenceMinutes, formatMassTime } from "../../../../shared/uti
   imports: [
     PrimeNgModule,
     CommonModule,
-    ShareButtons,
     SkeletonModule,
     RouterLink,
     ConfidenceBadgeComponent,
     CountdownChipComponent,
+    ChurchPlaceholderComponent,
   ],
   providers: [MessageService],
   templateUrl: "./details.component.html",
@@ -42,6 +42,7 @@ export class DetailsComponent implements OnInit {
   isLoading = false;
   nomeUnico: string | null = null;
   churchInfo: any;
+  fotoQuebrou = false;
 
   // Prova social
   totalConfirmacoes = 0;
@@ -77,6 +78,7 @@ export class DetailsComponent implements OnInit {
         const igreja = response?.data?.igreja ?? response?.data;
         const seo = response?.data?.seo;
         this.churchInfo = igreja;
+        this.fotoQuebrou = false;
 
         if (!igreja) {
           this._toast.add({ severity: "error", summary: "Erro", detail: "Dados da igreja não encontrados." });
@@ -165,9 +167,25 @@ export class DetailsComponent implements OnInit {
     return cep.length === 8 && cep !== "00000000";
   }
 
-  /** Missas agrupadas por dia da semana, ordenadas por horário */
-  get missasPorDia(): { dia: number; label: string; missas: Mass[] }[] {
-    const labels = ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"];
+  /** Observações distintas das missas — resumo para "Informações da comunidade" */
+  get observacoes(): string[] {
+    const missas: Mass[] = this.churchInfo?.missas ?? [];
+    const set = new Set<string>();
+    missas.forEach((m) => {
+      const o = (m.observacao ?? "").trim();
+      if (o) set.add(o);
+    });
+    return Array.from(set);
+  }
+
+  get temContato(): boolean {
+    const c = this.churchInfo?.contato;
+    return !!(c?.telefone || c?.telefoneWhatsApp || c?.emailContato || c?.site || this.churchInfo?.redesSociais?.length);
+  }
+
+  /** Semana completa (7 dias) — dias sem missa entram vazios para mostrar "—" */
+  get agendaSemana(): { dia: number; label: string; missas: Mass[] }[] {
+    const labels = ["Domingo","Segunda-feira","Terça-feira","Quarta-feira","Quinta-feira","Sexta-feira","Sábado"];
     const missas: Mass[] = this.churchInfo?.missas ?? [];
     const grupos: Record<number, Mass[]> = {};
     missas.forEach((m) => {
@@ -175,14 +193,22 @@ export class DetailsComponent implements OnInit {
         (grupos[m.diaSemana] = grupos[m.diaSemana] ?? []).push(m);
       }
     });
-    return Object.keys(grupos)
-      .map(Number)
-      .sort((a, b) => a - b)
-      .map((dia) => ({
-        dia,
-        label: labels[dia],
-        missas: grupos[dia].sort((a, b) => a.horario.localeCompare(b.horario)),
-      }));
+    return labels.map((label, dia) => ({
+      dia,
+      label,
+      missas: (grupos[dia] ?? []).sort((a, b) => a.horario.localeCompare(b.horario)),
+    }));
+  }
+
+  /** "última confirmação há 3 dias" — formato relativo */
+  get ultimaConfirmacaoLabel(): string {
+    if (!this.ultimaConfirmacao) return "";
+    const dias = Math.floor((Date.now() - new Date(this.ultimaConfirmacao).getTime()) / 86_400_000);
+    if (dias <= 0) return "hoje";
+    if (dias === 1) return "ontem";
+    if (dias < 7) return `há ${dias} dias`;
+    if (dias < 30) { const s = Math.floor(dias / 7); return `há ${s} ${s === 1 ? "semana" : "semanas"}`; }
+    const m = Math.floor(dias / 30); return `há ${m} ${m === 1 ? "mês" : "meses"}`;
   }
 
   // ── Prova social + mapa ────────────────────────────────────────────────────
@@ -260,8 +286,24 @@ export class DetailsComponent implements OnInit {
     this._location.back();
   }
 
+  /** Compartilhar: usa a API nativa quando disponível, senão copia o link */
+  compartilhar(): void {
+    const url = this.shareUrl;
+    const nav = navigator as any;
+    if (nav.share) {
+      nav.share({ title: this.churchInfo?.nome, text: `Horários de missa — ${this.churchInfo?.nome}`, url }).catch(() => {});
+    } else {
+      navigator.clipboard?.writeText(url);
+      this._toast.add({ severity: "success", summary: "Link copiado!", detail: "Cole onde quiser para compartilhar." });
+    }
+  }
+
   scrollToHorarios(): void {
     document.getElementById("horarios")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  scrollToLocal(): void {
+    document.getElementById("como-chegar")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   editChurch(church: any): void {
