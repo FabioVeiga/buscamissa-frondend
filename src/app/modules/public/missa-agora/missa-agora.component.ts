@@ -147,6 +147,10 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
     this._router.navigate(['/missas', cidade.uf, cidade.slug]);
   }
 
+  onCardClick(card: MassCardData): void {
+    this._analytics.missaAgoraCardClicked(card.churchName);
+  }
+
   onNavigate(card: MassCardData): void {
     const lat = card.latitude;
     const lng = card.longitude;

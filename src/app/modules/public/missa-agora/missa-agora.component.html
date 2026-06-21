@@ -95,6 +95,7 @@
       *ngFor="let card of missas"
       [data]="card"
       [urgency]="getUrgency(card)"
+      (cardClick)="onCardClick($event)"
       (navigateClick)="onNavigate($event)"
       (favoriteClick)="onFavorite($event)"
     />

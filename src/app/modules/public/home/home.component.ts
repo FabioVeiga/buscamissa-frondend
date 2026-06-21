@@ -24,6 +24,7 @@ import { STATES } from "../../../core/constants/states";
 import { MassTimeCardComponent } from "../../../shared/components/mass-time-card/mass-time-card.component";
 import { MassCardData } from "../../../shared/models/mass-card.model";
 import { getMissaAgoraUrgency, getCountdownLabel } from "../../../shared/utils/mass-time.utils";
+import { AnalyticsService } from "../../../core/services/analytics.service";
 
 interface AddressData {
   [uf: string]: {
@@ -54,6 +55,7 @@ export class HomeComponent {
   private _fb = inject(FormBuilder);
   public _router = inject(Router);
   private _route = inject(ActivatedRoute);
+  private _analytics = inject(AnalyticsService);
 
   /** Status da geolocalização */
   geoStatus: 'idle' | 'loading' | 'found' | 'denied' | 'error' = 'idle';
@@ -296,6 +298,14 @@ export class HomeComponent {
     this.mostrarMinhaParoquia = !this.mostrarMinhaParoquia;
   }
 
+  onCtaClick(): void {
+    this._analytics.searchStarted();
+  }
+
+  onCardClick(card: MassCardData): void {
+    this._analytics.resultClicked(card.churchName, card.cidadeSlug, card.uf);
+  }
+
   onFavoriteClick(card: MassCardData): void {
     const proximaMissaLabel = card.mass.diaSemana != null
       ? getCountdownLabel(card.mass.diaSemana, card.mass.horario)
@@ -307,6 +317,7 @@ export class HomeComponent {
     };
     localStorage.setItem('buscamissa_favorita', JSON.stringify(this.paroquiaFavorita));
     this.mostrarMinhaParoquia = true;
+    this._analytics.favoriteParishSaved(card.churchName);
   }
 
   removerFavorita(event: Event): void {

@@ -4,7 +4,7 @@
   [class.mass-time-card--soon]="urgency === 'soon'"
   [class.mass-time-card--later]="urgency === 'later'"
 >
-  <a [routerLink]="parishRoute" class="mass-time-card__body">
+  <a [routerLink]="parishRoute" class="mass-time-card__body" (click)="cardClick.emit(data)">
     <div class="mass-time-card__header">
       <span class="mass-time-card__time">{{ formattedTime }}</span>
 
