@@ -4,17 +4,21 @@ import { RouterModule, Router } from "@angular/router";
 import { FormsModule } from "@angular/forms";
 import { ChurchesService } from "../../../core/services/churches.service";
 import { SeoService } from "../../../core/services/seo.service";
+import { AnalyticsService } from "../../../core/services/analytics.service";
 import { MassTimeCardComponent } from "../../../shared/components/mass-time-card/mass-time-card.component";
 import { MassCardData } from "../../../shared/models/mass-card.model";
 import { Mass } from "../../../core/interfaces/church.interface";
-import { getMissaAgoraUrgency } from "../../../shared/utils/mass-time.utils";
+import { getMissaAgoraUrgency, getCountdownLabel } from "../../../shared/utils/mass-time.utils";
+import { MessageService } from "primeng/api";
+import { PrimeNgModule } from "../../../shared/primeng.module";
 
 type GeoStatus = 'idle' | 'loading' | 'found' | 'denied' | 'error';
 
 @Component({
   selector: "app-missa-agora",
   standalone: true,
-  imports: [CommonModule, RouterModule, FormsModule, MassTimeCardComponent],
+  imports: [CommonModule, RouterModule, FormsModule, MassTimeCardComponent, PrimeNgModule],
+  providers: [MessageService],
   templateUrl: "./missa-agora.component.html",
   styleUrl: "./missa-agora.component.scss",
 })
@@ -22,8 +26,11 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
   private _church = inject(ChurchesService);
   private _seo = inject(SeoService);
   private _router = inject(Router);
+  private _analytics = inject(AnalyticsService);
+  private _toast = inject(MessageService);
 
   geoStatus: GeoStatus = 'idle';
+  permissaoNegadaPeloBrowser = false;
   missas: MassCardData[] = [];
   isLoading = false;
   cidadeDetectada: string | null = null;
@@ -67,11 +74,17 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
     this.geoStatus = 'loading';
     navigator.geolocation.getCurrentPosition(
       pos => {
+        this.permissaoNegadaPeloBrowser = false;
         this.geoStatus = 'found';
         this._buscarMissas(pos.coords.latitude, pos.coords.longitude);
         this._reverseGeocode(pos.coords.latitude, pos.coords.longitude);
       },
-      () => { this.geoStatus = 'denied'; }
+      err => {
+        this.geoStatus = 'denied';
+        if (err.code === 1) {
+          this.permissaoNegadaPeloBrowser = true;
+        }
+      }
     );
   }
 
@@ -126,10 +139,35 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
 
   tentar(): void {
     this.missas = [];
+    this.permissaoNegadaPeloBrowser = false;
     this._pedirGeolocalizacao();
   }
 
   irParaCidade(cidade: { uf: string; slug: string }): void {
     this._router.navigate(['/missas', cidade.uf, cidade.slug]);
+  }
+
+  onNavigate(card: MassCardData): void {
+    const lat = card.latitude;
+    const lng = card.longitude;
+    const url = lat && lng
+      ? `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
+      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(card.churchName)}`;
+    window.open(url, '_blank', 'noopener');
+    this._analytics.getDirections(card.churchName);
+  }
+
+  onFavorite(card: MassCardData): void {
+    const proximaMissaLabel = card.mass.diaSemana != null
+      ? getCountdownLabel(card.mass.diaSemana, card.mass.horario)
+      : undefined;
+    const favorita = {
+      id: card.churchId, nome: card.churchName, uf: card.uf,
+      cidadeSlug: card.cidadeSlug, slug: card.slug,
+      proximaMissaLabel, diaSemana: card.mass.diaSemana, horario: card.mass.horario,
+    };
+    localStorage.setItem('buscamissa_favorita', JSON.stringify(favorita));
+    this._analytics.userContribution('confirm', card.churchName);
+    this._toast.add({ severity: 'success', summary: 'Paróquia salva!', detail: `${card.churchName} foi salva como sua paróquia.` });
   }
 }

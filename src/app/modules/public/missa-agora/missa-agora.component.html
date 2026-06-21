@@ -33,11 +33,18 @@
       </div>
       <div>
         <p class="missa-agora__estado-txt font-semibold">Localização não disponível</p>
-        <p class="missa-agora__estado-desc">Permita o acesso no navegador ou escolha uma cidade abaixo.</p>
+        <p class="missa-agora__estado-desc" *ngIf="!permissaoNegadaPeloBrowser">
+          Permita o acesso no navegador ou escolha uma cidade abaixo.
+        </p>
+        <p class="missa-agora__estado-desc missa-agora__estado-desc--aviso" *ngIf="permissaoNegadaPeloBrowser">
+          Você bloqueou a localização. Para liberar:<br>
+          <strong>Chrome:</strong> clique no 🔒 na barra de endereço → Localização → Permitir<br>
+          <strong>Safari:</strong> Ajustes → Safari → Localização → Permitir
+        </p>
       </div>
     </div>
 
-    <button (click)="tentar()" class="missa-agora__btn-primario">
+    <button (click)="tentar()" class="missa-agora__btn-primario" *ngIf="!permissaoNegadaPeloBrowser">
       <i class="pi pi-map-marker"></i> Permitir localização
     </button>
 
@@ -78,6 +85,7 @@
   </div>
 
   <!-- ══ LISTA DE MISSAS ══ -->
+  <p-toast></p-toast>
   <div *ngIf="geoStatus === 'found' && !isLoading && missas.length > 0" class="missa-agora__lista">
     <p class="missa-agora__contagem">
       {{ missas.length }} {{ missas.length === 1 ? 'missa' : 'missas' }} nas próximas 2h
@@ -87,6 +95,8 @@
       *ngFor="let card of missas"
       [data]="card"
       [urgency]="getUrgency(card)"
+      (navigateClick)="onNavigate($event)"
+      (favoriteClick)="onFavorite($event)"
     />
   </div>
 
