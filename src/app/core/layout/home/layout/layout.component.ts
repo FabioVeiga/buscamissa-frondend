@@ -12,7 +12,7 @@ import { RouterModule } from "@angular/router";
     FooterHomeComponent,
     RouterModule,
   ],
-  template: `<div class="layout-wrapper container">
+  template: `<div class="layout-wrapper" style="padding:3px">
     <div class="layout-main-container">
       <app-header-home></app-header-home>
       <div class="layout-main">

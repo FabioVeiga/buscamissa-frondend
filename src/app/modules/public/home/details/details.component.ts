@@ -13,7 +13,7 @@ import { Mass } from "../../church/models/church.model";
 import { ConfidenceBadgeComponent } from "../../../../shared/components/confidence-badge/confidence-badge.component";
 import { CountdownChipComponent } from "../../../../shared/components/countdown-chip/countdown-chip.component";
 import { ChurchPlaceholderComponent } from "../../../../shared/components/church-placeholder/church-placeholder.component";
-import { getNextOccurrenceMinutes, formatMassTime } from "../../../../shared/utils/mass-time.utils";
+import { getNextOccurrenceMinutes, formatMassTime, getCountdownLabel } from "../../../../shared/utils/mass-time.utils";
 
 @Component({
   selector: "app-details",
@@ -280,6 +280,41 @@ export class DetailsComponent implements OnInit {
     if (url.includes('youtube.com')) return 'pi pi-youtube';
     if (url.includes('tiktok.com')) return 'pi pi-tiktok';
     return 'pi pi-globe';
+  }
+
+  // Sprint 3B — Minha Paróquia
+
+  jaFavorita(): boolean {
+    if (!this.churchInfo?.id) return false;
+    try {
+      const raw = localStorage.getItem('buscamissa_favorita');
+      if (!raw) return false;
+      return JSON.parse(raw)?.id === this.churchInfo.id;
+    } catch { return false; }
+  }
+
+  toggleFavorita(): void {
+    if (this.jaFavorita()) {
+      localStorage.removeItem('buscamissa_favorita');
+      this._toast.add({ severity: 'info', summary: 'Removida', detail: 'Paróquia removida dos favoritos.' });
+    } else {
+      const pm = this.proximaMissa;
+      const proximaMissaLabel = pm?.diaSemana != null
+        ? getCountdownLabel(pm.diaSemana, pm.horario)
+        : undefined;
+      const fav = {
+        id: this.churchInfo.id,
+        nome: this.churchInfo.nome,
+        uf: this.churchInfo.endereco?.uf ?? '',
+        cidadeSlug: this.churchInfo.endereco?.cidadeSlug ?? '',
+        slug: this.churchInfo.slug ?? this.churchInfo.nomeUnico,
+        proximaMissaLabel,
+        diaSemana: pm?.diaSemana,
+        horario: pm?.horario,
+      };
+      localStorage.setItem('buscamissa_favorita', JSON.stringify(fav));
+      this._toast.add({ severity: 'success', summary: '⭐ Salva!', detail: 'Esta paróquia aparecerá na sua home.' });
+    }
   }
 
   voltar(): void {

@@ -1,3 +1,125 @@
+// ── Chips de ordenação ────────────────────────────────────────────────────────
+.sort-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.3rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  border: 1.5px solid #e5e7eb;
+  background: #fff;
+  color: #6b7280;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+
+  &:hover { border-color: #bc5d10; color: #bc5d10; }
+
+  &--ativo {
+    background: #bc5d10;
+    border-color: #bc5d10;
+    color: #fff;
+    &:hover { background: #a34f0c; color: #fff; }
+  }
+}
+
+// ── Hero CTAs (abaixo da imagem) ──────────────────────────────────────────────
+.hero-ctas {
+  display: flex;
+  gap: 0.625rem;
+  justify-content: center;
+  flex-wrap: wrap;
+  padding: 0.75rem 0;
+}
+
+.hero-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1rem;
+  border-radius: 0.625rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background 0.15s, transform 0.1s;
+  border: none;
+
+  &--primary {
+    background: #bc5d10;
+    color: #fff;
+    &:hover { background: #a34f0c; transform: translateY(-1px); }
+  }
+
+  &--secondary {
+    background: #fff4ed;
+    color: #bc5d10;
+    border: 1.5px solid #f3b989;
+    &:hover { background: #ffe8d6; transform: translateY(-1px); }
+  }
+}
+
+// ── Minha Paróquia ────────────────────────────────────────────────────────────
+.minha-paroquia {
+  margin-top: 0.5rem;
+
+  &__card {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    background: linear-gradient(135deg, #fffbf5 0%, #fff4ed 100%);
+    border: 1.5px solid #f3b989;
+    border-radius: 0.875rem;
+    text-decoration: none;
+    transition: background 0.15s;
+    &:hover { background: #fff4ed; }
+  }
+
+  &__icon {
+    width: 2.25rem; height: 2.25rem;
+    background: #bc5d10; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 0.875rem; flex-shrink: 0;
+  }
+
+  &__info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+  &__label { font-size: 0.65rem; font-weight: 700; color: #bc5d10; text-transform: uppercase; letter-spacing: 0.05em; }
+  &__nome { font-size: 0.9375rem; font-weight: 700; color: #1f2937; line-height: 1.2; }
+  &__missa { font-size: 0.75rem; color: #6b7280; margin-top: 0.15rem; }
+
+  &__remover {
+    display: flex; align-items: center; gap: 0.3rem;
+    margin-top: 0.5rem; padding: 0.3rem 0.75rem;
+    font-size: 0.75rem; color: #9ca3af;
+    background: none; border: none; cursor: pointer;
+    &:hover { color: #ef4444; }
+  }
+
+  &__vazia {
+    padding: 1.25rem;
+    background: #f9fafb;
+    border: 1px dashed #d1d5db;
+    border-radius: 0.875rem;
+    text-align: center;
+  }
+}
+
+// ── Seção Próximas missas perto de você ───────────────────────────────────────
+.proximas-section {
+  margin-top: 1.25rem;
+  padding: 1.25rem 1rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+}
+
+.proximas-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
 // ── Banner "Ajude a manter os horários" ───────────────────────────────────────
 .confirmar-banner {
   display: flex;

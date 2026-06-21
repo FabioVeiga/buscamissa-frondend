@@ -15,13 +15,15 @@ import {
   Church,
   FilterSearchChurch,
   Mass,
-  ResponseAddress,
 } from "../../../core/interfaces/church.interface";
 import { HttpErrorResponse } from "@angular/common/http";
 import { ModalComponent } from "../../../core/components/modal/modal.component";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import { ShareButtons } from "ngx-sharebuttons/buttons";
 import { STATES } from "../../../core/constants/states";
+import { MassTimeCardComponent } from "../../../shared/components/mass-time-card/mass-time-card.component";
+import { MassCardData } from "../../../shared/models/mass-card.model";
+import { getMissaAgoraUrgency, getCountdownLabel } from "../../../shared/utils/mass-time.utils";
 
 interface AddressData {
   [uf: string]: {
@@ -39,6 +41,7 @@ interface AddressData {
     ModalComponent,
     RouterModule,
     ShareButtons,
+    MassTimeCardComponent,
   ],
   providers: [MessageService, DatePipe],
   templateUrl: "./home.component.html",
@@ -52,7 +55,16 @@ export class HomeComponent {
   public _router = inject(Router);
   private _route = inject(ActivatedRoute);
 
-  /** Cidades em destaque (fallback quando sem geolocalização) */
+  /** Status da geolocalização */
+  geoStatus: 'idle' | 'loading' | 'found' | 'denied' | 'error' = 'idle';
+
+  /** Cidade detectada por geoloc */
+  cidadeDetectada: { nome: string; uf: string; slug: string } | null = null;
+
+  /** Cidades vizinhas (por geoloc) */
+  cidadesGrid: { nome: string; uf: string; slug: string }[] = [];
+
+  /** Cidades populares — exibidas quando sem geoloc */
   readonly cidadesFallback = [
     { nome: 'São Paulo',           uf: 'SP', slug: 'sao-paulo' },
     { nome: 'Campinas',            uf: 'SP', slug: 'campinas' },
@@ -60,22 +72,43 @@ export class HomeComponent {
     { nome: 'Ribeirão Preto',      uf: 'SP', slug: 'ribeirao-preto' },
     { nome: 'Santos',              uf: 'SP', slug: 'santos' },
     { nome: 'Sorocaba',            uf: 'SP', slug: 'sorocaba' },
-    { nome: 'Taubaté',             uf: 'SP', slug: 'taubate' },
     { nome: 'Brasília',            uf: 'DF', slug: 'brasilia' },
+    { nome: 'Belo Horizonte',      uf: 'MG', slug: 'belo-horizonte' },
   ];
 
-  /** Status da geolocalização */
-  geoStatus: 'idle' | 'loading' | 'found' | 'denied' | 'error' = 'idle';
-
-  /** Cidade detectada por geoloc */
-  cidadeDetectada: { nome: string; uf: string; slug: string } | null = null;
-
-  /** Cidades dinâmicas (por geoloc) ou fallback */
-  cidadesGrid: { nome: string; uf: string; slug: string }[] = [];
-
-  get cidadesFeatured() {
-    return this.cidadesGrid.length ? this.cidadesGrid : this.cidadesFallback;
+  get cidadesExibidas() {
+    return this.geoStatus === 'found' && this.cidadesGrid.length
+      ? this.cidadesGrid
+      : this.cidadesFallback;
   }
+
+  get tituloCidades() {
+    return this.geoStatus === 'found' && this.cidadeDetectada
+      ? 'Cidades próximas de você'
+      : 'Missas por cidade';
+  }
+
+  /** Cards de próximas missas */
+  proximasMissasCards: MassCardData[] = [];
+  isLoadingProximas = false;
+  tituloProximasMissas = 'Missas acontecendo hoje';
+
+  // Sprint 3B — Minha Paróquia
+  paroquiaFavorita: {
+    id: number; nome: string; uf: string; cidadeSlug: string; slug: string;
+    proximaMissaLabel?: string; diaSemana?: number; horario?: string;
+  } | null = null;
+  mostrarMinhaParoquia = false;
+
+  /** Flag loading do CTA */
+  isLoadingGeoNav = false;
+
+  /** Ordenação dos resultados da busca */
+  ordenacaoResultados: 'az' | 'za' | 'proximidade' | 'proxima-missa' = 'az';
+
+  /** Coords do usuário (preenchidas após geoloc) */
+  private _userLat: number | null = null;
+  private _userLng: number | null = null;
 
   public isLoading = false;
   public isLoadingAddress = false;
@@ -125,6 +158,7 @@ export class HomeComponent {
       Horario: [null],
     });
     this.getAddress();
+    this._loadFavorita();
 
     // Limpa resultados quando o usuário navega para home sem filtros (ex: clique no logo).
     // Usa a key 'uf' (minúscula) — a mesma gravada por searchFilter — senão o form
@@ -171,6 +205,7 @@ export class HomeComponent {
       complete: () => {
         this.isLoadingAddress = false;
         this._restoreFromQueryParams();
+        this._loadProximasMissas();
         this._requestGeolocation();
       },
     });
@@ -180,9 +215,118 @@ export class HomeComponent {
     if (!navigator.geolocation) return;
     this.geoStatus = 'loading';
     navigator.geolocation.getCurrentPosition(
-      pos => this._reverseGeocode(pos.coords.latitude, pos.coords.longitude),
+      pos => {
+        this._userLat = pos.coords.latitude;
+        this._userLng = pos.coords.longitude;
+        this._reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+        this.tituloProximasMissas = 'Próximas missas perto de você';
+        this._loadProximasMissas(pos.coords.latitude, pos.coords.longitude);
+      },
       () => { this.geoStatus = 'denied'; }
     );
+  }
+
+  private _loadProximasMissas(lat?: number | null, lng?: number | null): void {
+    this._churchService.proximasMissas(lat, lng).subscribe({
+      next: (res: any) => {
+        const items: any[] = res?.data ?? res ?? [];
+        this.proximasMissasCards = items.slice(0, 5).map((item: any) => ({
+          churchId: item.igrejaId,
+          churchName: item.nome,
+          slug: item.slug,
+          uf: item.uf?.toLowerCase(),
+          cidadeSlug: item.cidadeSlug,
+          bairro: item.bairro ?? '',
+          localidade: '',
+          imagemUrl: item.imagemUrl,
+          mass: {
+            id: item.missa?.id,
+            diaSemana: item.missa?.diaSemana,
+            horario: item.missa?.horario,
+            observacao: item.missa?.observacao,
+            fontePrincipal: item.missa?.fontePrincipal,
+            ultimaValidacao: item.missa?.ultimaValidacao,
+            scoreConfianca: item.missa?.scoreConfianca,
+            statusConfianca: item.missa?.statusConfianca,
+          } as Mass,
+          distanceMeters: item.distanciaKm != null ? item.distanciaKm * 1000 : undefined,
+          latitude: item.latitude,
+          longitude: item.longitude,
+        }));
+      },
+      error: () => { /* silencioso — seção simplesmente não aparece */ },
+    });
+  }
+
+  getUrgency(card: MassCardData) {
+    if (card.mass.diaSemana == null) return null;
+    return getMissaAgoraUrgency(card.mass.diaSemana, card.mass.horario);
+  }
+
+  /** CTA "Encontrar missas perto de mim" */
+  encontrarMissasPerto(): void {
+    if (this.cidadeDetectada) {
+      this._router.navigate(['/missas', this.cidadeDetectada.uf.toLowerCase(), this.cidadeDetectada.slug]);
+      return;
+    }
+    if (!navigator.geolocation) return;
+    this.isLoadingGeoNav = true;
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        this._userLat = pos.coords.latitude;
+        this._userLng = pos.coords.longitude;
+        this._reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+        // Aguarda a cidade ser detectada (máx 5s) depois navega
+        const wait = setInterval(() => {
+          if (this.cidadeDetectada) {
+            clearInterval(wait);
+            this.isLoadingGeoNav = false;
+            this._router.navigate(['/missas', this.cidadeDetectada.uf.toLowerCase(), this.cidadeDetectada.slug]);
+          }
+        }, 200);
+        setTimeout(() => { clearInterval(wait); this.isLoadingGeoNav = false; }, 5000);
+      },
+      () => { this.isLoadingGeoNav = false; }
+    );
+  }
+
+  // Sprint 3B — Minha Paróquia (localStorage)
+
+  toggleMinhaParoquia(): void {
+    this.mostrarMinhaParoquia = !this.mostrarMinhaParoquia;
+  }
+
+  onFavoriteClick(card: MassCardData): void {
+    const proximaMissaLabel = card.mass.diaSemana != null
+      ? getCountdownLabel(card.mass.diaSemana, card.mass.horario)
+      : undefined;
+    this.paroquiaFavorita = {
+      id: card.churchId, nome: card.churchName, uf: card.uf,
+      cidadeSlug: card.cidadeSlug, slug: card.slug,
+      proximaMissaLabel, diaSemana: card.mass.diaSemana, horario: card.mass.horario,
+    };
+    localStorage.setItem('buscamissa_favorita', JSON.stringify(this.paroquiaFavorita));
+    this.mostrarMinhaParoquia = true;
+  }
+
+  removerFavorita(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    localStorage.removeItem('buscamissa_favorita');
+    this.paroquiaFavorita = null;
+    this.mostrarMinhaParoquia = false;
+  }
+
+  private _loadFavorita(): void {
+    const raw = localStorage.getItem('buscamissa_favorita');
+    if (!raw) return;
+    try {
+      const saved = JSON.parse(raw);
+      if (saved.diaSemana != null && saved.horario)
+        saved.proximaMissaLabel = getCountdownLabel(saved.diaSemana, saved.horario);
+      this.paroquiaFavorita = saved;
+      this.mostrarMinhaParoquia = true;
+    } catch { /* ignora JSON inválido */ }
   }
 
   private _reverseGeocode(lat: number, lng: number): void {
@@ -361,6 +505,68 @@ export class HomeComponent {
     });
   }
 
+  setOrdenacaoResultados(o: 'az' | 'za' | 'proximidade' | 'proxima-missa'): void {
+    this.ordenacaoResultados = o;
+  }
+
+  get churchInfoOrdenada(): any[] {
+    const lista = [...this.churchInfo];
+    switch (this.ordenacaoResultados) {
+      case 'az':
+        return lista.sort((a, b) => (a.nome ?? '').localeCompare(b.nome ?? '', 'pt-BR'));
+      case 'za':
+        return lista.sort((a, b) => (b.nome ?? '').localeCompare(a.nome ?? '', 'pt-BR'));
+      case 'proxima-missa':
+        return lista.sort((a, b) => this._minProximaMissaHome(a) - this._minProximaMissaHome(b));
+      case 'proximidade':
+        if (this._userLat === null || this._userLng === null) return lista;
+        return lista.sort((a, b) => {
+          const dA = this._distHome(a) ?? Infinity;
+          const dB = this._distHome(b) ?? Infinity;
+          return dA - dB;
+        });
+      default:
+        return lista;
+    }
+  }
+
+  private _minProximaMissaHome(church: any): number {
+    const missas: any[] = church.missas ?? [];
+    if (!missas.length) return Infinity;
+    return Math.min(...missas.map((m: any) => getMissaAgoraUrgency != null
+      ? this._nextMinutes(m.diaSemana, m.horario)
+      : Infinity));
+  }
+
+  private _nextMinutes(diaSemana: number, horario: string): number {
+    const agora = new Date();
+    const [h, min] = (horario ?? '00:00').split(':').map(Number);
+    const diasAte = ((diaSemana - agora.getDay()) + 7) % 7;
+    const alvo = new Date(agora);
+    alvo.setDate(agora.getDate() + diasAte);
+    alvo.setHours(h, min, 0, 0);
+    if (diasAte === 0 && alvo.getTime() <= agora.getTime()) alvo.setDate(alvo.getDate() + 7);
+    return Math.round((alvo.getTime() - agora.getTime()) / 60_000);
+  }
+
+  private _distHome(church: any): number | null {
+    if (this._userLat === null || this._userLng === null) return null;
+    const lat2 = church.endereco?.latitude;
+    const lng2 = church.endereco?.longitude;
+    if (!lat2 || !lng2) return null;
+    const R = 6371000;
+    const toRad = (d: number) => (d * Math.PI) / 180;
+    const dLat = toRad(lat2 - this._userLat!);
+    const dLng = toRad(lng2 - this._userLng!);
+    const a = Math.sin(dLat / 2) ** 2 +
+      Math.cos(toRad(this._userLat!)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  get temGeolocalizacao(): boolean {
+    return this._userLat !== null && this._userLng !== null;
+  }
+
   onPageChange(event: any) {
     this.pageIndex = Math.floor(event.first / event.rows) + 1;
     this.pageSize = event.rows;
@@ -371,6 +577,8 @@ export class HomeComponent {
     this.form.reset();
     this.churchInfo = [];
     this.showNoChurchCard = false;
+    this.ordenacaoResultados = 'az';
+    this._router.navigate([], { queryParams: {}, replaceUrl: true });
   }
 
   editChurch(church: Church) {
