@@ -1,0 +1,93 @@
+<div class="missa-agora max-w-lg mx-auto px-3 pb-10">
+
+  <!-- ══ HEADER ══ -->
+  <div class="missa-agora__header">
+    <a routerLink="/home" class="missa-agora__back">
+      <i class="pi pi-arrow-left"></i>
+    </a>
+    <div class="missa-agora__header-text">
+      <h1 class="missa-agora__titulo">
+        <span class="missa-agora__dot"></span>
+        Missa agora
+      </h1>
+      <p class="missa-agora__sub" *ngIf="cidadeDetectada">perto de {{ cidadeDetectada }}</p>
+      <p class="missa-agora__sub" *ngIf="!cidadeDetectada && horaAtual">{{ horaAtual }} · missas nas próximas 2h</p>
+    </div>
+  </div>
+
+  <!-- ══ CARREGANDO GEOLOC ══ -->
+  <div *ngIf="geoStatus === 'loading'" class="missa-agora__estado">
+    <div class="missa-agora__estado-icon missa-agora__estado-icon--loading">
+      <i class="pi pi-spin pi-spinner"></i>
+    </div>
+    <p class="missa-agora__estado-txt">Localizando você…</p>
+    <p class="missa-agora__estado-desc">Permita o acesso à localização para ver missas perto de você.</p>
+  </div>
+
+  <!-- ══ GEOLOC NEGADA ══ -->
+  <div *ngIf="geoStatus === 'denied' || geoStatus === 'error'" class="missa-agora__negado">
+
+    <div class="missa-agora__negado-topo">
+      <div class="missa-agora__estado-icon missa-agora__estado-icon--denied">
+        <i class="pi pi-map-marker"></i>
+      </div>
+      <div>
+        <p class="missa-agora__estado-txt font-semibold">Localização não disponível</p>
+        <p class="missa-agora__estado-desc">Permita o acesso no navegador ou escolha uma cidade abaixo.</p>
+      </div>
+    </div>
+
+    <button (click)="tentar()" class="missa-agora__btn-primario">
+      <i class="pi pi-map-marker"></i> Permitir localização
+    </button>
+
+    <div class="missa-agora__divider">ou escolha uma cidade</div>
+
+    <div class="missa-agora__cidades">
+      <button
+        *ngFor="let c of cidadesFallback"
+        class="missa-agora__cidade-btn"
+        (click)="irParaCidade(c)">
+        <i class="pi pi-map-marker"></i>
+        <span>{{ c.nome }}</span>
+        <span class="missa-agora__cidade-uf">{{ c.uf.toUpperCase() }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ══ BUSCANDO MISSAS (geoloc ok) ══ -->
+  <div *ngIf="geoStatus === 'found' && isLoading" class="missa-agora__estado">
+    <div class="missa-agora__estado-icon missa-agora__estado-icon--loading">
+      <i class="pi pi-spin pi-spinner"></i>
+    </div>
+    <p class="missa-agora__estado-txt">Buscando missas próximas…</p>
+  </div>
+
+  <!-- ══ SEM RESULTADOS ══ -->
+  <div *ngIf="geoStatus === 'found' && !isLoading && missas.length === 0" class="missa-agora__estado">
+    <div class="missa-agora__estado-icon missa-agora__estado-icon--vazio">
+      <i class="pi pi-clock"></i>
+    </div>
+    <p class="missa-agora__estado-txt font-semibold">Nenhuma missa nas próximas 2h</p>
+    <p class="missa-agora__estado-desc">
+      Não encontramos missas num raio de 10 km. Tente buscar por cidade.
+    </p>
+    <a routerLink="/home" class="missa-agora__btn-primario mt-3">
+      Buscar em outra cidade
+    </a>
+  </div>
+
+  <!-- ══ LISTA DE MISSAS ══ -->
+  <div *ngIf="geoStatus === 'found' && !isLoading && missas.length > 0" class="missa-agora__lista">
+    <p class="missa-agora__contagem">
+      {{ missas.length }} {{ missas.length === 1 ? 'missa' : 'missas' }} nas próximas 2h
+      <span *ngIf="horaAtual"> · {{ horaAtual }}</span>
+    </p>
+    <app-mass-time-card
+      *ngFor="let card of missas"
+      [data]="card"
+      [urgency]="getUrgency(card)"
+    />
+  </div>
+
+</div>

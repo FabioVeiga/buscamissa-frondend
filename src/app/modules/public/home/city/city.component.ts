@@ -10,6 +10,7 @@ import { ConfidenceBadgeComponent } from "../../../../shared/components/confiden
 import { CountdownChipComponent } from "../../../../shared/components/countdown-chip/countdown-chip.component";
 import { DistanceChipComponent } from "../../../../shared/components/distance-chip/distance-chip.component";
 import { getNextOccurrenceMinutes, formatMassTime } from "../../../../shared/utils/mass-time.utils";
+import { AnalyticsService } from "../../../../core/services/analytics.service";
 
 const PERIODOS: Record<string, { de: number; ate: number; label: string }> = {
   manha: { de: 5 * 60, ate: 11 * 60 + 59, label: "Manhã" },
@@ -47,6 +48,7 @@ export class CityComponent implements OnInit, OnDestroy {
   private _router = inject(Router);
   private _church = inject(ChurchesService);
   private _seo = inject(SeoService);
+  private _analytics = inject(AnalyticsService);
 
   isLoading = false;
   uf = "";
@@ -64,9 +66,16 @@ export class CityComponent implements OnInit, OnDestroy {
   diaAtivo: number | null = null;
   periodoAtivo: string | null = null;
 
+  // Ordenação
+  ordenacaoAtiva: 'az' | 'za' | 'proximidade' | 'proxima-missa' = 'az';
+
   // Geolocalização
   userLat: number | null = null;
   userLng: number | null = null;
+
+  get temGeolocalizacao(): boolean {
+    return this.userLat !== null && this.userLng !== null;
+  }
 
   readonly dias = DIAS;
   readonly periodos = Object.entries(PERIODOS).map(([slug, v]) => ({ slug, label: v.label }));
@@ -75,6 +84,12 @@ export class CityComponent implements OnInit, OnDestroy {
     this._route.params.subscribe((params) => {
       this.uf = params["uf"];
       this.cidade = params["cidade"];
+
+      // Inicializa o nome da cidade imediatamente a partir do slug (evita "Missas em /SP" no header)
+      this.cidadeNome = this.cidade
+        .split('-')
+        .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
+        .join(' ');
 
       this._route.queryParams.subscribe((qp) => {
         this.diaAtivo = this.parseDiaSlug(qp["dia"]);
@@ -99,6 +114,7 @@ export class CityComponent implements OnInit, OnDestroy {
         const seo = data?.seo;
 
         this.aplicarFiltros();
+        this._analytics.searchPerformed(this.cidadeNome, this.uf);
 
         if (this.igrejas.length === 0) this.naoEncontrado = true;
 
@@ -129,13 +145,10 @@ export class CityComponent implements OnInit, OnDestroy {
   // ── Filtros ──────────────────────────────────────────────────────────────────
 
   setDia(idx: number): void {
+    this.diaAtivo = idx;
     const slug = DIAS.find((d) => d.idx === idx)?.slug ?? null;
-    this.diaAtivo = this.diaAtivo === idx ? null : idx;
     this._router.navigate([], {
-      queryParams: {
-        dia: this.diaAtivo !== null ? slug : null,
-        periodo: this.periodoAtivo,
-      },
+      queryParams: { dia: slug, periodo: this.periodoAtivo },
       queryParamsHandling: "merge",
       replaceUrl: true,
     });
@@ -143,9 +156,9 @@ export class CityComponent implements OnInit, OnDestroy {
   }
 
   setPeriodo(slug: string): void {
-    this.periodoAtivo = this.periodoAtivo === slug ? null : slug;
+    this.periodoAtivo = slug;
     this._router.navigate([], {
-      queryParams: { dia: this.diaAtivo !== null ? DIAS.find((d) => d.idx === this.diaAtivo)?.slug : null, periodo: this.periodoAtivo },
+      queryParams: { dia: this.diaAtivo !== null ? DIAS.find((d) => d.idx === this.diaAtivo)?.slug : null, periodo: slug },
       queryParamsHandling: "merge",
       replaceUrl: true,
     });
@@ -156,6 +169,11 @@ export class CityComponent implements OnInit, OnDestroy {
     this.diaAtivo = null;
     this.periodoAtivo = null;
     this._router.navigate([], { queryParams: {}, replaceUrl: true });
+    this.aplicarFiltros();
+  }
+
+  setOrdenacao(o: 'az' | 'za' | 'proximidade' | 'proxima-missa'): void {
+    this.ordenacaoAtiva = o;
     this.aplicarFiltros();
   }
 
@@ -183,8 +201,40 @@ export class CityComponent implements OnInit, OnDestroy {
       );
     }
 
+    lista = this._ordenar(lista);
+
     this.igrejasFiltradas = lista;
     if (!this.isLoading) this.naoEncontrado = lista.length === 0 && this.igrejas.length > 0;
+  }
+
+  private _ordenar(lista: any[]): any[] {
+    switch (this.ordenacaoAtiva) {
+      case 'az':
+        return [...lista].sort((a, b) => (a.nome ?? '').localeCompare(b.nome ?? '', 'pt-BR'));
+      case 'za':
+        return [...lista].sort((a, b) => (b.nome ?? '').localeCompare(a.nome ?? '', 'pt-BR'));
+      case 'proxima-missa':
+        return [...lista].sort((a, b) => {
+          const minA = this._minProximaMissa(a);
+          const minB = this._minProximaMissa(b);
+          return minA - minB;
+        });
+      case 'proximidade':
+        if (!this.temGeolocalizacao) return lista;
+        return [...lista].sort((a, b) => {
+          const dA = this.distanciaMetros(a) ?? Infinity;
+          const dB = this.distanciaMetros(b) ?? Infinity;
+          return dA - dB;
+        });
+      default:
+        return lista;
+    }
+  }
+
+  private _minProximaMissa(igreja: any): number {
+    const missas: any[] = igreja.missas ?? [];
+    if (!missas.length) return Infinity;
+    return Math.min(...missas.map((m) => getNextOccurrenceMinutes(m.diaSemana, m.horario)));
   }
 
   // ── Próxima missa do card ─────────────────────────────────────────────────
@@ -268,6 +318,8 @@ export class CityComponent implements OnInit, OnDestroy {
       (pos) => {
         this.userLat = pos.coords.latitude;
         this.userLng = pos.coords.longitude;
+        // Reordena se o usuário já escolheu "por proximidade" antes da geoloc chegar
+        if (this.ordenacaoAtiva === 'proximidade') this.aplicarFiltros();
       },
       () => { /* silencioso — distância é opcional */ }
     );

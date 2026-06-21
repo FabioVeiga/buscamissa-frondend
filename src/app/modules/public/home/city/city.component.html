@@ -5,15 +5,68 @@
   </a>
 </div>
 
-<p-panel class="p-1">
-  <ng-template pTemplate="header">
-    <div class="flex items-center gap-2">
-      <i class="pi pi-map-marker text-primary"></i>
-      <h1 class="text-xl font-bold text-gray-900">
-        Missas em {{ cidadeNome }}<span *ngIf="uf">/{{ uf.toUpperCase() }}</span>
-      </h1>
+<!-- ══ FILTROS FIXOS NO TOPO ══ -->
+<div class="filtros-topo px-1 pb-2">
+
+  <!-- Título -->
+  <div class="flex items-center gap-2 mb-3">
+    <i class="pi pi-map-marker text-primary"></i>
+    <h1 class="text-xl font-bold text-gray-900">
+      Missas em {{ cidadeNome }}<span *ngIf="uf">/{{ uf.toUpperCase() }}</span>
+    </h1>
+  </div>
+
+  <!-- Linha 1: Dias da semana -->
+  <div class="filter-row">
+    <span class="filter-label">Dia</span>
+    <div class="flex gap-1.5 flex-wrap">
+      <button
+        *ngFor="let d of dias"
+        (click)="setDia(d.idx)"
+        class="filter-chip"
+        [class.filter-chip--ativo]="diaAtivo === d.idx">
+        {{ d.label }}
+      </button>
     </div>
-  </ng-template>
+  </div>
+
+  <!-- Linha 2: Período -->
+  <div class="filter-row mt-2">
+    <span class="filter-label">Período</span>
+    <div class="flex gap-1.5 flex-wrap">
+      <button
+        *ngFor="let p of periodos"
+        (click)="setPeriodo(p.slug)"
+        class="filter-chip"
+        [class.filter-chip--ativo]="periodoAtivo === p.slug">
+        {{ p.label }}
+      </button>
+    </div>
+  </div>
+
+  <!-- Linha 3: Ordenação + Limpar -->
+  <div class="filter-row mt-2 items-center">
+    <span class="filter-label">Ordenar</span>
+    <div class="flex gap-1.5 flex-wrap flex-1">
+      <button (click)="setOrdenacao('az')"          class="sort-chip" [class.sort-chip--ativo]="ordenacaoAtiva === 'az'">A → Z</button>
+      <button (click)="setOrdenacao('za')"          class="sort-chip" [class.sort-chip--ativo]="ordenacaoAtiva === 'za'">Z → A</button>
+      <button (click)="setOrdenacao('proxima-missa')" class="sort-chip" [class.sort-chip--ativo]="ordenacaoAtiva === 'proxima-missa'">
+        <i class="pi pi-clock text-xs"></i> Próxima missa
+      </button>
+      <button (click)="setOrdenacao('proximidade')" class="sort-chip" [class.sort-chip--ativo]="ordenacaoAtiva === 'proximidade'"
+              [title]="temGeolocalizacao ? '' : 'Permita a localização para usar esta ordenação'">
+        <i class="pi pi-map-marker text-xs"></i> Mais próximas
+        <i *ngIf="!temGeolocalizacao" class="pi pi-lock text-xs opacity-50 ml-1"></i>
+      </button>
+    </div>
+    <button *ngIf="temFiltroAtivo" (click)="limparFiltros()" class="sort-chip sort-chip--limpar ml-auto">
+      <i class="pi pi-times text-xs"></i> Limpar
+    </button>
+  </div>
+
+</div>
+
+<p-panel class="p-1">
 
   <!-- Skeleton -->
   <div *ngIf="isLoading" class="flex flex-col gap-3 p-4">
@@ -22,46 +75,13 @@
 
   <ng-container *ngIf="!isLoading">
 
-    <!-- Texto contextual SEO -->
+    <!-- Texto contextual SEO + contador -->
     <p *ngIf="igrejas.length" class="text-gray-600 text-sm px-4 pt-3 pb-2">
-      Encontre os horários de missa em <strong>{{ cidadeNome }}/{{ uf.toUpperCase() }}</strong>.
-      <strong>{{ igrejas.length }}</strong> paróquia(s) e comunidades católicas.
+      <strong>{{ igrejasFiltradas.length }}</strong>
+      <span *ngIf="temFiltroAtivo"> de {{ igrejas.length }}</span>
+      paróquia(s) em <strong>{{ cidadeNome }}/{{ uf.toUpperCase() }}</strong>
+      <span *ngIf="temFiltroAtivo"> com os filtros selecionados</span>.
     </p>
-
-    <!-- Filtros: dia da semana + período (controle principal da tela) -->
-    <div class="flex gap-2 flex-wrap px-4 pb-3">
-      <button
-        *ngFor="let d of dias"
-        (click)="setDia(d.idx)"
-        class="px-4 py-2 rounded-lg text-sm font-semibold border-2 transition-colors"
-        [ngClass]="diaAtivo === d.idx
-          ? 'bg-primary text-white border-primary'
-          : 'bg-white text-gray-700 border-surface-200 hover:border-primary hover:text-primary'">
-        {{ d.label }}
-      </button>
-      <span class="w-px bg-gray-200 self-stretch mx-1"></span>
-      <button
-        *ngFor="let p of periodos"
-        (click)="setPeriodo(p.slug)"
-        class="px-4 py-2 rounded-lg text-sm font-semibold border-2 transition-colors"
-        [ngClass]="periodoAtivo === p.slug
-          ? 'bg-primary text-white border-primary'
-          : 'bg-white text-gray-700 border-surface-200 hover:border-primary hover:text-primary'">
-        {{ p.label }}
-      </button>
-      <button
-        *ngIf="temFiltroAtivo"
-        (click)="limparFiltros()"
-        class="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-700 border-2 border-transparent hover:border-gray-300 transition-colors">
-        <i class="pi pi-times text-xs mr-1"></i>Limpar
-      </button>
-    </div>
-
-    <!-- Contador de resultados -->
-    <div *ngIf="igrejas.length" class="text-xs text-gray-500 px-4 pb-3">
-      {{ igrejasFiltradas.length }} paróquia(s)
-      <span *ngIf="temFiltroAtivo">encontrada(s) com os filtros selecionados</span>
-    </div>
 
     <!-- Lista de paróquias -->
     <div *ngIf="igrejasFiltradas.length" class="flex flex-col divide-y divide-surface-100">
@@ -157,15 +177,6 @@
   </ng-container>
 </p-panel>
 
-<!-- Botão flutuante: Ver no mapa -->
-<button
-  *ngIf="!isLoading && igrejasFiltradas.length"
-  (click)="abrirMapa()"
-  class="fixed bottom-6 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg text-white text-sm font-medium transition-transform hover:scale-105 active:scale-95"
-  style="background-color: #bc5d10;">
-  <i class="pi pi-map text-base"></i>
-  Ver no mapa
-</button>
 
 <div class="flex justify-center w-full mt-4">
   <app-adsense-banner></app-adsense-banner>

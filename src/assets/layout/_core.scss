@@ -11,7 +11,7 @@ body {
   background-size: cover;
   background-attachment: fixed;
   margin: 0;
-  padding: 0;
+  padding: 3px;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -22,44 +22,39 @@ a {
   text-decoration: none;
 }
 
+@keyframes bm-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.5; transform: scale(0.75); }
+}
+
 .layout-wrapper {
   min-height: 100vh;
 }
 
 .container {
   width: 100%;
-  padding-right: var(--bs-gutter-x, 1rem);
-  padding-left: var(--bs-gutter-x, 1rem);
+  padding-right: 0;
+  padding-left: 0;
   margin-right: auto;
   margin-left: auto;
 }
 
 @media (min-width: 576px) {
-  .container {
-    max-width: 540px;
-  }
+  .container { max-width: 100%; }
 }
 
 @media (min-width: 768px) {
-  .container {
-    max-width: 720px;
-  }
+  .container { max-width: 100%; }
 }
 
 @media (min-width: 992px) {
-  .container {
-    max-width: 960px;
-  }
+  .container { max-width: 100%; }
 }
 
 @media (min-width: 1200px) {
-  .container {
-    max-width: 1140px;
-  }
+  .container { max-width: 100%; }
 }
 
 @media (min-width: 1400px) {
-  .container {
-    max-width: 1320px;
-  }
+  .container { max-width: 100%; }
 }

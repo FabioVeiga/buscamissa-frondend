@@ -1,6 +1,37 @@
-<div class="bg-white flex justify-center items-center">
-  <a [routerLink]="['/home']" [queryParams]="{}" class="flex items-center gap-2">
-    <img src="assets/logo.png" alt="Busca Missa" class="h-10 w-auto" />
-    <h3 class="text-lg font-semibold">Busca Missa</h3>
-  </a>
-</div>
+<header class="bm-header">
+  <div class="bm-header__inner">
+
+    <!-- Logo -->
+    <a routerLink="/home" [queryParams]="{}" class="bm-header__logo">
+      <img src="assets/logo.png" alt="Busca Missa" class="h-8 w-auto" />
+      <span class="bm-header__brand">Busca Missa</span>
+    </a>
+
+    <!-- Desktop nav -->
+    <nav class="bm-header__nav">
+      <a routerLink="/home" routerLinkActive="bm-header__link--ativo"
+         [routerLinkActiveOptions]="{exact: true}" class="bm-header__link">Início</a>
+      <a routerLink="/missa-agora" routerLinkActive="bm-header__link--ativo" class="bm-header__link bm-header__link--live">
+        <span class="bm-header__dot"></span> Missa agora
+      </a>
+      <a routerLink="/como-funciona" routerLinkActive="bm-header__link--ativo" class="bm-header__link">Como funciona</a>
+      <a routerLink="/nova" routerLinkActive="bm-header__link--ativo" class="bm-header__link">Cadastrar paróquia</a>
+    </nav>
+
+    <!-- Hamburger (mobile) -->
+    <button class="bm-header__hamburger" (click)="menuAberto = !menuAberto" aria-label="Menu">
+      <i class="pi" [ngClass]="menuAberto ? 'pi-times' : 'pi-bars'"></i>
+    </button>
+
+  </div>
+
+  <!-- Mobile dropdown -->
+  <nav *ngIf="menuAberto" class="bm-header__mobile" (click)="menuAberto = false">
+    <a routerLink="/home" class="bm-header__mobile-link">Início</a>
+    <a routerLink="/missa-agora" class="bm-header__mobile-link bm-header__mobile-link--live">
+      <span class="bm-header__dot"></span> Missa agora
+    </a>
+    <a routerLink="/como-funciona" class="bm-header__mobile-link">Como funciona</a>
+    <a routerLink="/nova" class="bm-header__mobile-link bm-header__mobile-link--cta">Cadastrar paróquia</a>
+  </nav>
+</header>

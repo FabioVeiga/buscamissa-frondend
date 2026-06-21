@@ -347,20 +347,13 @@ export class ChurchFormComponent implements OnInit, OnChanges {
   }
 
   private disableFields(): void {
-    this.form.get("telefone")?.disable();
-    this.form.get("whatsapp")?.disable();
-    this.form.get("emailContato")?.disable();
     this.form.get("typeChurch")?.disable();
     this.form.get("endereco")?.disable();
     this.form.get("numero")?.disable();
     this.form.get("bairro")?.disable();
     this.form.get("cidade")?.disable();
     this.form.get("estado")?.disable();
-    this.form.get("facebook")?.disable();
-    this.form.get("instagram")?.disable();
-    this.form.get("tiktok")?.disable();
     this.form.get("complemento")?.disable();
-    this.form.get("youtube")?.disable();
     this.form.get("nomeIgreja")?.disable();
   }
 }

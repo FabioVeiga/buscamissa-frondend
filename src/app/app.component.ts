@@ -2,6 +2,7 @@ import { Component, inject, OnInit } from "@angular/core";
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from "@angular/router";
 import { filter, map } from "rxjs/operators";
 import { SeoService } from "./core/services/seo.service";
+import { AnalyticsService } from "./core/services/analytics.service";
 
 @Component({
   selector: "app-root",
@@ -12,8 +13,10 @@ export class AppComponent implements OnInit {
   private _router = inject(Router);
   private _activatedRoute = inject(ActivatedRoute);
   private _seo = inject(SeoService);
+  private _analytics = inject(AnalyticsService);
 
   ngOnInit(): void {
+    this._analytics.initPageTracking();
     this._router.events.pipe(
       filter(e => e instanceof NavigationEnd),
       map(() => {

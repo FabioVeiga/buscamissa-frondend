@@ -1,0 +1,467 @@
+// ── Tokens ──────────────────────────────────────────────────────────────────
+$primary: #bc5d10;
+$primary-light: #fff4ed;
+$text: #111827;
+$muted: #6b7280;
+$border: #e5e7eb;
+
+// ── Utilitários ──────────────────────────────────────────────────────────────
+.cf-container {
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+.cf-center { text-align: center; }
+
+.mt-6 { margin-top: 1.5rem; }
+
+// ── Seções ───────────────────────────────────────────────────────────────────
+.cf-section {
+  padding: 4rem 0;
+
+  &--light { background: #f9fafb; }
+
+  &--green { background: #f0fdf4; }
+
+  &--compact { padding: 2.5rem 0; }
+
+  &__title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: $text;
+    text-align: center;
+    margin-bottom: 0.5rem;
+  }
+
+  &__sub {
+    text-align: center;
+    color: $muted;
+    margin-bottom: 2.5rem;
+    font-size: 1rem;
+  }
+}
+
+// ── Tag ──────────────────────────────────────────────────────────────────────
+.cf-tag {
+  display: inline-block;
+  background: $primary-light;
+  color: $primary;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  padding: .25rem .75rem;
+  border-radius: 999px;
+  margin-bottom: 1rem;
+}
+
+// ── Hero ─────────────────────────────────────────────────────────────────────
+.cf-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: center;
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 3.5rem 1.25rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+
+  &__content { display: flex; flex-direction: column; gap: 1rem; }
+
+  &__title {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 900;
+    color: $text;
+    line-height: 1.15;
+    margin: 0;
+  }
+
+  &__sub { color: $muted; font-size: 1.05rem; max-width: 36ch; }
+
+  &__mission {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    color: $muted;
+    font-size: .875rem;
+    margin: 0;
+  }
+
+  &__image {
+    border-radius: 1.25rem;
+    overflow: hidden;
+
+    img {
+      width: 100%;
+      height: 22rem;
+      object-fit: cover;
+      display: block;
+    }
+
+    @media (max-width: 768px) { display: none; }
+  }
+}
+
+// ── Ícones ───────────────────────────────────────────────────────────────────
+.cf-icon    { font-style: normal; }
+.cf-icon-sm { font-style: normal; }
+
+// ── Botões ───────────────────────────────────────────────────────────────────
+.cf-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  background: $primary;
+  color: #fff;
+  font-weight: 700;
+  padding: .75rem 1.5rem;
+  border-radius: .625rem;
+  font-size: 1rem;
+  text-decoration: none;
+  transition: background .15s;
+  width: fit-content;
+
+  &:hover { background: #9a4a0c; }
+
+  &--white {
+    background: #fff;
+    color: $primary;
+    &:hover { background: #fff4ed; }
+  }
+}
+
+.cf-btn-outline {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  border: 2px solid $primary;
+  color: $primary;
+  font-weight: 700;
+  padding: .65rem 1.5rem;
+  border-radius: .625rem;
+  font-size: 1rem;
+  text-decoration: none;
+  transition: background .15s;
+
+  &:hover { background: $primary-light; }
+}
+
+.cf-btn-confirm {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  background: #16a34a;
+  color: #fff;
+  font-weight: 700;
+  padding: .65rem 1.25rem;
+  border-radius: .5rem;
+  text-decoration: none;
+  font-size: .95rem;
+  transition: background .15s;
+  &:hover { background: #15803d; }
+}
+
+.cf-btn-report {
+  display: inline-flex;
+  align-items: center;
+  gap: .4rem;
+  border: 2px solid #16a34a;
+  color: #16a34a;
+  font-weight: 700;
+  padding: .65rem 1.25rem;
+  border-radius: .5rem;
+  text-decoration: none;
+  font-size: .95rem;
+  transition: background .15s;
+  &:hover { background: #f0fdf4; }
+}
+
+// ── Steps ────────────────────────────────────────────────────────────────────
+.cf-steps {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 0;
+  flex-wrap: wrap;
+  margin-top: 2.5rem;
+}
+
+.cf-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 16rem;
+  padding: 0 1.5rem;
+
+  &__icon {
+    font-size: 2.5rem;
+    background: $primary-light;
+    border-radius: 50%;
+    width: 5rem;
+    height: 5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 1rem;
+  }
+
+  &__title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: $text;
+    margin-bottom: .5rem;
+  }
+
+  &__text { color: $muted; font-size: .9rem; line-height: 1.5; }
+
+  &__arrow {
+    font-size: 2.5rem;
+    color: $border;
+    padding: 0 .5rem;
+    padding-top: 1.25rem;
+
+    @media (max-width: 640px) { display: none; }
+  }
+}
+
+// ── Fontes ───────────────────────────────────────────────────────────────────
+.cf-sources {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  gap: 1.25rem;
+  margin-bottom: 2.5rem;
+}
+
+.cf-source {
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: .875rem;
+  padding: 1.25rem;
+
+  h4 { font-size: .95rem; font-weight: 700; color: $text; margin: .5rem 0 .25rem; }
+  p  { font-size: .85rem; color: $muted; margin: 0; line-height: 1.5; }
+
+  &__icon {
+    font-size: 1.5rem;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &--green  { background: #dcfce7; }
+    &--blue   { background: #dbeafe; }
+    &--purple { background: #f3e8ff; }
+    &--orange { background: $primary-light; }
+  }
+}
+
+// ── Compromisso ──────────────────────────────────────────────────────────────
+.cf-commitment {
+  background: linear-gradient(135deg, #f9fafb 0%, #fff4ed 100%);
+  border: 1px solid #fde8d0;
+  border-radius: 1rem;
+  padding: 1.75rem 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 1.25rem;
+  }
+
+  &__left {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+
+    h3 { font-size: 1.05rem; font-weight: 700; color: $text; margin-bottom: .5rem; }
+    p  { color: $muted; font-size: .9rem; line-height: 1.6; margin: 0; }
+  }
+
+  &__badge { font-size: 2rem; flex-shrink: 0; }
+
+  &__image { font-size: 3rem; flex-shrink: 0; }
+}
+
+// ── Selos ────────────────────────────────────────────────────────────────────
+.cf-badges {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.cf-badge {
+  background: #fff;
+  border: 1px solid $border;
+  border-radius: .75rem;
+  padding: 0.75rem 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+
+  &__icon { font-size: 1.1rem; flex-shrink: 0; margin-top: .1rem; }
+
+  h4 { font-size: .8rem; font-weight: 700; color: $text; margin: 0 0 .2rem; }
+  p  { font-size: .75rem; color: $muted; margin: 0; line-height: 1.45; }
+}
+
+// ── Ajudar ───────────────────────────────────────────────────────────────────
+.cf-help {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 2.5rem;
+  align-items: center;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    text-align: center;
+  }
+
+  &__phone {
+    font-size: 4rem;
+    line-height: 1;
+
+    @media (max-width: 768px) { display: none; }
+  }
+
+  &__center {
+    h2 { font-size: 1.4rem; font-weight: 800; color: #14532d; margin-bottom: .5rem; }
+    p  { color: #166534; margin-bottom: 1.25rem; font-size: .95rem; }
+  }
+
+  &__btns {
+    display: flex;
+    gap: .75rem;
+    flex-wrap: wrap;
+
+    @media (max-width: 768px) { justify-content: center; }
+  }
+
+  &__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: .75rem;
+
+    li { font-size: .9rem; color: #166534; font-weight: 500; }
+
+    @media (max-width: 768px) { display: none; }
+  }
+}
+
+// ── Stats ────────────────────────────────────────────────────────────────────
+.cf-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 1.5rem;
+  margin-top: 2.5rem;
+  text-align: center;
+}
+
+.cf-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .25rem;
+
+  &__num {
+    font-size: 2.5rem;
+    font-weight: 900;
+    line-height: 1;
+
+    &--green  { color: #16a34a; }
+    &--orange { color: $primary; }
+    &--blue   { color: #2563eb; }
+    &--purple { color: #7c3aed; }
+  }
+
+  &__label { color: $muted; font-size: .9rem; }
+}
+
+// ── FAQ ───────────────────────────────────────────────────────────────────────
+.cf-faq-wrap { max-width: 52rem; }
+
+.cf-faq {
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  gap: .5rem;
+
+  &__item {
+    background: #fff;
+    border: 1px solid $border;
+    border-radius: .75rem;
+    padding: 1rem 1.25rem;
+    cursor: pointer;
+    transition: border-color .15s;
+
+    &:hover { border-color: #fde8d0; }
+  }
+
+  &__q {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    color: $text;
+    font-size: .95rem;
+    gap: 1rem;
+    user-select: none;
+  }
+
+  &__chevron {
+    font-style: normal;
+    font-size: 1.25rem;
+    color: $muted;
+    transition: transform .2s;
+    flex-shrink: 0;
+
+    &--open { transform: rotate(90deg); }
+  }
+
+  &__a {
+    margin-top: .75rem;
+    color: $muted;
+    font-size: .9rem;
+    line-height: 1.6;
+    border-top: 1px solid $border;
+    padding-top: .75rem;
+  }
+}
+
+// ── CTA Final ────────────────────────────────────────────────────────────────
+.cf-cta {
+  background: linear-gradient(135deg, #bc5d10 0%, #9a4a0c 100%);
+  padding: 4rem 1.25rem;
+
+  &__inner {
+    max-width: 60rem;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+
+    @media (max-width: 640px) { flex-direction: column; text-align: center; }
+  }
+
+  &__icon { font-size: 3rem; flex-shrink: 0; }
+
+  h2 { font-size: 1.6rem; font-weight: 800; color: #fff; margin-bottom: .5rem; }
+  p  { color: rgba(255,255,255,.85); margin: 0; font-size: .95rem; }
+
+  div { flex: 1; }
+}
