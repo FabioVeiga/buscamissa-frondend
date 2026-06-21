@@ -41,6 +41,10 @@
         <h1 class="text-base sm:text-lg font-extrabold text-gray-900 leading-snug">
           {{ churchInfo.nome }}
         </h1>
+        <p *ngIf="churchInfo.endereco?.logradouro" class="flex items-center gap-1.5 text-sm text-gray-500">
+          <i class="pi pi-home text-gray-400 shrink-0"></i>
+          {{ churchInfo.endereco?.logradouro }}<span *ngIf="churchInfo.endereco?.numero && churchInfo.endereco?.numero !== 0">, {{ churchInfo.endereco?.numero }}</span><span *ngIf="churchInfo.endereco?.complemento"> — {{ churchInfo.endereco?.complemento }}</span>
+        </p>
         <p class="flex items-center gap-1.5 text-sm text-gray-500">
           <i class="pi pi-map-marker text-gray-400 shrink-0"></i>
           {{ churchInfo.endereco?.bairro }}, {{ churchInfo.endereco?.localidade }}/{{ churchInfo.endereco?.uf }}
@@ -53,14 +57,18 @@
           <app-confidence-badge [mass]="proximaMissa" />
         </div>
         <div class="flex gap-2 flex-wrap mt-1">
-          <a [href]="linkGoogleMaps" target="_blank" rel="noopener" class="action-btn">
+          <a [href]="linkGoogleMaps" target="_blank" rel="noopener" class="action-btn" (click)="trackDirections()">
             <i class="pi pi-map"></i> Google Maps
           </a>
-          <a [href]="linkWaze" target="_blank" rel="noopener" class="action-btn">
+          <a [href]="linkWaze" target="_blank" rel="noopener" class="action-btn" (click)="trackDirections()">
             <i class="pi pi-car"></i> Waze
           </a>
           <button (click)="compartilhar()" class="action-btn">
             <i class="pi pi-share-alt"></i> Compartilhar
+          </button>
+          <button (click)="toggleFavorita()" class="action-btn" [class.action-btn--favorita]="jaFavorita()">
+            <i class="pi" [ngClass]="jaFavorita() ? 'pi-star-fill' : 'pi-star'"></i>
+            {{ jaFavorita() ? 'Minha paróquia' : 'Salvar' }}
           </button>
         </div>
       </div>
@@ -229,9 +237,15 @@
           <h3 class="sidebar-card__title">Informações da comunidade</h3>
 
           <!-- Sem contato -->
-          <div *ngIf="!temContato" class="px-4 py-5 flex flex-col items-center text-center gap-2">
-            <i class="pi pi-info-circle text-2xl text-gray-300"></i>
-            <p class="text-xs text-gray-400">Nenhuma informação de contato cadastrada.</p>
+          <div *ngIf="!temContato"
+               class="px-6 py-8 flex flex-col items-center text-center">
+            <i class="pi pi-address-book text-4xl text-gray-300 mb-3"></i>
+            <p class="text-gray-700 font-semibold text-sm">Nenhuma informação cadastrada</p>
+            <p class="text-gray-500 text-xs mt-1 max-w-xs">
+              Conhece o telefone, site ou redes sociais desta paróquia? Ajude a comunidade adicionando.
+            </p>
+            <button pButton type="button" icon="pi pi-plus" label="Adicionar informações"
+              class="p-button-sm mt-4" (click)="reportarErro()"></button>
           </div>
 
           <div *ngIf="temContato" class="flex flex-col divide-y divide-surface-100">

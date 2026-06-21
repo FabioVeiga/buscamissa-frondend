@@ -1,0 +1,214 @@
+.missa-agora {
+  padding-top: 1.25rem;
+
+  &__header {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.875rem;
+    margin-bottom: 1.5rem;
+  }
+
+  &__back {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    background: #f3f4f6;
+    color: #374151;
+    text-decoration: none;
+    flex-shrink: 0;
+    margin-top: 0.1rem;
+    transition: background 0.15s;
+    &:hover { background: #e5e7eb; }
+  }
+
+  &__header-text { display: flex; flex-direction: column; gap: 0.2rem; }
+
+  &__titulo {
+    font-size: 1.375rem;
+    font-weight: 800;
+    color: #1f2937;
+    line-height: 1.2;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  &__dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #16a34a;
+    flex-shrink: 0;
+    animation: bm-pulse 1.6s ease-in-out infinite;
+  }
+
+  &__sub {
+    font-size: 0.8125rem;
+    color: #6b7280;
+    margin: 0;
+  }
+
+  // ── Estados ──────────────────────────────────────────────────────────────
+  &__estado {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    padding: 2.5rem 1rem;
+    gap: 0.5rem;
+  }
+
+  &__estado-icon {
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.375rem;
+    margin-bottom: 0.5rem;
+
+    &--loading { background: #fff4ed; color: #bc5d10; }
+    &--denied  { background: #fef2f2; color: #dc2626; }
+    &--vazio   { background: #f3f4f6; color: #9ca3af; }
+  }
+
+  &__estado-txt {
+    font-size: 1rem;
+    color: #1f2937;
+    margin: 0;
+  }
+
+  &__estado-desc {
+    font-size: 0.8125rem;
+    color: #6b7280;
+    max-width: 20rem;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  // ── Estado geoloc negada ──────────────────────────────────────────────────
+  &__negado {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.5rem 0;
+    text-align: center;
+  }
+
+  &__negado-topo {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    text-align: left;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 0.875rem;
+    padding: 1rem 1.25rem;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  &__divider {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    font-weight: 500;
+    position: relative;
+    width: 100%;
+    text-align: center;
+
+    &::before, &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      width: 35%;
+      height: 1px;
+      background: #e5e7eb;
+    }
+    &::before { left: 0; }
+    &::after  { right: 0; }
+  }
+
+  &__cidades {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    width: 100%;
+  }
+
+  &__cidade-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #374151;
+    text-align: left;
+    transition: background 0.15s, border-color 0.15s;
+
+    .pi { color: #bc5d10; font-size: 0.875rem; }
+
+    &:hover {
+      background: #fff4ed;
+      border-color: #f3b989;
+    }
+  }
+
+  &__cidade-uf {
+    margin-left: auto;
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #9ca3af;
+  }
+
+  // ── Botões de ação ────────────────────────────────────────────────────────
+  &__btn-primario {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.6rem 1.25rem;
+    background: #bc5d10;
+    color: #fff;
+    border: none;
+    border-radius: 0.625rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s;
+    &:hover { background: #a34f0c; }
+  }
+
+  &__link-sec {
+    display: block;
+    font-size: 0.8125rem;
+    color: #bc5d10;
+    font-weight: 600;
+    text-decoration: none;
+    &:hover { text-decoration: underline; }
+  }
+
+  // ── Lista de resultados ───────────────────────────────────────────────────
+  &__lista {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  &__contagem {
+    font-size: 0.8125rem;
+    color: #6b7280;
+    font-weight: 500;
+    margin-bottom: 0.25rem;
+  }
+}

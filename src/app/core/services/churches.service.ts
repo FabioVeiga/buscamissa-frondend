@@ -58,6 +58,14 @@ export class ChurchesService {
     return this.http.post(`v1/Igreja/denunciar/${churchId}`, body);
   }
 
+  proximasMissas(lat?: number | null, lng?: number | null, raioKm = 10): Observable<any> {
+    let params = new HttpParams().append('RaioKm', raioKm).append('Horas', 2);
+    if (lat != null && lng != null) {
+      params = params.append('Lat', lat).append('Lng', lng);
+    }
+    return this.http.get('v2/Igreja/proximas-missas', { params });
+  }
+
   getInfo() {
     return this.http.get(`v1/Igreja/infos`);
   }

@@ -13,7 +13,8 @@ import { Mass } from "../../church/models/church.model";
 import { ConfidenceBadgeComponent } from "../../../../shared/components/confidence-badge/confidence-badge.component";
 import { CountdownChipComponent } from "../../../../shared/components/countdown-chip/countdown-chip.component";
 import { ChurchPlaceholderComponent } from "../../../../shared/components/church-placeholder/church-placeholder.component";
-import { getNextOccurrenceMinutes, formatMassTime } from "../../../../shared/utils/mass-time.utils";
+import { getNextOccurrenceMinutes, formatMassTime, getCountdownLabel } from "../../../../shared/utils/mass-time.utils";
+import { AnalyticsService } from "../../../../core/services/analytics.service";
 
 @Component({
   selector: "app-details",
@@ -38,6 +39,7 @@ export class DetailsComponent implements OnInit {
   _router = inject(Router);
   _location = inject(Location);
   _sanitizer = inject(DomSanitizer);
+  private _analytics = inject(AnalyticsService);
 
   isLoading = false;
   nomeUnico: string | null = null;
@@ -87,6 +89,7 @@ export class DetailsComponent implements OnInit {
         }
 
         if (igreja.id) this.carregarResumoConfirmacoes(igreja.id);
+        this._analytics.churchView(igreja.nome, igreja.endereco?.localidade ?? '', igreja.endereco?.uf ?? '');
 
         this._seo.update({
           title: seo?.title ?? `${igreja.nome} | BuscaMissa`,
@@ -239,6 +242,10 @@ export class DetailsComponent implements OnInit {
 
   // ── Navegação / compartilhamento ───────────────────────────────────────────
 
+  trackDirections(): void {
+    this._analytics.getDirections(this.churchInfo?.nome ?? '');
+  }
+
   get linkGoogleMaps(): string {
     const e = this.churchInfo?.endereco;
     if (!e) return '#';
@@ -282,6 +289,41 @@ export class DetailsComponent implements OnInit {
     return 'pi pi-globe';
   }
 
+  // Sprint 3B — Minha Paróquia
+
+  jaFavorita(): boolean {
+    if (!this.churchInfo?.id) return false;
+    try {
+      const raw = localStorage.getItem('buscamissa_favorita');
+      if (!raw) return false;
+      return JSON.parse(raw)?.id === this.churchInfo.id;
+    } catch { return false; }
+  }
+
+  toggleFavorita(): void {
+    if (this.jaFavorita()) {
+      localStorage.removeItem('buscamissa_favorita');
+      this._toast.add({ severity: 'info', summary: 'Removida', detail: 'Paróquia removida dos favoritos.' });
+    } else {
+      const pm = this.proximaMissa;
+      const proximaMissaLabel = pm?.diaSemana != null
+        ? getCountdownLabel(pm.diaSemana, pm.horario)
+        : undefined;
+      const fav = {
+        id: this.churchInfo.id,
+        nome: this.churchInfo.nome,
+        uf: this.churchInfo.endereco?.uf ?? '',
+        cidadeSlug: this.churchInfo.endereco?.cidadeSlug ?? '',
+        slug: this.churchInfo.slug ?? this.churchInfo.nomeUnico,
+        proximaMissaLabel,
+        diaSemana: pm?.diaSemana,
+        horario: pm?.horario,
+      };
+      localStorage.setItem('buscamissa_favorita', JSON.stringify(fav));
+      this._toast.add({ severity: 'success', summary: '⭐ Salva!', detail: 'Esta paróquia aparecerá na sua home.' });
+    }
+  }
+
   voltar(): void {
     this._location.back();
   }
@@ -311,7 +353,10 @@ export class DetailsComponent implements OnInit {
   }
 
   reportarErro(): void {
-    if (this.churchInfo?.id) this._router.navigate(['/editar', this.churchInfo.id]);
+    if (this.churchInfo?.id) {
+      this._analytics.userContribution('report', this.churchInfo.nome);
+      this._router.navigate(['/editar', this.churchInfo.id]);
+    }
   }
 
   // ── Confirmação de horários ─────────────────────────────────────────────────
@@ -331,6 +376,7 @@ export class DetailsComponent implements OnInit {
         localStorage.setItem(localKey, '1');
         this.confirmacaoEnviada = true;
         this.totalConfirmacoes++;
+        this._analytics.userContribution('confirm', this.churchInfo.nome);
         this._toast.add({ severity: 'success', summary: 'Obrigado!', detail: 'Sua confirmação ajuda outras pessoas da comunidade.' });
       },
       error: (err) => {

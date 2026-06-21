@@ -76,6 +76,31 @@ export const routes: Routes = [
             (m) => m.DetailsComponent
           ),
       },
+      {
+        path: 'como-funciona',
+        data: {
+          title: 'Como funciona | BuscaMissa',
+          description: 'Entenda como o BuscaMissa reúne horários de missas católicas de centenas de paróquias e como você pode contribuir.',
+          canonical: 'https://buscamissa.com.br/como-funciona',
+        },
+        loadComponent: () =>
+          import('./modules/public/como-funciona/como-funciona.component').then(
+            (m) => m.ComoFuncionaComponent
+          ),
+      },
+      // Missa Agora — geoloc em tempo real
+      {
+        path: 'missa-agora',
+        data: {
+          title: 'Missa Agora | BuscaMissa',
+          description: 'Missas acontecendo agora ou nas próximas 2 horas perto de você.',
+          canonical: 'https://buscamissa.com.br/missa-agora',
+        },
+        loadComponent: () =>
+          import('./modules/public/missa-agora/missa-agora.component').then(
+            (m) => m.MissaAgoraComponent
+          ),
+      },
       // Página de todas as cidades
       {
         path: 'cidades',
