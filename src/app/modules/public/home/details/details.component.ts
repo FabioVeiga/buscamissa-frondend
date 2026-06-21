@@ -14,6 +14,7 @@ import { ConfidenceBadgeComponent } from "../../../../shared/components/confiden
 import { CountdownChipComponent } from "../../../../shared/components/countdown-chip/countdown-chip.component";
 import { ChurchPlaceholderComponent } from "../../../../shared/components/church-placeholder/church-placeholder.component";
 import { getNextOccurrenceMinutes, formatMassTime, getCountdownLabel } from "../../../../shared/utils/mass-time.utils";
+import { AnalyticsService } from "../../../../core/services/analytics.service";
 
 @Component({
   selector: "app-details",
@@ -38,6 +39,7 @@ export class DetailsComponent implements OnInit {
   _router = inject(Router);
   _location = inject(Location);
   _sanitizer = inject(DomSanitizer);
+  private _analytics = inject(AnalyticsService);
 
   isLoading = false;
   nomeUnico: string | null = null;
@@ -87,6 +89,7 @@ export class DetailsComponent implements OnInit {
         }
 
         if (igreja.id) this.carregarResumoConfirmacoes(igreja.id);
+        this._analytics.churchView(igreja.nome, igreja.endereco?.localidade ?? '', igreja.endereco?.uf ?? '');
 
         this._seo.update({
           title: seo?.title ?? `${igreja.nome} | BuscaMissa`,
@@ -239,6 +242,10 @@ export class DetailsComponent implements OnInit {
 
   // ── Navegação / compartilhamento ───────────────────────────────────────────
 
+  trackDirections(): void {
+    this._analytics.getDirections(this.churchInfo?.nome ?? '');
+  }
+
   get linkGoogleMaps(): string {
     const e = this.churchInfo?.endereco;
     if (!e) return '#';
@@ -346,7 +353,10 @@ export class DetailsComponent implements OnInit {
   }
 
   reportarErro(): void {
-    if (this.churchInfo?.id) this._router.navigate(['/editar', this.churchInfo.id]);
+    if (this.churchInfo?.id) {
+      this._analytics.userContribution('report', this.churchInfo.nome);
+      this._router.navigate(['/editar', this.churchInfo.id]);
+    }
   }
 
   // ── Confirmação de horários ─────────────────────────────────────────────────
@@ -366,6 +376,7 @@ export class DetailsComponent implements OnInit {
         localStorage.setItem(localKey, '1');
         this.confirmacaoEnviada = true;
         this.totalConfirmacoes++;
+        this._analytics.userContribution('confirm', this.churchInfo.nome);
         this._toast.add({ severity: 'success', summary: 'Obrigado!', detail: 'Sua confirmação ajuda outras pessoas da comunidade.' });
       },
       error: (err) => {

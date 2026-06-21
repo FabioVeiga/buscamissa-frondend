@@ -10,6 +10,7 @@ import { ConfidenceBadgeComponent } from "../../../../shared/components/confiden
 import { CountdownChipComponent } from "../../../../shared/components/countdown-chip/countdown-chip.component";
 import { DistanceChipComponent } from "../../../../shared/components/distance-chip/distance-chip.component";
 import { getNextOccurrenceMinutes, formatMassTime } from "../../../../shared/utils/mass-time.utils";
+import { AnalyticsService } from "../../../../core/services/analytics.service";
 
 const PERIODOS: Record<string, { de: number; ate: number; label: string }> = {
   manha: { de: 5 * 60, ate: 11 * 60 + 59, label: "Manhã" },
@@ -47,6 +48,7 @@ export class CityComponent implements OnInit, OnDestroy {
   private _router = inject(Router);
   private _church = inject(ChurchesService);
   private _seo = inject(SeoService);
+  private _analytics = inject(AnalyticsService);
 
   isLoading = false;
   uf = "";
@@ -112,6 +114,7 @@ export class CityComponent implements OnInit, OnDestroy {
         const seo = data?.seo;
 
         this.aplicarFiltros();
+        this._analytics.searchPerformed(this.cidadeNome, this.uf);
 
         if (this.igrejas.length === 0) this.naoEncontrado = true;
 

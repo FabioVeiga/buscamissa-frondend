@@ -57,10 +57,10 @@
           <app-confidence-badge [mass]="proximaMissa" />
         </div>
         <div class="flex gap-2 flex-wrap mt-1">
-          <a [href]="linkGoogleMaps" target="_blank" rel="noopener" class="action-btn">
+          <a [href]="linkGoogleMaps" target="_blank" rel="noopener" class="action-btn" (click)="trackDirections()">
             <i class="pi pi-map"></i> Google Maps
           </a>
-          <a [href]="linkWaze" target="_blank" rel="noopener" class="action-btn">
+          <a [href]="linkWaze" target="_blank" rel="noopener" class="action-btn" (click)="trackDirections()">
             <i class="pi pi-car"></i> Waze
           </a>
           <button (click)="compartilhar()" class="action-btn">
