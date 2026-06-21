@@ -1,3 +1,10 @@
+<div class="px-1 pt-3 pb-1">
+  <a routerLink="/home"
+     class="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary transition-colors">
+    <i class="pi pi-arrow-left text-xs"></i> Página inicial
+  </a>
+</div>
+
 <p-panel class="p-1">
   <ng-template pTemplate="header">
     <div class="flex items-center gap-2">
@@ -64,16 +71,13 @@
 
         <!-- Imagem (ou placeholder consistente) -->
         <a [routerLink]="linkParoquia(igreja)" class="shrink-0 self-start">
-          <div *ngIf="igreja.imagemUrl"
-            class="w-20 h-20 bg-cover bg-center rounded-lg shadow-sm border border-surface-100"
-            [style.background-image]="'url(\'' + igreja.imagemUrl + '\')'"
+          <img *ngIf="igreja.imagemUrl && !imagensQuebradas.has(igreja.id)"
+            [src]="igreja.imagemUrl" [alt]="igreja.nome" (error)="imagensQuebradas.add(igreja.id)"
+            class="w-20 h-20 rounded-lg object-cover shadow-sm border border-surface-100">
+          <div *ngIf="!igreja.imagemUrl || imagensQuebradas.has(igreja.id)"
+            class="church-placeholder w-20 h-20 rounded-lg"
             [attr.aria-label]="igreja.nome">
-          </div>
-          <div *ngIf="!igreja.imagemUrl"
-            class="w-20 h-20 rounded-lg border border-surface-200 bg-surface-50 flex flex-col items-center justify-center text-gray-300 gap-0.5"
-            [attr.aria-label]="igreja.nome">
-            <i class="pi pi-building text-2xl"></i>
-            <span class="text-[10px] text-gray-400">Sem foto</span>
+            <i class="pi pi-building"></i>
           </div>
         </a>
 

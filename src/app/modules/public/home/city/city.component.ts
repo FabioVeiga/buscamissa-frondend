@@ -57,6 +57,9 @@ export class CityComponent implements OnInit, OnDestroy {
   naoEncontrado = false;
   faqs: { pergunta: string; resposta: string }[] = [];
 
+  /** Ids de igrejas cuja foto falhou ao carregar — caem no placeholder */
+  imagensQuebradas = new Set<number>();
+
   // Filtros ativos
   diaAtivo: number | null = null;
   periodoAtivo: string | null = null;

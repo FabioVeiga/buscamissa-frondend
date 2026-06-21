@@ -1,6 +1,6 @@
 <p-toast></p-toast>
 
-<div class="paroquia-page max-w-3xl mx-auto px-3 sm:px-4 pb-10">
+<div class="paroquia-page max-w-5xl mx-auto px-3 sm:px-4 pb-10">
 
   <!-- Skeleton -->
   <div *ngIf="isLoading" class="flex flex-col gap-4 pt-4">
@@ -24,198 +24,306 @@
       <span class="text-gray-600 font-medium truncate">{{ churchInfo.nome }}</span>
     </nav>
 
-    <!-- ══ IDENTIDADE: foto maior + nome + endereço + badge ══ -->
-    <header class="flex items-start gap-4">
-      <div
-        class="w-28 h-28 sm:w-32 sm:h-32 rounded-2xl bg-cover bg-center shadow-sm border border-surface-100 shrink-0"
-        [style.background-image]="'url(\'' + (churchInfo.imagemUrl ?? '/assets/church/naodisponivel.png') + '\')'"
-        [attr.aria-label]="churchInfo.nome">
+    <!-- ══ HEADER CLEAN (largura total) ══ -->
+    <header class="church-header">
+
+      <!-- Thumbnail -->
+      <div class="church-thumb shrink-0">
+        <img *ngIf="churchInfo.imagemUrl && !fotoQuebrou"
+          [src]="churchInfo.imagemUrl" [alt]="churchInfo.nome"
+          (error)="fotoQuebrou = true"
+          class="w-full h-full object-cover">
+        <app-church-placeholder *ngIf="!churchInfo.imagemUrl || fotoQuebrou" [showLabel]="false" />
       </div>
 
-      <div class="flex-1 min-w-0">
-        <h1 class="text-xl sm:text-2xl font-extrabold text-gray-900 leading-tight">
+      <!-- Info -->
+      <div class="church-info flex flex-col justify-center gap-2 p-4 sm:p-5 flex-1 min-w-0">
+        <h1 class="text-base sm:text-lg font-extrabold text-gray-900 leading-snug">
           {{ churchInfo.nome }}
         </h1>
-        <p class="flex items-start gap-1.5 text-gray-600 text-sm mt-1">
-          <i class="pi pi-map-marker mt-0.5 text-gray-400 shrink-0"></i>
-          <span>{{ churchInfo.endereco?.bairro }}, {{ churchInfo.endereco?.localidade }}/{{ churchInfo.endereco?.uf }}</span>
+        <p class="flex items-center gap-1.5 text-sm text-gray-500">
+          <i class="pi pi-map-marker text-gray-400 shrink-0"></i>
+          {{ churchInfo.endereco?.bairro }}, {{ churchInfo.endereco?.localidade }}/{{ churchInfo.endereco?.uf }}
         </p>
-        <p *ngIf="churchInfo.paroco" class="text-gray-500 text-sm mt-0.5">{{ churchInfo.paroco }}</p>
-        <!-- Badge de confiança único, logo abaixo do nome -->
-        <div class="mt-2">
-          <app-confidence-badge *ngIf="proximaMissa" [mass]="proximaMissa" />
+        <p *ngIf="churchInfo.paroco" class="flex items-center gap-1.5 text-sm text-gray-500">
+          <i class="pi pi-user text-gray-400 shrink-0"></i>
+          {{ churchInfo.paroco }}
+        </p>
+        <div *ngIf="proximaMissa">
+          <app-confidence-badge [mass]="proximaMissa" />
+        </div>
+        <div class="flex gap-2 flex-wrap mt-1">
+          <a [href]="linkGoogleMaps" target="_blank" rel="noopener" class="action-btn">
+            <i class="pi pi-map"></i> Google Maps
+          </a>
+          <a [href]="linkWaze" target="_blank" rel="noopener" class="action-btn">
+            <i class="pi pi-car"></i> Waze
+          </a>
+          <button (click)="compartilhar()" class="action-btn">
+            <i class="pi pi-share-alt"></i> Compartilhar
+          </button>
         </div>
       </div>
     </header>
 
-    <!-- ══ PRÓXIMA MISSA (scoreboard, sem redundância) ══ -->
+    <!-- ══ SCOREBOARD (largura total) ══ -->
     <section *ngIf="proximaMissa" class="scoreboard mt-4">
-      <span class="scoreboard-label">Próxima missa</span>
-
-      <div class="flex items-end gap-3 mt-1">
-        <span class="scoreboard-time">{{ formatarHorario(proximaMissa.horario) }}</span>
-        <span class="scoreboard-day">{{ proximaMissaDiaLabel }}</span>
-      </div>
-
-      <!-- Contador só quando há urgência real (até 3h) -->
-      <div *ngIf="mostrarContador" class="scoreboard-countdown mt-2 flex items-center gap-1.5">
-        <i class="pi pi-clock"></i>
-        <app-countdown-chip [diaSemana]="proximaMissa.diaSemana!" [horario]="proximaMissa.horario" />
-      </div>
-
-      <div class="flex items-center justify-between gap-3 mt-3 pt-3 border-t border-white/40">
-        <span class="text-sm text-gray-600 capitalize">{{ proximaMissaData }}</span>
-        <button (click)="scrollToHorarios()"
-          class="flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg bg-white/80 hover:bg-white transition-colors"
-          style="color: #bc5d10;">
-          Ver todos os horários <i class="pi pi-chevron-down text-xs"></i>
-        </button>
-      </div>
-    </section>
-
-    <!-- ══ HORÁRIOS ══ -->
-    <section id="horarios" class="mt-6 scroll-mt-4">
-      <h2 class="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-        <i class="pi pi-calendar text-gray-400"></i> Horários de Missa
-      </h2>
-
-      <div *ngIf="churchInfo.missas?.length" class="flex flex-col gap-2">
-        <div *ngFor="let grupo of missasPorDia"
-             class="rounded-xl px-4 py-3 flex flex-col sm:flex-row gap-3 transition-colors"
-             [ngClass]="isHoje(grupo.dia)
-               ? 'bg-orange-50 border-2 border-orange-300'
-               : 'bg-surface-50 border border-surface-100'">
-
-          <!-- Coluna do dia -->
-          <div class="flex items-center gap-2 w-full sm:w-40 shrink-0 sm:pt-1">
-            <span class="text-sm font-bold uppercase tracking-wide"
-                  [ngClass]="isHoje(grupo.dia) ? 'text-primary' : 'text-gray-500'">
-              {{ grupo.label }}
-            </span>
-            <span *ngIf="isHoje(grupo.dia)"
-                  class="text-[11px] px-2 py-0.5 rounded-full font-bold"
-                  style="background-color: #bc5d10; color: white;">
-              HOJE
-            </span>
+      <div class="flex items-start gap-4">
+        <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0">
+          <i class="pi pi-clock" style="color: #bc5d10;"></i>
+        </div>
+        <div class="flex-1">
+          <span class="scoreboard-label">Próxima missa</span>
+          <div class="flex items-end gap-3 mt-1">
+            <span class="scoreboard-time">{{ formatarHorario(proximaMissa.horario) }}</span>
+            <span class="scoreboard-day">{{ proximaMissaDiaLabel }}</span>
           </div>
-
-          <!-- Lista de missas: horário (largura fixa) + observação alinhada -->
-          <div class="flex flex-col gap-1.5 flex-1 min-w-0">
-            <div *ngFor="let m of grupo.missas" class="flex items-center gap-3">
-              <span class="inline-flex items-center justify-center min-w-[4.5rem] font-bold text-base bg-white rounded-lg px-3 py-1.5 border border-surface-200 shadow-sm shrink-0"
-                    style="color: #bc5d10;">
-                {{ formatarHorario(m.horario) }}
-              </span>
-              <span *ngIf="m.observacao" class="text-sm text-gray-500 leading-snug">
-                {{ m.observacao }}
-              </span>
-            </div>
+          <div *ngIf="mostrarContador" class="scoreboard-countdown mt-1.5 flex items-center gap-1.5">
+            <i class="pi pi-clock text-sm"></i>
+            <app-countdown-chip [diaSemana]="proximaMissa.diaSemana!" [horario]="proximaMissa.horario" />
           </div>
         </div>
+        <span class="text-sm text-gray-500 capitalize hidden sm:block self-center">{{ proximaMissaData }}</span>
       </div>
-
-      <p *ngIf="!churchInfo.missas?.length" class="text-gray-500 text-sm py-6 text-center">
-        Os horários desta paróquia ainda não foram cadastrados.
-      </p>
-
-      <!-- ══ CONFIRMAR (ação principal, logo abaixo da tabela) ══ -->
-      <div class="mt-5 rounded-xl border border-green-200 bg-green-50 px-5 py-4 text-center">
-        <p class="text-sm font-semibold text-green-800 mb-3">Os horários estão corretos?</p>
-        <button pButton
-          [icon]="confirmacaoEnviada || jaConfirmou() ? 'pi pi-check' : 'pi pi-thumbs-up'"
-          [label]="confirmacaoEnviada || jaConfirmou() ? 'Horários confirmados!' : 'Confirmar horários'"
-          [disabled]="confirmacaoEnviada || jaConfirmou() || confirmandoHorarios"
-          [loading]="confirmandoHorarios"
-          class="p-button-success"
-          (click)="confirmarHorarios()">
+      <div class="flex items-center justify-between mt-3 pt-3 border-t border-orange-200/60">
+        <span class="text-sm text-gray-500 capitalize sm:hidden">{{ proximaMissaData }}</span>
+        <button (click)="scrollToHorarios()"
+          class="flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg bg-white/70 hover:bg-white transition-colors ml-auto"
+          style="color: #bc5d10;">
+          Ver todas as missas <i class="pi pi-chevron-right text-xs"></i>
         </button>
-        <p *ngIf="totalConfirmacoes > 0 || ultimaConfirmacao" class="text-xs text-green-700/70 mt-2">
-          <span *ngIf="totalConfirmacoes > 0">{{ totalConfirmacoes }} {{ totalConfirmacoes === 1 ? 'confirmação' : 'confirmações' }} recentes</span>
-          <span *ngIf="totalConfirmacoes > 0 && ultimaConfirmacao"> · </span>
-          <span *ngIf="ultimaConfirmacao">última em {{ ultimaConfirmacao | date:'dd/MM/yyyy' }}</span>
-        </p>
       </div>
     </section>
 
-    <!-- ══ COMO CHEGAR (ação primária, mapa secundário) ══ -->
-    <section class="mt-8">
-      <h2 class="text-lg font-bold text-gray-800 mb-3 flex items-center gap-2">
-        <i class="pi pi-map-marker text-gray-400"></i> Como chegar
-      </h2>
+    <!-- ══ GRID DUAS COLUNAS ══ -->
+    <div class="page-grid mt-6">
 
-      <p class="flex items-start gap-1.5 text-sm text-gray-700 mb-3">
-        <i class="pi pi-map-marker mt-0.5 text-gray-400 shrink-0"></i>
-        <span>
-          {{ churchInfo.endereco?.logradouro }},
-          {{ churchInfo.endereco?.numero === 0 ? 'S/N' : churchInfo.endereco?.numero }} ·
-          {{ churchInfo.endereco?.bairro }}
-          <span *ngIf="cepValido" class="text-gray-400">· CEP {{ churchInfo.endereco.cep }}</span>
-        </span>
-      </p>
+      <!-- ── Coluna principal ── -->
+      <div class="min-w-0">
 
-      <div class="flex gap-2 flex-wrap mb-3">
-        <a [href]="linkGoogleMaps" target="_blank" rel="noopener"
-           class="flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-semibold text-white transition-transform hover:scale-[1.02]"
-           style="background-color: #bc5d10;">
-          <i class="pi pi-map"></i> Abrir no Google Maps
-        </a>
-        <a [href]="linkWaze" target="_blank" rel="noopener"
-           class="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-gray-200 text-sm font-semibold text-gray-700 hover:border-primary hover:text-primary transition-colors bg-white">
-          <i class="pi pi-car"></i> Waze
-        </a>
+        <!-- HORÁRIOS -->
+        <section id="horarios" class="scroll-mt-4">
+          <h2 class="section-title">
+            <i class="pi pi-calendar text-gray-400"></i> Horários de Missa
+          </h2>
+
+          <!-- Sem missas -->
+          <div *ngIf="!churchInfo.missas?.length"
+               class="rounded-xl border border-dashed border-surface-300 bg-surface-50 px-6 py-8 flex flex-col items-center text-center">
+            <i class="pi pi-calendar-plus text-4xl text-gray-300 mb-3"></i>
+            <p class="text-gray-700 font-semibold">Ainda não há horários cadastrados</p>
+            <p class="text-gray-500 text-sm mt-1 max-w-md">
+              Conhece os horários? Faça sua contribuição e ajude toda a comunidade.
+            </p>
+            <button pButton type="button" icon="pi pi-plus" label="Adicionar horários"
+              class="p-button-sm mt-4" (click)="reportarErro()"></button>
+          </div>
+
+          <div *ngIf="churchInfo.missas?.length" class="flex flex-col gap-2">
+            <div *ngFor="let grupo of agendaSemana"
+                 class="schedule-row"
+                 [ngClass]="isHoje(grupo.dia) ? 'schedule-row--hoje' : ''">
+
+              <!-- Dia -->
+              <div class="schedule-row__day">
+                <span class="text-sm font-bold uppercase tracking-wide"
+                      [ngClass]="isHoje(grupo.dia) ? 'text-primary' : 'text-gray-500'">
+                  {{ grupo.label }}
+                </span>
+                <span *ngIf="isHoje(grupo.dia)" class="hoje-pill">HOJE</span>
+              </div>
+
+              <!-- Chips -->
+              <div class="flex flex-wrap gap-2 flex-1">
+                <ng-container *ngIf="grupo.missas.length; else semMissa">
+                  <div *ngFor="let m of grupo.missas" class="mass-chip">
+                    <span class="mass-chip__time">{{ formatarHorario(m.horario) }}</span>
+                    <span *ngIf="m.observacao" class="mass-chip__obs">{{ m.observacao }}</span>
+                  </div>
+                </ng-container>
+                <ng-template #semMissa>
+                  <span class="text-gray-300 text-xl leading-none">—</span>
+                </ng-template>
+              </div>
+            </div>
+          </div>
+
+          <!-- Confirmar -->
+          <div *ngIf="churchInfo.missas?.length"
+               class="mt-4 rounded-xl border border-green-200 bg-green-50 px-5 py-4
+                      flex flex-col sm:flex-row sm:items-center gap-4">
+            <div class="flex items-start gap-3 flex-1">
+              <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+                <i class="pi pi-check-circle text-green-600"></i>
+              </div>
+              <div>
+                <p class="text-sm font-semibold text-green-800">Os horários estão corretos?</p>
+                <p class="text-xs text-green-700/70 mt-0.5">Ajude a comunidade a manter as informações atualizadas.</p>
+              </div>
+            </div>
+            <div class="shrink-0 flex flex-col items-center gap-1">
+              <button pButton
+                [icon]="confirmacaoEnviada || jaConfirmou() ? 'pi pi-check' : 'pi pi-thumbs-up'"
+                [label]="confirmacaoEnviada || jaConfirmou() ? 'Confirmado!' : 'Confirmar horários'"
+                [disabled]="confirmacaoEnviada || jaConfirmou() || confirmandoHorarios"
+                [loading]="confirmandoHorarios"
+                class="p-button-success"
+                (click)="confirmarHorarios()">
+              </button>
+              <p *ngIf="ultimaConfirmacao" class="text-xs text-green-700/60">
+                Última confirmação: {{ ultimaConfirmacaoLabel }}
+              </p>
+            </div>
+          </div>
+        </section>
+
+        <!-- COMO CHEGAR -->
+        <section id="como-chegar" class="mt-8 scroll-mt-4">
+          <h2 class="section-title">
+            <i class="pi pi-map-marker text-gray-400"></i> Como chegar
+          </h2>
+
+          <div class="como-chegar-grid">
+            <!-- Mapa -->
+            <div class="rounded-xl overflow-hidden border border-surface-200 shadow-sm">
+              <iframe *ngIf="mapEmbedUrl"
+                [src]="mapEmbedUrl"
+                class="w-full h-44 block border-0"
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"
+                [title]="'Mapa de ' + churchInfo.nome">
+              </iframe>
+            </div>
+
+            <!-- Endereço + botões -->
+            <div class="flex flex-col gap-3 justify-center">
+              <div class="flex items-start gap-2">
+                <i class="pi pi-map-marker text-gray-400 mt-0.5 shrink-0"></i>
+                <div class="text-sm text-gray-700 leading-relaxed">
+                  <p class="font-medium">
+                    {{ churchInfo.endereco?.logradouro }},
+                    {{ churchInfo.endereco?.numero === 0 ? 'S/N' : churchInfo.endereco?.numero }}
+                  </p>
+                  <p class="text-gray-500">{{ churchInfo.endereco?.bairro }}, {{ churchInfo.endereco?.localidade }}/{{ churchInfo.endereco?.uf }}</p>
+                  <p *ngIf="cepValido" class="text-gray-400 text-xs mt-0.5">CEP {{ churchInfo.endereco.cep }}</p>
+                </div>
+              </div>
+              <div class="flex gap-2 flex-wrap">
+                <a [href]="linkGoogleMaps" target="_blank" rel="noopener" class="action-btn">
+                  <i class="pi pi-map"></i> Abrir no Google Maps
+                </a>
+                <a [href]="linkWaze" target="_blank" rel="noopener" class="action-btn">
+                  <i class="pi pi-car"></i> Abrir no Waze
+                </a>
+              </div>
+            </div>
+          </div>
+        </section>
       </div>
 
-      <!-- Mapa secundário, compacto -->
-      <div class="rounded-xl overflow-hidden border border-surface-200 shadow-sm">
-        <iframe *ngIf="mapEmbedUrl"
-          [src]="mapEmbedUrl"
-          class="w-full h-40 block border-0"
-          loading="lazy"
-          referrerpolicy="no-referrer-when-downgrade"
-          [title]="'Mapa de ' + churchInfo.nome">
-        </iframe>
-      </div>
-    </section>
+      <!-- ── Sidebar ── -->
+      <aside class="flex flex-col gap-4">
 
-    <!-- ══ CONTATO (linha compacta, só o que existe) ══ -->
-    <section *ngIf="churchInfo.contato?.telefone || churchInfo.contato?.telefoneWhatsApp || churchInfo.contato?.emailContato || churchInfo.redesSociais?.length"
-             class="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-gray-700">
-      <a *ngIf="churchInfo.contato?.telefone" [href]="'tel:' + churchInfo.contato.ddd + churchInfo.contato.telefone"
-         class="flex items-center gap-1.5 hover:text-primary transition-colors">
-        <i class="pi pi-phone text-gray-400"></i> ({{ churchInfo.contato.ddd }}) {{ churchInfo.contato.telefone }}
-      </a>
-      <a *ngIf="churchInfo.contato?.telefoneWhatsApp"
-         [href]="'https://wa.me/55' + churchInfo.contato.dddWhatsApp + churchInfo.contato.telefoneWhatsApp" target="_blank" rel="noopener"
-         class="flex items-center gap-1.5 hover:text-primary transition-colors">
-        <i class="pi pi-whatsapp text-green-500"></i> WhatsApp
-      </a>
-      <a *ngIf="churchInfo.contato?.emailContato" [href]="'mailto:' + churchInfo.contato.emailContato"
-         class="flex items-center gap-1.5 hover:text-primary transition-colors min-w-0">
-        <i class="pi pi-envelope text-gray-400"></i> <span class="truncate">{{ churchInfo.contato.emailContato }}</span>
-      </a>
-      <a *ngFor="let rede of churchInfo.redesSociais" [href]="rede.url" target="_blank" rel="noopener"
-         class="flex items-center gap-1.5 hover:text-primary transition-colors">
-        <i [ngClass]="getSocialIcon(rede.url)" class="text-gray-400"></i> {{ rede.nomeRedeSocial }}
-      </a>
-      <share-buttons class="ml-auto"
-        [include]="['whatsapp', 'email', 'copy']"
-        [show]="4"
-        [showText]="false"
-        [url]="shareUrl">
-      </share-buttons>
-    </section>
+        <!-- INFORMAÇÕES DA COMUNIDADE -->
+        <div class="sidebar-card">
+          <h3 class="sidebar-card__title">Informações da comunidade</h3>
 
-    <!-- ══ REPORTAR (discreto) ══ -->
+          <!-- Sem contato -->
+          <div *ngIf="!temContato" class="px-4 py-5 flex flex-col items-center text-center gap-2">
+            <i class="pi pi-info-circle text-2xl text-gray-300"></i>
+            <p class="text-xs text-gray-400">Nenhuma informação de contato cadastrada.</p>
+          </div>
+
+          <div *ngIf="temContato" class="flex flex-col divide-y divide-surface-100">
+
+            <!-- WhatsApp -->
+            <a *ngIf="churchInfo.contato?.telefoneWhatsApp"
+               [href]="'https://wa.me/55' + churchInfo.contato.dddWhatsApp + churchInfo.contato.telefoneWhatsApp"
+               target="_blank" rel="noopener"
+               class="contact-row">
+              <div class="contact-row__icon contact-row__icon--green">
+                <i class="pi pi-whatsapp"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="contact-row__label">WhatsApp</p>
+                <p class="contact-row__value">({{ churchInfo.contato.dddWhatsApp }}) {{ churchInfo.contato.telefoneWhatsApp }}</p>
+              </div>
+            </a>
+
+            <!-- Telefone -->
+            <a *ngIf="churchInfo.contato?.telefone"
+               [href]="'tel:' + churchInfo.contato.ddd + churchInfo.contato.telefone"
+               class="contact-row">
+              <div class="contact-row__icon contact-row__icon--blue">
+                <i class="pi pi-phone"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="contact-row__label">Telefone</p>
+                <p class="contact-row__value">({{ churchInfo.contato.ddd }}) {{ churchInfo.contato.telefone }}</p>
+              </div>
+            </a>
+
+            <!-- E-mail -->
+            <a *ngIf="churchInfo.contato?.emailContato"
+               [href]="'mailto:' + churchInfo.contato.emailContato"
+               class="contact-row">
+              <div class="contact-row__icon contact-row__icon--orange">
+                <i class="pi pi-envelope"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="contact-row__label">E-mail</p>
+                <p class="contact-row__value truncate">{{ churchInfo.contato.emailContato }}</p>
+              </div>
+            </a>
+
+            <!-- Site -->
+            <a *ngIf="churchInfo.contato?.site"
+               [href]="churchInfo.contato.site" target="_blank" rel="noopener"
+               class="contact-row">
+              <div class="contact-row__icon contact-row__icon--purple">
+                <i class="pi pi-globe"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="contact-row__label">Site</p>
+                <p class="contact-row__value truncate">{{ churchInfo.contato.site }}</p>
+              </div>
+            </a>
+
+            <!-- Redes sociais -->
+            <div *ngIf="churchInfo.redesSociais?.length" class="contact-row contact-row--no-link">
+              <div class="contact-row__icon contact-row__icon--social">
+                <i class="pi pi-share-alt"></i>
+              </div>
+              <div class="min-w-0">
+                <p class="contact-row__label">Redes sociais</p>
+                <div class="flex gap-3 mt-1">
+                  <a *ngFor="let rede of churchInfo.redesSociais" [href]="rede.url"
+                     target="_blank" rel="noopener"
+                     class="text-2xl text-gray-500 hover:text-primary transition-colors"
+                     [attr.aria-label]="rede.nomeRedeSocial">
+                    <i [ngClass]="getSocialIcon(rede.url)"></i>
+                  </a>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </aside>
+    </div>
+
+    <!-- ══ REPORTAR (largura total) ══ -->
     <section class="mt-6 rounded-xl bg-surface-50 border border-surface-100 px-4 py-3
                     flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
       <div class="flex items-start gap-2">
         <i class="pi pi-exclamation-triangle text-gray-400 mt-0.5"></i>
         <div>
           <p class="text-sm font-medium text-gray-700">Horário incorreto ou desatualizado?</p>
-          <p class="text-xs text-gray-400">Nos ajude a manter as informações corretas.</p>
+          <p class="text-xs text-gray-400">Nos ajude a manter as informações corretas para toda a comunidade.</p>
         </div>
       </div>
-      <button pButton type="button" icon="pi pi-flag" label="Reportar"
+      <button pButton type="button" icon="pi pi-flag" label="Reportar problema"
         class="p-button-outlined p-button-secondary p-button-sm shrink-0"
         (click)="reportarErro()">
       </button>
@@ -223,7 +331,7 @@
 
     <!-- Voltar -->
     <div class="mt-4">
-      <button pButton type="button" icon="pi pi-arrow-left" label="Voltar"
+      <button pButton type="button" icon="pi pi-arrow-left" label="Voltar para resultados"
         class="p-button-text text-primary" (click)="voltar()"></button>
     </div>
 

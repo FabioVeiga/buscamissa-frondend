@@ -1,0 +1,121 @@
+<div class="cidades-page max-w-4xl mx-auto px-3 sm:px-4 pb-12">
+
+  <!-- Hero -->
+  <div class="hero-section">
+    <div class="flex-1">
+      <h1 class="text-2xl font-extrabold text-gray-900 leading-tight">Todas as cidades</h1>
+      <p class="text-gray-500 text-sm mt-1">Encontre horários de missas em sua cidade.</p>
+
+      <!-- Busca -->
+      <div class="search-box mt-4">
+        <i class="pi pi-search search-box__icon"></i>
+        <input
+          type="text"
+          [(ngModel)]="busca"
+          placeholder="Buscar por cidade, estado ou diocese..."
+          class="search-box__input"
+          autocomplete="off">
+      </div>
+    </div>
+    <div class="hero-section__art" aria-hidden="true">
+      <svg viewBox="0 0 120 100" xmlns="http://www.w3.org/2000/svg">
+        <ellipse cx="60" cy="95" rx="58" ry="5" fill="#f3d5ba" opacity="0.4"/>
+        <rect x="34" y="50" width="52" height="42" rx="3" fill="#f0e2d3"/>
+        <rect x="52" y="22" width="16" height="70" rx="2" fill="#f5ede3"/>
+        <polygon points="34,50 60,32 86,50" fill="#e6c9a8"/>
+        <polygon points="60,10 50,24 70,24" fill="#e6c9a8"/>
+        <rect x="58" y="3" width="4" height="9" rx="1" fill="#d4a97a"/>
+        <rect x="55" y="7" width="10" height="3.5" rx="1" fill="#d4a97a"/>
+        <rect x="57" y="66" width="6" height="26" rx="1" fill="#d4a97a"/>
+        <rect x="38" y="58" width="8" height="12" rx="2" fill="#d4a97a"/>
+        <rect x="74" y="58" width="8" height="12" rx="2" fill="#d4a97a"/>
+        <circle cx="60" cy="45" r="4" fill="#d4a97a"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Stats -->
+  <div class="stats-row">
+    <div class="stat-item">
+      <i class="pi pi-map stat-item__icon"></i>
+      <div>
+        <p class="stat-item__value">{{ estados.length }}</p>
+        <p class="stat-item__label">estados e o DF</p>
+      </div>
+    </div>
+    <div class="stat-item">
+      <i class="pi pi-building stat-item__icon"></i>
+      <div>
+        <p class="stat-item__value">{{ totalCidades }}+</p>
+        <p class="stat-item__label">cidades cadastradas</p>
+      </div>
+    </div>
+    <div class="stat-item">
+      <i class="pi pi-users stat-item__icon"></i>
+      <div>
+        <p class="stat-item__value">700+</p>
+        <p class="stat-item__label">paróquias e comunidades</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Skeleton -->
+  <div *ngIf="isLoading" class="flex flex-col gap-3 mt-6">
+    <div *ngFor="let i of [1,2,3,4,5]"
+         class="h-14 rounded-xl bg-gray-100 animate-pulse"></div>
+  </div>
+
+  <!-- Lista por estado -->
+  <section *ngIf="!isLoading" class="mt-6">
+    <h2 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-3">
+      Cidades por estado
+    </h2>
+
+    <div *ngIf="estadosFiltrados.length === 0" class="text-center py-10 text-gray-400">
+      <i class="pi pi-search text-3xl mb-3 block"></i>
+      Nenhuma cidade encontrada para "{{ busca }}"
+    </div>
+
+    <div class="flex flex-col gap-2">
+      <div *ngFor="let e of estadosFiltrados" class="estado-card">
+
+        <!-- Cabeçalho do estado -->
+        <button class="estado-header" (click)="toggleEstado(e)" type="button">
+          <span class="estado-badge" [ngClass]="badgeClass(e.sigla)">{{ e.sigla }}</span>
+          <div class="flex-1 text-left">
+            <span class="estado-nome">{{ e.nome }}</span>
+            <span class="estado-count">{{ e.cidades.length }} cidades</span>
+          </div>
+          <i class="pi transition-transform duration-200"
+             [ngClass]="e.expandido ? 'pi-chevron-up text-primary' : 'pi-chevron-down text-gray-400'"></i>
+        </button>
+
+        <!-- Grid de cidades -->
+        <div *ngIf="e.expandido" class="cidades-grid px-4 pb-4 pt-2">
+          <a *ngFor="let c of e.cidades"
+             [routerLink]="['/missas', e.sigla.toLowerCase(), c.slug]"
+             class="cidade-link">
+            {{ c.nome }} <i class="pi pi-chevron-right text-[10px]"></i>
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA: Não encontrou sua cidade -->
+  <div class="nao-encontrou mt-8">
+    <div class="nao-encontrou__icon">
+      <i class="pi pi-map-marker text-2xl" style="color: #bc5d10;"></i>
+    </div>
+    <div class="flex-1 min-w-0">
+      <p class="font-semibold text-gray-800 text-sm">Não encontrou sua cidade?</p>
+      <p class="text-gray-500 text-xs mt-0.5">Ajude nossa comunidade a crescer.</p>
+    </div>
+    <a routerLink="/solicitar"
+       class="cta-btn shrink-0">
+      <i class="pi pi-send"></i> Sugerir minha cidade
+    </a>
+  </div>
+
+</div>

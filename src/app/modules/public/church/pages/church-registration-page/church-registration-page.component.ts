@@ -6,7 +6,7 @@ import {
   ViewChild,
   AfterViewInit,
 } from "@angular/core";
-import { Router } from "@angular/router";
+import { Router, RouterLink } from "@angular/router";
 import { CommonModule, DatePipe } from "@angular/common";
 import { HttpErrorResponse } from "@angular/common/http";
 import { ConfirmationService, MessageService } from "primeng/api";
@@ -23,7 +23,7 @@ import { ChurchesService } from "../../../../../core/services/churches.service";
 @Component({
   selector: "app-church-registration-page",
   standalone: true,
-  imports: [CommonModule, ChurchFormComponent, PrimeNgModule],
+  imports: [CommonModule, RouterLink, ChurchFormComponent, PrimeNgModule],
   providers: [MessageService, DatePipe, ConfirmationService],
   templateUrl: "./church-registration-page.component.html",
   changeDetection: ChangeDetectionStrategy.OnPush,
