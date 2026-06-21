@@ -336,6 +336,10 @@ export class CityComponent implements OnInit, OnDestroy {
     return ["/paroquia", this.uf, this.cidade, igreja.slug];
   }
 
+  onChurchClick(igreja: any): void {
+    this._analytics.resultClicked(igreja.nome, this.cidadeNome, this.uf);
+  }
+
   linkCidade(): string[] {
     return ["/missas", this.uf.toLowerCase(), this.cidade];
   }

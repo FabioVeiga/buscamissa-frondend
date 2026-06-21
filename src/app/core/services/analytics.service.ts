@@ -49,6 +49,26 @@ export class AnalyticsService {
     this._send('missa_agora_open', { source });
   }
 
+  /** Usuário iniciou uma busca (clicou no CTA da home) */
+  searchStarted(): void {
+    this._send('search_started');
+  }
+
+  /** Usuário clicou em um card de resultado (home ou cidade) */
+  resultClicked(churchName: string, cidade: string, uf: string): void {
+    this._send('result_clicked', { church_name: churchName, cidade, uf });
+  }
+
+  /** Usuário clicou em um card na tela /missa-agora */
+  missaAgoraCardClicked(churchName: string): void {
+    this._send('missa_agora_card_clicked', { church_name: churchName });
+  }
+
+  /** Usuário salvou uma paróquia favorita */
+  favoriteParishSaved(churchName: string): void {
+    this._send('favorite_parish_saved', { church_name: churchName });
+  }
+
   private _send(eventName: string, params: Record<string, string> = {}): void {
     if (typeof gtag === 'undefined') return;
     gtag('event', eventName, params);

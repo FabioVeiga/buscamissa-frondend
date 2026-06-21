@@ -121,7 +121,8 @@
 
           <!-- Nome da paróquia -->
           <a [routerLink]="linkParoquia(igreja)"
-             class="font-semibold text-surface-900 hover:text-primary hover:underline leading-tight truncate mt-1">
+             class="font-semibold text-surface-900 hover:text-primary hover:underline leading-tight truncate mt-1"
+             (click)="onChurchClick(igreja)">
             {{ igreja.nome }}
           </a>
 

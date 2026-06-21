@@ -2,7 +2,7 @@
 
 <!-- ══ CTA único ══ -->
 <div class="hero-ctas mx-1">
-  <a routerLink="/missa-agora" class="hero-cta hero-cta--primary">
+  <a routerLink="/missa-agora" class="hero-cta hero-cta--primary" (click)="onCtaClick()">
     <i class="pi pi-map-marker"></i>
     Encontrar uma missa agora
   </a>
@@ -48,6 +48,7 @@
       *ngFor="let card of proximasMissasCards"
       [data]="card"
       [urgency]="getUrgency(card)"
+      (cardClick)="onCardClick($event)"
       (favoriteClick)="onFavoriteClick($event)"
     />
   </div>

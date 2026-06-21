@@ -27,6 +27,7 @@ export class MassTimeCardComponent implements OnChanges {
 
   @Output() navigateClick = new EventEmitter<MassCardData>();
   @Output() favoriteClick = new EventEmitter<MassCardData>();
+  @Output() cardClick = new EventEmitter<MassCardData>();
 
   formattedTime = '';
   parishRoute: string[] = [];
