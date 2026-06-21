@@ -1,11 +1,279 @@
-.social-link {
-  color: #555;
-  transition: color 0.2s, transform 0.2s;
+// ── Header clean ───────────────────────────────────────────────────────────────
+.church-header {
+  display: flex;
+  gap: 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+
+.church-thumb {
+  width: 10rem;
+  min-height: 10rem;
+  align-self: stretch;   // estica até a altura do bloco de info
+  flex-shrink: 0;
+
+  @media (min-width: 640px) {
+    width: 12rem;
+  }
+}
+
+.church-info {
+  flex: 1;
+  min-width: 0;
+}
+
+// ── Botões de ação ─────────────────────────────────────────────────────────────
+.action-btn {
   display: inline-flex;
   align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 0.5rem;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  text-decoration: none;
 
   &:hover {
-    color: #1a1a2e;
-    transform: scale(1.15);
+    background: #fff4ed;
+    border-color: #bc5d10;
+    color: #bc5d10;
+  }
+}
+
+// ── Scoreboard ─────────────────────────────────────────────────────────────────
+.scoreboard {
+  border-radius: 1rem;
+  padding: 1.125rem 1.375rem;
+  background: linear-gradient(135deg, #fff4ea 0%, #ffe8d2 100%);
+  border: 1px solid #f3d3b3;
+}
+
+.scoreboard-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #b06a2c;
+}
+
+.scoreboard-time {
+  font-size: 2.75rem;
+  line-height: 1;
+  font-weight: 800;
+  color: #bc5d10;
+
+  @media (min-width: 640px) {
+    font-size: 3.25rem;
+  }
+}
+
+.scoreboard-day {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #8a4a12;
+  padding-bottom: 0.3rem;
+}
+
+.scoreboard-countdown {
+  color: #bc5d10;
+
+  ::ng-deep .countdown-chip {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #bc5d10;
+  }
+}
+
+// ── Grid duas colunas ──────────────────────────────────────────────────────────
+.page-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+
+  @media (min-width: 768px) {
+    grid-template-columns: 1fr 17rem;
+  }
+}
+
+// ── Títulos de seção ───────────────────────────────────────────────────────────
+.section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+// ── Linha da agenda semanal ────────────────────────────────────────────────────
+.schedule-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  transition: background 0.15s;
+
+  @media (min-width: 480px) {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  &--hoje {
+    background: #fff7f0;
+    border: 2px solid #f3a06e;
+  }
+
+  &__day {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    flex-shrink: 0;
+
+    @media (min-width: 480px) {
+      width: 9rem;
+    }
+  }
+}
+
+.hoje-pill {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  background: #bc5d10;
+  color: #fff;
+  letter-spacing: 0.04em;
+}
+
+// ── Chips de horário — altura FIXA, largura AUTO ───────────────────────────────
+.mass-chip {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 3rem;          // altura fixa — todos iguais
+  min-width: 4rem;
+  padding: 0 0.75rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.625rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  overflow: hidden;
+
+  .schedule-row--hoje & {
+    border-color: #f3a06e;
+  }
+}
+
+.mass-chip__time {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #bc5d10;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.mass-chip__obs {
+  font-size: 0.68rem;
+  color: #9ca3af;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 10rem;
+  margin-top: 0.1rem;
+}
+
+// ── Como chegar (mapa + endereço lado a lado) ──────────────────────────────────
+.como-chegar-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+
+  @media (min-width: 560px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+// ── Sidebar ────────────────────────────────────────────────────────────────────
+.sidebar-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.875rem;
+  overflow: hidden;
+
+  &__title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #1f2937;
+    padding: 0.875rem 1rem 0.625rem;
+    border-bottom: 1px solid #f3f4f6;
+  }
+}
+
+// ── Linhas de contato na sidebar ───────────────────────────────────────────────
+.contact-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  text-decoration: none;
+  transition: background 0.15s;
+  cursor: pointer;
+
+  &:hover:not(.contact-row--no-link) {
+    background: #f9fafb;
+  }
+
+  &--no-link {
+    cursor: default;
+    align-items: flex-start;
+  }
+
+  &__icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+
+    &--green  { background: #dcfce7; color: #16a34a; }
+    &--blue   { background: #dbeafe; color: #2563eb; }
+    &--orange { background: #ffedd5; color: #ea580c; }
+    &--purple { background: #f3e8ff; color: #7c3aed; }
+    &--social { background: #f3f4f6; color: #6b7280; }
+  }
+
+  &__label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1;
+  }
+
+  &__value {
+    font-size: 0.8125rem;
+    color: #374151;
+    font-weight: 500;
+    margin-top: 0.2rem;
+    line-height: 1.3;
   }
 }

@@ -1,4 +1,9 @@
-<div class="hero"><h1></h1><p></p></div>
+<div class="px-1 pt-3 pb-1">
+  <a routerLink="/home"
+     class="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary transition-colors">
+    <i class="pi pi-arrow-left text-xs"></i> Página inicial
+  </a>
+</div>
 
 <p-panel class="p-1">
   <ng-template pTemplate="header">
@@ -12,113 +17,156 @@
 
   <!-- Skeleton -->
   <div *ngIf="isLoading" class="flex flex-col gap-3 p-4">
-    <p-skeleton height="8rem" *ngFor="let i of [1,2,3,4]" borderRadius="8px"></p-skeleton>
+    <p-skeleton height="7rem" *ngFor="let i of [1,2,3,4]" borderRadius="8px"></p-skeleton>
   </div>
 
-  <!-- Texto contextual (bom para SEO) -->
-  <p *ngIf="!isLoading && igrejas.length" class="text-gray-600 text-sm px-6 pt-3">
-    Encontre os horários de missa em <strong>{{ cidadeNome }}/{{ uf.toUpperCase() }}</strong>.
-    Consulte <strong>missa hoje</strong>, <strong>missa de domingo</strong> e as celebrações
-    das <strong>{{ igrejas.length }}</strong> paróquia(s) e comunidades católicas da cidade,
-    com endereço, contato e horários atualizados pela comunidade.
-  </p>
+  <ng-container *ngIf="!isLoading">
 
-  <!-- Lista de paróquias (layout de card, igual à busca) -->
-  <div *ngIf="!isLoading && igrejas.length" class="grid grid-cols-12 gap-4 grid-nogutter">
-    <div class="col-span-12" *ngFor="let igreja of igrejas; let first = first">
+    <!-- Texto contextual SEO -->
+    <p *ngIf="igrejas.length" class="text-gray-600 text-sm px-4 pt-3 pb-2">
+      Encontre os horários de missa em <strong>{{ cidadeNome }}/{{ uf.toUpperCase() }}</strong>.
+      <strong>{{ igrejas.length }}</strong> paróquia(s) e comunidades católicas.
+    </p>
+
+    <!-- Filtros: dia da semana + período (controle principal da tela) -->
+    <div class="flex gap-2 flex-wrap px-4 pb-3">
+      <button
+        *ngFor="let d of dias"
+        (click)="setDia(d.idx)"
+        class="px-4 py-2 rounded-lg text-sm font-semibold border-2 transition-colors"
+        [ngClass]="diaAtivo === d.idx
+          ? 'bg-primary text-white border-primary'
+          : 'bg-white text-gray-700 border-surface-200 hover:border-primary hover:text-primary'">
+        {{ d.label }}
+      </button>
+      <span class="w-px bg-gray-200 self-stretch mx-1"></span>
+      <button
+        *ngFor="let p of periodos"
+        (click)="setPeriodo(p.slug)"
+        class="px-4 py-2 rounded-lg text-sm font-semibold border-2 transition-colors"
+        [ngClass]="periodoAtivo === p.slug
+          ? 'bg-primary text-white border-primary'
+          : 'bg-white text-gray-700 border-surface-200 hover:border-primary hover:text-primary'">
+        {{ p.label }}
+      </button>
+      <button
+        *ngIf="temFiltroAtivo"
+        (click)="limparFiltros()"
+        class="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:text-gray-700 border-2 border-transparent hover:border-gray-300 transition-colors">
+        <i class="pi pi-times text-xs mr-1"></i>Limpar
+      </button>
+    </div>
+
+    <!-- Contador de resultados -->
+    <div *ngIf="igrejas.length" class="text-xs text-gray-500 px-4 pb-3">
+      {{ igrejasFiltradas.length }} paróquia(s)
+      <span *ngIf="temFiltroAtivo">encontrada(s) com os filtros selecionados</span>
+    </div>
+
+    <!-- Lista de paróquias -->
+    <div *ngIf="igrejasFiltradas.length" class="flex flex-col divide-y divide-surface-100">
       <article
-        class="flex flex-col sm:flex-row sm:items-center p-6 gap-4"
-        [ngClass]="{ 'border-t border-surface-200 dark:border-surface-700': !first }">
+        *ngFor="let igreja of igrejasFiltradas"
+        class="flex flex-col sm:flex-row gap-4 p-4 hover:bg-surface-50 transition-colors">
 
-        <!-- Imagem + redes sociais -->
-        <div class="bg-surface-50 flex justify-center items-center rounded p-4">
-          <div class="relative mx-auto text-center">
-            <a [routerLink]="linkParoquia(igreja)">
-              <div
-                class="w-44 h-44 bg-cover bg-center rounded shadow"
-                [style.background-image]="'url(\'' + (igreja.imagemUrl ?? '/assets/church/naodisponivel.png') + '\')'"
-                role="img"
-                [attr.aria-label]="igreja.nome">
-              </div>
-            </a>
-            <div *ngIf="igreja.redesSociais?.length" class="flex justify-center mt-2 gap-2">
-              <a *ngFor="let rede of igreja.redesSociais" [href]="rede.url" target="_blank"
-                 class="text-lg text-gray-600 hover:text-gray-900">
-                <i [ngClass]="getSocialIcon(rede.url)"></i>
-              </a>
-            </div>
+        <!-- Imagem (ou placeholder consistente) -->
+        <a [routerLink]="linkParoquia(igreja)" class="shrink-0 self-start">
+          <img *ngIf="igreja.imagemUrl && !imagensQuebradas.has(igreja.id)"
+            [src]="igreja.imagemUrl" [alt]="igreja.nome" (error)="imagensQuebradas.add(igreja.id)"
+            class="w-20 h-20 rounded-lg object-cover shadow-sm border border-surface-100">
+          <div *ngIf="!igreja.imagemUrl || imagensQuebradas.has(igreja.id)"
+            class="church-placeholder w-20 h-20 rounded-lg"
+            [attr.aria-label]="igreja.nome">
+            <i class="pi pi-building"></i>
           </div>
-        </div>
+        </a>
 
         <!-- Conteúdo -->
-        <div class="flex flex-col flex-1 gap-1">
-          <!-- Nome + confiança -->
-          <div class="flex items-center gap-2 flex-wrap">
-            <a [routerLink]="linkParoquia(igreja)"
-               class="text-lg font-bold text-surface-900 hover:text-primary hover:underline">
-              {{ igreja.nome }}
-            </a>
-            <span class="flex items-center gap-1 text-xs text-gray-500">
-              <span [ngClass]="confiancaDot(igreja.statusConfianca)" class="w-2 h-2 rounded-full"></span>
-              {{ confiancaLabel(igreja.statusConfianca) }}
+        <div class="flex flex-col flex-1 gap-0.5 min-w-0">
+
+          <!-- HORÁRIO PRIMÁRIO + contador OU dia (sem redundância) -->
+          <ng-container *ngIf="proximaMissa(igreja) as pm">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="text-2xl font-bold leading-none" style="color: #bc5d10;">
+                {{ formatarHorario(pm.horario) }}
+              </span>
+              <ng-container *ngIf="ehUrgente(pm); else diaLabel">
+                <app-countdown-chip [diaSemana]="pm.diaSemana" [horario]="pm.horario" />
+              </ng-container>
+              <ng-template #diaLabel>
+                <span class="text-sm font-medium text-gray-500">{{ diaLabelRelativo(pm) }}</span>
+              </ng-template>
+            </div>
+          </ng-container>
+
+          <!-- Nome da paróquia -->
+          <a [routerLink]="linkParoquia(igreja)"
+             class="font-semibold text-surface-900 hover:text-primary hover:underline leading-tight truncate mt-1">
+            {{ igreja.nome }}
+          </a>
+
+          <!-- Bairro -->
+          <span class="text-sm text-gray-500">{{ igreja.endereco?.bairro }}</span>
+
+          <!-- Distância (logo abaixo do nome) -->
+          <app-distance-chip *ngIf="distanciaMetros(igreja) as d" [meters]="d" class="text-sm" />
+
+          <!-- Confiança (discreta) + redes sociais -->
+          <div class="flex items-center gap-3 mt-1.5 flex-wrap">
+            <app-confidence-badge *ngIf="proximaMissa(igreja) as pb" [mass]="pb" />
+            <span *ngIf="igreja.redesSociais?.length" class="flex gap-3">
+              <a *ngFor="let rede of igreja.redesSociais" [href]="rede.url" target="_blank" rel="noopener"
+                 class="text-gray-400 hover:text-gray-700 transition-colors">
+                <i [ngClass]="getSocialIcon(rede.url)"></i>
+              </a>
             </span>
           </div>
 
-          <p *ngIf="igreja.paroco" class="font-medium text-surface-700">{{ igreja.paroco }}</p>
-
-          <!-- Endereço -->
-          <p class="font-small text-surface-900 mt-1">
-            {{ igreja.endereco?.logradouro }},
-            {{ igreja.endereco?.numero === 0 ? 'S/N' : igreja.endereco?.numero }},
-            {{ igreja.endereco?.bairro }} - {{ igreja.endereco?.localidade }}/{{ igreja.endereco?.uf }}
-          </p>
-
-          <!-- Telefone -->
-          <p *ngIf="igreja?.contato?.telefone || igreja?.contato?.telefoneWhatsApp" class="text-gray-700 text-sm">
-            <strong>Telefone:</strong> ({{ igreja?.contato?.ddd }}) {{ igreja?.contato?.telefone }}
-            <ng-container *ngIf="igreja?.contato?.telefoneWhatsApp">
-              / <strong>WhatsApp:</strong> ({{ igreja?.contato?.dddWhatsApp }}) {{ igreja?.contato?.telefoneWhatsApp }}
-            </ng-container>
-          </p>
-
-          <p-divider />
-
-          <!-- Horários -->
-          <div *ngIf="igreja.missas?.length" class="font-small mt-1">
-            <div class="text-base font-medium text-surface-900 mb-1">Horários:</div>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-6">
-              <div *ngFor="let r of resumoMissas(igreja.missas)" class="text-surface-800 text-sm">
-                <span class="font-medium">{{ r.dia }}:</span> {{ r.horarios }}
-              </div>
-            </div>
-          </div>
-
-          <a [routerLink]="linkParoquia(igreja)" class="text-sm text-primary hover:underline mt-2 self-start">
-            Ver detalhes →
+          <a [routerLink]="linkParoquia(igreja)"
+             class="text-xs text-primary hover:underline mt-1.5 self-start">
+            Ver todos os horários →
           </a>
         </div>
       </article>
     </div>
-  </div>
 
-  <!-- FAQ (visível + FAQPage schema, bom para rich result) -->
-  <section *ngIf="!isLoading && faqs.length" class="px-6 py-6 border-t border-surface-200">
-    <h2 class="text-lg font-bold text-surface-900 mb-3">Perguntas frequentes</h2>
-    <details *ngFor="let f of faqs" class="mb-2 border-b border-surface-100 pb-2">
-      <summary class="cursor-pointer font-medium text-surface-800">{{ f.pergunta }}</summary>
-      <p class="text-gray-600 text-sm mt-2">{{ f.resposta }}</p>
-    </details>
-  </section>
+    <!-- Vazio por filtro -->
+    <div *ngIf="!igrejasFiltradas.length && igrejas.length && temFiltroAtivo" class="text-center py-8 px-4">
+      <i class="pi pi-filter-slash text-3xl text-gray-300 mb-2"></i>
+      <p class="text-gray-600 font-medium">Nenhuma paróquia com esses filtros.</p>
+      <button (click)="limparFiltros()" class="text-sm text-primary hover:underline mt-2">Limpar filtros</button>
+    </div>
 
-  <!-- Vazio -->
-  <div *ngIf="!isLoading && naoEncontrado" class="text-center py-12 px-4">
-    <i class="pi pi-search text-4xl text-gray-300 mb-3"></i>
-    <p class="text-gray-600 font-medium">Nenhuma paróquia cadastrada nesta cidade ainda.</p>
-    <p class="text-gray-400 text-sm mt-1">Conhece uma missa em {{ cidadeNome }}? Ajude a comunidade cadastrando.</p>
-    <a routerLink="/nova" class="inline-block mt-4 text-primary hover:underline">Cadastrar paróquia</a>
-  </div>
+    <!-- Vazio geral -->
+    <div *ngIf="naoEncontrado && !igrejas.length" class="text-center py-12 px-4">
+      <i class="pi pi-search text-4xl text-gray-300 mb-3"></i>
+      <p class="text-gray-600 font-medium">Nenhuma paróquia cadastrada nesta cidade ainda.</p>
+      <p class="text-gray-400 text-sm mt-1">Conhece uma missa em {{ cidadeNome }}? Ajude a comunidade cadastrando.</p>
+      <a routerLink="/nova" class="inline-block mt-4 text-primary hover:underline">Cadastrar paróquia</a>
+    </div>
+
+    <!-- FAQ -->
+    <section *ngIf="faqs.length" class="px-4 py-6 border-t border-surface-100 mt-2">
+      <h2 class="text-base font-bold text-surface-900 mb-3">Perguntas frequentes</h2>
+      <details *ngFor="let f of faqs" class="mb-2 border-b border-surface-100 pb-2">
+        <summary class="cursor-pointer font-medium text-surface-800 text-sm">{{ f.pergunta }}</summary>
+        <p class="text-gray-600 text-sm mt-2">{{ f.resposta }}</p>
+      </details>
+    </section>
+
+  </ng-container>
 </p-panel>
 
-<div class="flex justify-center w-full">
+<!-- Botão flutuante: Ver no mapa -->
+<button
+  *ngIf="!isLoading && igrejasFiltradas.length"
+  (click)="abrirMapa()"
+  class="fixed bottom-6 right-4 z-50 flex items-center gap-2 px-4 py-3 rounded-full shadow-lg text-white text-sm font-medium transition-transform hover:scale-105 active:scale-95"
+  style="background-color: #bc5d10;">
+  <i class="pi pi-map text-base"></i>
+  Ver no mapa
+</button>
+
+<div class="flex justify-center w-full mt-4">
   <app-adsense-banner></app-adsense-banner>
 </div>

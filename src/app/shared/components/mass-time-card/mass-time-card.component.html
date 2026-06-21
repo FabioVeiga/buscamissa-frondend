@@ -1,0 +1,49 @@
+<article
+  class="mass-time-card"
+  [class.mass-time-card--urgent]="urgency === 'urgent'"
+  [class.mass-time-card--soon]="urgency === 'soon'"
+  [class.mass-time-card--later]="urgency === 'later'"
+>
+  <a [routerLink]="parishRoute" class="mass-time-card__body">
+    <div class="mass-time-card__header">
+      <span class="mass-time-card__time">{{ formattedTime }}</span>
+
+      @if (data.mass.diaSemana !== undefined) {
+        <app-countdown-chip
+          [diaSemana]="data.mass.diaSemana"
+          [horario]="data.mass.horario"
+        />
+      }
+
+      <app-confidence-badge [mass]="data.mass" />
+    </div>
+
+    <h3 class="mass-time-card__name">{{ data.churchName }}</h3>
+
+    <div class="mass-time-card__location">
+      <span class="mass-time-card__bairro">{{ data.bairro }}</span>
+      <app-distance-chip [meters]="data.distanceMeters" />
+    </div>
+  </a>
+
+  <div class="mass-time-card__actions">
+    <button
+      type="button"
+      class="mass-time-card__btn mass-time-card__btn--navigate"
+      (click)="onNavigate($event)"
+      aria-label="Como chegar"
+    >
+      <i class="pi pi-map-marker"></i>
+      Como chegar
+    </button>
+
+    <button
+      type="button"
+      class="mass-time-card__btn mass-time-card__btn--favorite"
+      (click)="onFavorite($event)"
+      aria-label="Favoritar"
+    >
+      <i class="pi pi-heart"></i>
+    </button>
+  </div>
+</article>

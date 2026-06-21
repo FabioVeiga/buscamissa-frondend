@@ -1,0 +1,28 @@
+<div class="church-ph">
+  <svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg" class="church-ph__art" aria-hidden="true">
+    <!-- nuvens -->
+    <ellipse cx="52" cy="56" rx="26" ry="13" fill="#ffffff" opacity="0.55" />
+    <ellipse cx="190" cy="48" rx="22" ry="11" fill="#ffffff" opacity="0.55" />
+    <!-- corpo -->
+    <rect x="78" y="100" width="84" height="66" rx="4" fill="#e7dccd" />
+    <!-- torre -->
+    <rect x="107" y="58" width="26" height="108" rx="3" fill="#f0e7da" />
+    <!-- telhado lateral -->
+    <polygon points="78,100 120,72 162,100" fill="#d9c8b2" />
+    <!-- topo da torre -->
+    <polygon points="120,40 105,60 135,60" fill="#d9c8b2" />
+    <!-- cruz -->
+    <rect x="118" y="26" width="4" height="16" rx="1" fill="#c6b49b" />
+    <rect x="113" y="31" width="14" height="4" rx="1" fill="#c6b49b" />
+    <!-- porta -->
+    <path d="M114 166 v-24 a6 6 0 0 1 12 0 v24 z" fill="#d2c0a8" />
+    <!-- janelas -->
+    <circle cx="120" cy="86" r="5" fill="#d2c0a8" />
+    <rect x="88" y="120" width="10" height="18" rx="5" fill="#d2c0a8" />
+    <rect x="142" y="120" width="10" height="18" rx="5" fill="#d2c0a8" />
+  </svg>
+
+  <span *ngIf="showLabel" class="church-ph__label">
+    <i class="pi pi-image"></i> Sem imagem cadastrada
+  </span>
+</div>

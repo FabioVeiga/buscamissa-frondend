@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "buscamissa-frontend",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["ng", "serve", "--no-open"],
+      "port": 4200,
+      "autoPort": true
+    }
+  ]
+}
