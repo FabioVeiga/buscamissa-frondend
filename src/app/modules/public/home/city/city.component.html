@@ -1,184 +1,264 @@
-<div class="px-1 pt-3 pb-1">
-  <a routerLink="/home"
-     class="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-primary transition-colors">
-    <i class="pi pi-arrow-left text-xs"></i> Página inicial
-  </a>
-</div>
+<div class="city-page">
 
-<!-- ══ FILTROS FIXOS NO TOPO ══ -->
-<div class="filtros-topo px-1 pb-2">
+  <!-- ══ BREADCRUMB ══ -->
+  <nav class="city-breadcrumb">
+    <a routerLink="/home" class="city-breadcrumb__item">
+      <i class="pi pi-home"></i>
+    </a>
+    <span class="city-breadcrumb__sep">/</span>
+    <a routerLink="/cidades" class="city-breadcrumb__item">Cidades</a>
+    <span class="city-breadcrumb__sep">/</span>
+    <span class="city-breadcrumb__item city-breadcrumb__item--active">
+      {{ cidadeNome }}<span *ngIf="uf">/{{ uf.toUpperCase() }}</span>
+    </span>
+  </nav>
 
-  <!-- Título -->
-  <div class="flex items-center gap-2 mb-3">
-    <i class="pi pi-map-marker text-primary"></i>
-    <h1 class="text-xl font-bold text-gray-900">
-      Missas em {{ cidadeNome }}<span *ngIf="uf">/{{ uf.toUpperCase() }}</span>
-    </h1>
-  </div>
-
-  <!-- Linha 1: Dias da semana -->
-  <div class="filter-row">
-    <span class="filter-label">Dia</span>
-    <div class="flex gap-1.5 flex-wrap">
-      <button
-        *ngFor="let d of dias"
-        (click)="setDia(d.idx)"
-        class="filter-chip"
-        [class.filter-chip--ativo]="diaAtivo === d.idx">
-        {{ d.label }}
-      </button>
+  <!-- ══ HEADER ══ -->
+  <div class="city-header">
+    <div class="city-header__left">
+      <a routerLink="/home" class="city-header__back">
+        <i class="pi pi-arrow-left"></i>
+      </a>
+      <div>
+        <h1 class="city-header__titulo">
+          <i class="pi pi-map-marker city-header__titulo-icon"></i>
+          Missas em {{ cidadeNome }}<span *ngIf="uf">/{{ uf.toUpperCase() }}</span>
+        </h1>
+        <p class="city-header__sub" *ngIf="!isLoading && igrejas.length">
+          {{ igrejasFiltradas.length }}
+          <ng-container *ngIf="temFiltroAtivo"> de {{ igrejas.length }}</ng-container>
+          missa{{ igrejasFiltradas.length !== 1 ? 's' : '' }} encontrada{{ igrejasFiltradas.length !== 1 ? 's' : '' }}
+        </p>
+      </div>
     </div>
-  </div>
 
-  <!-- Linha 2: Período -->
-  <div class="filter-row mt-2">
-    <span class="filter-label">Período</span>
-    <div class="flex gap-1.5 flex-wrap">
-      <button
-        *ngFor="let p of periodos"
-        (click)="setPeriodo(p.slug)"
-        class="filter-chip"
-        [class.filter-chip--ativo]="periodoAtivo === p.slug">
-        {{ p.label }}
-      </button>
-    </div>
-  </div>
-
-  <!-- Linha 3: Ordenação + Limpar -->
-  <div class="filter-row mt-2 items-center">
-    <span class="filter-label">Ordenar</span>
-    <div class="flex gap-1.5 flex-wrap flex-1">
-      <button (click)="setOrdenacao('az')"          class="sort-chip" [class.sort-chip--ativo]="ordenacaoAtiva === 'az'">A → Z</button>
-      <button (click)="setOrdenacao('za')"          class="sort-chip" [class.sort-chip--ativo]="ordenacaoAtiva === 'za'">Z → A</button>
-      <button (click)="setOrdenacao('proxima-missa')" class="sort-chip" [class.sort-chip--ativo]="ordenacaoAtiva === 'proxima-missa'">
-        <i class="pi pi-clock text-xs"></i> Próxima missa
-      </button>
-      <button (click)="setOrdenacao('proximidade')" class="sort-chip" [class.sort-chip--ativo]="ordenacaoAtiva === 'proximidade'"
-              [title]="temGeolocalizacao ? '' : 'Permita a localização para usar esta ordenação'">
-        <i class="pi pi-map-marker text-xs"></i> Mais próximas
-        <i *ngIf="!temGeolocalizacao" class="pi pi-lock text-xs opacity-50 ml-1"></i>
-      </button>
-    </div>
-    <button *ngIf="temFiltroAtivo" (click)="limparFiltros()" class="sort-chip sort-chip--limpar ml-auto">
-      <i class="pi pi-times text-xs"></i> Limpar
+    <button class="city-header__share" (click)="compartilhar()" title="Compartilhar">
+      <i class="pi pi-share-alt"></i> Compartilhar
     </button>
   </div>
 
-</div>
-
-<p-panel class="p-1">
-
-  <!-- Skeleton -->
-  <div *ngIf="isLoading" class="flex flex-col gap-3 p-4">
-    <p-skeleton height="7rem" *ngFor="let i of [1,2,3,4]" borderRadius="8px"></p-skeleton>
+  <!-- ══ FILTROS RÁPIDOS ══ -->
+  <div class="city-filtros">
+    <div class="city-filtros__chips">
+      <button class="city-chip" [class.city-chip--ativo]="quickFilter === 'hoje'" (click)="setQuickFilter('hoje')">
+        <i class="pi pi-calendar"></i> Hoje
+      </button>
+      <button class="city-chip" [class.city-chip--ativo]="quickFilter === 'amanha'" (click)="setQuickFilter('amanha')">
+        <i class="pi pi-calendar-plus"></i> Amanhã
+      </button>
+      <button class="city-chip" [class.city-chip--ativo]="quickFilter === 'fds'" (click)="setQuickFilter('fds')">
+        <i class="pi pi-sun"></i> Fim de semana
+      </button>
+      <button class="city-chip city-chip--outline" [class.city-chip--ativo]="mostrarFiltrosAvancados"
+        (click)="mostrarFiltrosAvancados = !mostrarFiltrosAvancados">
+        <i class="pi pi-sliders-h"></i> Mais filtros
+      </button>
+    </div>
+    <button *ngIf="temFiltroAtivo" class="city-filtros__limpar" (click)="limparFiltros()">
+      <i class="pi pi-times"></i> Limpar
+    </button>
   </div>
 
-  <ng-container *ngIf="!isLoading">
+  <!-- ══ LINHA: PERÍODO + ORDENAR ══ -->
+  <div class="city-periodo-row">
+    <div class="city-periodo-chips">
+      <button *ngFor="let p of periodos" class="city-chip city-chip--sm city-chip--periodo"
+        [class.city-chip--ativo]="periodoAtivo === p.slug"
+        (click)="setPeriodo(p.slug)">
+        <ng-container [ngSwitch]="p.slug">
+          <i *ngSwitchCase="'manha'" class="pi pi-sun"></i>
+          <i *ngSwitchCase="'tarde'" class="pi pi-sun"></i>
+          <i *ngSwitchCase="'noite'" class="pi pi-moon"></i>
+        </ng-container>
+        {{ p.label }}
+      </button>
+    </div>
+    <div class="city-sort" *ngIf="!isLoading && igrejas.length">
+      <span class="city-sort__label">Ordenar por:</span>
+      <select class="city-sort__select" (change)="setOrdenacao($any($event.target).value)" [value]="ordenacaoAtiva">
+        <option value="proxima-missa">Próxima missa</option>
+        <option value="az">A → Z</option>
+        <option value="za">Z → A</option>
+        <option value="proximidade" [disabled]="!temGeolocalizacao">Mais próximas</option>
+      </select>
+    </div>
+  </div>
 
-    <!-- Texto contextual SEO + contador -->
-    <p *ngIf="igrejas.length" class="text-gray-600 text-sm px-4 pt-3 pb-2">
-      <strong>{{ igrejasFiltradas.length }}</strong>
-      <span *ngIf="temFiltroAtivo"> de {{ igrejas.length }}</span>
-      paróquia(s) em <strong>{{ cidadeNome }}/{{ uf.toUpperCase() }}</strong>
-      <span *ngIf="temFiltroAtivo"> com os filtros selecionados</span>.
-    </p>
+  <!-- ══ FILTROS AVANÇADOS (dias da semana) ══ -->
+  <div class="city-filtros-avancados" *ngIf="mostrarFiltrosAvancados">
+    <div class="city-filtros-avancados__grupo">
+      <span class="city-filtros-avancados__label">Dia</span>
+      <div class="city-filtros-avancados__chips">
+        <button *ngFor="let d of dias" class="city-chip city-chip--sm"
+          [class.city-chip--ativo]="diaAtivo === d.idx"
+          (click)="setDia(d.idx)">
+          {{ d.label }}
+        </button>
+      </div>
+    </div>
+  </div>
 
-    <!-- Lista de paróquias -->
-    <div *ngIf="igrejasFiltradas.length" class="flex flex-col divide-y divide-surface-100">
-      <article
-        *ngFor="let igreja of igrejasFiltradas"
-        class="flex flex-col sm:flex-row gap-4 p-4 hover:bg-surface-50 transition-colors">
+  <!-- ══ LAYOUT PRINCIPAL ══ -->
+  <div class="city-layout">
 
-        <!-- Imagem (ou placeholder consistente) -->
-        <a [routerLink]="linkParoquia(igreja)" class="shrink-0 self-start">
-          <img *ngIf="igreja.imagemUrl && !imagensQuebradas.has(igreja.id)"
-            [src]="igreja.imagemUrl" [alt]="igreja.nome" (error)="imagensQuebradas.add(igreja.id)"
-            class="w-20 h-20 rounded-lg object-cover shadow-sm border border-surface-100">
-          <div *ngIf="!igreja.imagemUrl || imagensQuebradas.has(igreja.id)"
-            class="church-placeholder w-20 h-20 rounded-lg"
-            [attr.aria-label]="igreja.nome">
-            <i class="pi pi-building"></i>
+    <!-- LISTA -->
+    <div class="city-lista">
+
+      <!-- Skeletons -->
+      <ng-container *ngIf="isLoading">
+        <div class="city-card city-card--skeleton" *ngFor="let i of [1,2,3,4,5]">
+          <div class="city-card__time-col">
+            <p-skeleton width="3.5rem" height="2rem" borderRadius="6px"></p-skeleton>
+            <p-skeleton width="2.5rem" height="1rem" borderRadius="4px" styleClass="mt-1"></p-skeleton>
           </div>
-        </a>
-
-        <!-- Conteúdo -->
-        <div class="flex flex-col flex-1 gap-0.5 min-w-0">
-
-          <!-- HORÁRIO PRIMÁRIO + contador OU dia (sem redundância) -->
-          <ng-container *ngIf="proximaMissa(igreja) as pm">
-            <div class="flex items-center gap-2 flex-wrap">
-              <span class="text-2xl font-bold leading-none" style="color: #bc5d10;">
-                {{ formatarHorario(pm.horario) }}
-              </span>
-              <ng-container *ngIf="ehUrgente(pm); else diaLabel">
-                <app-countdown-chip [diaSemana]="pm.diaSemana" [horario]="pm.horario" />
-              </ng-container>
-              <ng-template #diaLabel>
-                <span class="text-sm font-medium text-gray-500">{{ diaLabelRelativo(pm) }}</span>
-              </ng-template>
-            </div>
-          </ng-container>
-
-          <!-- Nome da paróquia -->
-          <a [routerLink]="linkParoquia(igreja)"
-             class="font-semibold text-surface-900 hover:text-primary hover:underline leading-tight truncate mt-1"
-             (click)="onChurchClick(igreja)">
-            {{ igreja.nome }}
-          </a>
-
-          <!-- Bairro -->
-          <span class="text-sm text-gray-500">{{ igreja.endereco?.bairro }}</span>
-
-          <!-- Distância (logo abaixo do nome) -->
-          <app-distance-chip *ngIf="distanciaMetros(igreja) as d" [meters]="d" class="text-sm" />
-
-          <!-- Confiança (discreta) + redes sociais -->
-          <div class="flex items-center gap-3 mt-1.5 flex-wrap">
-            <app-confidence-badge *ngIf="proximaMissa(igreja) as pb" [mass]="pb" />
-            <span *ngIf="igreja.redesSociais?.length" class="flex gap-3">
-              <a *ngFor="let rede of igreja.redesSociais" [href]="rede.url" target="_blank" rel="noopener"
-                 class="text-gray-400 hover:text-gray-700 transition-colors">
-                <i [ngClass]="getSocialIcon(rede.url)"></i>
-              </a>
-            </span>
+          <div class="city-card__img-wrap">
+            <p-skeleton width="5rem" height="5rem" borderRadius="12px"></p-skeleton>
           </div>
-
-          <a [routerLink]="linkParoquia(igreja)"
-             class="text-xs text-primary hover:underline mt-1.5 self-start">
-            Ver todos os horários →
-          </a>
+          <div class="city-card__body">
+            <p-skeleton width="70%" height="1.125rem" borderRadius="4px"></p-skeleton>
+            <p-skeleton width="40%" height="0.875rem" borderRadius="4px" styleClass="mt-2"></p-skeleton>
+            <p-skeleton width="5rem" height="1.5rem" borderRadius="6px" styleClass="mt-3"></p-skeleton>
+          </div>
         </div>
-      </article>
+      </ng-container>
+
+      <!-- Resultados -->
+      <ng-container *ngIf="!isLoading">
+        <article
+          *ngFor="let igreja of igrejasFiltradas; let i = index"
+          class="city-card"
+          [class.city-card--destaque]="i === 0">
+
+          <!-- Coluna esquerda: horário -->
+          <div class="city-card__time-col">
+            <ng-container *ngIf="proximaMissa(igreja) as pm; else semHorario">
+              <span class="city-card__hora">{{ formatarHorario(pm.horario) }}</span>
+              <span class="city-card__dia" [class.city-card__dia--hoje]="diaLabelRelativo(pm) === 'Hoje'">
+                {{ diaLabelRelativo(pm) }}
+              </span>
+              <span *ngIf="ehUrgente(pm)" class="city-card__countdown">
+                <i class="pi pi-clock"></i> {{ countdownLabel(pm) }}
+              </span>
+            </ng-container>
+            <ng-template #semHorario>
+              <span class="city-card__hora city-card__hora--vazio">—</span>
+            </ng-template>
+          </div>
+
+          <!-- Imagem -->
+          <a *ngIf="igreja.imagemUrl && !imagensQuebradas.has(igreja.id)"
+            [routerLink]="linkParoquia(igreja)" class="city-card__img-wrap" (click)="onChurchClick(igreja)">
+            <img [src]="igreja.imagemUrl" [alt]="igreja.nome"
+              (error)="imagensQuebradas.add(igreja.id)"
+              class="city-card__img">
+          </a>
+
+          <!-- Corpo do card -->
+          <div class="city-card__body">
+            <div class="city-card__topo">
+              <a [routerLink]="linkParoquia(igreja)" class="city-card__nome" (click)="onChurchClick(igreja)">
+                {{ igreja.nome }}
+              </a>
+              <div class="city-card__topo-actions">
+                <span *ngIf="i === 0 && igrejasFiltradas.length > 1" class="city-card__badge-destaque">
+                  ⭐ Melhor opção
+                </span>
+                <button class="city-card__favoritar"
+                  [class.city-card__favoritar--ativo]="ehFavorita(igreja)"
+                  (click)="toggleFavoritar(igreja, $event)"
+                  [title]="ehFavorita(igreja) ? 'Remover da Minha Paróquia' : 'Salvar como Minha Paróquia'">
+                  <i class="pi" [class.pi-heart]="!ehFavorita(igreja)" [class.pi-heart-fill]="ehFavorita(igreja)"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="city-card__meta">
+              <span *ngIf="igreja.endereco?.bairro" class="city-card__bairro">
+                {{ igreja.endereco.bairro }}, {{ cidadeNome }}/{{ uf.toUpperCase() }}
+              </span>
+              <span *ngIf="distanciaMetros(igreja) as d" class="city-card__distancia">
+                <i class="pi pi-map-marker"></i>
+                {{ d < 1000 ? (d | number:'1.0-0') + ' m' : ((d / 1000) | number:'1.1-1') + ' km' }}
+              </span>
+            </div>
+
+            <app-confidence-badge *ngIf="proximaMissa(igreja) as pb" [mass]="pb" class="city-card__badge" />
+
+            <p *ngIf="diasMissa(igreja)" class="city-card__dia-missa">
+              Missa: {{ diasMissa(igreja) }}
+            </p>
+
+            <div class="city-card__actions">
+              <a [routerLink]="linkParoquia(igreja)" class="city-card__btn city-card__btn--primary" (click)="onChurchClick(igreja)">
+                Ver horários
+              </a>
+              <button class="city-card__btn city-card__btn--secondary" (click)="comoChegar(igreja)">
+                <i class="pi pi-compass"></i> Como chegar
+              </button>
+            </div>
+          </div>
+
+        </article>
+
+        <!-- Vazio por filtro -->
+        <div *ngIf="!igrejasFiltradas.length && igrejas.length" class="city-vazio">
+          <i class="pi pi-filter-slash"></i>
+          <p>Nenhuma paróquia com esses filtros.</p>
+          <button (click)="limparFiltros()">Limpar filtros</button>
+        </div>
+
+        <!-- Vazio geral -->
+        <div *ngIf="naoEncontrado && !igrejas.length" class="city-vazio">
+          <i class="pi pi-search"></i>
+          <p>Nenhuma paróquia cadastrada em {{ cidadeNome }} ainda.</p>
+          <a routerLink="/nova">Cadastrar paróquia</a>
+        </div>
+
+        <!-- FAQ -->
+        <section *ngIf="faqs.length" class="city-faq">
+          <h2 class="city-faq__titulo">Perguntas frequentes</h2>
+          <details *ngFor="let f of faqs" class="city-faq__item">
+            <summary class="city-faq__pergunta">{{ f.pergunta }}</summary>
+            <p class="city-faq__resposta">{{ f.resposta }}</p>
+          </details>
+        </section>
+
+      </ng-container>
     </div>
 
-    <!-- Vazio por filtro -->
-    <div *ngIf="!igrejasFiltradas.length && igrejas.length && temFiltroAtivo" class="text-center py-8 px-4">
-      <i class="pi pi-filter-slash text-3xl text-gray-300 mb-2"></i>
-      <p class="text-gray-600 font-medium">Nenhuma paróquia com esses filtros.</p>
-      <button (click)="limparFiltros()" class="text-sm text-primary hover:underline mt-2">Limpar filtros</button>
-    </div>
+    <!-- MAPA (desktop) + rodapé -->
+    <aside class="city-mapa" [class.city-mapa--visible]="mapVisible">
+      <app-city-map
+        [igrejas]="mapIgrejas"
+        [cidadeNome]="cidadeNome"
+        [uf]="uf">
+      </app-city-map>
 
-    <!-- Vazio geral -->
-    <div *ngIf="naoEncontrado && !igrejas.length" class="text-center py-12 px-4">
-      <i class="pi pi-search text-4xl text-gray-300 mb-3"></i>
-      <p class="text-gray-600 font-medium">Nenhuma paróquia cadastrada nesta cidade ainda.</p>
-      <p class="text-gray-400 text-sm mt-1">Conhece uma missa em {{ cidadeNome }}? Ajude a comunidade cadastrando.</p>
-      <a routerLink="/nova" class="inline-block mt-4 text-primary hover:underline">Cadastrar paróquia</a>
-    </div>
+      <!-- Rodapé "Não encontrou sua paróquia?" -->
+      <div class="city-mapa-cta">
+        <div class="city-mapa-cta__icon">
+          <i class="pi pi-map-marker"></i>
+        </div>
+        <div class="city-mapa-cta__body">
+          <strong>Não encontrou sua paróquia?</strong>
+          <span>Ajude a ampliar a cobertura do Busca Missa.</span>
+        </div>
+        <a routerLink="/nova" class="city-mapa-cta__btn">
+          Cadastrar paróquia
+        </a>
+      </div>
+    </aside>
 
-    <!-- FAQ -->
-    <section *ngIf="faqs.length" class="px-4 py-6 border-t border-surface-100 mt-2">
-      <h2 class="text-base font-bold text-surface-900 mb-3">Perguntas frequentes</h2>
-      <details *ngFor="let f of faqs" class="mb-2 border-b border-surface-100 pb-2">
-        <summary class="cursor-pointer font-medium text-surface-800 text-sm">{{ f.pergunta }}</summary>
-        <p class="text-gray-600 text-sm mt-2">{{ f.resposta }}</p>
-      </details>
-    </section>
+  </div>
 
-  </ng-container>
-</p-panel>
+  <!-- Botão flutuante Ver mapa (mobile) -->
+  <button class="city-fab-mapa" (click)="mapVisible = !mapVisible">
+    <i class="pi" [class.pi-map]="!mapVisible" [class.pi-list]="mapVisible"></i>
+    {{ mapVisible ? 'Ver lista' : 'Ver mapa' }}
+  </button>
 
+</div>
 
-<div class="flex justify-center w-full mt-4">
+<div class="flex justify-center w-full mt-4 pb-4">
   <app-adsense-banner></app-adsense-banner>
 </div>

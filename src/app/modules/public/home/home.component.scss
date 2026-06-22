@@ -1,3 +1,19 @@
+// ── Layout principal ──────────────────────────────────────────────────────────
+:host {
+  display: block;
+}
+
+:host >>> .hero-ctas.mx-1,
+:host >>> .minha-paroquia.mx-1,
+:host >>> .proximas-section.mx-1,
+:host >>> .cidades-section.mx-1,
+:host >>> .confirmar-banner.mx-1 {
+  max-width: 680px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 1rem;
+}
+
 // ── Chips de ordenação ────────────────────────────────────────────────────────
 .sort-chip {
   display: inline-flex;
@@ -26,29 +42,32 @@
 // ── Hero CTAs (abaixo da imagem) ──────────────────────────────────────────────
 .hero-ctas {
   display: flex;
-  gap: 0.625rem;
+  gap: 0.75rem;
   justify-content: center;
   flex-wrap: wrap;
-  padding: 0.75rem 0;
+  padding: 1.5rem 0;
 }
 
 .hero-cta {
   display: inline-flex;
   align-items: center;
-  gap: 0.4rem;
-  padding: 0.55rem 1rem;
-  border-radius: 0.625rem;
-  font-size: 0.875rem;
-  font-weight: 600;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
   cursor: pointer;
   text-decoration: none;
-  transition: background 0.15s, transform 0.1s;
+  transition: all 0.15s;
   border: none;
 
   &--primary {
     background: #bc5d10;
     color: #fff;
-    &:hover { background: #a34f0c; transform: translateY(-1px); }
+    width: 100%;
+
+    &:hover { background: #a34f0c; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(188, 93, 16, 0.2); }
   }
 
   &--secondary {
@@ -59,59 +78,137 @@
   }
 }
 
-// ── Minha Paróquia ────────────────────────────────────────────────────────────
-.minha-paroquia {
-  margin-top: 0.5rem;
+// ── Minhas Paróquias ──────────────────────────────────────────────────────────
+.minhas-paroquias {
+  margin-top: 1.5rem;
+
+  &__header {
+    padding: 0 0.5rem 0.75rem;
+  }
+
+  &__titulo {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1rem;
+  }
 
   &__card {
     display: flex;
-    align-items: center;
+    flex-direction: column;
     gap: 0.75rem;
-    padding: 0.875rem 1rem;
+    padding: 1.125rem;
     background: linear-gradient(135deg, #fffbf5 0%, #fff4ed 100%);
     border: 1.5px solid #f3b989;
     border-radius: 0.875rem;
     text-decoration: none;
-    transition: background 0.15s;
-    &:hover { background: #fff4ed; }
+    transition: box-shadow 0.15s, border-color 0.15s, transform 0.1s;
+
+    &:hover {
+      box-shadow: 0 4px 16px rgba(188, 93, 16, 0.12);
+      border-color: #e8944a;
+      transform: translateY(-2px);
+    }
+
+    &--hot {
+      background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
+      border-color: #f97316;
+    }
+
+    &--soon {
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+      border-color: #4ade80;
+    }
   }
 
-  &__icon {
-    width: 2.25rem; height: 2.25rem;
-    background: #bc5d10; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    color: #fff; font-size: 0.875rem; flex-shrink: 0;
+  &__topo {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 0.5rem;
   }
 
-  &__info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
-  &__label { font-size: 0.65rem; font-weight: 700; color: #bc5d10; text-transform: uppercase; letter-spacing: 0.05em; }
-  &__nome { font-size: 0.9375rem; font-weight: 700; color: #1f2937; line-height: 1.2; }
-  &__missa { font-size: 0.75rem; color: #6b7280; margin-top: 0.15rem; }
+  &__nome {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #1f2937;
+    line-height: 1.3;
+    flex: 1;
+    min-width: 0;
+  }
 
   &__remover {
-    display: flex; align-items: center; gap: 0.3rem;
-    margin-top: 0.5rem; padding: 0.3rem 0.75rem;
-    font-size: 0.75rem; color: #9ca3af;
-    background: none; border: none; cursor: pointer;
-    &:hover { color: #ef4444; }
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #d1d5db;
+    font-size: 0.75rem;
+    border-radius: 50%;
+    transition: color 0.15s, background 0.15s;
+    flex-shrink: 0;
+
+    &:hover { color: #ef4444; background: #fee2e2; }
   }
 
-  &__vazia {
-    padding: 1.25rem;
-    background: #f9fafb;
-    border: 1px dashed #d1d5db;
-    border-radius: 0.875rem;
-    text-align: center;
+  &__info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  &__missa {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+
+  &__missa-icone {
+    font-size: 1rem;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  &__missa-label {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  &__cta {
+    display: inline-block;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #bc5d10;
+    margin-top: 0.25rem;
   }
 }
 
 // ── Seção Próximas missas perto de você ───────────────────────────────────────
 .proximas-section {
-  margin-top: 1.25rem;
+  margin-top: 1.5rem;
   padding: 1.25rem 1rem;
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 1rem;
+
+  h2 {
+    font-size: 1.1rem !important;
+  }
+
+  .pi {
+    font-size: 1.25rem;
+  }
 }
 
 .proximas-grid {
@@ -245,66 +342,80 @@
   background: #fff;
   border: 1px solid #e5e7eb;
   border-radius: 1rem;
+
+  h2 {
+    font-size: 1.1rem !important;
+  }
+
+  .pi {
+    font-size: 1.25rem;
+  }
 }
 
 .cidades-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 0.625rem;
+  gap: 0.75rem;
 
-  @media (min-width: 480px) { grid-template-columns: repeat(3, 1fr); }
-  @media (min-width: 700px) { grid-template-columns: repeat(4, 1fr); }
+  @media (min-width: 480px) { grid-template-columns: repeat(3, 1fr); gap: 0.875rem; }
+  @media (min-width: 700px) { grid-template-columns: repeat(3, 1fr); }
 }
 
 .cidade-card {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.625rem;
-  padding: 0.75rem;
-  border: 1px solid #f3f4f6;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 1rem 0.75rem;
+  border: 1.5px solid #e5e7eb;
   border-radius: 0.75rem;
-  background: #fafafa;
+  background: #fff;
   text-decoration: none;
-  transition: background 0.15s, border-color 0.15s, transform 0.15s;
+  transition: all 0.15s;
 
   &:hover {
     background: #fff4ed;
     border-color: #f3b989;
-    transform: translateY(-1px);
+    transform: translateY(-2px);
+    box-shadow: 0 2px 8px rgba(243, 185, 137, 0.1);
   }
 
   &__icon {
-    width: 2.75rem;
-    height: 2.75rem;
+    width: 2.5rem;
+    height: 2.5rem;
     flex-shrink: 0;
     display: flex;
     align-items: center;
     justify-content: center;
     background: #fff4ed;
-    border-radius: 0.625rem;
+    border-radius: 0.5rem;
+    color: #bc5d10;
 
-    svg { width: 1.75rem; height: 1.75rem; }
+    svg { width: 1.5rem; height: 1.5rem; }
   }
 
   &__info {
     display: flex;
     flex-direction: column;
+    align-items: center;
     min-width: 0;
+    text-align: center;
   }
 
   &__nome {
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: #1f2937;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: #111827;
     line-height: 1.2;
-    white-space: normal;
   }
 
   &__uf {
-    font-size: 0.7rem;
-    font-weight: 500;
+    font-size: 0.75rem;
+    font-weight: 600;
     color: #9ca3af;
-    margin-top: 0.1rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
 }
 

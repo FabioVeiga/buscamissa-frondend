@@ -289,40 +289,6 @@ export class DetailsComponent implements OnInit {
     return 'pi pi-globe';
   }
 
-  // Sprint 3B — Minha Paróquia
-
-  jaFavorita(): boolean {
-    if (!this.churchInfo?.id) return false;
-    try {
-      const raw = localStorage.getItem('buscamissa_favorita');
-      if (!raw) return false;
-      return JSON.parse(raw)?.id === this.churchInfo.id;
-    } catch { return false; }
-  }
-
-  toggleFavorita(): void {
-    if (this.jaFavorita()) {
-      localStorage.removeItem('buscamissa_favorita');
-      this._toast.add({ severity: 'info', summary: 'Removida', detail: 'Paróquia removida dos favoritos.' });
-    } else {
-      const pm = this.proximaMissa;
-      const proximaMissaLabel = pm?.diaSemana != null
-        ? getCountdownLabel(pm.diaSemana, pm.horario)
-        : undefined;
-      const fav = {
-        id: this.churchInfo.id,
-        nome: this.churchInfo.nome,
-        uf: this.churchInfo.endereco?.uf ?? '',
-        cidadeSlug: this.churchInfo.endereco?.cidadeSlug ?? '',
-        slug: this.churchInfo.slug ?? this.churchInfo.nomeUnico,
-        proximaMissaLabel,
-        diaSemana: pm?.diaSemana,
-        horario: pm?.horario,
-      };
-      localStorage.setItem('buscamissa_favorita', JSON.stringify(fav));
-      this._toast.add({ severity: 'success', summary: '⭐ Salva!', detail: 'Esta paróquia aparecerá na sua home.' });
-    }
-  }
 
   voltar(): void {
     this._location.back();

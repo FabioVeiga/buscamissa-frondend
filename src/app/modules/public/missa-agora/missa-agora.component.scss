@@ -1,49 +1,59 @@
+$primary: #bc5d10;
+$primary-dark: #9a4a0c;
+$primary-light: #fff4ed;
+
 .missa-agora {
   padding-top: 1.25rem;
 
   &__header {
     display: flex;
     align-items: flex-start;
-    gap: 0.875rem;
-    margin-bottom: 1.5rem;
+    gap: 1rem;
+    margin-bottom: 2rem;
   }
 
   &__back {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 2.25rem;
-    height: 2.25rem;
+    width: 2.5rem;
+    height: 2.5rem;
     border-radius: 50%;
     background: #f3f4f6;
     color: #374151;
     text-decoration: none;
     flex-shrink: 0;
-    margin-top: 0.1rem;
+    margin-top: 0.2rem;
     transition: background 0.15s;
+
     &:hover { background: #e5e7eb; }
   }
 
-  &__header-text { display: flex; flex-direction: column; gap: 0.2rem; }
+  &__header-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
 
   &__titulo {
-    font-size: 1.375rem;
+    font-size: 1.75rem;
     font-weight: 800;
-    color: #1f2937;
-    line-height: 1.2;
+    color: #111827;
+    margin: 0;
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    line-height: 1.2;
   }
 
   &__dot {
     display: inline-block;
-    width: 10px;
-    height: 10px;
+    width: 0.75rem;
+    height: 0.75rem;
     border-radius: 50%;
-    background: #16a34a;
+    background: #10b981;
     flex-shrink: 0;
-    animation: bm-pulse 1.6s ease-in-out infinite;
+    animation: pulse 2s infinite;
   }
 
   &__sub {
@@ -52,172 +62,363 @@
     margin: 0;
   }
 
-  // ── Estados ──────────────────────────────────────────────────────────────
-  &__estado {
+  // ── HERO SECTION ──────────────────────────────────────────────────────────
+  &__hero {
     display: flex;
     flex-direction: column;
+    gap: 1.25rem;
     align-items: center;
     text-align: center;
-    padding: 2.5rem 1rem;
-    gap: 0.5rem;
+    padding: 2rem 1.5rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 1.25rem;
+    margin-bottom: 2rem;
   }
 
-  &__estado-icon {
-    width: 3.5rem;
-    height: 3.5rem;
-    border-radius: 50%;
+  &__hero-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: center;
+  }
+
+  &__hero-icon {
+    font-size: 2.5rem;
+    color: $primary;
+  }
+
+  &__hero-titulo {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+  }
+
+  &__hero-desc {
+    font-size: 0.9375rem;
+    color: #6b7280;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  &__spinner {
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.375rem;
-    margin-bottom: 0.5rem;
-
-    &--loading { background: #fff4ed; color: #bc5d10; }
-    &--denied  { background: #fef2f2; color: #dc2626; }
-    &--vazio   { background: #f3f4f6; color: #9ca3af; }
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: #fff;
+    color: $primary;
+    font-size: 1.5rem;
   }
 
-  &__estado-txt {
-    font-size: 1rem;
-    color: #1f2937;
-    margin: 0;
-  }
-
-  &__estado-desc {
-    font-size: 0.8125rem;
-    color: #6b7280;
-    max-width: 20rem;
-    margin: 0;
-    line-height: 1.5;
-
-    &--aviso {
-      color: #92400e;
-      background: #fef3c7;
-      border: 1px solid #fde68a;
-      border-radius: 0.5rem;
-      padding: 0.75rem;
-      max-width: none;
-    }
-  }
-
-  // ── Estado geoloc negada ──────────────────────────────────────────────────
-  &__negado {
-    display: flex;
-    flex-direction: column;
+  // ── BOTÕES ────────────────────────────────────────────────────────────────
+  &__btn-primary {
+    display: inline-flex;
     align-items: center;
-    gap: 1rem;
-    padding: 1.5rem 0;
-    text-align: center;
-  }
-
-  &__negado-topo {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    text-align: left;
-    background: #fef2f2;
-    border: 1px solid #fecaca;
-    border-radius: 0.875rem;
-    padding: 1rem 1.25rem;
+    justify-content: center;
+    gap: 0.5rem;
     width: 100%;
-    box-sizing: border-box;
+    padding: 0.75rem 1.5rem;
+    background: $primary;
+    color: #fff;
+    border: none;
+    border-radius: 0.75rem;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &:hover { background: $primary-dark; }
+    &:active { transform: scale(0.98); }
   }
 
+  &__btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.75rem 1.5rem;
+    background: #fff;
+    color: $primary;
+    border: 2px solid $primary;
+    border-radius: 0.75rem;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+
+    &:hover { background: $primary-light; }
+    &:active { transform: scale(0.98); }
+  }
+
+  // ── DIVIDER ───────────────────────────────────────────────────────────────
   &__divider {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
     font-size: 0.75rem;
     color: #9ca3af;
-    font-weight: 500;
-    position: relative;
-    width: 100%;
-    text-align: center;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 
     &::before, &::after {
       content: '';
-      position: absolute;
-      top: 50%;
-      width: 35%;
+      flex: 1;
       height: 1px;
       background: #e5e7eb;
     }
-    &::before { left: 0; }
-    &::after  { right: 0; }
+  }
+
+  // ── GRID DE CIDADES ───────────────────────────────────────────────────────
+  &__cidades-grid {
+    margin-bottom: 2rem;
+  }
+
+  &__cidades-titulo {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 1rem;
+    text-align: left;
   }
 
   &__cidades {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.5rem;
-    width: 100%;
-  }
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.75rem;
 
-  &__cidade-btn {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1rem;
-    background: #fff;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.75rem;
-    cursor: pointer;
-    font-size: 0.875rem;
-    font-weight: 500;
-    color: #374151;
-    text-align: left;
-    transition: background 0.15s, border-color 0.15s;
-
-    .pi { color: #bc5d10; font-size: 0.875rem; }
-
-    &:hover {
-      background: #fff4ed;
-      border-color: #f3b989;
+    @media (min-width: 480px) {
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
     }
   }
 
-  &__cidade-uf {
-    margin-left: auto;
-    font-size: 0.7rem;
-    font-weight: 700;
-    color: #9ca3af;
+  &__cidade-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1.25rem 0.75rem;
+    background: #fff;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 1rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    text-decoration: none;
+
+    &:hover {
+      border-color: $primary;
+      background: $primary-light;
+      box-shadow: 0 2px 8px rgba($primary, 0.1);
+      transform: translateY(-2px);
+    }
+
+    &:active { transform: scale(0.96); }
+
+    .pi {
+      font-size: 1.5rem;
+      color: $primary;
+    }
   }
 
-  // ── Botões de ação ────────────────────────────────────────────────────────
-  &__btn-primario {
+  &__cidade-nome {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: #111827;
+    text-align: center;
+    line-height: 1.2;
+  }
+
+  &__cidade-uf {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  &__ver-todas {
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
-    padding: 0.6rem 1.25rem;
-    background: #bc5d10;
-    color: #fff;
-    border: none;
-    border-radius: 0.625rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    cursor: pointer;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 0.875rem 1.5rem;
+    margin-top: 1rem;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: $primary;
+    background: $primary-light;
+    border: 1.5px solid $primary;
+    border-radius: 0.875rem;
     text-decoration: none;
-    transition: background 0.15s;
-    &:hover { background: #a34f0c; }
+    transition: all 0.15s;
+
+    &:hover {
+      background: $primary;
+      color: #fff;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba($primary, 0.2);
+    }
+
+    &:active { transform: scale(0.98); }
+
+    .pi { font-size: 0.8rem; }
   }
 
-  &__link-sec {
-    display: block;
+  // ── BLOCKED STATE ─────────────────────────────────────────────────────────
+  &__blocked {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    align-items: center;
+    text-align: center;
+    padding: 2rem 1.5rem;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    border-radius: 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  &__blocked-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 50%;
+    background: #fee2e2;
+    color: #dc2626;
+    font-size: 1.25rem;
+  }
+
+  &__blocked-titulo {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+  }
+
+  &__blocked-desc {
     font-size: 0.8125rem;
-    color: #bc5d10;
-    font-weight: 600;
-    text-decoration: none;
-    &:hover { text-decoration: underline; }
+    color: #6b7280;
+    margin: 0;
   }
 
-  // ── Lista de resultados ───────────────────────────────────────────────────
+  &__blocked-instrs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 1rem;
+    background: #fff;
+    border-radius: 0.75rem;
+    border: 1px solid #e5e7eb;
+  }
+
+  &__blocked-instr {
+    font-size: 0.75rem;
+    color: #4b5563;
+    text-align: left;
+    line-height: 1.4;
+
+    strong {
+      font-weight: 700;
+      color: #111827;
+    }
+  }
+
+  // ── VAZIO STATE ───────────────────────────────────────────────────────────
+  &__vazio {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    align-items: center;
+    text-align: center;
+    padding: 2rem 1.5rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  &__vazio-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3rem;
+    height: 3rem;
+    border-radius: 50%;
+    background: #dbeafe;
+    color: #3b82f6;
+    font-size: 1.5rem;
+  }
+
+  &__vazio-titulo {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+  }
+
+  &__vazio-desc {
+    font-size: 0.8125rem;
+    color: #6b7280;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  // ── LISTA ─────────────────────────────────────────────────────────────────
+  &__contagem {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: $primary;
+    margin: 0 0 1rem;
+    text-align: center;
+  }
+
   &__lista {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
+    margin-bottom: 2rem;
   }
 
-  &__contagem {
+  // ── FAQ ───────────────────────────────────────────────────────────────────
+  &__faq {
+    padding: 1.5rem 1.25rem;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 1rem;
+    text-align: center;
+  }
+
+  &__faq-titulo {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 0.5rem;
+  }
+
+  &__faq-desc {
     font-size: 0.8125rem;
     color: #6b7280;
-    font-weight: 500;
-    margin-bottom: 0.25rem;
+    margin: 0;
+    line-height: 1.5;
   }
+}
+
+// ── UTILIDADES ────────────────────────────────────────────────────────────
+.mt-3 { margin-top: 1rem; }
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
