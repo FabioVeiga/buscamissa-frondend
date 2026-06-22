@@ -35,6 +35,7 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
   isLoading = false;
   cidadeDetectada: string | null = null;
   horaAtual = '';
+  cidadesProximas: { nome: string; uf: string; slug: string }[] = [];
   private _clockInterval: any;
 
   readonly cidadesFallback = [
@@ -44,7 +45,16 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
     { nome: 'Belo Horizonte',      uf: 'mg', slug: 'belo-horizonte' },
     { nome: 'Brasília',            uf: 'df', slug: 'brasilia' },
     { nome: 'Santos',              uf: 'sp', slug: 'santos' },
+    { nome: 'Curitiba',            uf: 'pr', slug: 'curitiba' },
+    { nome: 'São José dos Campos', uf: 'sp', slug: 'sao-jose-dos-campos' },
+    { nome: 'Sorocaba',            uf: 'sp', slug: 'sorocaba' },
   ];
+
+  get cidadesExibidas() {
+    return this.geoStatus === 'found' && this.cidadesProximas.length
+      ? this.cidadesProximas
+      : this.cidadesFallback;
+  }
 
   ngOnInit(): void {
     this._seo.update({
@@ -78,6 +88,7 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
         this.geoStatus = 'found';
         this._buscarMissas(pos.coords.latitude, pos.coords.longitude);
         this._reverseGeocode(pos.coords.latitude, pos.coords.longitude);
+        this._loadCidadesProximas(pos.coords.latitude, pos.coords.longitude);
       },
       err => {
         this.geoStatus = 'denied';
@@ -162,16 +173,63 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
   }
 
   onFavorite(card: MassCardData): void {
-    const proximaMissaLabel = card.mass.diaSemana != null
-      ? getCountdownLabel(card.mass.diaSemana, card.mass.horario)
-      : undefined;
-    const favorita = {
-      id: card.churchId, nome: card.churchName, uf: card.uf,
-      cidadeSlug: card.cidadeSlug, slug: card.slug,
-      proximaMissaLabel, diaSemana: card.mass.diaSemana, horario: card.mass.horario,
-    };
-    localStorage.setItem('buscamissa_favorita', JSON.stringify(favorita));
-    this._analytics.userContribution('confirm', card.churchName);
-    this._toast.add({ severity: 'success', summary: 'Paróquia salva!', detail: `${card.churchName} foi salva como sua paróquia.` });
+    try {
+      const raw = localStorage.getItem('buscamissa_favoritas');
+      let favoritas = Array.isArray(JSON.parse(raw || '[]')) ? JSON.parse(raw!) : [];
+
+      const jaExiste = favoritas.some((f: any) => f.id === card.churchId);
+
+      if (jaExiste) {
+        favoritas = favoritas.filter((f: any) => f.id !== card.churchId);
+      } else {
+        const novaFavorita = {
+          id: card.churchId,
+          nome: card.churchName,
+          uf: card.uf,
+          cidadeSlug: card.cidadeSlug,
+          slug: card.slug,
+          diaSemana: card.mass.diaSemana,
+          horario: card.mass.horario,
+        };
+        favoritas.push(novaFavorita);
+      }
+
+      localStorage.setItem('buscamissa_favoritas', JSON.stringify(favoritas));
+
+      this._analytics.favoriteParishSaved(card.churchName);
+      this._toast.add({
+        severity: 'success',
+        summary: jaExiste ? 'Removido' : 'Salvo!',
+        detail: jaExiste
+          ? `${card.churchName} foi removida.`
+          : `${card.churchName} foi salva como favorita.`
+      });
+    } catch (e) {
+      this._toast.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível salvar.' });
+    }
+  }
+
+  private _loadCidadesProximas(lat: number, lng: number): void {
+    this._church.cidadesProximas(lat, lng).subscribe({
+      next: (res: any) => {
+        const items: any[] = res?.data ?? res ?? [];
+        const cidadesMapa = new Map<string, any>();
+        items.forEach((item: any) => {
+          const key = `${item.uf}_${item.cidadeSlug}`;
+          if (!cidadesMapa.has(key)) {
+            cidadesMapa.set(key, {
+              nome: item.localidade || item.nome,
+              uf: item.uf?.toUpperCase(),
+              slug: item.cidadeSlug
+            });
+          }
+        });
+        const cidades = Array.from(cidadesMapa.values()).slice(0, 8);
+        if (cidades.length) {
+          this.cidadesProximas = cidades;
+        }
+      },
+      error: () => { /* silencioso — mantém fallback */ }
+    });
   }
 }

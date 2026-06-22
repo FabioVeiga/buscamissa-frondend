@@ -66,10 +66,6 @@
           <button (click)="compartilhar()" class="action-btn">
             <i class="pi pi-share-alt"></i> Compartilhar
           </button>
-          <button (click)="toggleFavorita()" class="action-btn" [class.action-btn--favorita]="jaFavorita()">
-            <i class="pi" [ngClass]="jaFavorita() ? 'pi-star-fill' : 'pi-star'"></i>
-            {{ jaFavorita() ? 'Minha paróquia' : 'Salvar' }}
-          </button>
         </div>
       </div>
     </header>

@@ -23,7 +23,7 @@ import { ShareButtons } from "ngx-sharebuttons/buttons";
 import { STATES } from "../../../core/constants/states";
 import { MassTimeCardComponent } from "../../../shared/components/mass-time-card/mass-time-card.component";
 import { MassCardData } from "../../../shared/models/mass-card.model";
-import { getMissaAgoraUrgency, getCountdownLabel } from "../../../shared/utils/mass-time.utils";
+import { getMissaAgoraUrgency, getCountdownLabel, getNextOccurrenceMinutes } from "../../../shared/utils/mass-time.utils";
 import { AnalyticsService } from "../../../core/services/analytics.service";
 
 interface AddressData {
@@ -74,6 +74,7 @@ export class HomeComponent {
     { nome: 'Ribeirão Preto',      uf: 'SP', slug: 'ribeirao-preto' },
     { nome: 'Santos',              uf: 'SP', slug: 'santos' },
     { nome: 'Sorocaba',            uf: 'SP', slug: 'sorocaba' },
+    { nome: 'Curitiba',            uf: 'PR', slug: 'curitiba' },
     { nome: 'Brasília',            uf: 'DF', slug: 'brasilia' },
     { nome: 'Belo Horizonte',      uf: 'MG', slug: 'belo-horizonte' },
   ];
@@ -95,12 +96,11 @@ export class HomeComponent {
   isLoadingProximas = false;
   tituloProximasMissas = 'Missas acontecendo hoje';
 
-  // Sprint 3B — Minha Paróquia
-  paroquiaFavorita: {
+  // Sprint 3B — Minhas Paróquias (múltiplas)
+  paroquiasFavoritas: Array<{
     id: number; nome: string; uf: string; cidadeSlug: string; slug: string;
     proximaMissaLabel?: string; diaSemana?: number; horario?: string;
-  } | null = null;
-  mostrarMinhaParoquia = false;
+  }> = [];
 
   /** Flag loading do CTA */
   isLoadingGeoNav = false;
@@ -223,6 +223,8 @@ export class HomeComponent {
         this._reverseGeocode(pos.coords.latitude, pos.coords.longitude);
         this.tituloProximasMissas = 'Próximas missas perto de você';
         this._loadProximasMissas(pos.coords.latitude, pos.coords.longitude);
+        this._loadCidadesProximas(pos.coords.latitude, pos.coords.longitude);
+        this.geoStatus = 'found';
       },
       () => { this.geoStatus = 'denied'; }
     );
@@ -292,10 +294,26 @@ export class HomeComponent {
     );
   }
 
-  // Sprint 3B — Minha Paróquia (localStorage)
+  // Sprint 3B — Minhas Paróquias (localStorage)
 
-  toggleMinhaParoquia(): void {
-    this.mostrarMinhaParoquia = !this.mostrarMinhaParoquia;
+  /** Verifica se uma igreja é favorita */
+  ehFavorita(churchId: number): boolean {
+    return this.paroquiasFavoritas.some(f => f.id === churchId);
+  }
+
+  /** Retorna urgência de um favorito específico */
+  getUrgenciaFavorita(fav: any): 'hot' | 'soon' | null {
+    if (!fav || fav.diaSemana == null || !fav.horario) return null;
+    const mins = getNextOccurrenceMinutes(fav.diaSemana, fav.horario);
+    if (mins <= 180) return 'hot';
+    if (new Date().getDay() === fav.diaSemana) return 'soon';
+    return null;
+  }
+
+  /** Label da próxima missa para um favorito */
+  getProximaLabelFavorita(fav: any): string {
+    if (!fav || fav.diaSemana == null || !fav.horario) return '';
+    return getCountdownLabel(fav.diaSemana, fav.horario);
   }
 
   onCtaClick(): void {
@@ -307,36 +325,52 @@ export class HomeComponent {
   }
 
   onFavoriteClick(card: MassCardData): void {
-    const proximaMissaLabel = card.mass.diaSemana != null
-      ? getCountdownLabel(card.mass.diaSemana, card.mass.horario)
-      : undefined;
-    this.paroquiaFavorita = {
-      id: card.churchId, nome: card.churchName, uf: card.uf,
-      cidadeSlug: card.cidadeSlug, slug: card.slug,
-      proximaMissaLabel, diaSemana: card.mass.diaSemana, horario: card.mass.horario,
+    if (this.ehFavorita(card.churchId)) {
+      this.removerFavorita(card.churchId);
+    } else {
+      this.adicionarFavorita(card);
+    }
+  }
+
+  private adicionarFavorita(card: MassCardData): void {
+    const novaFavorita = {
+      id: card.churchId,
+      nome: card.churchName,
+      uf: card.uf,
+      cidadeSlug: card.cidadeSlug,
+      slug: card.slug,
+      diaSemana: card.mass.diaSemana,
+      horario: card.mass.horario,
     };
-    localStorage.setItem('buscamissa_favorita', JSON.stringify(this.paroquiaFavorita));
-    this.mostrarMinhaParoquia = true;
+    this.paroquiasFavoritas.push(novaFavorita);
+    this._salvarFavoritas();
     this._analytics.favoriteParishSaved(card.churchName);
   }
 
-  removerFavorita(event: Event): void {
-    event.preventDefault();
-    event.stopPropagation();
-    localStorage.removeItem('buscamissa_favorita');
-    this.paroquiaFavorita = null;
-    this.mostrarMinhaParoquia = false;
+  removerFavorita(churchId: number, event?: Event): void {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    this.paroquiasFavoritas = this.paroquiasFavoritas.filter(f => f.id !== churchId);
+    this._salvarFavoritas();
+  }
+
+  private _salvarFavoritas(): void {
+    localStorage.setItem('buscamissa_favoritas', JSON.stringify(this.paroquiasFavoritas));
   }
 
   private _loadFavorita(): void {
-    const raw = localStorage.getItem('buscamissa_favorita');
+    const raw = localStorage.getItem('buscamissa_favoritas');
     if (!raw) return;
     try {
       const saved = JSON.parse(raw);
-      if (saved.diaSemana != null && saved.horario)
-        saved.proximaMissaLabel = getCountdownLabel(saved.diaSemana, saved.horario);
-      this.paroquiaFavorita = saved;
-      this.mostrarMinhaParoquia = true;
+      if (Array.isArray(saved)) {
+        this.paroquiasFavoritas = saved.map((f: any) => ({
+          ...f,
+          proximaMissaLabel: f.diaSemana != null && f.horario ? getCountdownLabel(f.diaSemana, f.horario) : undefined,
+        }));
+      }
     } catch { /* ignora JSON inválido */ }
   }
 
@@ -371,6 +405,30 @@ export class HomeComponent {
         this.geoStatus = 'found';
       })
       .catch(() => { this.geoStatus = 'error'; });
+  }
+
+  private _loadCidadesProximas(lat: number, lng: number): void {
+    this._churchService.cidadesProximas(lat, lng).subscribe({
+      next: (res: any) => {
+        const items: any[] = res?.data ?? res ?? [];
+        const cidadesMapa = new Map<string, any>();
+        items.forEach((item: any) => {
+          const key = `${item.uf}_${item.cidadeSlug}`;
+          if (!cidadesMapa.has(key)) {
+            cidadesMapa.set(key, {
+              nome: item.localidade || item.nome,
+              uf: item.uf?.toUpperCase(),
+              slug: item.cidadeSlug
+            });
+          }
+        });
+        const cidades = Array.from(cidadesMapa.values()).slice(0, 8);
+        if (cidades.length) {
+          this.cidadesGrid = cidades;
+        }
+      },
+      error: () => { /* silencioso — mantém fallback */ }
+    });
   }
 
   private _norm(s: string): string {

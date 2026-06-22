@@ -66,6 +66,17 @@ export class ChurchesService {
     return this.http.get('v2/Igreja/proximas-missas', { params });
   }
 
+  /** Busca cidades próximas (até 100km de raio) para mostrar no grid */
+  cidadesProximas(lat: number, lng: number): Observable<any> {
+    return this.http.get('v2/Igreja/proximas-missas', {
+      params: new HttpParams()
+        .append('Lat', lat)
+        .append('Lng', lng)
+        .append('RaioKm', 100)
+        .append('Horas', 2)
+    });
+  }
+
   getInfo() {
     return this.http.get(`v1/Igreja/infos`);
   }

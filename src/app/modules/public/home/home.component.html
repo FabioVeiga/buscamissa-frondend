@@ -8,23 +8,41 @@
   </a>
 </div>
 
-<!-- ══ MINHA PARÓQUIA (Sprint 3B) ══ -->
-<div class="minha-paroquia mx-1" *ngIf="mostrarMinhaParoquia && paroquiaFavorita">
-  <a [routerLink]="['/paroquia', paroquiaFavorita.uf.toLowerCase(), paroquiaFavorita.cidadeSlug, paroquiaFavorita.slug]"
-     class="minha-paroquia__card">
-    <div class="minha-paroquia__icon"><i class="pi pi-star-fill"></i></div>
-    <div class="minha-paroquia__info">
-      <span class="minha-paroquia__label">Minha paróquia</span>
-      <span class="minha-paroquia__nome">{{ paroquiaFavorita.nome }}</span>
-      <span class="minha-paroquia__missa" *ngIf="paroquiaFavorita.proximaMissaLabel">
-        Próxima missa: {{ paroquiaFavorita.proximaMissaLabel }}
-      </span>
-    </div>
-    <i class="pi pi-arrow-right" style="color: #bc5d10; flex-shrink:0;"></i>
-  </a>
-  <button class="minha-paroquia__remover" (click)="removerFavorita($event)">
-    <i class="pi pi-times"></i> Remover
-  </button>
+<!-- ══ MINHAS PARÓQUIAS (Sprint 3B) ══ -->
+<div class="minhas-paroquias mx-1" *ngIf="paroquiasFavoritas.length > 0">
+  <div class="minhas-paroquias__header">
+    <h2 class="minhas-paroquias__titulo">🏠 Minhas Paróquias</h2>
+  </div>
+  <div class="minhas-paroquias__grid">
+    <a *ngFor="let fav of paroquiasFavoritas"
+       [routerLink]="['/paroquia', fav.uf.toLowerCase(), fav.cidadeSlug, fav.slug]"
+       class="minhas-paroquias__card"
+       [class.minhas-paroquias__card--hot]="getUrgenciaFavorita(fav) === 'hot'"
+       [class.minhas-paroquias__card--soon]="getUrgenciaFavorita(fav) === 'soon'">
+
+      <div class="minhas-paroquias__topo">
+        <span class="minhas-paroquias__nome">{{ fav.nome }}</span>
+        <button class="minhas-paroquias__remover"
+                (click)="removerFavorita(fav.id, $event)"
+                aria-label="Remover favorita">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+
+      <div class="minhas-paroquias__info">
+        <div class="minhas-paroquias__missa" *ngIf="getProximaLabelFavorita(fav)">
+          <span class="minhas-paroquias__missa-icone">
+            <ng-container *ngIf="getUrgenciaFavorita(fav) === 'hot'">🔥</ng-container>
+            <ng-container *ngIf="getUrgenciaFavorita(fav) === 'soon'">🟢</ng-container>
+            <ng-container *ngIf="!getUrgenciaFavorita(fav)">⏰</ng-container>
+          </span>
+          <span class="minhas-paroquias__missa-label">{{ getProximaLabelFavorita(fav) }}</span>
+        </div>
+      </div>
+
+      <span class="minhas-paroquias__cta">Ver horários →</span>
+    </a>
+  </div>
 </div>
 
 <!-- ══ PRÓXIMAS MISSAS ══ (sempre visível) -->
