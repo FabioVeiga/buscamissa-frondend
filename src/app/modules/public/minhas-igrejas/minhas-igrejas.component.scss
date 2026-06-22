@@ -1,0 +1,224 @@
+.minhas-igrejas {
+  padding: 2rem 1rem;
+  max-width: 1000px;
+  margin: 0 auto;
+
+  &__header {
+    margin-bottom: 2rem;
+    text-align: center;
+  }
+
+  &__titulo {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #111827;
+    margin: 0 0 0.5rem;
+  }
+
+  &__subtitulo {
+    font-size: 0.9375rem;
+    color: #6b7280;
+    margin: 0;
+  }
+
+  &__vazio {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1.5rem;
+    padding: 3rem 2rem;
+    text-align: center;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 1rem;
+  }
+
+  &__vazio-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 3.5rem;
+    height: 3.5rem;
+    border-radius: 50%;
+    background: #ffe8d6;
+    color: #bc5d10;
+    font-size: 1.75rem;
+  }
+
+  &__vazio-titulo {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0;
+  }
+
+  &__vazio-desc {
+    font-size: 0.9375rem;
+    color: #6b7280;
+    margin: 0;
+    line-height: 1.5;
+    max-width: 400px;
+  }
+
+  &__cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: #bc5d10;
+    color: #fff;
+    border: none;
+    border-radius: 0.75rem;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background 0.15s;
+
+    &:hover { background: #a34f0c; }
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+  }
+
+  &__card {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, #fffbf5 0%, #fff4ed 100%);
+    border: 1.5px solid #f3b989;
+    border-left: 4px solid transparent;
+    border-radius: 1rem;
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.15s;
+    cursor: pointer;
+
+    &:hover {
+      box-shadow: 0 4px 16px rgba(188, 93, 16, 0.12);
+      border-color: #e8944a;
+      transform: translateY(-2px);
+    }
+
+    &--hot {
+      border-left-color: #ef4444;
+      background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+    }
+
+    &--soon {
+      border-left-color: #10b981;
+      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    }
+  }
+
+  &__card-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+
+  &__card-nome {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: #1f2937;
+    margin: 0;
+    line-height: 1.3;
+    flex: 1;
+  }
+
+  &__remover {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #d1d5db;
+    font-size: 0.875rem;
+    border-radius: 50%;
+    transition: all 0.15s;
+    flex-shrink: 0;
+
+    &:hover { color: #ef4444; background: #fee2e2; }
+  }
+
+  &__card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  &__card-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: #6b7280;
+  }
+
+  &__badge {
+    display: inline-block;
+    padding: 0.25rem 0.625rem;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 0.375rem;
+    font-weight: 600;
+    color: #374151;
+  }
+
+  &__separador {
+    color: #d1d5db;
+  }
+
+  &__slug {
+    font-weight: 600;
+    color: #111827;
+  }
+
+  &__missa {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 0.75rem;
+    background: rgba(255, 255, 255, 0.6);
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  &__icone {
+    font-size: 1rem;
+    line-height: 1;
+  }
+
+  &__label {
+    color: #bc5d10;
+  }
+
+  &__card-footer {
+    margin-top: 0.5rem;
+    text-align: right;
+  }
+
+  &__cta-link {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #bc5d10;
+    transition: opacity 0.15s;
+  }
+
+  &__card:hover &__cta-link {
+    opacity: 1;
+    text-decoration: underline;
+  }
+}

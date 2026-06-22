@@ -1,0 +1,60 @@
+<div class="minhas-igrejas">
+  <div class="minhas-igrejas__header">
+    <h1 class="minhas-igrejas__titulo">❤️ Minhas Igrejas</h1>
+    <p class="minhas-igrejas__subtitulo">{{ igrejas.length }} {{ igrejas.length === 1 ? 'igreja' : 'igrejas' }} salva{{ igrejas.length === 1 ? '' : 's' }}</p>
+  </div>
+
+  <!-- Vazio -->
+  <div *ngIf="igrejas.length === 0" class="minhas-igrejas__vazio">
+    <div class="minhas-igrejas__vazio-icon">
+      <i class="pi pi-heart"></i>
+    </div>
+    <h2 class="minhas-igrejas__vazio-titulo">Nenhuma igreja favorita</h2>
+    <p class="minhas-igrejas__vazio-desc">
+      Explore igrejas e clique no ❤️ para salvar seus favoritos aqui.
+    </p>
+    <a routerLink="/home" class="minhas-igrejas__cta">
+      Explorar Igrejas
+    </a>
+  </div>
+
+  <!-- Grid de Igrejas -->
+  <div *ngIf="igrejas.length > 0" class="minhas-igrejas__grid">
+    <a *ngFor="let igreja of igrejas"
+       (click)="irParaIgreja(igreja)"
+       class="minhas-igrejas__card"
+       [class.minhas-igrejas__card--hot]="getUrgency(igreja) === 'urgent'"
+       [class.minhas-igrejas__card--soon]="getUrgency(igreja) === 'soon'">
+
+      <div class="minhas-igrejas__card-header">
+        <h3 class="minhas-igrejas__card-nome">{{ igreja.nome }}</h3>
+        <button class="minhas-igrejas__remover"
+                (click)="removerIgreja(igreja.id, $event)"
+                aria-label="Remover">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+
+      <div class="minhas-igrejas__card-body">
+        <div class="minhas-igrejas__card-meta">
+          <span class="minhas-igrejas__badge">{{ igreja.uf.toUpperCase() }}</span>
+          <span class="minhas-igrejas__separador">•</span>
+          <span class="minhas-igrejas__slug">{{ igreja.cidadeSlug | uppercase }}</span>
+        </div>
+
+        <div *ngIf="igreja.proximaMissaLabel" class="minhas-igrejas__missa">
+          <span class="minhas-igrejas__icone">
+            <ng-container *ngIf="getUrgency(igreja) === 'urgent'">🔥</ng-container>
+            <ng-container *ngIf="getUrgency(igreja) === 'soon'">🟢</ng-container>
+            <ng-container *ngIf="!getUrgency(igreja)">⏰</ng-container>
+          </span>
+          <span class="minhas-igrejas__label">{{ igreja.proximaMissaLabel }}</span>
+        </div>
+      </div>
+
+      <div class="minhas-igrejas__card-footer">
+        <span class="minhas-igrejas__cta-link">Ver detalhes →</span>
+      </div>
+    </a>
+  </div>
+</div>
