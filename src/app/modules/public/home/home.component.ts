@@ -325,6 +325,7 @@ export class HomeComponent {
   }
 
   onFavoriteClick(card: MassCardData): void {
+    console.log('[onFavoriteClick] card:', card.churchId, card.churchName);
     if (this.ehFavorita(card.churchId)) {
       this.removerFavorita(card.churchId);
     } else {
@@ -333,6 +334,7 @@ export class HomeComponent {
   }
 
   private adicionarFavorita(card: MassCardData): void {
+    console.log('[adicionarFavorita] adicionando:', card.churchId);
     const novaFavorita = {
       id: card.churchId,
       nome: card.churchName,
@@ -343,6 +345,7 @@ export class HomeComponent {
       horario: card.mass.horario,
     };
     this.paroquiasFavoritas.push(novaFavorita);
+    console.log('[adicionarFavorita] array após push:', this.paroquiasFavoritas.length);
     this._salvarFavoritas();
     this._analytics.favoriteParishSaved(card.churchName);
   }
@@ -352,16 +355,19 @@ export class HomeComponent {
       event.preventDefault();
       event.stopPropagation();
     }
+    console.log('[removerFavorita] removendo:', churchId);
     this.paroquiasFavoritas = this.paroquiasFavoritas.filter(f => f.id !== churchId);
     this._salvarFavoritas();
   }
 
   private _salvarFavoritas(): void {
+    console.log('[_salvarFavoritas] salvando', this.paroquiasFavoritas.length, 'favoritas');
     localStorage.setItem('buscamissa_favoritas', JSON.stringify(this.paroquiasFavoritas));
   }
 
   private _loadFavorita(): void {
     const raw = localStorage.getItem('buscamissa_favoritas');
+    console.log('[_loadFavorita] carregando favoritas:', raw);
     if (!raw) return;
     try {
       const saved = JSON.parse(raw);
@@ -370,8 +376,9 @@ export class HomeComponent {
           ...f,
           proximaMissaLabel: f.diaSemana != null && f.horario ? getCountdownLabel(f.diaSemana, f.horario) : undefined,
         }));
+        console.log('[_loadFavorita] carregadas', this.paroquiasFavoritas.length, 'favoritas');
       }
-    } catch { /* ignora JSON inválido */ }
+    } catch { console.error('[_loadFavorita] erro ao parsear'); }
   }
 
   private _reverseGeocode(lat: number, lng: number): void {
