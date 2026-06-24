@@ -27,14 +27,17 @@ const API_URL = lerApiUrl();
 const BASE_URL = 'https://buscamissa.com.br';
 
 const STATIC_PAGES = [
-  { loc: '/home',        changefreq: 'daily',   priority: '1.0' },
-  { loc: '/nova',        changefreq: 'monthly',  priority: '0.8' },
-  { loc: '/contribuir',  changefreq: 'monthly',  priority: '0.6' },
-  { loc: '/solicitar',   changefreq: 'monthly',  priority: '0.5' },
-  { loc: '/anuncios',    changefreq: 'monthly',  priority: '0.4' },
-  { loc: '/termos',      changefreq: 'yearly',   priority: '0.3' },
-  { loc: '/privacidade', changefreq: 'yearly',   priority: '0.3' },
-  { loc: '/cookies',     changefreq: 'yearly',   priority: '0.3' },
+  { loc: '/home',          changefreq: 'daily',   priority: '1.0' },
+  { loc: '/cidades',       changefreq: 'weekly',  priority: '0.7' },
+  { loc: '/missa-agora',   changefreq: 'daily',   priority: '0.7' },
+  { loc: '/como-funciona', changefreq: 'monthly', priority: '0.5' },
+  { loc: '/nova',          changefreq: 'monthly', priority: '0.8' },
+  { loc: '/contribuir',    changefreq: 'monthly', priority: '0.6' },
+  { loc: '/solicitar',     changefreq: 'monthly', priority: '0.5' },
+  { loc: '/anuncios',      changefreq: 'monthly', priority: '0.4' },
+  { loc: '/termos',        changefreq: 'yearly',  priority: '0.3' },
+  { loc: '/privacidade',   changefreq: 'yearly',  priority: '0.3' },
+  { loc: '/cookies',       changefreq: 'yearly',  priority: '0.3' },
 ];
 
 async function main() {

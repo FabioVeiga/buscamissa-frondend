@@ -20,6 +20,19 @@ const PERIODOS: Record<string, { de: number; ate: number; label: string }> = {
   noite: { de: 18 * 60, ate: 23 * 60 + 59, label: "Noite" },
 };
 
+// Cidades populares para internal linking (SEO) no rodapé da página de cidade
+const CIDADES_POPULARES: { nome: string; uf: string; slug: string }[] = [
+  { nome: 'São Paulo',           uf: 'SP', slug: 'sao-paulo' },
+  { nome: 'Campinas',            uf: 'SP', slug: 'campinas' },
+  { nome: 'São José dos Campos', uf: 'SP', slug: 'sao-jose-dos-campos' },
+  { nome: 'Ribeirão Preto',      uf: 'SP', slug: 'ribeirao-preto' },
+  { nome: 'Santos',              uf: 'SP', slug: 'santos' },
+  { nome: 'Sorocaba',            uf: 'SP', slug: 'sorocaba' },
+  { nome: 'Curitiba',            uf: 'PR', slug: 'curitiba' },
+  { nome: 'Brasília',            uf: 'DF', slug: 'brasilia' },
+  { nome: 'Belo Horizonte',      uf: 'MG', slug: 'belo-horizonte' },
+];
+
 const DIAS: { label: string; slug: string; idx: number }[] = [
   { label: "Dom", slug: "domingo", idx: 0 },
   { label: "Seg", slug: "segunda", idx: 1 },
@@ -95,6 +108,13 @@ export class CityComponent implements OnInit, OnDestroy {
 
   readonly dias = DIAS;
   readonly periodos = Object.entries(PERIODOS).map(([slug, v]) => ({ slug, label: v.label }));
+
+  /** Cidades populares para links internos (exclui a cidade atual) — SEO/navegação */
+  get cidadesRelacionadas(): { nome: string; uf: string; slug: string }[] {
+    return CIDADES_POPULARES
+      .filter((c) => !(c.slug === this.cidade && c.uf.toLowerCase() === this.uf?.toLowerCase()))
+      .slice(0, 8);
+  }
 
   ngOnInit(): void {
     this._route.params.subscribe((params) => {

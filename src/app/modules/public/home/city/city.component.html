@@ -230,6 +230,19 @@
           </details>
         </section>
 
+        <!-- Links internos: missas em outras cidades (SEO + navegação) -->
+        <nav class="city-outras" *ngIf="!isLoading">
+          <h2 class="city-outras__titulo">Missas em outras cidades</h2>
+          <div class="city-outras__lista">
+            <a *ngFor="let c of cidadesRelacionadas"
+               [routerLink]="['/missas', c.uf.toLowerCase(), c.slug]"
+               class="city-outras__link">
+              Missas em {{ c.nome }}/{{ c.uf }}
+            </a>
+          </div>
+          <a routerLink="/cidades" class="city-outras__todas">Ver todas as cidades →</a>
+        </nav>
+
       </ng-container>
     </div>
 
