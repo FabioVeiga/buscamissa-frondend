@@ -15,10 +15,11 @@
         <span class="bm-header__dot"></span> Missa agora
       </a>
       <a routerLink="/como-funciona" routerLinkActive="bm-header__link--ativo" class="bm-header__link">Como funciona</a>
-      <a routerLink="/minhas-igrejas" routerLinkActive="bm-header__link--ativo" class="bm-header__link">
-        <i class="pi pi-heart"></i> Minhas Igrejas
+      <a routerLink="/minhas-igrejas" routerLinkActive="bm-header__link--ativo" class="bm-header__link bm-header__link--favoritos">
+        <i class="pi pi-heart-fill"></i> Meus favoritos
+        <span class="bm-header__contador" *ngIf="favoritosCount > 0">{{ favoritosCount }}</span>
       </a>
-      <a routerLink="/nova" routerLinkActive="bm-header__link--ativo" class="bm-header__link">Cadastrar paróquia</a>
+      <a routerLink="/nova" routerLinkActive="bm-header__link--ativo" class="bm-header__link">Cadastrar igreja</a>
     </nav>
 
     <!-- Hamburger (mobile) -->
@@ -35,9 +36,10 @@
       <span class="bm-header__dot"></span> Missa agora
     </a>
     <a routerLink="/como-funciona" class="bm-header__mobile-link">Como funciona</a>
-    <a routerLink="/minhas-igrejas" class="bm-header__mobile-link">
-      <i class="pi pi-heart"></i> Minhas Igrejas
+    <a routerLink="/minhas-igrejas" class="bm-header__mobile-link bm-header__mobile-link--fav">
+      <i class="pi pi-heart-fill"></i> Meus favoritos
+      <span class="bm-header__contador" *ngIf="favoritosCount > 0">{{ favoritosCount }}</span>
     </a>
-    <a routerLink="/nova" class="bm-header__mobile-link bm-header__mobile-link--cta">Cadastrar paróquia</a>
+    <a routerLink="/nova" class="bm-header__mobile-link bm-header__mobile-link--cta">Cadastrar igreja</a>
   </nav>
 </header>

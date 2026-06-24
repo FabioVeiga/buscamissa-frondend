@@ -22,8 +22,9 @@ import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import { ShareButtons } from "ngx-sharebuttons/buttons";
 import { STATES } from "../../../core/constants/states";
 import { MassTimeCardComponent } from "../../../shared/components/mass-time-card/mass-time-card.component";
+import { CityMapComponent } from "../../../shared/components/city-map/city-map.component";
 import { MassCardData } from "../../../shared/models/mass-card.model";
-import { getMissaAgoraUrgency, getCountdownLabel, getNextOccurrenceMinutes } from "../../../shared/utils/mass-time.utils";
+import { getMissaAgoraUrgency, getCountdownLabel, getNextOccurrenceMinutes, formatMassTime } from "../../../shared/utils/mass-time.utils";
 import { AnalyticsService } from "../../../core/services/analytics.service";
 
 interface AddressData {
@@ -43,6 +44,7 @@ interface AddressData {
     RouterModule,
     ShareButtons,
     MassTimeCardComponent,
+    CityMapComponent,
   ],
   providers: [MessageService, DatePipe],
   templateUrl: "./home.component.html",
@@ -89,6 +91,140 @@ export class HomeComponent {
     return this.geoStatus === 'found' && this.cidadeDetectada
       ? 'Cidades próximas de você'
       : 'Missas por cidade';
+  }
+
+  get urgencyBadgeText(): string | null {
+    if (this.isLoadingProximas || this.geoStatus !== 'found') return null;
+    const cards = this.proximasMissasCards;
+    if (cards.length === 0) return null;
+    const mins = getNextOccurrenceMinutes(
+      cards[0].mass.diaSemana!,
+      cards[0].mass.horario
+    );
+    if (mins <= 90) return `🟢 Próxima missa em ${mins} min`;
+    return '📍 Missas encontradas perto de você';
+  }
+
+  get missasDeHojeHorarios(): string[] {
+    const hoje = new Date().getDay();
+    return [...new Set(
+      this.proximasMissasCards
+        .filter(c => c.mass.diaSemana === hoje)
+        .map(c => formatMassTime(c.mass.horario))
+    )].slice(0, 8);
+  }
+
+  /** ── Filtros rápidos (chips do hero) ── */
+  quickFilter: 'perto' | 'hoje' | 'amanha' | 'fds' | 'manha' | 'tarde' | 'noite' | null = null;
+
+  setQuickFilter(f: typeof this.quickFilter): void {
+    if (f === 'perto') {
+      this._requestGeolocation();
+      this.quickFilter = 'perto';
+      return;
+    }
+    if (!this.chipsHabilitados) return;
+    this.quickFilter = this.quickFilter === f ? null : f;
+  }
+
+  /** Há conteúdo para os chips de dia/horário filtrarem? (missas próximas carregadas ou resultados de busca) */
+  get chipsHabilitados(): boolean {
+    return this.proximasMissasCards.length > 0 || this.churchInfo.length > 0;
+  }
+
+  readonly chipsTooltip = 'Busque uma cidade ou ative "Perto de mim" para filtrar por horário';
+
+  private _aplicarQuickFilterCards(cards: MassCardData[]): MassCardData[] {
+    const hoje = new Date().getDay();
+    const amanha = (hoje + 1) % 7;
+    const hora = (c: MassCardData) => parseInt((c.mass.horario || '0').split(':')[0], 10);
+
+    switch (this.quickFilter) {
+      case 'hoje':  return cards.filter(c => c.mass.diaSemana === hoje);
+      case 'amanha': return cards.filter(c => c.mass.diaSemana === amanha);
+      case 'fds':   return cards.filter(c => c.mass.diaSemana === 0 || c.mass.diaSemana === 6);
+      case 'manha': return cards.filter(c => hora(c) < 12);
+      case 'tarde': return cards.filter(c => hora(c) >= 12 && hora(c) < 18);
+      case 'noite': return cards.filter(c => hora(c) >= 18);
+      default:      return cards;
+    }
+  }
+
+  get proximasFiltradas(): MassCardData[] {
+    return this._aplicarQuickFilterCards(this.proximasMissasCards);
+  }
+
+  private _aplicarQuickFilterChurches(igrejas: Church[]): Church[] {
+    if (!this.quickFilter) return igrejas;
+
+    const hoje = new Date().getDay();
+    const amanha = (hoje + 1) % 7;
+    const hora = (horario: string) => parseInt((horario || '0').split(':')[0], 10);
+
+    return igrejas.filter(church => {
+      const missas = church.missas ?? [];
+      if (!missas.length) return false;
+
+      switch (this.quickFilter) {
+        case 'hoje':  return missas.some(m => m.diaSemana === hoje);
+        case 'amanha': return missas.some(m => m.diaSemana === amanha);
+        case 'fds':   return missas.some(m => m.diaSemana === 0 || m.diaSemana === 6);
+        case 'manha': return missas.some(m => hora(m.horario) < 12);
+        case 'tarde': return missas.some(m => {
+          const h = hora(m.horario);
+          return h >= 12 && h < 18;
+        });
+        case 'noite': return missas.some(m => hora(m.horario) >= 18);
+        default:      return true;
+      }
+    });
+  }
+
+  get churchInfoFiltrado(): Church[] {
+    return this._aplicarQuickFilterChurches(this.churchInfo);
+  }
+
+  private _ordenarIgrejas(lista: Church[]): Church[] {
+    const copia = [...lista];
+    switch (this.ordenacaoResultados) {
+      case 'az':
+        return copia.sort((a, b) => (a.nome ?? '').localeCompare(b.nome ?? '', 'pt-BR'));
+      case 'za':
+        return copia.sort((a, b) => (b.nome ?? '').localeCompare(a.nome ?? '', 'pt-BR'));
+      case 'proxima-missa':
+        return copia.sort((a, b) => this._minProximaMissaHome(a) - this._minProximaMissaHome(b));
+      case 'proximidade':
+        if (this._userLat === null || this._userLng === null) return copia;
+        return copia.sort((a, b) => {
+          const dA = this._distHome(a) ?? Infinity;
+          const dB = this._distHome(b) ?? Infinity;
+          return dA - dB;
+        });
+      default:
+        return copia;
+    }
+  }
+
+  get churchInfoOrdenaFiltrado(): Church[] {
+    return this._ordenarIgrejas(this.churchInfoFiltrado);
+  }
+
+  get totalRecordsFiltrado(): number {
+    return this.quickFilter ? this.churchInfoFiltrado.length : this.totalRecords;
+  }
+
+  /** Igrejas para o mapa lateral (a partir das próximas missas) */
+  get mapChurches(): { id: number; nome: string; lat: number | null; lng: number | null }[] {
+    return this.proximasMissasCards.map(c => ({
+      id: c.churchId,
+      nome: c.churchName,
+      lat: c.latitude ?? null,
+      lng: c.longitude ?? null,
+    }));
+  }
+
+  get temMapaComCoords(): boolean {
+    return this.mapChurches.some(m => m.lat != null && m.lng != null);
   }
 
   /** Cards de próximas missas */
@@ -151,7 +287,12 @@ export class HomeComponent {
 
   public form!: FormGroup;
 
+  /** True quando renderizado na rota /buscar (só busca + resultados) */
+  resultsMode = false;
+
   ngOnInit(): void {
+    this.resultsMode = !!this._route.snapshot.data['resultsMode'];
+
     this.form = this._fb.group({
       Uf: [null, Validators.required],
       Localidade: [null],
@@ -207,8 +348,10 @@ export class HomeComponent {
       complete: () => {
         this.isLoadingAddress = false;
         this._restoreFromQueryParams();
-        this._loadProximasMissas();
-        this._requestGeolocation();
+        if (!this.resultsMode) {
+          this._loadProximasMissas();
+          this._requestGeolocation();
+        }
       },
     });
   }
@@ -497,6 +640,47 @@ export class HomeComponent {
     this.form.get('Bairro')?.setValue(null);
   }
 
+  /** Extrai valores de filtro do formulário para query params */
+  private _buildFilterQueryParams(): {
+    uf: string | null;
+    cidade: string | null;
+    bairro: string | null;
+    dia: number | null;
+    horario: string | null;
+  } {
+    const uf = this.form.get("Uf")?.value;
+    const localidade = this.form.get("Localidade")?.value;
+    const bairro = this.form.get("Bairro")?.value;
+    const diaDaSemana = this.form.get("DiaDaSemana")?.value;
+    const horario = this._datePipe.transform(this.form.value.Horario, "HH:mm");
+
+    return {
+      uf: uf ?? null,
+      cidade: localidade ?? null,
+      bairro: bairro ?? null,
+      dia: diaDaSemana ?? null,
+      horario: horario ?? null,
+    };
+  }
+
+  /** Clique no botão "Buscar": na home navega p/ /buscar; em /buscar refaz inline */
+  public onBuscarClick(): void {
+    if (this.form.invalid) return;
+    if (this.resultsMode) {
+      this.searchFilter();
+    } else {
+      this.submitBusca();
+    }
+  }
+
+  /** Navega para a página de resultados com os filtros como query params */
+  public submitBusca(): void {
+    const params = this._buildFilterQueryParams();
+    this._router.navigate(['/buscar'], {
+      queryParams: { ...params, pagina: 1 },
+    });
+  }
+
   public searchFilter(resetPage = true): void {
     if (this.isLoading || this.form.invalid) return;
 
@@ -505,30 +689,19 @@ export class HomeComponent {
     this.isLoading = true;
     this.churchInfo = [];
 
-    const uf = this.form.get("Uf")?.value;
-    const localidade = this.form.get("Localidade")?.value;
-    const bairro = this.form.get("Bairro")?.value;
-    const diaDaSemana = this.form.get("DiaDaSemana")?.value;
-    const horario = this._datePipe.transform(this.form.value.Horario, "HH:mm");
+    const params = this._buildFilterQueryParams();
 
     this._router.navigate([], {
-      queryParams: {
-        uf: uf || null,
-        cidade: localidade || null,
-        bairro: bairro || null,
-        dia: diaDaSemana ?? null,
-        horario: horario || null,
-        pagina: this.pageIndex,
-      },
+      queryParams: { ...params, pagina: this.pageIndex },
       replaceUrl: true,
     });
 
     const filters: FilterSearchChurch = {
-      Uf: uf,
-      Localidade: localidade,
-      Bairro: bairro,
-      DiaDaSemana: diaDaSemana,
-      Horario: horario,
+      Uf: params.uf!,
+      Localidade: params.cidade || undefined,
+      Bairro: params.bairro || undefined,
+      DiaDaSemana: params.dia || undefined,
+      Horario: params.horario || undefined,
       "Paginacao.PageIndex": this.pageIndex,
       "Paginacao.PageSize": this.pageSize,
     };
@@ -680,7 +853,6 @@ export class HomeComponent {
           }
         },
         error: (err: HttpErrorResponse) => {
-          console.error(err);
           this._toast.add({
             severity: "warn",
             summary: "Igreja não encontrada",
@@ -699,13 +871,10 @@ export class HomeComponent {
 
   fecharModal(): void {
     this.isModalVisible = false;
-    this.reportForm.reset(); // Limpa o formulário ao fechar o modal
-    console.log("Modal foi fechado.");
+    this.reportForm.reset();
   }
 
-  onModalShow(): void {
-    console.log("Modal foi aberto.");
-  }
+  onModalShow(): void {}
 
   // Converte dia da semana de número para nome
   getDayName(dia: number): string {

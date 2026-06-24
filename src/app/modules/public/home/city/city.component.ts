@@ -9,6 +9,7 @@ import { SeoService } from "../../../../core/services/seo.service";
 import { ConfidenceBadgeComponent } from "../../../../shared/components/confidence-badge/confidence-badge.component";
 import { CountdownChipComponent } from "../../../../shared/components/countdown-chip/countdown-chip.component";
 import { DistanceChipComponent } from "../../../../shared/components/distance-chip/distance-chip.component";
+import { ChurchPlaceholderComponent } from "../../../../shared/components/church-placeholder/church-placeholder.component";
 import { getNextOccurrenceMinutes, formatMassTime, getCountdownLabel } from "../../../../shared/utils/mass-time.utils";
 import { AnalyticsService } from "../../../../core/services/analytics.service";
 import { CityMapComponent, MapChurch } from "../../../../shared/components/city-map/city-map.component";
@@ -39,6 +40,7 @@ const DIAS: { label: string; slug: string; idx: number }[] = [
     SkeletonModule,
     ConfidenceBadgeComponent,
     CityMapComponent,
+    ChurchPlaceholderComponent,
   ],
   templateUrl: "./city.component.html",
   styleUrl: "./city.component.scss",
@@ -60,7 +62,7 @@ export class CityComponent implements OnInit, OnDestroy {
   faqs: { pergunta: string; resposta: string }[] = [];
 
   imagensQuebradas = new Set<number>();
-  paroquiaFavoritaId: number | null = null;
+  favoritasIds: number[] = [];
 
   // Filtros
   diaAtivo: number | null = null;
@@ -131,9 +133,14 @@ export class CityComponent implements OnInit, OnDestroy {
 
         if (this.igrejas.length === 0) this.naoEncontrado = true;
 
+        const ufUpper = this.uf?.toUpperCase();
+        const totalIgrejas = this.igrejas.length;
+        const descFallback = totalIgrejas
+          ? `Veja horários de missa de ${totalIgrejas} ${totalIgrejas === 1 ? 'paróquia' : 'paróquias'} em ${this.cidadeNome}/${ufUpper}. Encontre a missa mais próxima por dia, horário e bairro no BuscaMissa.`
+          : `Horários de missa em ${this.cidadeNome}/${ufUpper}. Encontre missas perto de você no BuscaMissa.`;
         this._seo.update({
-          title: seo?.title ?? `Missas em ${this.cidadeNome}/${this.uf?.toUpperCase()} | BuscaMissa`,
-          description: seo?.description ?? `Horários de missa em ${this.cidadeNome}/${this.uf?.toUpperCase()}.`,
+          title: seo?.title ?? `Missas em ${this.cidadeNome}/${ufUpper} — Horários atualizados | BuscaMissa`,
+          description: seo?.description ?? descFallback,
           canonical: seo?.canonicalUrl,
         });
 
@@ -393,33 +400,42 @@ export class CityComponent implements OnInit, OnDestroy {
 
   private _loadFavorita(): void {
     try {
-      const raw = localStorage.getItem('buscamissa_favorita');
-      if (raw) this.paroquiaFavoritaId = JSON.parse(raw)?.id ?? null;
-    } catch { }
+      const raw = localStorage.getItem('buscamissa_favoritas');
+      const arr = raw ? JSON.parse(raw) : [];
+      this.favoritasIds = Array.isArray(arr) ? arr.map((f: any) => f.id) : [];
+    } catch { this.favoritasIds = []; }
   }
 
   ehFavorita(ig: any): boolean {
-    return this.paroquiaFavoritaId === ig.id;
+    return this.favoritasIds.includes(ig.id);
   }
 
   toggleFavoritar(ig: any, event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
+
+    let favoritas: any[] = [];
+    try { favoritas = JSON.parse(localStorage.getItem('buscamissa_favoritas') || '[]'); } catch { }
+    if (!Array.isArray(favoritas)) favoritas = [];
+
     if (this.ehFavorita(ig)) {
-      localStorage.removeItem('buscamissa_favorita');
-      this.paroquiaFavoritaId = null;
+      favoritas = favoritas.filter((f) => f.id !== ig.id);
+      this.favoritasIds = this.favoritasIds.filter((id) => id !== ig.id);
     } else {
-      const data = {
+      const pm = ig.proximaMissa ?? (ig.missas && ig.missas[0]) ?? null;
+      favoritas.push({
         id: ig.id,
         nome: ig.nome,
-        slug: ig.slug,
+        uf: this.uf?.toLowerCase(),
         cidadeSlug: this.cidade,
-        uf: this.uf,
-      };
-      localStorage.setItem('buscamissa_favorita', JSON.stringify(data));
-      this.paroquiaFavoritaId = ig.id;
+        slug: ig.slug,
+        diaSemana: pm?.diaSemana,
+        horario: pm?.horario,
+      });
+      this.favoritasIds = [...this.favoritasIds, ig.id];
       this._analytics.favoriteParishSaved(ig.nome);
     }
+    localStorage.setItem('buscamissa_favoritas', JSON.stringify(favoritas));
   }
 
   // ── Compartilhar ──────────────────────────────────────────────────────────

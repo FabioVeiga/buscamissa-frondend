@@ -1,11 +1,13 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterModule, Router } from '@angular/router';
+import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { PrimeNgModule } from '../../../shared/primeng.module';
 import { SeoService } from '../../../core/services/seo.service';
 import { getCountdownLabel } from '../../../shared/utils/mass-time.utils';
 import { getMissaAgoraUrgency } from '../../../shared/utils/mass-time.utils';
+import { Subscription } from 'rxjs';
+import { filter } from 'rxjs/operators';
 
 interface IgrejaFavorita {
   id: number;
@@ -26,12 +28,13 @@ interface IgrejaFavorita {
   templateUrl: './minhas-igrejas.component.html',
   styleUrl: './minhas-igrejas.component.scss',
 })
-export class MinhasIgrejasComponent implements OnInit {
+export class MinhasIgrejasComponent implements OnInit, OnDestroy {
   private _seo = inject(SeoService);
   private _router = inject(Router);
   private _toast = inject(MessageService);
 
   igrejas: IgrejaFavorita[] = [];
+  private _navSub: Subscription | null = null;
 
   ngOnInit(): void {
     this._seo.update({
@@ -40,6 +43,14 @@ export class MinhasIgrejasComponent implements OnInit {
       canonical: 'https://buscamissa.com.br/minhas-igrejas',
     });
     this._carregarIgrejas();
+
+    this._navSub = this._router.events
+      .pipe(filter(e => e instanceof NavigationEnd))
+      .subscribe(() => this._carregarIgrejas());
+  }
+
+  ngOnDestroy(): void {
+    this._navSub?.unsubscribe();
   }
 
   private _carregarIgrejas(): void {

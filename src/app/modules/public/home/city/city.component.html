@@ -150,7 +150,14 @@
             [routerLink]="linkParoquia(igreja)" class="city-card__img-wrap" (click)="onChurchClick(igreja)">
             <img [src]="igreja.imagemUrl" [alt]="igreja.nome"
               (error)="imagensQuebradas.add(igreja.id)"
+              loading="lazy"
               class="city-card__img">
+          </a>
+
+          <!-- Fallback quando não há imagem ou ela falhou -->
+          <a *ngIf="!igreja.imagemUrl || imagensQuebradas.has(igreja.id)"
+            [routerLink]="linkParoquia(igreja)" class="city-card__img-wrap" (click)="onChurchClick(igreja)">
+            <app-church-placeholder class="city-card__img" [showLabel]="false" />
           </a>
 
           <!-- Corpo do card -->
