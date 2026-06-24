@@ -487,7 +487,7 @@
               <div class="font-small text-xs text-surface-500 dark:text-surface-400 text-left">
                 Compartilhar:
                 <share-buttons [include]="['whatsapp', 'email', 'copy']" [show]="4" [showText]="false"
-                  url="https://buscamissa.com.br/detalhes/{{ church.endereco.cep }}"></share-buttons>
+                  [url]="shareUrlChurch(church)"></share-buttons>
               </div>
               <div *ngIf="church.usuario.nome" class="font-small text-xs text-surface-500 dark:text-surface-400 text-right">
                 Última alteração: {{ church.alteracao | date : "dd/MM/yyyy" }} por {{ church.usuario.nome }}

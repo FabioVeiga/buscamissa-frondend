@@ -966,6 +966,17 @@ export class HomeComponent {
     return ["/igrejas", church?.nomeUnico];
   }
 
+  /** URL completa para compartilhamento (SEO3 revisado) */
+  shareUrlChurch(church: any): string {
+    const base = 'https://buscamissa.com.br';
+    const uf = church?.endereco?.uf;
+    const cidadeSlug = church?.endereco?.cidadeSlug;
+    if (uf && cidadeSlug && church?.slug) {
+      return `${base}/paroquia/${uf.toLowerCase()}/${cidadeSlug}/${church.slug}`;
+    }
+    return `${base}/igrejas/${church?.nomeUnico}`;
+  }
+
   // 0=Desconhecida, 1=Baixa, 2=Media, 3=Alta
   getConfiancaLabel(status: number): string {
     const labels: Record<number, string> = {
