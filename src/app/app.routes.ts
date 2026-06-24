@@ -19,6 +19,18 @@ export const routes: Routes = [
           ),
       },
       {
+        path: "buscar",
+        data: {
+          resultsMode: true,
+          title: 'Resultados da busca | BuscaMissa',
+          description: 'Resultados da busca de missas e igrejas católicas por estado, cidade e bairro.',
+        },
+        loadComponent: () =>
+          import("./modules/public/home/home.component").then(
+            (m) => m.HomeComponent
+          ),
+      },
+      {
         path: "nova",
         data: {
           title: 'Cadastrar Igreja | BuscaMissa',
@@ -99,6 +111,19 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./modules/public/missa-agora/missa-agora.component').then(
             (m) => m.MissaAgoraComponent
+          ),
+      },
+      // Minhas Igrejas — favoritos salvos
+      {
+        path: 'minhas-igrejas',
+        data: {
+          title: 'Minhas Igrejas | BuscaMissa',
+          description: 'Veja todas as suas igrejas favoritas e horários de missa.',
+          canonical: 'https://buscamissa.com.br/minhas-igrejas',
+        },
+        loadComponent: () =>
+          import('./modules/public/minhas-igrejas/minhas-igrejas.component').then(
+            (m) => m.MinhasIgrejasComponent
           ),
       },
       // Página de todas as cidades

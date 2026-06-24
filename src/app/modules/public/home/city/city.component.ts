@@ -9,14 +9,29 @@ import { SeoService } from "../../../../core/services/seo.service";
 import { ConfidenceBadgeComponent } from "../../../../shared/components/confidence-badge/confidence-badge.component";
 import { CountdownChipComponent } from "../../../../shared/components/countdown-chip/countdown-chip.component";
 import { DistanceChipComponent } from "../../../../shared/components/distance-chip/distance-chip.component";
-import { getNextOccurrenceMinutes, formatMassTime } from "../../../../shared/utils/mass-time.utils";
+import { ChurchPlaceholderComponent } from "../../../../shared/components/church-placeholder/church-placeholder.component";
+import { getNextOccurrenceMinutes, formatMassTime, getCountdownLabel } from "../../../../shared/utils/mass-time.utils";
 import { AnalyticsService } from "../../../../core/services/analytics.service";
+import { CityMapComponent, MapChurch } from "../../../../shared/components/city-map/city-map.component";
 
 const PERIODOS: Record<string, { de: number; ate: number; label: string }> = {
   manha: { de: 5 * 60, ate: 11 * 60 + 59, label: "Manhã" },
   tarde: { de: 12 * 60, ate: 17 * 60 + 59, label: "Tarde" },
   noite: { de: 18 * 60, ate: 23 * 60 + 59, label: "Noite" },
 };
+
+// Cidades populares para internal linking (SEO) no rodapé da página de cidade
+const CIDADES_POPULARES: { nome: string; uf: string; slug: string }[] = [
+  { nome: 'São Paulo',           uf: 'SP', slug: 'sao-paulo' },
+  { nome: 'Campinas',            uf: 'SP', slug: 'campinas' },
+  { nome: 'São José dos Campos', uf: 'SP', slug: 'sao-jose-dos-campos' },
+  { nome: 'Ribeirão Preto',      uf: 'SP', slug: 'ribeirao-preto' },
+  { nome: 'Santos',              uf: 'SP', slug: 'santos' },
+  { nome: 'Sorocaba',            uf: 'SP', slug: 'sorocaba' },
+  { nome: 'Curitiba',            uf: 'PR', slug: 'curitiba' },
+  { nome: 'Brasília',            uf: 'DF', slug: 'brasilia' },
+  { nome: 'Belo Horizonte',      uf: 'MG', slug: 'belo-horizonte' },
+];
 
 const DIAS: { label: string; slug: string; idx: number }[] = [
   { label: "Dom", slug: "domingo", idx: 0 },
@@ -37,8 +52,8 @@ const DIAS: { label: string; slug: string; idx: number }[] = [
     RouterLink,
     SkeletonModule,
     ConfidenceBadgeComponent,
-    CountdownChipComponent,
-    DistanceChipComponent,
+    CityMapComponent,
+    ChurchPlaceholderComponent,
   ],
   templateUrl: "./city.component.html",
   styleUrl: "./city.component.scss",
@@ -59,33 +74,52 @@ export class CityComponent implements OnInit, OnDestroy {
   naoEncontrado = false;
   faqs: { pergunta: string; resposta: string }[] = [];
 
-  /** Ids de igrejas cuja foto falhou ao carregar — caem no placeholder */
   imagensQuebradas = new Set<number>();
+  favoritasIds: number[] = [];
 
-  // Filtros ativos
+  // Filtros
   diaAtivo: number | null = null;
   periodoAtivo: string | null = null;
+  quickFilter: 'hoje' | 'amanha' | 'fds' | null = null;
+
+  // UI
+  mostrarFiltrosAvancados = false;
+  mapVisible = false;
 
   // Ordenação
-  ordenacaoAtiva: 'az' | 'za' | 'proximidade' | 'proxima-missa' = 'az';
+  ordenacaoAtiva: 'az' | 'za' | 'proximidade' | 'proxima-missa' = 'proxima-missa';
 
   // Geolocalização
   userLat: number | null = null;
   userLng: number | null = null;
 
-  get temGeolocalizacao(): boolean {
-    return this.userLat !== null && this.userLng !== null;
+  get temGeolocalizacao(): boolean { return this.userLat !== null && this.userLng !== null; }
+
+  get mapIgrejas(): MapChurch[] {
+    return this.igrejasFiltradas.map((ig) => ({
+      id: ig.id,
+      nome: ig.nome,
+      lat: ig.endereco?.latitude ?? null,
+      lng: ig.endereco?.longitude ?? null,
+    }));
   }
+  get diaHoje(): number { return new Date().getDay(); }
+  get diaAmanha(): number { return (new Date().getDay() + 1) % 7; }
 
   readonly dias = DIAS;
   readonly periodos = Object.entries(PERIODOS).map(([slug, v]) => ({ slug, label: v.label }));
+
+  /** Cidades populares para links internos (exclui a cidade atual) — SEO/navegação */
+  get cidadesRelacionadas(): { nome: string; uf: string; slug: string }[] {
+    return CIDADES_POPULARES
+      .filter((c) => !(c.slug === this.cidade && c.uf.toLowerCase() === this.uf?.toLowerCase()))
+      .slice(0, 8);
+  }
 
   ngOnInit(): void {
     this._route.params.subscribe((params) => {
       this.uf = params["uf"];
       this.cidade = params["cidade"];
-
-      // Inicializa o nome da cidade imediatamente a partir do slug (evita "Missas em /SP" no header)
       this.cidadeNome = this.cidade
         .split('-')
         .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
@@ -99,6 +133,7 @@ export class CityComponent implements OnInit, OnDestroy {
     });
 
     this.pedirGeolocalizacao();
+    this._loadFavorita();
   }
 
   carregar(): void {
@@ -118,9 +153,14 @@ export class CityComponent implements OnInit, OnDestroy {
 
         if (this.igrejas.length === 0) this.naoEncontrado = true;
 
+        const ufUpper = this.uf?.toUpperCase();
+        const totalIgrejas = this.igrejas.length;
+        const descFallback = totalIgrejas
+          ? `Veja horários de missa de ${totalIgrejas} ${totalIgrejas === 1 ? 'paróquia' : 'paróquias'} em ${this.cidadeNome}/${ufUpper}. Encontre a missa mais próxima por dia, horário e bairro no BuscaMissa.`
+          : `Horários de missa em ${this.cidadeNome}/${ufUpper}. Encontre missas perto de você no BuscaMissa.`;
         this._seo.update({
-          title: seo?.title ?? `Missas em ${this.cidadeNome}/${this.uf?.toUpperCase()} | BuscaMissa`,
-          description: seo?.description ?? `Horários de missa em ${this.cidadeNome}/${this.uf?.toUpperCase()}.`,
+          title: seo?.title ?? `Missas em ${this.cidadeNome}/${ufUpper} — Horários atualizados | BuscaMissa`,
+          description: seo?.description ?? descFallback,
           canonical: seo?.canonicalUrl,
         });
 
@@ -142,11 +182,22 @@ export class CityComponent implements OnInit, OnDestroy {
     this._seo.removeJsonLd("faq");
   }
 
-  // ── Filtros ──────────────────────────────────────────────────────────────────
+  // ── Quick filters ─────────────────────────────────────────────────────────
+
+  setQuickFilter(f: 'hoje' | 'amanha' | 'fds' | null): void {
+    this.quickFilter = this.quickFilter === f ? null : f;
+    this.diaAtivo = null;
+    this.periodoAtivo = null;
+    this._router.navigate([], { queryParams: {}, replaceUrl: true });
+    this.aplicarFiltros();
+  }
+
+  // ── Filtros avançados ─────────────────────────────────────────────────────
 
   setDia(idx: number): void {
-    this.diaAtivo = idx;
-    const slug = DIAS.find((d) => d.idx === idx)?.slug ?? null;
+    this.diaAtivo = this.diaAtivo === idx ? null : idx;
+    this.quickFilter = null;
+    const slug = DIAS.find((d) => d.idx === this.diaAtivo)?.slug ?? null;
     this._router.navigate([], {
       queryParams: { dia: slug, periodo: this.periodoAtivo },
       queryParamsHandling: "merge",
@@ -156,9 +207,9 @@ export class CityComponent implements OnInit, OnDestroy {
   }
 
   setPeriodo(slug: string): void {
-    this.periodoAtivo = slug;
+    this.periodoAtivo = this.periodoAtivo === slug ? null : slug;
     this._router.navigate([], {
-      queryParams: { dia: this.diaAtivo !== null ? DIAS.find((d) => d.idx === this.diaAtivo)?.slug : null, periodo: slug },
+      queryParams: { dia: this.diaAtivo !== null ? DIAS.find((d) => d.idx === this.diaAtivo)?.slug : null, periodo: this.periodoAtivo },
       queryParamsHandling: "merge",
       replaceUrl: true,
     });
@@ -168,6 +219,7 @@ export class CityComponent implements OnInit, OnDestroy {
   limparFiltros(): void {
     this.diaAtivo = null;
     this.periodoAtivo = null;
+    this.quickFilter = null;
     this._router.navigate([], { queryParams: {}, replaceUrl: true });
     this.aplicarFiltros();
   }
@@ -178,21 +230,30 @@ export class CityComponent implements OnInit, OnDestroy {
   }
 
   get temFiltroAtivo(): boolean {
-    return this.diaAtivo !== null || this.periodoAtivo !== null;
+    return this.diaAtivo !== null || this.periodoAtivo !== null || this.quickFilter !== null;
   }
 
   private aplicarFiltros(): void {
     let lista = [...this.igrejas];
 
-    if (this.diaAtivo !== null) {
-      lista = lista.filter((ig) =>
-        ig.missas?.some((m: any) => m.diaSemana === this.diaAtivo)
-      );
+    // Quick filters
+    if (this.quickFilter === 'hoje') {
+      lista = lista.filter(ig => ig.missas?.some((m: any) => m.diaSemana === this.diaHoje));
+    } else if (this.quickFilter === 'amanha') {
+      lista = lista.filter(ig => ig.missas?.some((m: any) => m.diaSemana === this.diaAmanha));
+    } else if (this.quickFilter === 'fds') {
+      lista = lista.filter(ig => ig.missas?.some((m: any) => m.diaSemana === 0 || m.diaSemana === 6));
     }
 
+    // Filtro por dia manual
+    if (this.diaAtivo !== null) {
+      lista = lista.filter(ig => ig.missas?.some((m: any) => m.diaSemana === this.diaAtivo));
+    }
+
+    // Filtro por período
     if (this.periodoAtivo && PERIODOS[this.periodoAtivo]) {
       const { de, ate } = PERIODOS[this.periodoAtivo];
-      lista = lista.filter((ig) =>
+      lista = lista.filter(ig =>
         ig.missas?.some((m: any) => {
           const [h, min] = (m.horario ?? "").split(":").map(Number);
           const total = h * 60 + min;
@@ -202,7 +263,6 @@ export class CityComponent implements OnInit, OnDestroy {
     }
 
     lista = this._ordenar(lista);
-
     this.igrejasFiltradas = lista;
     if (!this.isLoading) this.naoEncontrado = lista.length === 0 && this.igrejas.length > 0;
   }
@@ -214,11 +274,7 @@ export class CityComponent implements OnInit, OnDestroy {
       case 'za':
         return [...lista].sort((a, b) => (b.nome ?? '').localeCompare(a.nome ?? '', 'pt-BR'));
       case 'proxima-missa':
-        return [...lista].sort((a, b) => {
-          const minA = this._minProximaMissa(a);
-          const minB = this._minProximaMissa(b);
-          return minA - minB;
-        });
+        return [...lista].sort((a, b) => this._minProximaMissa(a) - this._minProximaMissa(b));
       case 'proximidade':
         if (!this.temGeolocalizacao) return lista;
         return [...lista].sort((a, b) => {
@@ -232,9 +288,20 @@ export class CityComponent implements OnInit, OnDestroy {
   }
 
   private _minProximaMissa(igreja: any): number {
-    const missas: any[] = igreja.missas ?? [];
+    const diasFiltro = this._diasFiltroAtivos();
+    const missas: any[] = (igreja.missas ?? []).filter((m: any) =>
+      diasFiltro === null || diasFiltro.includes(m.diaSemana)
+    );
     if (!missas.length) return Infinity;
     return Math.min(...missas.map((m) => getNextOccurrenceMinutes(m.diaSemana, m.horario)));
+  }
+
+  private _diasFiltroAtivos(): number[] | null {
+    if (this.quickFilter === 'hoje') return [this.diaHoje];
+    if (this.quickFilter === 'amanha') return [this.diaAmanha];
+    if (this.quickFilter === 'fds') return [0, 6];
+    if (this.diaAtivo !== null) return [this.diaAtivo];
+    return null;
   }
 
   // ── Próxima missa do card ─────────────────────────────────────────────────
@@ -243,11 +310,9 @@ export class CityComponent implements OnInit, OnDestroy {
     let candidatas: any[] = igreja.missas ?? [];
     if (!candidatas.length) return null;
 
-    // Respeita o filtro de dia: destaca a próxima missa daquele dia
-    if (this.diaAtivo !== null)
-      candidatas = candidatas.filter((m) => m.diaSemana === this.diaAtivo);
+    const diasFiltro = this._diasFiltroAtivos();
+    if (diasFiltro) candidatas = candidatas.filter((m) => diasFiltro.includes(m.diaSemana));
 
-    // Respeita o filtro de período: destaca a próxima missa daquela faixa de horário
     if (this.periodoAtivo && PERIODOS[this.periodoAtivo]) {
       const { de, ate } = PERIODOS[this.periodoAtivo];
       candidatas = candidatas.filter((m) => {
@@ -257,13 +322,17 @@ export class CityComponent implements OnInit, OnDestroy {
       });
     }
 
-    if (!candidatas.length) return null;
+    if (!candidatas.length) candidatas = igreja.missas ?? [];
 
     return candidatas.reduce((melhor: any, m: any) => {
       const min = getNextOccurrenceMinutes(m.diaSemana, m.horario);
       const melhorMin = getNextOccurrenceMinutes(melhor.diaSemana, melhor.horario);
       return min < melhorMin ? m : melhor;
     });
+  }
+
+  countdownLabel(m: any): string {
+    return getCountdownLabel(m.diaSemana, m.horario);
   }
 
   formatarHorario(horario: string): string {
@@ -274,12 +343,10 @@ export class CityComponent implements OnInit, OnDestroy {
     return ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"][dia] ?? "";
   }
 
-  /** Contador só quando há urgência real (até 3h) — senão mostra só o dia */
   ehUrgente(m: any): boolean {
     return getNextOccurrenceMinutes(m.diaSemana, m.horario) <= 180;
   }
 
-  /** Rótulo relativo do dia, sem horário: "Hoje" / "Amanhã" / "Domingo" */
   diaLabelRelativo(m: any): string {
     const min = getNextOccurrenceMinutes(m.diaSemana, m.horario);
     const alvo = new Date(Date.now() + min * 60_000);
@@ -318,16 +385,25 @@ export class CityComponent implements OnInit, OnDestroy {
       (pos) => {
         this.userLat = pos.coords.latitude;
         this.userLng = pos.coords.longitude;
-        // Reordena se o usuário já escolheu "por proximidade" antes da geoloc chegar
         if (this.ordenacaoAtiva === 'proximidade') this.aplicarFiltros();
       },
-      () => { /* silencioso — distância é opcional */ }
+      () => {}
     );
   }
 
-  // ── Mapa ──────────────────────────────────────────────────────────────────
+  // ── Ações ─────────────────────────────────────────────────────────────────
 
-  abrirMapa(): void {
+  comoChegar(igreja: any): void {
+    const lat = igreja.endereco?.latitude;
+    const lng = igreja.endereco?.longitude;
+    const url = lat && lng
+      ? `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
+      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(igreja.nome + ' ' + this.cidadeNome)}`;
+    window.open(url, '_blank', 'noopener');
+    this._analytics.getDirections(igreja.nome);
+  }
+
+  abrirMapaCidade(): void {
     const url = `https://www.google.com/maps/search/missa+${encodeURIComponent(this.cidadeNome)}+${this.uf.toUpperCase()}`;
     window.open(url, "_blank", "noopener");
   }
@@ -336,11 +412,84 @@ export class CityComponent implements OnInit, OnDestroy {
     return ["/paroquia", this.uf, this.cidade, igreja.slug];
   }
 
+  onChurchClick(igreja: any): void {
+    this._analytics.resultClicked(igreja.nome, this.cidadeNome, this.uf);
+  }
+
+  // ── Favoritar ─────────────────────────────────────────────────────────────
+
+  private _loadFavorita(): void {
+    try {
+      const raw = localStorage.getItem('buscamissa_favoritas');
+      const arr = raw ? JSON.parse(raw) : [];
+      this.favoritasIds = Array.isArray(arr) ? arr.map((f: any) => f.id) : [];
+    } catch { this.favoritasIds = []; }
+  }
+
+  ehFavorita(ig: any): boolean {
+    return this.favoritasIds.includes(ig.id);
+  }
+
+  toggleFavoritar(ig: any, event: MouseEvent): void {
+    event.preventDefault();
+    event.stopPropagation();
+
+    let favoritas: any[] = [];
+    try { favoritas = JSON.parse(localStorage.getItem('buscamissa_favoritas') || '[]'); } catch { }
+    if (!Array.isArray(favoritas)) favoritas = [];
+
+    if (this.ehFavorita(ig)) {
+      favoritas = favoritas.filter((f) => f.id !== ig.id);
+      this.favoritasIds = this.favoritasIds.filter((id) => id !== ig.id);
+    } else {
+      const pm = ig.proximaMissa ?? (ig.missas && ig.missas[0]) ?? null;
+      favoritas.push({
+        id: ig.id,
+        nome: ig.nome,
+        uf: this.uf?.toLowerCase(),
+        cidadeSlug: this.cidade,
+        slug: ig.slug,
+        diaSemana: pm?.diaSemana,
+        horario: pm?.horario,
+      });
+      this.favoritasIds = [...this.favoritasIds, ig.id];
+      this._analytics.favoriteParishSaved(ig.nome);
+    }
+    localStorage.setItem('buscamissa_favoritas', JSON.stringify(favoritas));
+  }
+
+  // ── Compartilhar ──────────────────────────────────────────────────────────
+
+  compartilhar(): void {
+    const title = `Missas em ${this.cidadeNome}/${this.uf.toUpperCase()} | BuscaMissa`;
+    if (navigator.share) {
+      navigator.share({ title, url: window.location.href }).catch(() => {});
+    } else {
+      navigator.clipboard?.writeText(window.location.href);
+    }
+  }
+
+  // ── Dia da missa ──────────────────────────────────────────────────────────
+
+  diasMissa(ig: any): string {
+    const pm = this.proximaMissa(ig);
+    if (!pm) return '';
+    return this.diaNome(pm.diaSemana);
+  }
+
   linkCidade(): string[] {
     return ["/missas", this.uf.toLowerCase(), this.cidade];
   }
 
-  // ── SEO helpers ───────────────────────────────────────────────────────────
+  getSocialIcon(url: string): string {
+    if (url.includes("facebook.com")) return "pi pi-facebook";
+    if (url.includes("instagram.com")) return "pi pi-instagram";
+    if (url.includes("youtube.com")) return "pi pi-youtube";
+    if (url.includes("tiktok.com")) return "pi pi-tiktok";
+    return "pi pi-globe";
+  }
+
+  // ── SEO ───────────────────────────────────────────────────────────────────
 
   private parseDiaSlug(slug?: string): number | null {
     if (!slug) return null;
@@ -354,12 +503,7 @@ export class CityComponent implements OnInit, OnDestroy {
       "@type": "BreadcrumbList",
       itemListElement: [
         { "@type": "ListItem", position: 1, name: "Início", item: `${base}/home` },
-        {
-          "@type": "ListItem",
-          position: 2,
-          name: `${this.cidadeNome}/${this.uf.toUpperCase()}`,
-          item: `${base}/missas/${this.uf}/${this.cidade}`,
-        },
+        { "@type": "ListItem", position: 2, name: `${this.cidadeNome}/${this.uf.toUpperCase()}`, item: `${base}/missas/${this.uf}/${this.cidade}` },
       ],
     });
   }
@@ -367,18 +511,9 @@ export class CityComponent implements OnInit, OnDestroy {
   private montarFaqs(): void {
     const local = `${this.cidadeNome}/${this.uf.toUpperCase()}`;
     this.faqs = [
-      {
-        pergunta: `Que horas é a missa hoje em ${this.cidadeNome}?`,
-        resposta: `Consulte nesta página os horários de missa das ${this.igrejas.length} paróquia(s) de ${local}, organizados por dia da semana.`,
-      },
-      {
-        pergunta: `Tem missa de domingo em ${this.cidadeNome}?`,
-        resposta: `Sim. Diversas paróquias de ${local} celebram missas aos domingos. Veja a lista e os horários abaixo.`,
-      },
-      {
-        pergunta: `Como encontrar uma igreja católica perto de mim em ${this.cidadeNome}?`,
-        resposta: `Listamos todas as paróquias e comunidades católicas de ${local} com endereço e horários atualizados pela comunidade.`,
-      },
+      { pergunta: `Que horas é a missa hoje em ${this.cidadeNome}?`, resposta: `Consulte nesta página os horários de missa das ${this.igrejas.length} paróquia(s) de ${local}, organizados por dia da semana.` },
+      { pergunta: `Tem missa de domingo em ${this.cidadeNome}?`, resposta: `Sim. Diversas paróquias de ${local} celebram missas aos domingos. Veja a lista e os horários abaixo.` },
+      { pergunta: `Como encontrar uma igreja católica perto de mim em ${this.cidadeNome}?`, resposta: `Listamos todas as paróquias e comunidades católicas de ${local} com endereço e horários atualizados pela comunidade.` },
     ];
   }
 
@@ -392,13 +527,5 @@ export class CityComponent implements OnInit, OnDestroy {
         acceptedAnswer: { "@type": "Answer", text: f.resposta },
       })),
     });
-  }
-
-  getSocialIcon(url: string): string {
-    if (url.includes("facebook.com")) return "pi pi-facebook";
-    if (url.includes("instagram.com")) return "pi pi-instagram";
-    if (url.includes("youtube.com")) return "pi pi-youtube";
-    if (url.includes("tiktok.com")) return "pi pi-tiktok";
-    return "pi pi-globe";
   }
 }

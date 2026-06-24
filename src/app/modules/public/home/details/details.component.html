@@ -66,9 +66,12 @@
           <button (click)="compartilhar()" class="action-btn">
             <i class="pi pi-share-alt"></i> Compartilhar
           </button>
-          <button (click)="toggleFavorita()" class="action-btn" [class.action-btn--favorita]="jaFavorita()">
-            <i class="pi" [ngClass]="jaFavorita() ? 'pi-star-fill' : 'pi-star'"></i>
-            {{ jaFavorita() ? 'Minha paróquia' : 'Salvar' }}
+          <button (click)="toggleFavorita()" class="action-btn action-btn--fav"
+                  [class.action-btn--fav-ativo]="isFavorita"
+                  [attr.aria-pressed]="isFavorita"
+                  [attr.aria-label]="isFavorita ? 'Remover dos favoritos' : 'Adicionar aos favoritos'">
+            <i class="pi" [ngClass]="isFavorita ? 'pi-heart-fill' : 'pi-heart'"></i>
+            {{ isFavorita ? 'Favoritada' : 'Favoritar' }}
           </button>
         </div>
       </div>
