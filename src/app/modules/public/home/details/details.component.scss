@@ -47,10 +47,18 @@
     color: #bc5d10;
   }
 
-  &--favorita {
+  &--fav {
+    background: #f9fafb;
+    border-color: #e5e7eb;
+    color: #374151;
+  }
+
+  &--fav-ativo {
     background: #fff4ed;
-    border-color: #f3b989;
+    border-color: #bc5d10;
     color: #bc5d10;
+
+    .pi { color: #e0245e; }
   }
 }
 

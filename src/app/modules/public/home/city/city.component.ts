@@ -9,6 +9,7 @@ import { SeoService } from "../../../../core/services/seo.service";
 import { ConfidenceBadgeComponent } from "../../../../shared/components/confidence-badge/confidence-badge.component";
 import { CountdownChipComponent } from "../../../../shared/components/countdown-chip/countdown-chip.component";
 import { DistanceChipComponent } from "../../../../shared/components/distance-chip/distance-chip.component";
+import { ChurchPlaceholderComponent } from "../../../../shared/components/church-placeholder/church-placeholder.component";
 import { getNextOccurrenceMinutes, formatMassTime, getCountdownLabel } from "../../../../shared/utils/mass-time.utils";
 import { AnalyticsService } from "../../../../core/services/analytics.service";
 import { CityMapComponent, MapChurch } from "../../../../shared/components/city-map/city-map.component";
@@ -18,6 +19,19 @@ const PERIODOS: Record<string, { de: number; ate: number; label: string }> = {
   tarde: { de: 12 * 60, ate: 17 * 60 + 59, label: "Tarde" },
   noite: { de: 18 * 60, ate: 23 * 60 + 59, label: "Noite" },
 };
+
+// Cidades populares para internal linking (SEO) no rodapé da página de cidade
+const CIDADES_POPULARES: { nome: string; uf: string; slug: string }[] = [
+  { nome: 'São Paulo',           uf: 'SP', slug: 'sao-paulo' },
+  { nome: 'Campinas',            uf: 'SP', slug: 'campinas' },
+  { nome: 'São José dos Campos', uf: 'SP', slug: 'sao-jose-dos-campos' },
+  { nome: 'Ribeirão Preto',      uf: 'SP', slug: 'ribeirao-preto' },
+  { nome: 'Santos',              uf: 'SP', slug: 'santos' },
+  { nome: 'Sorocaba',            uf: 'SP', slug: 'sorocaba' },
+  { nome: 'Curitiba',            uf: 'PR', slug: 'curitiba' },
+  { nome: 'Brasília',            uf: 'DF', slug: 'brasilia' },
+  { nome: 'Belo Horizonte',      uf: 'MG', slug: 'belo-horizonte' },
+];
 
 const DIAS: { label: string; slug: string; idx: number }[] = [
   { label: "Dom", slug: "domingo", idx: 0 },
@@ -39,6 +53,7 @@ const DIAS: { label: string; slug: string; idx: number }[] = [
     SkeletonModule,
     ConfidenceBadgeComponent,
     CityMapComponent,
+    ChurchPlaceholderComponent,
   ],
   templateUrl: "./city.component.html",
   styleUrl: "./city.component.scss",
@@ -60,7 +75,7 @@ export class CityComponent implements OnInit, OnDestroy {
   faqs: { pergunta: string; resposta: string }[] = [];
 
   imagensQuebradas = new Set<number>();
-  paroquiaFavoritaId: number | null = null;
+  favoritasIds: number[] = [];
 
   // Filtros
   diaAtivo: number | null = null;
@@ -93,6 +108,13 @@ export class CityComponent implements OnInit, OnDestroy {
 
   readonly dias = DIAS;
   readonly periodos = Object.entries(PERIODOS).map(([slug, v]) => ({ slug, label: v.label }));
+
+  /** Cidades populares para links internos (exclui a cidade atual) — SEO/navegação */
+  get cidadesRelacionadas(): { nome: string; uf: string; slug: string }[] {
+    return CIDADES_POPULARES
+      .filter((c) => !(c.slug === this.cidade && c.uf.toLowerCase() === this.uf?.toLowerCase()))
+      .slice(0, 8);
+  }
 
   ngOnInit(): void {
     this._route.params.subscribe((params) => {
@@ -131,9 +153,14 @@ export class CityComponent implements OnInit, OnDestroy {
 
         if (this.igrejas.length === 0) this.naoEncontrado = true;
 
+        const ufUpper = this.uf?.toUpperCase();
+        const totalIgrejas = this.igrejas.length;
+        const descFallback = totalIgrejas
+          ? `Veja horários de missa de ${totalIgrejas} ${totalIgrejas === 1 ? 'paróquia' : 'paróquias'} em ${this.cidadeNome}/${ufUpper}. Encontre a missa mais próxima por dia, horário e bairro no BuscaMissa.`
+          : `Horários de missa em ${this.cidadeNome}/${ufUpper}. Encontre missas perto de você no BuscaMissa.`;
         this._seo.update({
-          title: seo?.title ?? `Missas em ${this.cidadeNome}/${this.uf?.toUpperCase()} | BuscaMissa`,
-          description: seo?.description ?? `Horários de missa em ${this.cidadeNome}/${this.uf?.toUpperCase()}.`,
+          title: seo?.title ?? `Missas em ${this.cidadeNome}/${ufUpper} — Horários atualizados | BuscaMissa`,
+          description: seo?.description ?? descFallback,
           canonical: seo?.canonicalUrl,
         });
 
@@ -393,33 +420,42 @@ export class CityComponent implements OnInit, OnDestroy {
 
   private _loadFavorita(): void {
     try {
-      const raw = localStorage.getItem('buscamissa_favorita');
-      if (raw) this.paroquiaFavoritaId = JSON.parse(raw)?.id ?? null;
-    } catch { }
+      const raw = localStorage.getItem('buscamissa_favoritas');
+      const arr = raw ? JSON.parse(raw) : [];
+      this.favoritasIds = Array.isArray(arr) ? arr.map((f: any) => f.id) : [];
+    } catch { this.favoritasIds = []; }
   }
 
   ehFavorita(ig: any): boolean {
-    return this.paroquiaFavoritaId === ig.id;
+    return this.favoritasIds.includes(ig.id);
   }
 
   toggleFavoritar(ig: any, event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
+
+    let favoritas: any[] = [];
+    try { favoritas = JSON.parse(localStorage.getItem('buscamissa_favoritas') || '[]'); } catch { }
+    if (!Array.isArray(favoritas)) favoritas = [];
+
     if (this.ehFavorita(ig)) {
-      localStorage.removeItem('buscamissa_favorita');
-      this.paroquiaFavoritaId = null;
+      favoritas = favoritas.filter((f) => f.id !== ig.id);
+      this.favoritasIds = this.favoritasIds.filter((id) => id !== ig.id);
     } else {
-      const data = {
+      const pm = ig.proximaMissa ?? (ig.missas && ig.missas[0]) ?? null;
+      favoritas.push({
         id: ig.id,
         nome: ig.nome,
-        slug: ig.slug,
+        uf: this.uf?.toLowerCase(),
         cidadeSlug: this.cidade,
-        uf: this.uf,
-      };
-      localStorage.setItem('buscamissa_favorita', JSON.stringify(data));
-      this.paroquiaFavoritaId = ig.id;
+        slug: ig.slug,
+        diaSemana: pm?.diaSemana,
+        horario: pm?.horario,
+      });
+      this.favoritasIds = [...this.favoritasIds, ig.id];
       this._analytics.favoriteParishSaved(ig.nome);
     }
+    localStorage.setItem('buscamissa_favoritas', JSON.stringify(favoritas));
   }
 
   // ── Compartilhar ──────────────────────────────────────────────────────────

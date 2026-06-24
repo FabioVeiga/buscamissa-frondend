@@ -4,14 +4,11 @@ html {
 }
 
 body {
-  font-family: 'Lato', sans-serif;
+  font-family: 'Poppins', 'Lato', sans-serif;
   color: var(--text-color);
-  background-image: linear-gradient(to top, #FFA500, #FF69B4);
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-attachment: fixed;
+  background: #f8f9fb;
   margin: 0;
-  padding: 3px;
+  padding: 0;
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;

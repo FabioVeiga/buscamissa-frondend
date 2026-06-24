@@ -112,7 +112,9 @@
             <p-skeleton width="2.5rem" height="1rem" borderRadius="4px" styleClass="mt-1"></p-skeleton>
           </div>
           <div class="city-card__img-wrap">
-            <p-skeleton width="5rem" height="5rem" borderRadius="12px"></p-skeleton>
+            <div class="city-card__img">
+              <p-skeleton width="100%" height="100%" borderRadius="0"></p-skeleton>
+            </div>
           </div>
           <div class="city-card__body">
             <p-skeleton width="70%" height="1.125rem" borderRadius="4px"></p-skeleton>
@@ -150,7 +152,14 @@
             [routerLink]="linkParoquia(igreja)" class="city-card__img-wrap" (click)="onChurchClick(igreja)">
             <img [src]="igreja.imagemUrl" [alt]="igreja.nome"
               (error)="imagensQuebradas.add(igreja.id)"
+              loading="lazy"
               class="city-card__img">
+          </a>
+
+          <!-- Fallback quando não há imagem ou ela falhou -->
+          <a *ngIf="!igreja.imagemUrl || imagensQuebradas.has(igreja.id)"
+            [routerLink]="linkParoquia(igreja)" class="city-card__img-wrap" (click)="onChurchClick(igreja)">
+            <app-church-placeholder class="city-card__img" [showLabel]="false" />
           </a>
 
           <!-- Corpo do card -->
@@ -222,6 +231,19 @@
             <p class="city-faq__resposta">{{ f.resposta }}</p>
           </details>
         </section>
+
+        <!-- Links internos: missas em outras cidades (SEO + navegação) -->
+        <nav class="city-outras" *ngIf="!isLoading">
+          <h2 class="city-outras__titulo">Missas em outras cidades</h2>
+          <div class="city-outras__lista">
+            <a *ngFor="let c of cidadesRelacionadas"
+               [routerLink]="['/missas', c.uf.toLowerCase(), c.slug]"
+               class="city-outras__link">
+              Missas em {{ c.nome }}/{{ c.uf }}
+            </a>
+          </div>
+          <a routerLink="/cidades" class="city-outras__todas">Ver todas as cidades →</a>
+        </nav>
 
       </ng-container>
     </div>

@@ -11,4 +11,14 @@ import { RouterModule } from '@angular/router';
 })
 export class HeaderHomeComponent {
   menuAberto = false;
+
+  get favoritosCount(): number {
+    try {
+      const raw = localStorage.getItem('buscamissa_favoritas');
+      const arr = JSON.parse(raw || '[]');
+      return Array.isArray(arr) ? arr.length : 0;
+    } catch {
+      return 0;
+    }
+  }
 }

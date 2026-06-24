@@ -391,20 +391,25 @@ $primary-light: #fff4ed;
     white-space: nowrap;
   }
 
-  // Imagem
+  // Imagem (thumbnail menor no mobile, maior a partir de 480px)
   &__img-wrap {
-    display: none;
+    display: block;
     flex-shrink: 0;
-
-    @media (min-width: 480px) { display: block; }
   }
 
   &__img {
-    width: 5rem;
-    height: 5rem;
+    width: 3.25rem;
+    height: 3.25rem;
     object-fit: cover;
-    border-radius: 0.75rem;
+    border-radius: 0.625rem;
     border: 1px solid #f0f0f0;
+    overflow: hidden;
+
+    @media (min-width: 480px) {
+      width: 5rem;
+      height: 5rem;
+      border-radius: 0.75rem;
+    }
   }
 
   // Corpo
@@ -734,5 +739,57 @@ $primary-light: #fff4ed;
     color: #6b7280;
     margin: 0.5rem 0 0;
     line-height: 1.6;
+  }
+}
+
+// ── Links internos: outras cidades ──────────────────────────────────────────
+.city-outras {
+  display: block;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #f0f0f0;
+
+  &__titulo {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 0.875rem;
+  }
+
+  &__lista {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  &__link {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 0.875rem;
+    border-radius: 999px;
+    border: 1.5px solid #e5e7eb;
+    background: #f9fafb;
+    color: #4b5563;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.15s;
+
+    &:hover {
+      border-color: #bc5d10;
+      color: #bc5d10;
+      background: #fff4ed;
+    }
+  }
+
+  &__todas {
+    display: inline-block;
+    margin-top: 0.875rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #bc5d10;
+    text-decoration: none;
+
+    &:hover { text-decoration: underline; }
   }
 }

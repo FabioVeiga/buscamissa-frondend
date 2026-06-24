@@ -1,54 +1,22 @@
-// ── Layout principal ──────────────────────────────────────────────────────────
-:host {
-  display: block;
+// ── Tokens ────────────────────────────────────────────────────────────────────
+$laranja: #bc5d10;
+$laranja-hover: #a34f0c;
+$borda: #e5e7eb;
+$texto: #111827;
+$texto-2: #6b7280;
+
+:host { display: block; }
+
+// ── Container central ─────────────────────────────────────────────────────────
+.page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 2.5rem;
 }
 
-:host >>> .hero-ctas.mx-1,
-:host >>> .minha-paroquia.mx-1,
-:host >>> .proximas-section.mx-1,
-:host >>> .cidades-section.mx-1,
-:host >>> .confirmar-banner.mx-1 {
-  max-width: 680px;
-  margin-left: auto;
-  margin-right: auto;
-  padding: 0 1rem;
-}
-
-// ── Chips de ordenação ────────────────────────────────────────────────────────
-.sort-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.3rem;
-  padding: 0.3rem 0.75rem;
-  border-radius: 999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  border: 1.5px solid #e5e7eb;
-  background: #fff;
-  color: #6b7280;
-  cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, color 0.15s;
-
-  &:hover { border-color: #bc5d10; color: #bc5d10; }
-
-  &--ativo {
-    background: #bc5d10;
-    border-color: #bc5d10;
-    color: #fff;
-    &:hover { background: #a34f0c; color: #fff; }
-  }
-}
-
-// ── Hero CTAs (abaixo da imagem) ──────────────────────────────────────────────
-.hero-ctas {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: center;
-  flex-wrap: wrap;
-  padding: 1.5rem 0;
-}
-
-.hero-cta {
+// ── Botões reutilizáveis ──────────────────────────────────────────────────────
+.btn-primary,
+.btn-secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -61,402 +29,608 @@
   text-decoration: none;
   transition: all 0.15s;
   border: none;
+  white-space: nowrap;
+}
+.btn-primary {
+  background: $laranja;
+  color: #fff;
+  &:hover { background: $laranja-hover; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(188,93,16,.2); }
+}
+.btn-secondary {
+  background: #fff;
+  color: $laranja;
+  border: 1.5px solid #f3b989;
+  &:hover { background: #fff4ed; }
+}
 
-  &--primary {
-    background: #bc5d10;
-    color: #fff;
-    width: 100%;
+// ── Cabeçalho de seção ────────────────────────────────────────────────────────
+.sec-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
 
-    &:hover { background: #a34f0c; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(188, 93, 16, 0.2); }
+  &__titulo {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: $texto;
+    margin: 0;
   }
 
-  &--secondary {
-    background: #fff4ed;
-    color: #bc5d10;
-    border: 1.5px solid #f3b989;
-    &:hover { background: #ffe8d6; transform: translateY(-1px); }
+  &__link {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: $laranja;
+    text-decoration: none;
+    white-space: nowrap;
+    &:hover { text-decoration: underline; }
   }
 }
 
-// ── Minhas Paróquias ──────────────────────────────────────────────────────────
-.minhas-paroquias {
-  margin-top: 1.5rem;
+// ── HERO V2 ───────────────────────────────────────────────────────────────────
+.hero-v2 {
+  position: relative;
+  background: url('/assets/banner/hero-igreja.webp') no-repeat center center;
+  background-size: cover;
+  padding: 2.5rem 1.25rem 2rem;
+  overflow: hidden;
 
-  &__header {
-    padding: 0 0.5rem 0.75rem;
+  &__overlay {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(105deg, rgba(40,25,10,.82) 0%, rgba(40,25,10,.55) 55%, rgba(40,25,10,.3) 100%);
+    z-index: 0;
+  }
+
+  &__inner {
+    position: relative;
+    z-index: 1;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  &__badge {
+    display: inline-block;
+    background: rgba(255,255,255,.92);
+    color: $laranja;
+    font-size: 0.78rem;
+    font-weight: 700;
+    padding: 0.3rem 0.8rem;
+    border-radius: 999px;
+    margin-bottom: 0.85rem;
   }
 
   &__titulo {
-    font-size: 1rem;
+    font-size: clamp(1.75rem, 4vw, 2.5rem);
+    font-weight: 800;
+    line-height: 1.15;
+    color: #fff;
+    margin: 0 0 0.6rem;
+  }
+
+  &__hoje { color: #ffb56b; }
+
+  &__subtitulo {
+    font-size: 0.95rem;
+    color: rgba(255,255,255,.9);
+    margin: 0 0 1rem;
+  }
+
+  &__provas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+  }
+
+  &__prova {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(255,255,255,.15);
+    border: 1px solid rgba(255,255,255,.25);
+    color: #fff;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    backdrop-filter: blur(4px);
+
+    .pi { font-size: 0.85rem; color: #ffce9e; }
+  }
+
+  @media (max-width: 640px) {
+    padding: 1.75rem 1rem 1.5rem;
+  }
+}
+
+// ── Barra de busca embutida ───────────────────────────────────────────────────
+.hero-search {
+  background: #fff;
+  border-radius: 1rem;
+  padding: 0.875rem;
+  box-shadow: 0 10px 30px rgba(0,0,0,.18);
+
+  &__form {
+    display: flex;
+    align-items: stretch;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+
+  &__field {
+    flex: 1 1 150px;
+    min-width: 130px;
+  }
+
+  &__btn {
+    flex: 0 0 auto;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0 1.5rem;
+    min-height: 3.25rem;
+    background: $laranja;
+    color: #fff;
+    border: none;
+    border-radius: 0.6rem;
+    font-size: 0.95rem;
     font-weight: 700;
-    color: #111827;
+    cursor: pointer;
+    transition: background 0.15s;
+
+    &:hover:not(:disabled) { background: $laranja-hover; }
+    &:disabled { opacity: 0.6; cursor: not-allowed; }
+  }
+
+  @media (max-width: 768px) {
+    &__form { flex-direction: column; }
+    &__field { min-width: 0; }
+    &__btn { min-height: 3rem; width: 100%; }
+  }
+}
+
+// ── Chips de filtro rápido ────────────────────────────────────────────────────
+.hero-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.hero-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: 1.5px solid rgba(255,255,255,.4);
+  background: rgba(255,255,255,.12);
+  color: #fff;
+  text-decoration: none;
+  transition: all 0.15s;
+  backdrop-filter: blur(4px);
+
+  &:hover:not(:disabled) { background: rgba(255,255,255,.25); }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  &--ativo {
+    background: #fff;
+    color: $laranja;
+    border-color: #fff;
+  }
+
+  &--geo {
+    background: #fff;
+    color: $laranja;
+    border-color: #fff;
+  }
+
+  &--fav {
+    .pi { color: #ff6b81; }
+  }
+}
+
+// ── PÁGINA DE RESULTADOS ──────────────────────────────────────────────────────
+.resultados-header {
+  margin-bottom: 1.25rem;
+
+  &__voltar {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: $laranja;
+    text-decoration: none;
+    margin-bottom: 0.4rem;
+    &:hover { text-decoration: underline; }
+  }
+
+  &__titulo {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: $texto;
     margin: 0;
+  }
+}
+
+.resultados-feedback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+  padding: 2.5rem 1rem;
+  color: $texto-2;
+  font-size: 0.95rem;
+
+  .pi { font-size: 1.5rem; color: $laranja; }
+
+  &--vazio {
+    background: #fff;
+    border: 1px dashed $borda;
+    border-radius: 1rem;
+
+    .pi { color: #d1d5db; font-size: 2rem; }
+  }
+
+  &__titulo { font-size: 1rem; font-weight: 700; color: #374151; margin: 0.25rem 0 0; }
+  &__sub { font-size: 0.85rem; color: $texto-2; margin: 0 0 0.5rem; }
+}
+
+// ── ESTATÍSTICAS ──────────────────────────────────────────────────────────────
+.stats-strip {
+  background: #fff;
+  border: 1px solid $borda;
+  border-radius: 1rem;
+  padding: 1.5rem 1.25rem;
+  margin-bottom: 2rem;
+  text-align: center;
+
+  &__titulo {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: $texto;
+    margin: 0 0 1.25rem;
   }
 
   &__grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(4, 1fr);
     gap: 1rem;
+
+    @media (max-width: 600px) { grid-template-columns: repeat(2, 1fr); }
   }
 
+  &__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.15rem;
+  }
+
+  &__num {
+    font-size: 1.65rem;
+    font-weight: 800;
+    line-height: 1;
+
+    &--green  { color: #16a34a; }
+    &--orange { color: $laranja; }
+    &--blue   { color: #2563eb; }
+    &--purple { color: #7c3aed; }
+  }
+
+  &__label {
+    font-size: 0.8rem;
+    color: $texto-2;
+    font-weight: 500;
+  }
+}
+
+// ── MISSAS + MAPA ─────────────────────────────────────────────────────────────
+.missas-mapa {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+  gap: 1.5rem;
+  align-items: start;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.missas-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: 1rem;
+
+  @media (max-width: 1100px) and (min-width: 901px) {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.proximas-loading {
+  display: flex;
+  align-items: center;
+  padding: 2rem 0;
+}
+
+.proximas-vazia {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 2rem 1rem;
+  gap: 0.5rem;
+  background: #fff;
+  border: 1px dashed $borda;
+  border-radius: 1rem;
+
+  &__icon { font-size: 2rem; color: #d1d5db; }
+  &__texto { font-size: 0.9rem; color: $texto-2; margin: 0; }
+  &__link { font-size: 0.875rem; font-weight: 600; color: $laranja; text-decoration: none; &:hover { text-decoration: underline; } }
+}
+
+// ── Card do mapa ──────────────────────────────────────────────────────────────
+.mapa-card {
+  background: #fff;
+  border: 1px solid $borda;
+  border-radius: 1rem;
+  overflow: hidden;
+  position: sticky;
+  top: 5rem;
+
+  &__header {
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid #f1f1f1;
+  }
+
+  &__titulo {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 700;
+    color: $texto;
+    .pi { color: $laranja; }
+  }
+
+  app-city-map { display: block; }
+
+  &__full {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.875rem;
+    border-top: 1px solid #f1f1f1;
+    color: $laranja;
+    font-size: 0.875rem;
+    font-weight: 700;
+    text-decoration: none;
+    &:hover { background: #fff7f0; }
+  }
+}
+
+// ── BLOCO DE CONFIANÇA (4 cards) ──────────────────────────────────────────────
+.trust-cards {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  margin-top: 2.5rem;
+
+  @media (max-width: 800px) { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 460px) { grid-template-columns: 1fr; }
+}
+
+.trust-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  padding: 1.125rem;
+  background: #fff;
+  border: 1px solid $borda;
+  border-radius: 1rem;
+  text-decoration: none;
+  transition: box-shadow 0.15s, transform 0.1s, border-color 0.15s;
+
+  &--link:hover {
+    box-shadow: 0 4px 14px rgba(0,0,0,.06);
+    border-color: #f3b989;
+    transform: translateY(-2px);
+  }
+
+  &__icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    flex-shrink: 0;
+    background: #fff4ed;
+    border-radius: 0.75rem;
+    color: $laranja;
+    font-size: 1.1rem;
+  }
+
+  &__titulo { font-size: 0.9rem; font-weight: 700; color: $texto; margin: 0 0 0.2rem; }
+  &__desc { font-size: 0.78rem; color: $texto-2; line-height: 1.4; margin: 0; }
+}
+
+// ── FAVORITOS ─────────────────────────────────────────────────────────────────
+.favoritos-section { margin-top: 2.5rem; }
+
+.favoritos-vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 2rem 1rem;
+  gap: 0.5rem;
+  background: #fff;
+  border: 1px dashed $borda;
+  border-radius: 1rem;
+
+  &__icon { font-size: 2rem; color: #f3b989; margin-bottom: 0.25rem; }
+  &__titulo { font-size: 1.05rem; font-weight: 700; color: #374151; margin: 0; }
+  &__sub { font-size: 0.85rem; color: $texto-2; max-width: 360px; line-height: 1.5; margin: 0 0 0.5rem; }
+}
+
+.minhas-paroquias {
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+  }
   &__card {
     display: flex;
     flex-direction: column;
     gap: 0.75rem;
     padding: 1.125rem;
-    background: linear-gradient(135deg, #fffbf5 0%, #fff4ed 100%);
-    border: 1.5px solid #f3b989;
+    background: #fff;
+    border: 1px solid $borda;
     border-radius: 0.875rem;
     text-decoration: none;
     transition: box-shadow 0.15s, border-color 0.15s, transform 0.1s;
 
-    &:hover {
-      box-shadow: 0 4px 16px rgba(188, 93, 16, 0.12);
-      border-color: #e8944a;
-      transform: translateY(-2px);
-    }
-
-    &--hot {
-      background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 100%);
-      border-color: #f97316;
-    }
-
-    &--soon {
-      background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
-      border-color: #4ade80;
-    }
+    &:hover { box-shadow: 0 4px 16px rgba(0,0,0,.08); border-color: #f3b989; transform: translateY(-2px); }
+    &--hot { border-left: 4px solid #f97316; }
+    &--soon { border-left: 4px solid #4ade80; }
   }
-
-  &__topo {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.5rem;
-  }
-
-  &__nome {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #1f2937;
-    line-height: 1.3;
-    flex: 1;
-    min-width: 0;
-  }
-
+  &__topo { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.5rem; }
+  &__nome { font-size: 1rem; font-weight: 700; color: #1f2937; line-height: 1.3; flex: 1; min-width: 0; }
   &__remover {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 1.5rem;
-    height: 1.5rem;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #d1d5db;
-    font-size: 0.75rem;
-    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    width: 1.5rem; height: 1.5rem; background: none; border: none; cursor: pointer;
+    color: #d1d5db; font-size: 0.75rem; border-radius: 50%; flex-shrink: 0;
     transition: color 0.15s, background 0.15s;
-    flex-shrink: 0;
-
     &:hover { color: #ef4444; background: #fee2e2; }
   }
+  &__info { display: flex; flex-direction: column; gap: 0.5rem; }
+  &__missa { display: flex; align-items: center; gap: 0.375rem; }
+  &__missa-icone { font-size: 1rem; line-height: 1; flex-shrink: 0; }
+  &__missa-label { font-size: 0.875rem; font-weight: 600; color: $texto; }
+  &__cta { display: inline-block; font-size: 0.8125rem; font-weight: 600; color: $laranja; margin-top: 0.25rem; }
+}
 
-  &__info {
+// ── EXPLORE POR CIDADE ────────────────────────────────────────────────────────
+.cidades-chips {
+  margin-top: 2.5rem;
+
+  &__lista {
     display: flex;
-    flex-direction: column;
+    flex-wrap: wrap;
     gap: 0.5rem;
   }
-
-  &__missa {
-    display: flex;
-    align-items: center;
-    gap: 0.375rem;
-  }
-
-  &__missa-icone {
-    font-size: 1rem;
-    line-height: 1;
-    flex-shrink: 0;
-  }
-
-  &__missa-label {
-    font-size: 0.875rem;
-    font-weight: 600;
-    color: #111827;
-  }
-
-  &__cta {
-    display: inline-block;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    color: #bc5d10;
-    margin-top: 0.25rem;
-  }
 }
 
-// ── Seção Próximas missas perto de você ───────────────────────────────────────
-.proximas-section {
-  margin-top: 1.5rem;
-  padding: 1.25rem 1rem;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 1rem;
-
-  h2 {
-    font-size: 1.1rem !important;
-  }
-
-  .pi {
-    font-size: 1.25rem;
-  }
-}
-
-.proximas-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-}
-
-// ── Banner "Ajude a manter os horários" ───────────────────────────────────────
-.confirmar-banner {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 1.5rem;
-  padding: 1rem 1.25rem;
-  background: #fff9f5;
-  border: 1px solid #f3d5ba;
-  border-radius: 1rem;
-  flex-wrap: wrap;
-
-  &__art {
-    width: 4rem;
-    flex-shrink: 0;
-    svg { width: 100%; height: auto; }
-  }
-
-  &__text { flex: 1; min-width: 12rem; }
-
-  &__btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 0.5rem 1.125rem;
-    border: 1.5px solid #bc5d10;
-    border-radius: 0.5rem;
-    color: #bc5d10;
-    font-size: 0.8125rem;
-    font-weight: 600;
-    text-decoration: none;
-    white-space: nowrap;
-    transition: background 0.15s;
-
-    &:hover { background: #fff4ed; }
-  }
-}
-
-// ── Badge de geolocalização ───────────────────────────────────────────────────
-.geo-badge {
+.cidade-chip {
   display: inline-flex;
   align-items: center;
-  gap: 0.3rem;
-  padding: 0.2rem 0.6rem;
+  padding: 0.5rem 1rem;
+  background: #fff;
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 500;
   border-radius: 999px;
-  font-size: 0.7rem;
-  font-weight: 600;
+  border: 1px solid $borda;
+  text-decoration: none;
+  transition: all 0.15s;
 
-  &--loading { background: #f3f4f6; color: #9ca3af; }
-  &--found   { background: #dcfce7; color: #16a34a; }
+  &:hover { background: #fff4ed; border-color: #f3b989; color: $laranja; }
+  &--skip { display: none; }
 }
 
-// ── Card de cidade em destaque (geoloc) ───────────────────────────────────────
 .cidade-destaque {
   display: flex;
   align-items: center;
   gap: 0.75rem;
   padding: 0.875rem 1rem;
-  background: linear-gradient(135deg, #fff9f5 0%, #fff4ed 100%);
-  border: 1.5px solid #f3b989;
+  background: #fff;
+  border: 1px solid #f3b989;
   border-radius: 0.875rem;
   text-decoration: none;
+  margin-bottom: 1rem;
   transition: background 0.15s, border-color 0.15s;
 
-  &:hover { background: #fff4ed; border-color: #bc5d10; }
-
-  &__icon {
-    width: 2.5rem;
-    height: 2.5rem;
-    background: #bc5d10;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    color: #fff;
-    font-size: 1rem;
-  }
-
-  &__info {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-width: 0;
-  }
-
-  &__label {
-    font-size: 0.68rem;
-    font-weight: 600;
-    color: #bc5d10;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-  }
-
-  &__nome {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #1f2937;
-    line-height: 1.2;
-  }
-
-  &__estado {
-    font-size: 0.75rem;
-    font-weight: 700;
-    color: #9ca3af;
-    flex-shrink: 0;
-  }
-
-  &__arrow {
-    color: #bc5d10;
-    flex-shrink: 0;
-    font-size: 0.875rem;
-  }
+  &:hover { background: #fff4ed; border-color: $laranja; }
+  &__icon { width: 2.5rem; height: 2.5rem; background: $laranja; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #fff; font-size: 1rem; }
+  &__info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+  &__label { font-size: 0.68rem; font-weight: 600; color: $laranja; text-transform: uppercase; letter-spacing: 0.04em; }
+  &__nome { font-size: 1rem; font-weight: 700; color: #1f2937; line-height: 1.2; }
+  &__estado { font-size: 0.75rem; font-weight: 700; color: #9ca3af; flex-shrink: 0; }
+  &__arrow { color: $laranja; flex-shrink: 0; font-size: 0.875rem; }
 }
 
-// Quando a cidade detectada já aparece no destaque, esconde o 1º card do grid
-.cidade-card--skip { display: none; }
-
-// ── Seção Missas por cidade ────────────────────────────────────────────────────
-.cidades-section {
-  margin-top: 1.5rem;
-  padding: 1.25rem 1rem;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 1rem;
-
-  h2 {
-    font-size: 1.1rem !important;
-  }
-
-  .pi {
-    font-size: 1.25rem;
-  }
-}
-
-.cidades-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.75rem;
-
-  @media (min-width: 480px) { grid-template-columns: repeat(3, 1fr); gap: 0.875rem; }
-  @media (min-width: 700px) { grid-template-columns: repeat(3, 1fr); }
-}
-
-.cidade-card {
+// ── CTA FINAL ─────────────────────────────────────────────────────────────────
+.cadastrar-cta {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  padding: 1rem 0.75rem;
-  border: 1.5px solid #e5e7eb;
-  border-radius: 0.75rem;
+  gap: 1.25rem;
+  margin-top: 2.5rem;
+  padding: 1.5rem;
+  background: #fff4ed;
+  border: 1px solid #f3b989;
+  border-radius: 1rem;
+  flex-wrap: wrap;
+
+  &__art { width: 4rem; flex-shrink: 0; svg { width: 100%; height: auto; } }
+  &__text { flex: 1; min-width: 200px; }
+  &__titulo { font-size: 1.05rem; font-weight: 700; color: $texto; margin: 0 0 0.25rem; }
+  &__desc { font-size: 0.85rem; color: $texto-2; margin: 0; line-height: 1.5; }
+  &__btn { flex-shrink: 0; }
+
+  @media (max-width: 480px) { &__btn { width: 100%; } }
+}
+
+// ── Banner confirmar ──────────────────────────────────────────────────────────
+.confirmar-banner {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-top: 1.25rem;
+  padding: 1rem 1.25rem;
   background: #fff;
-  text-decoration: none;
-  transition: all 0.15s;
+  border: 1px solid $borda;
+  border-radius: 1rem;
+  flex-wrap: wrap;
 
-  &:hover {
-    background: #fff4ed;
-    border-color: #f3b989;
-    transform: translateY(-2px);
-    box-shadow: 0 2px 8px rgba(243, 185, 137, 0.1);
-  }
-
-  &__icon {
-    width: 2.5rem;
-    height: 2.5rem;
-    flex-shrink: 0;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #fff4ed;
-    border-radius: 0.5rem;
-    color: #bc5d10;
-
-    svg { width: 1.5rem; height: 1.5rem; }
-  }
-
-  &__info {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    min-width: 0;
-    text-align: center;
-  }
-
-  &__nome {
-    font-size: 0.9375rem;
-    font-weight: 700;
-    color: #111827;
-    line-height: 1.2;
-  }
-
-  &__uf {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: #9ca3af;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
+  &__art { width: 3.5rem; flex-shrink: 0; svg { width: 100%; height: auto; } }
+  &__text { flex: 1; min-width: 12rem; }
+  &__btn {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.5rem 1.125rem; border: 1.5px solid $laranja; border-radius: 0.5rem;
+    color: $laranja; font-size: 0.8125rem; font-weight: 600; text-decoration: none; white-space: nowrap;
+    transition: background 0.15s;
+    &:hover { background: #fff4ed; }
   }
 }
 
-.text-lg {
-    font-size: 1.5rem;
+// ── Chips de ordenação ────────────────────────────────────────────────────────
+.sort-chip {
+  display: inline-flex; align-items: center; gap: 0.3rem;
+  padding: 0.3rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600;
+  border: 1.5px solid $borda; background: #fff; color: $texto-2; cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  &:hover { border-color: $laranja; color: $laranja; }
+  &--ativo { background: $laranja; border-color: $laranja; color: #fff; &:hover { background: $laranja-hover; color: #fff; } }
 }
 
-.church-name-link {
-  cursor: pointer;
-
-  &:hover {
-    text-decoration: underline;
-  }
-}
-
+// ── Resultados (dataview) ─────────────────────────────────────────────────────
+.church-name-link { cursor: pointer; &:hover { text-decoration: underline; } }
 .image-container {
-  width: 150px;
-  height: 200px;
-  border-radius: 8px;
-  border: 1px solid #ccc;
-  margin: 0 auto;
-  background-size: cover;
-  background-position: center center;
-  background-repeat: no-repeat;
+  width: 150px; height: 200px; border-radius: 8px; border: 1px solid #ccc; margin: 0 auto;
+  background-size: cover; background-position: center center; background-repeat: no-repeat;
 }
-
-/* Ícones das Redes Sociais */
-.social-icons {
-    display: flex;
-    justify-content: center;
-    gap: 10px;
-    margin-top: 8px;
-  }
-  
-  .icon-link {
-    font-size: 1.2rem;
-    color: #555;
-    transition: color 0.3s;
-  }
-  
-  .icon-link:hover {
-    color: #000;
-  }
-  
+.social-icons { display: flex; justify-content: center; gap: 10px; margin-top: 8px; }
+.icon-link { font-size: 1.2rem; color: #555; transition: color 0.3s; &:hover { color: #000; } }
+.text-lg { font-size: 1.5rem; }

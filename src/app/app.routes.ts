@@ -19,6 +19,18 @@ export const routes: Routes = [
           ),
       },
       {
+        path: "buscar",
+        data: {
+          resultsMode: true,
+          title: 'Resultados da busca | BuscaMissa',
+          description: 'Resultados da busca de missas e igrejas católicas por estado, cidade e bairro.',
+        },
+        loadComponent: () =>
+          import("./modules/public/home/home.component").then(
+            (m) => m.HomeComponent
+          ),
+      },
+      {
         path: "nova",
         data: {
           title: 'Cadastrar Igreja | BuscaMissa',

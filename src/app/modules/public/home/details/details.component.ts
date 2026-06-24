@@ -54,6 +54,9 @@ export class DetailsComponent implements OnInit {
   confirmacaoEnviada = false;
   confirmandoHorarios = false;
 
+  // Favorito
+  isFavorita = false;
+
   ngOnInit(): void {
     this._route.params.subscribe((params) => {
       const uf = params["uf"];
@@ -89,11 +92,17 @@ export class DetailsComponent implements OnInit {
         }
 
         if (igreja.id) this.carregarResumoConfirmacoes(igreja.id);
+        this._loadFavoritaState();
         this._analytics.churchView(igreja.nome, igreja.endereco?.localidade ?? '', igreja.endereco?.uf ?? '');
 
+        const cidadeUf = igreja.endereco?.localidade
+          ? `${igreja.endereco.localidade}${igreja.endereco?.uf ? '/' + igreja.endereco.uf : ''}`
+          : '';
         this._seo.update({
-          title: seo?.title ?? `${igreja.nome} | BuscaMissa`,
-          description: seo?.description ?? `Veja os horários de missa, endereço e contato de ${igreja.nome}. Encontre missas perto de você no BuscaMissa.`,
+          title: seo?.title ?? (cidadeUf
+            ? `${igreja.nome} — Missas em ${cidadeUf} | BuscaMissa`
+            : `${igreja.nome} — Horários de Missa | BuscaMissa`),
+          description: seo?.description ?? `Confira os horários de missa, endereço e contato da ${igreja.nome}${cidadeUf ? ' em ' + cidadeUf : ''}. Encontre missas perto de você no BuscaMissa.`,
           canonical: seo?.canonicalUrl,
         });
         this.aplicarBreadcrumbSchema(igreja);
@@ -101,7 +110,6 @@ export class DetailsComponent implements OnInit {
       },
       error: (error) => {
         this._toast.add({ severity: "error", summary: "Erro", detail: "Erro ao carregar dados da igreja." });
-        console.error(error);
       },
     });
   }
@@ -212,6 +220,48 @@ export class DetailsComponent implements OnInit {
     if (dias < 7) return `há ${dias} dias`;
     if (dias < 30) { const s = Math.floor(dias / 7); return `há ${s} ${s === 1 ? "semana" : "semanas"}`; }
     const m = Math.floor(dias / 30); return `há ${m} ${m === 1 ? "mês" : "meses"}`;
+  }
+
+  // ── Favorito ───────────────────────────────────────────────────────────────
+
+  private _loadFavoritaState(): void {
+    try {
+      const arr = JSON.parse(localStorage.getItem('buscamissa_favoritas') || '[]');
+      this.isFavorita = Array.isArray(arr) && arr.some((f: any) => f.id === this.churchInfo?.id);
+    } catch {
+      this.isFavorita = false;
+    }
+  }
+
+  toggleFavorita(): void {
+    if (!this.churchInfo?.id) return;
+
+    let favoritas: any[] = [];
+    try { favoritas = JSON.parse(localStorage.getItem('buscamissa_favoritas') || '[]'); } catch { }
+    if (!Array.isArray(favoritas)) favoritas = [];
+
+    const id = this.churchInfo.id;
+    if (this.isFavorita) {
+      favoritas = favoritas.filter((f) => f.id !== id);
+      this.isFavorita = false;
+      this._toast.add({ severity: 'info', summary: 'Removida dos favoritos', detail: this.churchInfo.nome });
+    } else {
+      const pm = this.proximaMissa;
+      const end = this.churchInfo.endereco ?? {};
+      favoritas.push({
+        id,
+        nome: this.churchInfo.nome,
+        uf: (end.uf ?? '').toLowerCase(),
+        cidadeSlug: end.cidadeSlug,
+        slug: this.churchInfo.slug,
+        diaSemana: pm?.diaSemana,
+        horario: pm?.horario,
+      });
+      this.isFavorita = true;
+      this._analytics.favoriteParishSaved(this.churchInfo.nome);
+      this._toast.add({ severity: 'success', summary: 'Adicionada aos favoritos!', detail: this.churchInfo.nome });
+    }
+    localStorage.setItem('buscamissa_favoritas', JSON.stringify(favoritas));
   }
 
   // ── Prova social + mapa ────────────────────────────────────────────────────
