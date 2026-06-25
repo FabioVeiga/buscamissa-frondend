@@ -7,6 +7,13 @@
       "runtimeArgs": ["ng", "serve", "--no-open"],
       "port": 4200,
       "autoPort": true
+    },
+    {
+      "name": "buscamissa-staging",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["ng", "serve", "--configuration=staging", "--no-open", "--port", "4201"],
+      "port": 4201,
+      "autoPort": true
     }
   ]
 }

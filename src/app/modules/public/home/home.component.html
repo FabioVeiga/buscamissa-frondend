@@ -361,145 +361,17 @@
     </button>
   </div>
 
-  <p-panel *ngIf="churchInfo && churchInfo.length > 0">
-    <p-dataview #dv [value]="resultsMode ? churchInfoOrdenaFiltrado : churchInfoOrdenada" [rows]="pageSize">
-      <ng-template #list let-church>
-        <div class="grid grid-cols-12 gap-4 grid-nogutter">
-          <div class="col-span-12" *ngFor="let church of church; let first = first">
-            <div class="flex flex-col sm:flex-row sm:items-center p-6 gap-4"
-              [ngClass]="{ 'border-t border-surface-200 dark:border-surface-700': !first }">
-              <div class="bg-surface-50 flex justify-center items-center rounded p-4">
-                <div class="relative mx-auto text-center">
-                  <div class="image-container"
-                    [style.background-image]="'url(\'' + (church.imagemUrl ?? '/assets/church/naodisponivel.png') + '\')'"
-                    role="img" [attr.aria-label]="church.nome"></div>
-
-                  <div *ngIf="church.redesSociais?.length" class="social-icons flex justify-center mt-2">
-                    <a *ngFor="let rede of church.redesSociais" [href]="rede.url" target="_blank" class="icon-link mr-2 last:mr-0">
-                      <i [ngClass]="getSocialIcon(rede.url)"></i>
-                    </a>
-                  </div>
-
-                  <div class="flex justify-center mt-4">
-                    <p-inputgroup>
-                      <button pButton icon="pi pi-pencil" size="small" label="Editar"
-                        class="p-button-sm p-button-rounded p-button-outlined p-button-text text-sm"
-                        style="color: #2c3e50; border-color: #bdc3c7" (click)="editChurch(church)"></button>
-                      <button pButton icon="pi pi-exclamation-circle" size="small" label="Denunciar"
-                        class="p-button-sm p-button-rounded p-button-outlined p-button-text text-sm"
-                        style="color: #2c3e50; border-color: #bdc3c7" (click)="abrirModalDenuncia()"></button>
-                    </p-inputgroup>
-                  </div>
-
-                  <app-modal [visible]="isModalVisible" (visibleChange)="isModalVisible = $event"
-                    [header]="modalHeader" (onHide)="fecharModal()" (onShow)="onModalShow()" styleClass="w-full md:w-1/4">
-                    <form [formGroup]="reportForm" (ngSubmit)="reportChurch(church)">
-                      <div class="mb-4">
-                        <label for="titulo" class="flex text-gray-700 text-sm font-bold mb-2">Título</label>
-                        <input type="text" id="titulo" formControlName="titulo"
-                          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                          placeholder="Título da denúncia" />
-                        <div *ngIf="reportForm.get('titulo')?.invalid && (reportForm.get('titulo')?.dirty || reportForm.get('titulo')?.touched)"
-                          class="text-red-500 text-xs italic mt-1">Título é obrigatório.</div>
-                      </div>
-                      <div class="mb-4">
-                        <label for="descricao" class="flex text-gray-700 text-sm font-bold mb-2">Descrição</label>
-                        <textarea id="descricao" formControlName="descricao" rows="3"
-                          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                          placeholder="Descreva a denúncia"></textarea>
-                        <div *ngIf="reportForm.get('descricao')?.invalid && (reportForm.get('descricao')?.dirty || reportForm.get('descricao')?.touched)"
-                          class="text-red-500 text-xs italic mt-1">Descrição é obrigatória.</div>
-                      </div>
-                      <div class="mb-4">
-                        <label for="nomeDenunciador" class="flex text-gray-700 text-sm font-bold mb-2">Seu Nome</label>
-                        <input type="text" id="nomeDenunciador" formControlName="nomeDenunciador"
-                          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                          placeholder="Seu nome" />
-                        <div *ngIf="reportForm.get('nomeDenunciador')?.invalid && (reportForm.get('nomeDenunciador')?.dirty || reportForm.get('nomeDenunciador')?.touched)"
-                          class="text-red-500 text-xs italic mt-1">Seu nome é obrigatório.</div>
-                      </div>
-                      <div class="mb-4">
-                        <label for="emailDenunciador" class="flex text-gray-700 text-sm font-bold mb-2">Seu Email</label>
-                        <input type="email" id="emailDenunciador" formControlName="emailDenunciador"
-                          class="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                          placeholder="seu@email.com" />
-                        <div *ngIf="reportForm.get('emailDenunciador')?.invalid && (reportForm.get('emailDenunciador')?.dirty || reportForm.get('emailDenunciador')?.touched)"
-                          class="text-red-500 text-xs italic mt-1">
-                          <div *ngIf="reportForm.get('emailDenunciador')?.errors?.['required']">Email é obrigatório.</div>
-                          <div *ngIf="reportForm.get('emailDenunciador')?.errors?.['email']">Email inválido.</div>
-                        </div>
-                      </div>
-                      <div class="flex items-center justify-end mt-6">
-                        <button type="button" (click)="isModalVisible = false"
-                          class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded mr-2 focus:outline-none focus:shadow-outline">Cancelar</button>
-                        <button type="submit" [disabled]="reportForm.invalid"
-                          class="bg-red-500 hover:bg-red-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50 disabled:cursor-not-allowed">Denunciar</button>
-                      </div>
-                    </form>
-                  </app-modal>
-                </div>
-              </div>
-
-              <div class="flex flex-col md:flex-row justify-between md:items-center flex-1 gap-6">
-                <div class="flex flex-col md:flex-row justify-between items-start gap-2">
-                  <div>
-                    <div class="text-lg font-bold text-surface-900 dark:text-surface-0">
-                      <h2 [routerLink]="linkParoquia(church)" class="church-name-link">{{ church.nome }}</h2>
-                      <p class="font-medium text-surface-700 dark:text-surface-200">{{ church.paroco }}</p>
-                    </div>
-                    <div class="font-small text-surface-900 dark:text-surface-0 mt-2">
-                      {{ church.endereco.logradouro }},
-                      {{ church.endereco.numero === 0 ? "S/N" : church.endereco.numero }},
-                      {{ church.endereco.bairro }} - {{ church.endereco.localidade }}/{{ church.endereco.uf }}
-                      <p>{{ church.endereco.complemento }}</p>
-                    </div>
-                    <p *ngIf="church?.contato?.telefone || church?.contato?.telefoneWhatsApp" class="text-gray-700 mb-2">
-                      <strong>Telefone:</strong> ({{ church?.contato?.ddd }}) {{ church?.contato?.telefone }}
-                      <ng-container *ngIf="church?.contato?.telefoneWhatsApp">
-                        / <strong>WhatsApp:</strong> ({{ church?.contato?.dddWhatsApp }}) {{ church?.contato?.telefoneWhatsApp }}
-                      </ng-container>
-                      <ng-container *ngIf="church?.contato?.emailContato">
-                        / <strong>E-mail para contato:</strong> {{ church?.contato?.emailContato }}
-                      </ng-container>
-                    </p>
-                    <p-divider />
-                    <div class="font-small mt-2">
-                      <div class="text-lg font-medium text-surface-900 dark:text-surface-0 mb-2">Horários:</div>
-                      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div *ngIf="church.missas?.length">
-                          <div *ngFor="let mass of getFormattedMasses(church.missas)">
-                            <p class="font-small text-surface-900 dark:text-surface-0 mt-2 flex items-center gap-2">
-                              {{ mass.horario }}
-                              <i *ngIf="mass.observacao && mass.observacao !== 'Sem observação'"
-                                class="pi pi-info-circle text-blue-500 cursor-pointer"
-                                pTooltip="{{ mass.observacao }}" tooltipPosition="top"></i>
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div class="flex justify-between items-center mt-4">
-              <div class="font-small text-xs text-surface-500 dark:text-surface-400 text-left">
-                Compartilhar:
-                <share-buttons [include]="['whatsapp', 'email', 'copy']" [show]="4" [showText]="false"
-                  [url]="shareUrlChurch(church)"></share-buttons>
-              </div>
-              <div *ngIf="church.usuario.nome" class="font-small text-xs text-surface-500 dark:text-surface-400 text-right">
-                Última alteração: {{ church.alteracao | date : "dd/MM/yyyy" }} por {{ church.usuario.nome }}
-              </div>
-            </div>
-          </div>
-        </div>
-      </ng-template>
-    </p-dataview>
+  <div *ngIf="churchInfo && churchInfo.length > 0" class="resultados-cards">
+    <app-church-result-card
+      *ngFor="let church of (resultsMode ? churchInfoOrdenaFiltrado : churchInfoOrdenada)"
+      [igreja]="church"
+      [userLat]="geoLat"
+      [userLng]="geoLng"
+      (churchClick)="onResultCardClick($event)"
+    />
     <p-paginator [rows]="pageSize" [first]="(pageIndex - 1) * pageSize" [totalRecords]="totalRecordsFiltrado"
       [rowsPerPageOptions]="[5, 10, 20]" (onPageChange)="onPageChange($event)"></p-paginator>
-  </p-panel>
+  </div>
 
   <div class="flex justify-center w-full">
     <app-adsense-banner></app-adsense-banner>
