@@ -185,8 +185,10 @@ $texto-2: #6b7280;
   }
 
   @media (max-width: 768px) {
-    &__form { flex-direction: column; align-items: flex-start; }
-    &__field { min-width: 0; width: 100%; }
+    &__form { flex-direction: column; align-items: stretch; }
+    // No layout em coluna o `flex-basis: 150px` vira altura-base e estica cada
+    // campo para 150px. Resetar para o conteúdo definir a altura (~47px).
+    &__field { flex: 0 0 auto; min-width: 0; width: 100%; }
     &__btn { min-height: 3rem; width: 100%; }
   }
 }
@@ -625,7 +627,15 @@ $texto-2: #6b7280;
   &--ativo { background: $laranja; border-color: $laranja; color: #fff; &:hover { background: $laranja-hover; color: #fff; } }
 }
 
-// ── Resultados (dataview) ─────────────────────────────────────────────────────
+// ── Resultados (cards) ────────────────────────────────────────────────────────
+.resultados-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+// ── Resultados (legado dataview — mantido p/ compat) ──────────────────────────
 .church-name-link { cursor: pointer; &:hover { text-decoration: underline; } }
 .image-container {
   width: 150px; height: 200px; border-radius: 8px; border: 1px solid #ccc; margin: 0 auto;
