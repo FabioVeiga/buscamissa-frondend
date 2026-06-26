@@ -1,0 +1,78 @@
+<article class="city-card" [class.city-card--destaque]="destaque">
+
+  <!-- Coluna esquerda: horário -->
+  <div class="city-card__time-col">
+    <ng-container *ngIf="proximaMissa() as pm; else semHorario">
+      <span class="city-card__hora">{{ formatarHorario(pm.horario) }}</span>
+      <span class="city-card__dia" [class.city-card__dia--hoje]="diaLabelRelativo(pm) === 'Hoje'">
+        {{ diaLabelRelativo(pm) }}
+      </span>
+      <span *ngIf="ehUrgente(pm)" class="city-card__countdown">
+        <i class="pi pi-clock"></i> {{ countdownLabel(pm) }}
+      </span>
+    </ng-container>
+    <ng-template #semHorario>
+      <span class="city-card__hora city-card__hora--vazio">—</span>
+    </ng-template>
+  </div>
+
+  <!-- Imagem -->
+  <a *ngIf="igreja.imagemUrl && !imagemQuebrada"
+    [routerLink]="linkParoquia()" class="city-card__img-wrap" (click)="onClick()">
+    <img [src]="igreja.imagemUrl" [alt]="igreja.nome"
+      (error)="imagemQuebrada = true"
+      loading="lazy"
+      class="city-card__img">
+  </a>
+  <a *ngIf="!igreja.imagemUrl || imagemQuebrada"
+    [routerLink]="linkParoquia()" class="city-card__img-wrap" (click)="onClick()">
+    <app-church-placeholder class="city-card__img" [showLabel]="false" />
+  </a>
+
+  <!-- Corpo do card -->
+  <div class="city-card__body">
+    <div class="city-card__topo">
+      <a [routerLink]="linkParoquia()" class="city-card__nome" (click)="onClick()">
+        {{ igreja.nome }}
+      </a>
+      <div class="city-card__topo-actions">
+        <span *ngIf="showBadgeDestaque" class="city-card__badge-destaque">
+          ⭐ Melhor opção
+        </span>
+        <button class="city-card__favoritar"
+          [class.city-card__favoritar--ativo]="favorita"
+          (click)="toggleFavoritar($event)"
+          [title]="favorita ? 'Remover da Minha Paróquia' : 'Salvar como Minha Paróquia'"
+          [attr.aria-label]="favorita ? 'Remover da Minha Paróquia' : 'Salvar como Minha Paróquia'">
+          <i class="pi" [class.pi-heart]="!favorita" [class.pi-heart-fill]="favorita"></i>
+        </button>
+      </div>
+    </div>
+
+    <div class="city-card__meta">
+      <span *ngIf="igreja.endereco?.bairro" class="city-card__bairro">
+        {{ igreja.endereco.bairro }}<span *ngIf="cidadeNome">, {{ cidadeNome }}/{{ ufLabel }}</span>
+      </span>
+      <span *ngIf="distanciaMetros() as d" class="city-card__distancia">
+        <i class="pi pi-map-marker"></i>
+        {{ d < 1000 ? (d | number:'1.0-0') + ' m' : ((d / 1000) | number:'1.1-1') + ' km' }}
+      </span>
+    </div>
+
+    <app-confidence-badge *ngIf="proximaMissa() as pb" [mass]="pb" class="city-card__badge" />
+
+    <p *ngIf="diasMissa()" class="city-card__dia-missa">
+      Missa: {{ diasMissa() }}
+    </p>
+
+    <div class="city-card__actions">
+      <a [routerLink]="linkParoquia()" class="city-card__btn city-card__btn--primary" (click)="onClick()">
+        Ver horários
+      </a>
+      <button class="city-card__btn city-card__btn--secondary" (click)="comoChegar($event)">
+        <i class="pi pi-compass"></i> Como chegar
+      </button>
+    </div>
+  </div>
+
+</article>

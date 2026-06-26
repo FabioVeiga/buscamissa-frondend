@@ -22,6 +22,7 @@ import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import { ShareButtons } from "ngx-sharebuttons/buttons";
 import { STATES } from "../../../core/constants/states";
 import { MassTimeCardComponent } from "../../../shared/components/mass-time-card/mass-time-card.component";
+import { ChurchResultCardComponent } from "../../../shared/components/church-result-card/church-result-card.component";
 import { CityMapComponent } from "../../../shared/components/city-map/city-map.component";
 import { MassCardData } from "../../../shared/models/mass-card.model";
 import { getMissaAgoraUrgency, getCountdownLabel, getNextOccurrenceMinutes, formatMassTime } from "../../../shared/utils/mass-time.utils";
@@ -44,6 +45,7 @@ interface AddressData {
     RouterModule,
     ShareButtons,
     MassTimeCardComponent,
+    ChurchResultCardComponent,
     CityMapComponent,
   ],
   providers: [MessageService, DatePipe],
@@ -467,6 +469,14 @@ export class HomeComponent {
     this._analytics.resultClicked(card.churchName, card.cidadeSlug, card.uf);
   }
 
+  onResultCardClick(church: any): void {
+    this._analytics.resultClicked(
+      church?.nome,
+      church?.endereco?.localidade ?? "",
+      church?.endereco?.uf ?? ""
+    );
+  }
+
   onFavoriteClick(card: MassCardData): void {
     if (this.ehFavorita(card.churchId)) {
       this.removerFavorita(card.churchId);
@@ -808,6 +818,10 @@ export class HomeComponent {
   get temGeolocalizacao(): boolean {
     return this._userLat !== null && this._userLng !== null;
   }
+
+  /** Geolocalização exposta para o card de resultado (distância). */
+  get geoLat(): number | null { return this._userLat; }
+  get geoLng(): number | null { return this._userLng; }
 
   onPageChange(event: any) {
     this.pageIndex = Math.floor(event.first / event.rows) + 1;
