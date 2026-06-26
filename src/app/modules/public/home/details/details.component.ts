@@ -15,6 +15,7 @@ import { CountdownChipComponent } from "../../../../shared/components/countdown-
 import { ChurchPlaceholderComponent } from "../../../../shared/components/church-placeholder/church-placeholder.component";
 import { getNextOccurrenceMinutes, formatMassTime, getCountdownLabel } from "../../../../shared/utils/mass-time.utils";
 import { AnalyticsService } from "../../../../core/services/analytics.service";
+import { ClarityService } from "../../../../core/services/clarity.service";
 
 @Component({
   selector: "app-details",
@@ -40,6 +41,7 @@ export class DetailsComponent implements OnInit {
   _location = inject(Location);
   _sanitizer = inject(DomSanitizer);
   private _analytics = inject(AnalyticsService);
+  private _clarity = inject(ClarityService);
 
   isLoading = false;
   nomeUnico: string | null = null;
@@ -94,6 +96,7 @@ export class DetailsComponent implements OnInit {
         if (igreja.id) this.carregarResumoConfirmacoes(igreja.id);
         this._loadFavoritaState();
         this._analytics.churchView(igreja.nome, igreja.endereco?.localidade ?? '', igreja.endereco?.uf ?? '');
+        this._aplicarClarityTags(igreja);
 
         const cidadeUf = igreja.endereco?.localidade
           ? `${igreja.endereco.localidade}${igreja.endereco?.uf ? '/' + igreja.endereco.uf : ''}`
@@ -111,6 +114,58 @@ export class DetailsComponent implements OnInit {
       error: (error) => {
         this._toast.add({ severity: "error", summary: "Erro", detail: "Erro ao carregar dados da igreja." });
       },
+    });
+  }
+
+  // ── Clarity ────────────────────────────────────────────────────────────────
+
+  private _aplicarClarityTags(igreja: any): void {
+    const end = igreja.endereco ?? {};
+    const missas: any[] = igreja.missas ?? [];
+    const redes: any[] = igreja.redesSociais ?? [];
+    const contato = igreja.contato ?? {};
+
+    const temFoto = !!igreja.imagemUrl;
+    const temTelefone = !!(contato.telefone || contato.telefoneWhatsApp);
+    const temSite = !!contato.site;
+    const temInstagram = redes.some((r: any) => r.tipoRedeSocial === 2);
+    const temFacebook = redes.some((r: any) => r.tipoRedeSocial === 1);
+    const qtdMissas = missas.length;
+    const dadosCompletos = temFoto && qtdMissas > 0 && temTelefone;
+
+    this._clarity.tag('cidade', end.localidade ?? '');
+    this._clarity.tag('estado', end.uf ?? '');
+    this._clarity.tag('igrejaId', String(igreja.id ?? ''));
+    this._clarity.tag('tipo_igreja', igreja.tipo ?? 'desconhecido');
+    this._clarity.tag('paroquia_ou_nao', (igreja.tipo ?? '') === 'Paróquia' ? 'sim' : 'nao');
+    this._clarity.tag('tem_foto', temFoto ? 'sim' : 'nao');
+    this._clarity.tag('tem_telefone', temTelefone ? 'sim' : 'nao');
+    this._clarity.tag('tem_site', temSite ? 'sim' : 'nao');
+    this._clarity.tag('tem_instagram', temInstagram ? 'sim' : 'nao');
+    this._clarity.tag('tem_facebook', temFacebook ? 'sim' : 'nao');
+    this._clarity.tag('possui_missas', qtdMissas > 0 ? 'sim' : 'nao');
+    this._clarity.tag('possui_redes', (temInstagram || temFacebook) ? 'sim' : 'nao');
+    this._clarity.tag('qtd_missas', String(qtdMissas));
+    this._clarity.tag('dados_completos', dadosCompletos ? 'sim' : 'nao');
+    this._clarity.tag('origem_navegacao', this._clarity.navOrigem(''));
+
+    // Tempo decorrido desde a busca inicial
+    const ts = Number(localStorage.getItem('bm_ts_busca'));
+    if (ts > 0) {
+      const segundos = Math.round((Date.now() - ts) / 1000);
+      if (segundos > 0 && segundos < 600) {
+        this._clarity.track('tempo_para_encontrar', { segundos });
+      }
+      localStorage.removeItem('bm_ts_busca');
+    }
+  }
+
+  trackObjetivoAlcancado(acao: string): void {
+    const igreja = this.churchInfo;
+    this._clarity.track('objetivo_alcancado', {
+      acao,
+      igrejaId: String(igreja?.id ?? ''),
+      cidade: igreja?.endereco?.localidade ?? '',
     });
   }
 
@@ -259,6 +314,7 @@ export class DetailsComponent implements OnInit {
       });
       this.isFavorita = true;
       this._analytics.favoriteParishSaved(this.churchInfo.nome);
+      this.trackObjetivoAlcancado('favoritar');
       this._toast.add({ severity: 'success', summary: 'Adicionada aos favoritos!', detail: this.churchInfo.nome });
     }
     localStorage.setItem('buscamissa_favoritas', JSON.stringify(favoritas));
@@ -294,6 +350,7 @@ export class DetailsComponent implements OnInit {
 
   trackDirections(): void {
     this._analytics.getDirections(this.churchInfo?.nome ?? '');
+    this.trackObjetivoAlcancado('tracar_rota');
   }
 
   get linkGoogleMaps(): string {
@@ -339,6 +396,14 @@ export class DetailsComponent implements OnInit {
     return 'pi pi-globe';
   }
 
+  getSocialTrackName(url: string): string {
+    if (url.includes('facebook.com')) return 'facebook';
+    if (url.includes('instagram.com')) return 'instagram';
+    if (url.includes('youtube.com')) return 'youtube';
+    if (url.includes('tiktok.com')) return 'tiktok';
+    return 'rede_social';
+  }
+
 
   voltar(): void {
     this._location.back();
@@ -348,6 +413,7 @@ export class DetailsComponent implements OnInit {
   compartilhar(): void {
     const url = this.shareUrl;
     const nav = navigator as any;
+    this.trackObjetivoAlcancado('compartilhar');
     if (nav.share) {
       nav.share({ title: this.churchInfo?.nome, text: `Horários de missa — ${this.churchInfo?.nome}`, url }).catch(() => {});
     } else {

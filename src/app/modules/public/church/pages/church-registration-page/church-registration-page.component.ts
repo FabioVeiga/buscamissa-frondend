@@ -19,6 +19,7 @@ import {
 import { ChurchFormComponent } from "../../components/church-form/church-form.component";
 import { PrimeNgModule } from "../../../../../shared/primeng.module";
 import { ChurchesService } from "../../../../../core/services/churches.service";
+import { ClarityService } from "../../../../../core/services/clarity.service";
 
 @Component({
   selector: "app-church-registration-page",
@@ -37,12 +38,14 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
   private confirmationService = inject(ConfirmationService);
   private datePipe = inject(DatePipe);
   private cd = inject(ChangeDetectorRef);
+  private _clarity = inject(ClarityService);
 
   isLoading = false;
   isCepLoading = false;
 
   ngAfterViewInit(): void {
     this.cd.detectChanges();
+    this._clarity.track('contrib_form_aberto');
   }
 
   // Lida com a submissão vinda do form filho
@@ -264,8 +267,8 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
     });
   }
 
-  // Navega de volta (ex: para a lista ou home)
   cancel(): void {
+    this._clarity.track('contrib_cancelado');
     this.router.navigate(["/"]);
   }
 }

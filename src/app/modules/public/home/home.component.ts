@@ -477,6 +477,16 @@ export class HomeComponent {
     );
   }
 
+  onNavigateClick(card: MassCardData): void {
+    const lat = card.latitude;
+    const lng = card.longitude;
+    const url = lat && lng
+      ? `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
+      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(card.churchName)}`;
+    window.open(url, '_blank', 'noopener');
+    this._analytics.getDirections(card.churchName);
+  }
+
   onFavoriteClick(card: MassCardData): void {
     if (this.ehFavorita(card.churchId)) {
       this.removerFavorita(card.churchId);
@@ -495,7 +505,7 @@ export class HomeComponent {
       diaSemana: card.mass.diaSemana,
       horario: card.mass.horario,
     };
-    this.paroquiasFavoritas.push(novaFavorita);
+    this.paroquiasFavoritas = [...this.paroquiasFavoritas, novaFavorita];
     this._salvarFavoritas();
     this._analytics.favoriteParishSaved(card.churchName);
   }

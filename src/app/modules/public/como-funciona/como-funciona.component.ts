@@ -1,7 +1,8 @@
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, inject, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { ChurchesService } from '../../../core/services/churches.service';
+import { ClarityService } from '../../../core/services/clarity.service';
 
 @Component({
   selector: 'app-como-funciona',
@@ -10,13 +11,15 @@ import { ChurchesService } from '../../../core/services/churches.service';
   templateUrl: './como-funciona.component.html',
   styleUrl: './como-funciona.component.scss',
 })
-export class ComoFuncionaComponent implements OnInit {
+export class ComoFuncionaComponent implements OnInit, AfterViewInit, OnDestroy {
   private _church = inject(ChurchesService);
+  private _clarity = inject(ClarityService);
+  private _scrollObserver: IntersectionObserver | null = null;
 
   stats = {
     cidades: 213,
-    paroquias: 1674,
-    horarios: 8535,
+    paroquias: 2000,
+    horarios: 9100,
     estados: 26,
   };
 
@@ -61,6 +64,34 @@ export class ComoFuncionaComponent implements OnInit {
         if (d.quantidadesIgrejas)  this.stats.paroquias = d.quantidadesIgrejas;
         if (d.quantidadeMissas)    this.stats.horarios  = d.quantidadeMissas;
       },
+    });
+  }
+
+  ngAfterViewInit(): void {
+    this._initScrollTracking();
+  }
+
+  ngOnDestroy(): void {
+    this._scrollObserver?.disconnect();
+  }
+
+  private _initScrollTracking(): void {
+    const sentinels = [25, 50, 75, 100];
+    this._scrollObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const pct = entry.target.getAttribute('data-scroll-pct');
+          if (pct) {
+            this._clarity.track(`scroll_${pct}`);
+            this._scrollObserver?.unobserve(entry.target);
+          }
+        }
+      });
+    }, { threshold: 0 });
+
+    sentinels.forEach(pct => {
+      const el = document.querySelector(`[data-scroll-pct="${pct}"]`);
+      if (el) this._scrollObserver!.observe(el);
     });
   }
 

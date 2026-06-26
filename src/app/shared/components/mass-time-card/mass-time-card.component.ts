@@ -24,6 +24,8 @@ export class MassTimeCardComponent implements OnChanges {
   @Input({ required: true }) data!: MassCardData;
   /** Usado na tela /missa-agora para colorir a borda por urgência */
   @Input() urgency: MassUrgency = null;
+  /** Estado de favorito — controla o ícone de coração */
+  @Input() isFavorite = false;
 
   @Output() navigateClick = new EventEmitter<MassCardData>();
   @Output() favoriteClick = new EventEmitter<MassCardData>();
