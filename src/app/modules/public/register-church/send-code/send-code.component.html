@@ -23,14 +23,14 @@
       <p-inputgroup-addon>
         <i class="pi pi-user"></i>
       </p-inputgroup-addon>
-      <input pInputText formControlName="nome" placeholder="Nome" />
+      <input pInputText formControlName="nome" placeholder="Nome" (blur)="onNomeBlur()" />
     </p-inputgroup>
 
     <p-inputgroup>
       <p-inputgroup-addon>
         <i class="pi pi-at"></i>
       </p-inputgroup-addon>
-      <input pInputText formControlName="email" placeholder="E-mail" />
+      <input pInputText formControlName="email" placeholder="E-mail" (blur)="onEmailBlur()" />
     </p-inputgroup>
 
     <div class="flex items-center">

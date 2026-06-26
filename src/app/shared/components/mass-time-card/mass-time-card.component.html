@@ -40,10 +40,12 @@
     <button
       type="button"
       class="mass-time-card__btn mass-time-card__btn--favorite"
+      [class.mass-time-card__btn--favorite-ativo]="isFavorite"
       (click)="onFavorite($event)"
-      aria-label="Favoritar"
+      [attr.aria-pressed]="isFavorite"
+      [attr.aria-label]="isFavorite ? 'Remover dos favoritos' : 'Favoritar'"
     >
-      <i class="pi pi-heart"></i>
+      <i class="pi" [ngClass]="isFavorite ? 'pi-heart-fill' : 'pi-heart'"></i>
     </button>
   </div>
 </article>

@@ -276,6 +276,7 @@
             <a *ngIf="churchInfo.contato?.telefoneWhatsApp"
                [href]="'https://wa.me/55' + churchInfo.contato.dddWhatsApp + churchInfo.contato.telefoneWhatsApp"
                target="_blank" rel="noopener"
+               (click)="trackObjetivoAlcancado('whatsapp')"
                class="contact-row">
               <div class="contact-row__icon contact-row__icon--green">
                 <i class="pi pi-whatsapp"></i>
@@ -289,6 +290,7 @@
             <!-- Telefone -->
             <a *ngIf="churchInfo.contato?.telefone"
                [href]="'tel:' + churchInfo.contato.ddd + churchInfo.contato.telefone"
+               (click)="trackObjetivoAlcancado('ligar')"
                class="contact-row">
               <div class="contact-row__icon contact-row__icon--blue">
                 <i class="pi pi-phone"></i>
@@ -315,6 +317,7 @@
             <!-- Site -->
             <a *ngIf="churchInfo.contato?.site"
                [href]="churchInfo.contato.site" target="_blank" rel="noopener"
+               (click)="trackObjetivoAlcancado('site')"
                class="contact-row">
               <div class="contact-row__icon contact-row__icon--purple">
                 <i class="pi pi-globe"></i>
@@ -335,6 +338,7 @@
                 <div class="flex gap-3 mt-1">
                   <a *ngFor="let rede of churchInfo.redesSociais" [href]="rede.url"
                      target="_blank" rel="noopener"
+                     (click)="trackObjetivoAlcancado(getSocialTrackName(rede.url))"
                      class="text-2xl text-gray-500 hover:text-primary transition-colors"
                      [attr.aria-label]="rede.nomeRedeSocial">
                     <i [ngClass]="getSocialIcon(rede.url)"></i>

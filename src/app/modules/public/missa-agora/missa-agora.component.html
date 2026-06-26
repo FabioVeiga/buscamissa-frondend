@@ -139,6 +139,7 @@
         *ngFor="let card of missas"
         [data]="card"
         [urgency]="getUrgency(card)"
+        [isFavorite]="ehFavorita(card.churchId)"
         (cardClick)="onCardClick($event)"
         (navigateClick)="onNavigate($event)"
         (favoriteClick)="onFavorite($event)"
