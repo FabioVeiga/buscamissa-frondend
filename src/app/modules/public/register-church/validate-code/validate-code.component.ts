@@ -8,6 +8,7 @@ import {
   Validators,
 } from "@angular/forms";
 import { ChurchesService } from "../../../../core/services/churches.service";
+import { ClarityService } from "../../../../core/services/clarity.service";
 import { ActivatedRoute, Router } from "@angular/router";
 import { PrimeNgModule } from "../../../../shared/primeng.module";
 import { LoadingComponent } from "../../../../core/components/loading/loading.component";
@@ -32,6 +33,7 @@ export class ValidateCodeComponent {
   private _router = inject(Router);
   private _service = inject(ChurchesService);
   private _toast = inject(MessageService);
+  private _clarity = inject(ClarityService);
 
   isLoading = false;
   form: FormGroup;
@@ -52,10 +54,11 @@ export class ValidateCodeComponent {
       this.email = params["email"];
       this.controleId = params["controleId"];
     });
-    console.log(this.controleId);
+    this._clarity.track('contrib_tela_confirmacao');
   }
 
   validateCode(): void {
+    this._clarity.track('contrib_codigo_confirmado');
     this.isLoading = true;
     if (this.form.invalid) {
       this._toast.add({
@@ -75,6 +78,7 @@ export class ValidateCodeComponent {
 
     this._service.validateCode(payload).subscribe({
       next: (response: any) => {
+        this._clarity.track('contrib_sucesso');
         this._toast.add({
           severity: "success",
           summary: "Aviso!",
@@ -86,6 +90,7 @@ export class ValidateCodeComponent {
         this.isLoading = false;
       },
       error: (error) => {
+        this._clarity.track('contrib_erro_codigo');
         this._toast.add({
           severity: "info",
           summary: "Aviso!",

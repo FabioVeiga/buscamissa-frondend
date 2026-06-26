@@ -12,6 +12,7 @@ import { DistanceChipComponent } from "../../../../shared/components/distance-ch
 import { ChurchPlaceholderComponent } from "../../../../shared/components/church-placeholder/church-placeholder.component";
 import { getNextOccurrenceMinutes, formatMassTime, getCountdownLabel } from "../../../../shared/utils/mass-time.utils";
 import { AnalyticsService } from "../../../../core/services/analytics.service";
+import { ClarityService } from "../../../../core/services/clarity.service";
 import { CityMapComponent, MapChurch } from "../../../../shared/components/city-map/city-map.component";
 
 const PERIODOS: Record<string, { de: number; ate: number; label: string }> = {
@@ -64,6 +65,7 @@ export class CityComponent implements OnInit, OnDestroy {
   private _church = inject(ChurchesService);
   private _seo = inject(SeoService);
   private _analytics = inject(AnalyticsService);
+  private _clarity = inject(ClarityService);
 
   isLoading = false;
   uf = "";
@@ -151,7 +153,21 @@ export class CityComponent implements OnInit, OnDestroy {
         this.aplicarFiltros();
         this._analytics.searchPerformed(this.cidadeNome, this.uf);
 
-        if (this.igrejas.length === 0) this.naoEncontrado = true;
+        // Tags Clarity de contexto
+        this._clarity.tag('cidade', this.cidadeNome);
+        this._clarity.tag('estado', this.uf?.toUpperCase());
+        this._clarity.tag('qtd_resultados', String(this.igrejas.length));
+
+        // Marca o momento da busca para medir tempo até encontrar uma missa
+        localStorage.setItem('bm_ts_busca', String(Date.now()));
+
+        if (this.igrejas.length === 0) {
+          this.naoEncontrado = true;
+          this._clarity.track('nenhum_resultado', {
+            cidade: this.cidadeNome,
+            estado: this.uf?.toUpperCase(),
+          });
+        }
 
         const ufUpper = this.uf?.toUpperCase();
         const totalIgrejas = this.igrejas.length;

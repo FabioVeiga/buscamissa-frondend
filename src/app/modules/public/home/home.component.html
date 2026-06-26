@@ -17,8 +17,8 @@
 
     <!-- Mini badges de prova social -->
     <div class="hero-v2__provas" *ngIf="!resultsMode">
-      <span class="hero-v2__prova"><i class="pi pi-home"></i> 1.200+ paróquias</span>
-      <span class="hero-v2__prova"><i class="pi pi-clock"></i> 2.700+ horários de missa</span>
+      <span class="hero-v2__prova"><i class="pi pi-home"></i> 2.000+ igrejas</span>
+      <span class="hero-v2__prova"><i class="pi pi-clock"></i> 9.100+ horários de missa</span>
       <span class="hero-v2__prova"><i class="pi pi-check-circle"></i> Atualizado diariamente</span>
     </div>
 
@@ -158,11 +158,11 @@
         <span class="stats-strip__label">cidades</span>
       </div>
       <div class="stats-strip__item">
-        <span class="stats-strip__num stats-strip__num--orange">1.200+</span>
-        <span class="stats-strip__label">paróquias</span>
+        <span class="stats-strip__num stats-strip__num--orange">2.000+</span>
+        <span class="stats-strip__label">igrejas</span>
       </div>
       <div class="stats-strip__item">
-        <span class="stats-strip__num stats-strip__num--blue">2.700+</span>
+        <span class="stats-strip__num stats-strip__num--blue">9.100+</span>
         <span class="stats-strip__label">horários de missa</span>
       </div>
       <div class="stats-strip__item">
@@ -199,7 +199,9 @@
           *ngFor="let card of proximasFiltradas"
           [data]="card"
           [urgency]="getUrgency(card)"
+          [isFavorite]="ehFavorita(card.churchId)"
           (cardClick)="onCardClick($event)"
+          (navigateClick)="onNavigateClick($event)"
           (favoriteClick)="onFavoriteClick($event)"
         />
       </div>
@@ -424,6 +426,19 @@
     </div>
     <a routerLink="/cidades" class="confirmar-banner__btn shrink-0">
       <i class="pi pi-thumbs-up"></i> Quero confirmar
+    </a>
+  </div>
+
+  <!-- ══ INSTAGRAM ══ -->
+  <div class="home-instagram">
+    <a href="https://www.instagram.com/buscamissa/" target="_blank" rel="noopener noreferrer" class="home-instagram__link">
+      <svg class="home-instagram__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="currentColor" stroke-width="1.8"/>
+        <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/>
+        <circle cx="17.5" cy="6.5" r="1" fill="currentColor"/>
+      </svg>
+      <span>Siga o BuscaMissa no Instagram</span>
+      <i class="pi pi-arrow-right" style="font-size:0.75rem"></i>
     </a>
   </div>
 

@@ -2,6 +2,7 @@ import { CommonModule } from "@angular/common";
 import { Component, inject, OnInit } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { ChurchesService } from "../../../../core/services/churches.service";
+import { ClarityService } from "../../../../core/services/clarity.service";
 import {
   FormBuilder,
   FormGroup,
@@ -31,6 +32,7 @@ export class SendCodeComponent implements OnInit {
   private _router = inject(Router);
   private _service = inject(ChurchesService);
   private _toast = inject(MessageService);
+  private _clarity = inject(ClarityService);
 
   isLoading = false;
   controleId!: number;
@@ -40,6 +42,7 @@ export class SendCodeComponent implements OnInit {
 
   ngOnInit(): void {
     this.controleId = Number(this._route.snapshot.paramMap.get("controleId"));
+    this._clarity.track('contrib_tela_identificacao');
     this.form = this._fb.group({
       nome: ["", Validators.required],
       email: ["", [Validators.required, Validators.email]],
@@ -48,7 +51,16 @@ export class SendCodeComponent implements OnInit {
     });
   }
 
+  onNomeBlur(): void {
+    if (this.form.get('nome')?.value) this._clarity.track('contrib_nome_preenchido');
+  }
+
+  onEmailBlur(): void {
+    if (this.form.get('email')?.valid) this._clarity.track('contrib_email_preenchido');
+  }
+
   generateValidationCode(): void {
+    this._clarity.track('contrib_solicitar_codigo_clicado');
     this.isLoading = true;
     if (this.form.invalid) {
       this._toast.add({ severity: 'info', summary: 'Aviso!', detail: "Por favor, preencha todos os campos obrigatórios." });
@@ -64,6 +76,7 @@ export class SendCodeComponent implements OnInit {
     this._service.generateCode(body).subscribe({
       next: (response: any) => {
         if (response?.data?.mensagemTela) {
+          this._clarity.track('contrib_codigo_enviado');
           this._router.navigate(["/validar"], {
             queryParams: {
               email: body.email,
