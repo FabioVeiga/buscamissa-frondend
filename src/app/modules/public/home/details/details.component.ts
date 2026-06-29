@@ -16,6 +16,8 @@ import { ChurchPlaceholderComponent } from "../../../../shared/components/church
 import { getNextOccurrenceMinutes, formatMassTime, getCountdownLabel } from "../../../../shared/utils/mass-time.utils";
 import { AnalyticsService } from "../../../../core/services/analytics.service";
 import { ClarityService } from "../../../../core/services/clarity.service";
+import { RedesSociaisService, TipoRedeSocial } from "../../../../core/services/redes-sociais.service";
+import { getSocialIconFromTipos } from "../../../../shared/utils/social-icon.utils";
 
 @Component({
   selector: "app-details",
@@ -42,7 +44,9 @@ export class DetailsComponent implements OnInit {
   _sanitizer = inject(DomSanitizer);
   private _analytics = inject(AnalyticsService);
   private _clarity = inject(ClarityService);
+  private _redesSociais = inject(RedesSociaisService);
 
+  tiposRedeSocial: TipoRedeSocial[] = [];
   isLoading = false;
   nomeUnico: string | null = null;
   churchInfo: any;
@@ -60,6 +64,8 @@ export class DetailsComponent implements OnInit {
   isFavorita = false;
 
   ngOnInit(): void {
+    this._redesSociais.obterTipos().subscribe((tipos) => (this.tiposRedeSocial = tipos));
+
     this._route.params.subscribe((params) => {
       const uf = params["uf"];
       const cidade = params["cidade"];
@@ -389,11 +395,7 @@ export class DetailsComponent implements OnInit {
   }
 
   getSocialIcon(url: string): string {
-    if (url.includes('facebook.com')) return 'pi pi-facebook';
-    if (url.includes('instagram.com')) return 'pi pi-instagram';
-    if (url.includes('youtube.com')) return 'pi pi-youtube';
-    if (url.includes('tiktok.com')) return 'pi pi-tiktok';
-    return 'pi pi-globe';
+    return getSocialIconFromTipos(url, this.tiposRedeSocial);
   }
 
   getSocialTrackName(url: string): string {

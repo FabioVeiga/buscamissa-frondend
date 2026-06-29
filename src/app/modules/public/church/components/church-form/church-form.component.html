@@ -247,29 +247,11 @@
 
   <p-fieldset legend="Redes sociais" *ngIf="!isEditMode">
     <div class="card grid grid-cols-1 md:grid-cols-2 gap-4">
-      <p-inputgroup>
+      <p-inputgroup *ngFor="let tipo of tiposRedeSocial">
         <p-inputgroup-addon>
-          <i class="pi pi-facebook"></i>
+          <i [class]="tipo.icone"></i>
         </p-inputgroup-addon>
-        <input pInputText formControlName="facebook" placeholder="Facebook" />
-      </p-inputgroup>
-      <p-inputgroup>
-        <p-inputgroup-addon>
-          <i class="pi pi-instagram"></i>
-        </p-inputgroup-addon>
-        <input pInputText formControlName="instagram" placeholder="Instagram" />
-      </p-inputgroup>
-      <p-inputgroup>
-        <p-inputgroup-addon>
-          <i class="pi pi-youtube"></i>
-        </p-inputgroup-addon>
-        <input pInputText formControlName="youtube" placeholder="YouTube" />
-      </p-inputgroup>
-      <p-inputgroup>
-        <p-inputgroup-addon>
-          <i class="pi pi-tiktok"></i>
-        </p-inputgroup-addon>
-        <input pInputText formControlName="tiktok" placeholder="TikTok" />
+        <input pInputText [formControlName]="tipo.nome.toLowerCase()" [placeholder]="tipo.nome" />
       </p-inputgroup>
     </div>
   </p-fieldset>

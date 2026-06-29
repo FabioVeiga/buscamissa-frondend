@@ -14,6 +14,8 @@ import { getNextOccurrenceMinutes, formatMassTime, getCountdownLabel } from "../
 import { AnalyticsService } from "../../../../core/services/analytics.service";
 import { ClarityService } from "../../../../core/services/clarity.service";
 import { CityMapComponent, MapChurch } from "../../../../shared/components/city-map/city-map.component";
+import { RedesSociaisService, TipoRedeSocial } from "../../../../core/services/redes-sociais.service";
+import { getSocialIconFromTipos } from "../../../../shared/utils/social-icon.utils";
 
 const PERIODOS: Record<string, { de: number; ate: number; label: string }> = {
   manha: { de: 5 * 60, ate: 11 * 60 + 59, label: "Manhã" },
@@ -66,6 +68,8 @@ export class CityComponent implements OnInit, OnDestroy {
   private _seo = inject(SeoService);
   private _analytics = inject(AnalyticsService);
   private _clarity = inject(ClarityService);
+  private _redesSociais = inject(RedesSociaisService);
+  tiposRedeSocial: TipoRedeSocial[] = [];
 
   isLoading = false;
   uf = "";
@@ -119,6 +123,8 @@ export class CityComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this._redesSociais.obterTipos().subscribe((tipos) => (this.tiposRedeSocial = tipos));
+
     this._route.params.subscribe((params) => {
       this.uf = params["uf"];
       this.cidade = params["cidade"];
@@ -498,11 +504,7 @@ export class CityComponent implements OnInit, OnDestroy {
   }
 
   getSocialIcon(url: string): string {
-    if (url.includes("facebook.com")) return "pi pi-facebook";
-    if (url.includes("instagram.com")) return "pi pi-instagram";
-    if (url.includes("youtube.com")) return "pi pi-youtube";
-    if (url.includes("tiktok.com")) return "pi pi-tiktok";
-    return "pi pi-globe";
+    return getSocialIconFromTipos(url, this.tiposRedeSocial);
   }
 
   // ── SEO ───────────────────────────────────────────────────────────────────
