@@ -24,6 +24,7 @@ import { CommonModule, DatePipe } from "@angular/common";
 import { PrimeNgModule } from "../../../../../shared/primeng.module";
 import { ChurchFormData, Mass } from "../../models/church.model";
 import { MessageService } from "primeng/api";
+import { RedesSociaisService, TipoRedeSocial } from "../../../../../core/services/redes-sociais.service";
 
 interface TypeChurchOption {
   name: string;
@@ -40,6 +41,9 @@ interface TypeChurchOption {
 })
 export class ChurchFormComponent implements OnInit, OnChanges {
   private messageService = inject(MessageService);
+  private redesSociaisService = inject(RedesSociaisService);
+
+  tiposRedeSocial: TipoRedeSocial[] = [];
   @Input() initialData: ChurchFormData | null = null;
   @Input() isSaving: boolean = false;
   @Input() isEditMode: boolean = false; // Para desabilitar CEP na edição
@@ -79,6 +83,19 @@ export class ChurchFormComponent implements OnInit, OnChanges {
 
   ngOnInit(): void {
     this.initForm();
+
+    this.redesSociaisService.obterTipos().subscribe((tipos) => {
+      this.tiposRedeSocial = tipos;
+      tipos.forEach((t) => {
+        const key = t.nome.toLowerCase();
+        if (!this.form.contains(key)) {
+          this.form.addControl(key, this.fb.control(""));
+        }
+      });
+      if (this.initialData) {
+        this.populateForm(this.initialData);
+      }
+    });
 
     if (this.initialData) {
       this.populateForm(this.initialData);
@@ -144,10 +161,6 @@ export class ChurchFormComponent implements OnInit, OnChanges {
       whatsapp: [""],
       emailContato: ["", Validators.email],
       missas: this.fb.array([], Validators.required), // Pelo menos uma missa?
-      facebook: [""],
-      instagram: [""],
-      tiktok: [""],
-      youtube: [""],
       imagem: [""], // Armazena base64
     });
   }

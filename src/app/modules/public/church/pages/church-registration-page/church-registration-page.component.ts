@@ -19,6 +19,7 @@ import {
 import { ChurchFormComponent } from "../../components/church-form/church-form.component";
 import { PrimeNgModule } from "../../../../../shared/primeng.module";
 import { ChurchesService } from "../../../../../core/services/churches.service";
+import { RedesSociaisService, TipoRedeSocial } from "../../../../../core/services/redes-sociais.service";
 
 @Component({
   selector: "app-church-registration-page",
@@ -37,11 +38,14 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
   private confirmationService = inject(ConfirmationService);
   private datePipe = inject(DatePipe);
   private cd = inject(ChangeDetectorRef);
+  private redesSociaisService = inject(RedesSociaisService);
 
+  private tiposRedeSocial: TipoRedeSocial[] = [];
   isLoading = false;
   isCepLoading = false;
 
   ngAfterViewInit(): void {
+    this.redesSociaisService.obterTipos().subscribe((tipos) => (this.tiposRedeSocial = tipos));
     this.cd.detectChanges();
   }
 
@@ -227,22 +231,18 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
         telefoneWhatsApp: whatsappLimpo.substring(2),
         emailContato: formData.emailContato,
       },
-      redesSociais: [
-        ...(formData.facebook
-          ? [{ tipoRedeSocial: 1, nomeRedeSocial: formData.facebook }]
-          : []),
-        ...(formData.instagram
-          ? [{ tipoRedeSocial: 2, nomeRedeSocial: formData.instagram }]
-          : []),
-        ...(formData.youtube
-          ? [{ tipoRedeSocial: 3, nomeRedeSocial: formData.youtube }]
-          : []),
-        ...(formData.tiktok
-          ? [{ tipoRedeSocial: 4, nomeRedeSocial: formData.tiktok }]
-          : []),
-      ],
+      redesSociais: this._mapearRedesSociais(formData),
     };
     return payload;
+  }
+
+  private _mapearRedesSociais(formData: any) {
+    return this.tiposRedeSocial
+      .map((tipo) => ({
+        tipoRedeSocial: tipo.id,
+        nomeRedeSocial: (formData[tipo.nome.toLowerCase()] as string) ?? "",
+      }))
+      .filter(({ nomeRedeSocial }) => !!nomeRedeSocial.trim());
   }
 
   private showErrorToast(error: HttpErrorResponse, summary: string): void {

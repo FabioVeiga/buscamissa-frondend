@@ -27,6 +27,8 @@ import { CityMapComponent } from "../../../shared/components/city-map/city-map.c
 import { MassCardData } from "../../../shared/models/mass-card.model";
 import { getMissaAgoraUrgency, getCountdownLabel, getNextOccurrenceMinutes, formatMassTime } from "../../../shared/utils/mass-time.utils";
 import { AnalyticsService } from "../../../core/services/analytics.service";
+import { RedesSociaisService, TipoRedeSocial } from "../../../core/services/redes-sociais.service";
+import { getSocialIconFromTipos } from "../../../shared/utils/social-icon.utils";
 
 interface AddressData {
   [uf: string]: {
@@ -60,6 +62,8 @@ export class HomeComponent {
   public _router = inject(Router);
   private _route = inject(ActivatedRoute);
   private _analytics = inject(AnalyticsService);
+  private _redesSociais = inject(RedesSociaisService);
+  tiposRedeSocial: TipoRedeSocial[] = [];
 
   /** Status da geolocalização */
   geoStatus: 'idle' | 'loading' | 'found' | 'denied' | 'error' = 'idle';
@@ -293,6 +297,7 @@ export class HomeComponent {
   resultsMode = false;
 
   ngOnInit(): void {
+    this._redesSociais.obterTipos().subscribe((tipos) => (this.tiposRedeSocial = tipos));
     this.resultsMode = !!this._route.snapshot.data['resultsMode'];
 
     this.form = this._fb.group({
@@ -963,11 +968,7 @@ export class HomeComponent {
   }
 
   getSocialIcon(url: string): string {
-    if (url.includes("facebook.com")) return "pi pi-facebook";
-    if (url.includes("instagram.com")) return "pi pi-instagram";
-    if (url.includes("youtube.com")) return "pi pi-youtube";
-    if (url.includes("tiktok.com")) return "pi pi-tiktok";
-    return "pi pi-globe";
+    return getSocialIconFromTipos(url, this.tiposRedeSocial);
   }
 
   // Usa a URL canônica nova se houver slug+cidade; senão cai no legado /igrejas
