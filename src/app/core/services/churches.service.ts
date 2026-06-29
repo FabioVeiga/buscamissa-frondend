@@ -35,9 +35,12 @@ export class ChurchesService {
 
   /** Busca igrejas pelo CEP (v2) — retorna dadosEndereco com localidade e uf */
   searchByCEPv2(cep: string) {
-    return this.http.get<{ data: { dadosEndereco: { localidade: string; uf: string } }[] }>(
-      `v2/Igreja/buscar-por-cep/${cep}`
-    );
+    return this.http.get<{
+      data: {
+        nomeUnico: string;
+        dadosEndereco: { localidade: string; uf: string };
+      }[];
+    }>(`v2/Igreja/buscar-por-cep/${cep}`);
   }
 
   /** Busca cidades e bairros através da UF, Localidade e Bairro */
