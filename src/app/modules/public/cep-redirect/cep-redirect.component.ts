@@ -33,9 +33,15 @@ export class CepRedirectComponent implements OnInit {
         const uf = endereco.uf.toLowerCase();
         const cidadeSlug = this._toSlug(endereco.localidade);
 
-        if (igrejas.length === 1 && igrejas[0].nomeUnico) {
-          // CEP pertence a uma única igreja — vai direto para a página dela
-          this._router.navigate(["/paroquia", uf, cidadeSlug, igrejas[0].nomeUnico]);
+        if (igrejas.length === 1) {
+          const ig = igrejas[0];
+          const slugFinal = ig.slug ?? ig.nomeUnico;
+          const cidadeFinal = ig.cidadeSlug ?? cidadeSlug;
+          if (slugFinal) {
+            this._router.navigate(["/paroquia", uf, cidadeFinal, slugFinal]);
+          } else {
+            this._router.navigate(["/missas", uf, cidadeSlug]);
+          }
         } else {
           // Múltiplas igrejas no CEP — mostra a lista da cidade
           this._router.navigate(["/missas", uf, cidadeSlug]);

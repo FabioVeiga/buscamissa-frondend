@@ -38,6 +38,8 @@ export class ChurchesService {
     return this.http.get<{
       data: {
         nomeUnico: string;
+        slug?: string;
+        cidadeSlug?: string;
         dadosEndereco: { localidade: string; uf: string };
       }[];
     }>(`v2/Igreja/buscar-por-cep/${cep}`);
