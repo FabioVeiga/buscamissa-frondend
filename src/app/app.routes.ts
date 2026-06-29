@@ -139,11 +139,13 @@ export const routes: Routes = [
             (m) => m.CidadesComponent
           ),
       },
-      // Redirect da rota antiga para manter links existentes funcionando
+      // Rota legada do Google Maps — redireciona para a cidade via ViaCEP
       {
         path: "detalhes/:cep",
-        redirectTo: "home",
-        pathMatch: "full"
+        loadComponent: () =>
+          import("./modules/public/cep-redirect/cep-redirect.component").then(
+            (m) => m.CepRedirectComponent
+          ),
       },
       {
         path: "enviar-codigo/:controleId",
