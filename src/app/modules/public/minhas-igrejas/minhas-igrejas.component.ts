@@ -4,6 +4,7 @@ import { RouterModule, Router, NavigationEnd } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { PrimeNgModule } from '../../../shared/primeng.module';
 import { SeoService } from '../../../core/services/seo.service';
+import { ClarityService } from '../../../core/services/clarity.service';
 import { getCountdownLabel } from '../../../shared/utils/mass-time.utils';
 import { getMissaAgoraUrgency } from '../../../shared/utils/mass-time.utils';
 import { Subscription } from 'rxjs';
@@ -32,6 +33,7 @@ export class MinhasIgrejasComponent implements OnInit, OnDestroy {
   private _seo = inject(SeoService);
   private _router = inject(Router);
   private _toast = inject(MessageService);
+  private _clarity = inject(ClarityService);
 
   igrejas: IgrejaFavorita[] = [];
   private _navSub: Subscription | null = null;
@@ -43,6 +45,7 @@ export class MinhasIgrejasComponent implements OnInit, OnDestroy {
       canonical: 'https://buscamissa.com.br/minhas-igrejas',
     });
     this._carregarIgrejas();
+    this._clarity.track('favoritos_lista_aberta');
 
     this._navSub = this._router.events
       .pipe(filter(e => e instanceof NavigationEnd))
@@ -87,6 +90,7 @@ export class MinhasIgrejasComponent implements OnInit, OnDestroy {
     const filtradas = igrejas.filter((i: any) => i.id !== id);
     localStorage.setItem('buscamissa_favoritas', JSON.stringify(filtradas));
 
+    this._clarity.track('favorito_removido', { igrejaId: String(id) });
     this._carregarIgrejas();
     this._toast.add({
       severity: 'success',
@@ -96,6 +100,7 @@ export class MinhasIgrejasComponent implements OnInit, OnDestroy {
   }
 
   irParaIgreja(igreja: IgrejaFavorita): void {
+    this._clarity.track('favorito_clicado', { igrejaId: String(igreja.id) });
     this._router.navigate(['/paroquia', igreja.uf.toLowerCase(), igreja.cidadeSlug, igreja.slug]);
   }
 }

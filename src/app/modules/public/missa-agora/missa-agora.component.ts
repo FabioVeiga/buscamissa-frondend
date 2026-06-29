@@ -32,6 +32,7 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
   geoStatus: GeoStatus = 'idle';
   permissaoNegadaPeloBrowser = false;
   missas: MassCardData[] = [];
+  favoritasIds = new Set<number>();
   isLoading = false;
   cidadeDetectada: string | null = null;
   horaAtual = '';
@@ -56,7 +57,15 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
       : this.cidadesFallback;
   }
 
+  private _loadFavoritas(): void {
+    try {
+      const arr = JSON.parse(localStorage.getItem('buscamissa_favoritas') || '[]');
+      this.favoritasIds = new Set(Array.isArray(arr) ? arr.map((f: any) => f.id) : []);
+    } catch { this.favoritasIds = new Set(); }
+  }
+
   ngOnInit(): void {
+    this._loadFavoritas();
     this._seo.update({
       title: 'Missa Agora | BuscaMissa',
       description: 'Veja as missas que estão acontecendo agora ou nas próximas 2 horas perto de você.',
@@ -172,6 +181,10 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
     this._analytics.getDirections(card.churchName);
   }
 
+  ehFavorita(churchId: number): boolean {
+    return this.favoritasIds.has(churchId);
+  }
+
   onFavorite(card: MassCardData): void {
     try {
       const raw = localStorage.getItem('buscamissa_favoritas');
@@ -195,6 +208,13 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
       }
 
       localStorage.setItem('buscamissa_favoritas', JSON.stringify(favoritas));
+      // atualiza o Set reativo para que o ícone mude imediatamente
+      if (jaExiste) {
+        this.favoritasIds.delete(card.churchId);
+      } else {
+        this.favoritasIds.add(card.churchId);
+      }
+      this.favoritasIds = new Set(this.favoritasIds); // nova referência → trigger change detection
 
       this._analytics.favoriteParishSaved(card.churchName);
       this._toast.add({

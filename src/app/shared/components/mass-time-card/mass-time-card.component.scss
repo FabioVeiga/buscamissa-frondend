@@ -125,6 +125,15 @@
       &:hover .pi {
         color: #bc5d10;
       }
+
+      &-ativo {
+        border-color: #bc5d10;
+        background: #fcf7f3;
+
+        .pi {
+          color: #bc5d10;
+        }
+      }
     }
   }
 }

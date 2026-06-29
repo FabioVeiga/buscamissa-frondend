@@ -21,6 +21,7 @@ import {
 import { ChurchFormComponent } from "../../components/church-form/church-form.component";
 import { PrimeNgModule } from "../../../../../shared/primeng.module";
 import { ChurchesService } from "../../../../../core/services/churches.service";
+import { ClarityService } from "../../../../../core/services/clarity.service";
 
 @Component({
   selector: "app-church-edit-page",
@@ -38,6 +39,7 @@ export class ChurchEditPageComponent implements OnInit {
   private cd = inject(ChangeDetectorRef);
   private location = inject(Location);
   public router = inject(Router);
+  private _clarity = inject(ClarityService);
 
   isLoading = false;
   isSaving = false;
@@ -58,6 +60,7 @@ export class ChurchEditPageComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    this._clarity.track('contrib_form_aberto');
     this.churchDataForForm$ = this.route.params.pipe(
       tap((params) => {
         this.churchId = params["id"];
@@ -211,6 +214,7 @@ export class ChurchEditPageComponent implements OnInit {
   }
 
   cancel(): void {
+    this._clarity.track('contrib_cancelado');
     this.location.back();
   }
 }
