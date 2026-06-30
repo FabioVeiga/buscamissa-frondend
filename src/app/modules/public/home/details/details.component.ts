@@ -17,6 +17,7 @@ import { getNextOccurrenceMinutes, formatMassTime, getCountdownLabel } from "../
 import { AnalyticsService } from "../../../../core/services/analytics.service";
 import { ClarityService } from "../../../../core/services/clarity.service";
 import { RedesSociaisService, TipoRedeSocial } from "../../../../core/services/redes-sociais.service";
+import { MetricasService } from "../../../../core/services/metricas.service";
 import { getSocialIconFromTipos } from "../../../../shared/utils/social-icon.utils";
 
 @Component({
@@ -45,6 +46,7 @@ export class DetailsComponent implements OnInit {
   private _analytics = inject(AnalyticsService);
   private _clarity = inject(ClarityService);
   private _redesSociais = inject(RedesSociaisService);
+  private _metricas = inject(MetricasService);
 
   tiposRedeSocial: TipoRedeSocial[] = [];
   isLoading = false;
@@ -102,6 +104,7 @@ export class DetailsComponent implements OnInit {
         if (igreja.id) this.carregarResumoConfirmacoes(igreja.id);
         this._loadFavoritaState();
         this._analytics.churchView(igreja.nome, igreja.endereco?.localidade ?? '', igreja.endereco?.uf ?? '');
+        if (igreja.id) this._metricas.registrarVisualizacaoIgreja(igreja.id);
         this._aplicarClarityTags(igreja);
 
         const cidadeUf = igreja.endereco?.localidade
@@ -321,6 +324,7 @@ export class DetailsComponent implements OnInit {
       this.isFavorita = true;
       this._analytics.favoriteParishSaved(this.churchInfo.nome);
       this.trackObjetivoAlcancado('favoritar');
+      this._metricas.registrarFavorito(id);
       this._toast.add({ severity: 'success', summary: 'Adicionada aos favoritos!', detail: this.churchInfo.nome });
     }
     localStorage.setItem('buscamissa_favoritas', JSON.stringify(favoritas));
@@ -357,6 +361,7 @@ export class DetailsComponent implements OnInit {
   trackDirections(): void {
     this._analytics.getDirections(this.churchInfo?.nome ?? '');
     this.trackObjetivoAlcancado('tracar_rota');
+    if (this.churchInfo?.id) this._metricas.registrarCliqueRota(this.churchInfo.id);
   }
 
   get linkGoogleMaps(): string {
@@ -406,6 +411,16 @@ export class DetailsComponent implements OnInit {
     return 'rede_social';
   }
 
+  trackSocialClick(url: string): void {
+    this.trackObjetivoAlcancado(this.getSocialTrackName(url));
+    if (url.includes('instagram.com') && this.churchInfo?.id)
+      this._metricas.registrarCliqueInstagram(this.churchInfo.id);
+  }
+
+  trackCliqueTelefone(): void {
+    if (this.churchInfo?.id) this._metricas.registrarCliqueTelefone(this.churchInfo.id);
+  }
+
 
   voltar(): void {
     this._location.back();
@@ -416,6 +431,7 @@ export class DetailsComponent implements OnInit {
     const url = this.shareUrl;
     const nav = navigator as any;
     this.trackObjetivoAlcancado('compartilhar');
+    if (this.churchInfo?.id) this._metricas.registrarCompartilhamento(this.churchInfo.id);
     if (nav.share) {
       nav.share({ title: this.churchInfo?.nome, text: `Horários de missa — ${this.churchInfo?.nome}`, url }).catch(() => {});
     } else {
@@ -439,6 +455,7 @@ export class DetailsComponent implements OnInit {
   reportarErro(): void {
     if (this.churchInfo?.id) {
       this._analytics.userContribution('report', this.churchInfo.nome);
+      this._metricas.registrarSugestaoEdicao(this.churchInfo.id);
       this._router.navigate(['/editar', this.churchInfo.id]);
     }
   }
