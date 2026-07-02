@@ -296,6 +296,140 @@ export class HomeComponent {
   /** True quando renderizado na rota /buscar (só busca + resultados) */
   resultsMode = false;
 
+  /** ── Busca em abas (redesign) ── */
+  searchTab: 'cidade' | 'local' = 'cidade';
+  /** Dia/Horário escondidos por padrão na aba cidade */
+  mostrarMaisFiltros = false;
+  /** Loading do botão da aba "perto de mim" (GPS ou CEP) */
+  isLoadingCep = false;
+  /** Já houve uma busca por localização bem-sucedida */
+  cepBuscado = false;
+  /** Raio (km) da busca por localização */
+  raioCep = 5;
+
+  /** Estatísticas (números reais via getInfo, com fallback) */
+  stats = { igrejas: 2000, horarios: 9100, cidades: 213, estados: 26 };
+
+  setSearchTab(tab: 'cidade' | 'local'): void {
+    if (this.searchTab === tab) return;
+    this.searchTab = tab;
+    this._router.navigate([], { queryParams: {}, replaceUrl: true });
+    this.churchInfo = [];
+    this.showNoChurchCard = false;
+  }
+
+  /** Formata número com separador de milhar pt-BR (ex.: 2000 → "2.000") */
+  fmt(n: number): string {
+    return (n ?? 0).toLocaleString('pt-BR');
+  }
+
+  toggleMaisFiltros(): void {
+    this.mostrarMaisFiltros = !this.mostrarMaisFiltros;
+  }
+
+  /** Botão "Usar minha localização" (aba localização) */
+  usarMinhaLocalizacao(): void {
+    this._analytics.searchStarted();
+    this._requestGeolocation();
+    setTimeout(() => this._scrollToProximas(), 600);
+  }
+
+  /** Busca por CEP → geocodifica e lista missas por distância */
+  onCepSearch(): void {
+    const cepRaw = String(this.form.get('Cep')?.value ?? '').replace(/\D/g, '');
+    if (cepRaw.length !== 8) {
+      this._toast.add({
+        severity: 'warn',
+        summary: 'CEP inválido',
+        detail: 'Digite um CEP com 8 dígitos.',
+      });
+      return;
+    }
+    this.isLoadingCep = true;
+    this._analytics.searchStarted();
+    this._geocodeCep(cepRaw);
+  }
+
+  /** Reexecuta a busca com novo raio (chips 2/5/10 km) */
+  setRaioCep(km: number): void {
+    this.raioCep = km;
+    if (this._userLat != null && this._userLng != null) {
+      this._loadProximasMissas(this._userLat, this._userLng, km);
+      this._loadCidadesProximas(this._userLat, this._userLng);
+    }
+  }
+
+  private _geocodeCep(cep: string): void {
+    // Passo 1: ViaCEP → obtém cidade/UF do CEP (cobertura 100% brasileira)
+    fetch(`https://viacep.com.br/ws/${cep}/json/`)
+      .then(r => r.json())
+      .then((addr: any) => {
+        if (!addr || addr.erro) { this._cepNaoEncontrado(); return; }
+
+        const { logradouro, bairro, localidade, uf } = addr;
+
+        // Passo 2: busca todas as igrejas da cidade (sem filtro de horário)
+        const filters: FilterSearchChurch = {
+          Uf: uf,
+          Localidade: localidade,
+          'Paginacao.PageIndex': 1,
+          'Paginacao.PageSize': 20,
+        };
+
+        this._churchService.searchByFilters(filters).subscribe({
+          next: (data: any) => {
+            const items: Church[] = data?.data?.items ?? [];
+            this.isLoadingCep = false;
+
+            if (!items.length) {
+              this._cepNaoEncontrado();
+              return;
+            }
+
+            this.churchInfo = items;
+            this.totalRecords = data?.data?.totalItems ?? items.length;
+            this.cepBuscado = true;
+            this.resultsMode = true;
+
+            // Passo 3: geocodifica o endereço para ordenar por proximidade (fire-and-forget)
+            const query = encodeURIComponent(
+              [logradouro, bairro, localidade, uf, 'Brazil'].filter(Boolean).join(', ')
+            );
+            fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&countrycodes=br`)
+              .then(r => r.json())
+              .then((arr: any[]) => {
+                const hit = arr?.[0];
+                if (hit?.lat && hit?.lon) {
+                  this._userLat = parseFloat(hit.lat);
+                  this._userLng = parseFloat(hit.lon);
+                  this.ordenacaoResultados = 'proximidade';
+                }
+              })
+              .catch(() => {});
+          },
+          error: () => {
+            this.isLoadingCep = false;
+            this._cepNaoEncontrado();
+          },
+        });
+      })
+      .catch(() => this._cepNaoEncontrado());
+  }
+
+  private _cepNaoEncontrado(): void {
+    this.isLoadingCep = false;
+    this._toast.add({
+      severity: 'warn',
+      summary: 'CEP não encontrado',
+      detail: 'Não encontramos igrejas para este CEP. Tente buscar por cidade.',
+    });
+  }
+
+  private _scrollToProximas(): void {
+    document.getElementById('proximas-section')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
   ngOnInit(): void {
     this._redesSociais.obterTipos().subscribe((tipos) => (this.tiposRedeSocial = tipos));
     this.resultsMode = !!this._route.snapshot.data['resultsMode'];
@@ -306,9 +440,15 @@ export class HomeComponent {
       Bairro: [null],
       DiaDaSemana: [null],
       Horario: [null],
+      HorarioFim: [null],
+      Cep: [null],
     });
+    // Na página de resultados a aba "cidade" é a mais útil (filtros visíveis)
+    // aba padrão sempre "cidade" (inclusive em resultsMode)
+    this.searchTab = 'cidade';
     this.getAddress();
     this._loadFavorita();
+    this._loadStats();
 
     // Limpa resultados quando o usuário navega para home sem filtros (ex: clique no logo).
     // Usa a key 'uf' (minúscula) — a mesma gravada por searchFilter — senão o form
@@ -380,8 +520,21 @@ export class HomeComponent {
     );
   }
 
-  private _loadProximasMissas(lat?: number | null, lng?: number | null): void {
-    this._churchService.proximasMissas(lat, lng).subscribe({
+  private _loadStats(): void {
+    this._churchService.getInfo().subscribe({
+      next: (res: any) => {
+        const d = res?.data ?? res ?? {};
+        const igrejas = d.quantidadesIgrejas ?? d.quantidadeIgrejas ?? d.totalIgrejas;
+        const horarios = d.quantidadeMissas ?? d.quantidadesMissas ?? d.totalMissas;
+        if (igrejas) this.stats.igrejas = igrejas;
+        if (horarios) this.stats.horarios = horarios;
+      },
+      error: () => { /* silencioso — mantém fallback */ },
+    });
+  }
+
+  private _loadProximasMissas(lat?: number | null, lng?: number | null, raioKm = 10): void {
+    this._churchService.proximasMissas(lat, lng, raioKm).subscribe({
       next: (res: any) => {
         const items: any[] = res?.data ?? res ?? [];
         this.proximasMissasCards = items.slice(0, 5).map((item: any) => ({
@@ -628,6 +781,12 @@ export class HomeComponent {
       t.setHours(h, m, 0, 0);
       this.form.get('Horario')?.setValue(t);
     }
+    if (p['horarioFim']) {
+      const [h2, m2] = p['horarioFim'].split(':').map(Number);
+      const t2 = new Date();
+      t2.setHours(h2, m2, 0, 0);
+      this.form.get('HorarioFim')?.setValue(t2);
+    }
     if (p['pagina']) this.pageIndex = Number(p['pagina']);
 
     this.searchFilter(false);
@@ -672,12 +831,16 @@ export class HomeComponent {
     bairro: string | null;
     dia: number | null;
     horario: string | null;
+    horarioFim: string | null;
   } {
     const uf = this.form.get("Uf")?.value;
     const localidade = this.form.get("Localidade")?.value;
     const bairro = this.form.get("Bairro")?.value;
     const diaDaSemana = this.form.get("DiaDaSemana")?.value;
-    const horario = this._datePipe.transform(this.form.value.Horario, "HH:mm");
+    const horarioRaw = this.form.value.Horario;
+    const horario = horarioRaw ? (typeof horarioRaw === 'string' ? horarioRaw : this._datePipe.transform(horarioRaw, 'HH:mm')) : null;
+    const horarioFimRaw = this.form.value.HorarioFim;
+    const horarioFim = horarioFimRaw ? (typeof horarioFimRaw === 'string' ? horarioFimRaw : this._datePipe.transform(horarioFimRaw, 'HH:mm')) : null;
 
     return {
       uf: uf ?? null,
@@ -685,6 +848,7 @@ export class HomeComponent {
       bairro: bairro ?? null,
       dia: diaDaSemana ?? null,
       horario: horario ?? null,
+      horarioFim: horarioFim ?? null,
     };
   }
 
@@ -727,6 +891,7 @@ export class HomeComponent {
       Bairro: params.bairro || undefined,
       DiaDaSemana: params.dia || undefined,
       Horario: params.horario || undefined,
+      HorarioFim: params.horarioFim || undefined,
       "Paginacao.PageIndex": this.pageIndex,
       "Paginacao.PageSize": this.pageSize,
     };

@@ -1,141 +1,125 @@
-<!-- ══ HERO COM BUSCA EMBUTIDA ══ -->
-<section class="hero-v2">
-  <div class="hero-v2__overlay"></div>
-  <div class="hero-v2__inner">
-    <div class="hero-v2__badge" *ngIf="urgencyBadgeText">{{ urgencyBadgeText }}</div>
+<!-- ══ HERO — IMAGEM FULL-WIDTH + CARD CENTRALIZADO ══ -->
+<section class="hero" [class.hero--results]="resultsMode">
 
-    <h1 class="hero-v2__titulo" *ngIf="!resultsMode">
-      Encontre uma missa <span class="hero-v2__hoje">hoje</span><br>
-      perto de você
-    </h1>
-    <p class="hero-v2__subtitulo" *ngIf="!resultsMode">
-      Horários atualizados por igrejas e pela comunidade católica.
-    </p>
-    <p class="hero-v2__subtitulo" *ngIf="resultsMode">
-      Refine os filtros ou explore os resultados abaixo.
-    </p>
+  <!-- Imagem de fundo (LCP priority) -->
+  <img *ngIf="!resultsMode" class="hero__bg"
+       src="/assets/banner/hero-igreja.webp"
+       width="1440" height="560"
+       fetchpriority="high"
+       alt="Interior de uma igreja católica iluminada" />
+  <div class="hero__overlay" *ngIf="!resultsMode"></div>
 
-    <!-- Mini badges de prova social -->
-    <div class="hero-v2__provas" *ngIf="!resultsMode">
-      <span class="hero-v2__prova"><i class="pi pi-home"></i> 2.000+ igrejas</span>
-      <span class="hero-v2__prova"><i class="pi pi-clock"></i> 9.100+ horários de missa</span>
-      <span class="hero-v2__prova"><i class="pi pi-check-circle"></i> Atualizado diariamente</span>
+  <div class="hero__inner">
+
+    <!-- Título e subtítulo sobre a imagem -->
+    <div class="hero__text" *ngIf="!resultsMode">
+      <div class="hero__badge" *ngIf="urgencyBadgeText">{{ urgencyBadgeText }}</div>
+      <h1 class="hero__titulo">Encontre uma missa<br>perto de você.</h1>
+      <p class="hero__emocional">Onde você estiver, sempre haverá uma comunidade esperando por você.</p>
     </div>
 
-    <!-- Barra de busca -->
-    <div class="hero-search">
-      <form [formGroup]="form" class="hero-search__form">
-        <p-iftalabel class="hero-search__field">
-          <p-select
-            [options]="statesList"
-            (onChange)="onStateChange($event)"
-            [filter]="statesList"
-            [filterBy]="'label'"
-            [showClear]="!!form.get('Uf')?.value"
-            formControlName="Uf"
-            placeholder="Selecione"
-            class="w-full"
-            appendTo="body"
-            [loading]="isLoadingAddress"
-            id="Uf"
-          ></p-select>
-          <label for="Uf">Estado *</label>
-        </p-iftalabel>
+    <p class="hero__subtitulo--results" *ngIf="resultsMode && searchTab === 'cidade'">Refine os filtros ou explore os resultados abaixo.</p>
 
-        <p-iftalabel class="hero-search__field">
-          <p-select
-            [options]="citiesList"
-            (onChange)="onCityChange($event)"
-            [disabled]="!form.get('Uf')?.value"
-            [showClear]="!!form.get('Localidade')?.value"
-            [filter]="true"
-            filterBy="label"
-            formControlName="Localidade"
-            placeholder="Selecione"
-            class="w-full"
-            appendTo="body"
-            id="Cidade"
-            [loading]="isLoadingAddress"
-          ></p-select>
-          <label for="Localidade">Cidade</label>
-        </p-iftalabel>
-
-        <p-iftalabel class="hero-search__field">
-          <p-select
-            [options]="districtsList"
-            [disabled]="!form.get('Localidade')?.value"
-            [showClear]="!!form.get('Bairro')?.value"
-            [filter]="true"
-            filterBy="label"
-            formControlName="Bairro"
-            placeholder="Selecione"
-            class="w-full"
-            appendTo="body"
-            id="Bairro"
-            [loading]="isLoadingAddress"
-          ></p-select>
-          <label for="Bairro">Bairro</label>
-        </p-iftalabel>
-
-        <p-iftalabel class="hero-search__field">
-          <p-select
-            [options]="weakDays"
-            [filter]="true"
-            filterBy="weakDays"
-            optionLabel="nome"
-            optionValue="id"
-            [showClear]="true"
-            formControlName="DiaDaSemana"
-            placeholder="Qualquer dia"
-            class="w-full"
-            appendTo="body"
-            id="DiasSemana"
-          ></p-select>
-          <label for="DiasSemana">Dia</label>
-        </p-iftalabel>
-
-        <p-floatlabel class="hero-search__field" variant="in">
-          <p-datepicker
-            formControlName="Horario"
-            [timeOnly]="true"
-            [showClear]="true"
-            inputId="Horario"
-            [readonlyInput]="false"
-            showIcon
-            iconDisplay="input"
-            appendTo="body"
-            [stepMinute]="15"
-            (onFocus)="setDefaultTimeIfNull()"
-          />
-          <label for="Horario">Horário</label>
-        </p-floatlabel>
-
-        <button type="button" class="hero-search__btn"
-                [disabled]="form.invalid || isLoading"
-                (click)="onBuscarClick()">
-          <i class="pi" [ngClass]="isLoading ? 'pi-spin pi-spinner' : 'pi-search'"></i>
-          Buscar
+    <!-- Card de busca com 2 abas -->
+    <div class="search-card">
+      <div class="search-tabs" role="tablist" aria-label="Formas de busca">
+        <button type="button" role="tab" id="tab-cidade" class="search-tab"
+                [class.search-tab--ativa]="searchTab === 'cidade'"
+                [attr.aria-selected]="searchTab === 'cidade'" (click)="setSearchTab('cidade')">
+          <i class="pi pi-search"></i> Buscar uma missa
         </button>
-      </form>
-      <p-toast position="top-right"></p-toast>
+        <button type="button" role="tab" id="tab-local" class="search-tab"
+                [class.search-tab--ativa]="searchTab === 'local'"
+                [attr.aria-selected]="searchTab === 'local'" (click)="setSearchTab('local')">
+          <i class="pi pi-map-marker"></i> Buscar perto de mim
+        </button>
+      </div>
+
+      <!-- Painel: buscar uma missa (cidade/estado/bairro) -->
+      <div class="search-panel" *ngIf="searchTab === 'cidade'" role="tabpanel" aria-labelledby="tab-cidade">
+        <form [formGroup]="form" class="search-form">
+          <div class="search-form__row">
+            <p-iftalabel class="search-form__field">
+              <p-select [options]="statesList" (onChange)="onStateChange($event)" [filter]="true" [filterBy]="'label'"
+                        [showClear]="!!form.get('Uf')?.value" formControlName="Uf" placeholder="Selecione"
+                        class="w-full" appendTo="body" [loading]="isLoadingAddress" id="Uf"></p-select>
+              <label for="Uf">Estado *</label>
+            </p-iftalabel>
+
+            <p-iftalabel class="search-form__field">
+              <p-select [options]="citiesList" (onChange)="onCityChange($event)" [disabled]="!form.get('Uf')?.value"
+                        [showClear]="!!form.get('Localidade')?.value" [filter]="true" filterBy="label"
+                        formControlName="Localidade" placeholder="Selecione" class="w-full" appendTo="body"
+                        id="Cidade" [loading]="isLoadingAddress"></p-select>
+              <label for="Localidade">Cidade</label>
+            </p-iftalabel>
+
+            <p-iftalabel class="search-form__field">
+              <p-select [options]="districtsList" [disabled]="!form.get('Localidade')?.value"
+                        [showClear]="!!form.get('Bairro')?.value" [filter]="true" filterBy="label"
+                        formControlName="Bairro" placeholder="Selecione" class="w-full" appendTo="body"
+                        id="Bairro" [loading]="isLoadingAddress"></p-select>
+              <label for="Bairro">Bairro</label>
+            </p-iftalabel>
+          </div>
+
+          <div class="search-form__advanced">
+            <p-iftalabel class="search-form__field">
+              <p-select [options]="weakDays" [filter]="true" filterBy="weakDays" optionLabel="nome" optionValue="id"
+                        [showClear]="true" formControlName="DiaDaSemana" placeholder="Qualquer dia" class="w-full"
+                        appendTo="body" id="DiasSemana"></p-select>
+              <label for="DiasSemana">Dia</label>
+            </p-iftalabel>
+
+            <p-iftalabel class="search-form__field">
+              <p-datepicker formControlName="Horario" [timeOnly]="true" [showClear]="true" inputId="Horario"
+                            [readonlyInput]="false" showIcon iconDisplay="input" appendTo="body" [stepMinute]="15"
+                            (onFocus)="setDefaultTimeIfNull()" />
+              <label for="Horario">Horário</label>
+            </p-iftalabel>
+          </div>
+
+          <button type="button" class="btn-primary search-form__submit"
+                  [disabled]="form.invalid || isLoading" (click)="onBuscarClick()">
+            <i class="pi" [ngClass]="isLoading ? 'pi-spin pi-spinner' : 'pi-search'"></i>
+            Buscar missas
+          </button>
+        </form>
+      </div>
+
+      <!-- Painel: buscar perto de mim (GPS + CEP como plano B) -->
+      <div class="search-panel" *ngIf="searchTab === 'local'" role="tabpanel" aria-labelledby="tab-local">
+        <div class="search-local">
+          <p class="search-panel__desc">Encontraremos as missas mais próximas de você.</p>
+          <button type="button" class="btn-primary search-local__btn"
+                  (click)="usarMinhaLocalizacao()" [disabled]="geoStatus === 'loading'">
+            <i class="pi" [ngClass]="geoStatus === 'loading' ? 'pi-spin pi-spinner' : 'pi-map-marker'"></i>
+            Usar minha localização
+          </button>
+          <p class="search-panel__hint" *ngIf="geoStatus === 'denied'">
+            Permissão de localização negada. Use o CEP abaixo.
+          </p>
+
+          <div class="search-local__divider">
+            <span>ou</span>
+          </div>
+
+          <p class="search-panel__desc">Não consegue usar sua localização? Digite seu CEP:</p>
+          <form [formGroup]="form" class="search-cep" (ngSubmit)="onCepSearch()">
+            <p-iftalabel class="search-form__field search-form__field--cep">
+              <p-inputmask formControlName="Cep" mask="99999-999" inputId="Cep" placeholder="00000-000" class="w-full" />
+              <label for="Cep">CEP</label>
+            </p-iftalabel>
+            <button type="button" class="btn-primary search-cep__btn" [disabled]="isLoadingCep" (click)="onCepSearch()">
+              <i class="pi" [ngClass]="isLoadingCep ? 'pi-spin pi-spinner' : 'pi-search'"></i>
+              Buscar
+            </button>
+          </form>
+        </div>
+      </div>
     </div>
 
-    <!-- Chips de filtro rápido -->
-    <div class="hero-chips">
-      <button class="hero-chip hero-chip--geo" [class.hero-chip--ativo]="quickFilter === 'perto'"
-              (click)="setQuickFilter('perto')">
-        <i class="pi pi-map-marker"></i> Perto de mim
-      </button>
-      <button class="hero-chip" [class.hero-chip--ativo]="quickFilter === 'hoje'"   [disabled]="!chipsHabilitados" [title]="chipsHabilitados ? '' : chipsTooltip" (click)="setQuickFilter('hoje')">Hoje</button>
-      <button class="hero-chip" [class.hero-chip--ativo]="quickFilter === 'amanha'" [disabled]="!chipsHabilitados" [title]="chipsHabilitados ? '' : chipsTooltip" (click)="setQuickFilter('amanha')">Amanhã</button>
-      <button class="hero-chip" [class.hero-chip--ativo]="quickFilter === 'fds'"    [disabled]="!chipsHabilitados" [title]="chipsHabilitados ? '' : chipsTooltip" (click)="setQuickFilter('fds')">Fim de semana</button>
-      <button class="hero-chip" [class.hero-chip--ativo]="quickFilter === 'manha'"  [disabled]="!chipsHabilitados" [title]="chipsHabilitados ? '' : chipsTooltip" (click)="setQuickFilter('manha')">Manhã</button>
-      <button class="hero-chip" [class.hero-chip--ativo]="quickFilter === 'tarde'"  [disabled]="!chipsHabilitados" [title]="chipsHabilitados ? '' : chipsTooltip" (click)="setQuickFilter('tarde')">Tarde</button>
-      <button class="hero-chip" [class.hero-chip--ativo]="quickFilter === 'noite'"  [disabled]="!chipsHabilitados" [title]="chipsHabilitados ? '' : chipsTooltip" (click)="setQuickFilter('noite')">Noite</button>
-      <a routerLink="/minhas-igrejas" class="hero-chip hero-chip--fav">
-        <i class="pi pi-heart-fill"></i> Favoritas
-      </a>
-    </div>
+    <p-toast position="top-right"></p-toast>
   </div>
 </section>
 
@@ -149,26 +133,27 @@
     <h1 class="resultados-header__titulo">Resultados da busca</h1>
   </div>
 
-  <!-- ══ ESTATÍSTICAS (números reais) ══ -->
-  <section class="stats-strip" *ngIf="!resultsMode">
-    <h2 class="stats-strip__titulo">O Busca Missa cresce todos os dias</h2>
-    <div class="stats-strip__grid">
-      <div class="stats-strip__item">
-        <span class="stats-strip__num stats-strip__num--green">213+</span>
-        <span class="stats-strip__label">cidades</span>
-      </div>
-      <div class="stats-strip__item">
-        <span class="stats-strip__num stats-strip__num--orange">2.000+</span>
-        <span class="stats-strip__label">igrejas</span>
-      </div>
-      <div class="stats-strip__item">
-        <span class="stats-strip__num stats-strip__num--blue">9.100+</span>
-        <span class="stats-strip__label">horários de missa</span>
-      </div>
-      <div class="stats-strip__item">
-        <span class="stats-strip__num stats-strip__num--purple">26</span>
-        <span class="stats-strip__label">estados brasileiros</span>
-      </div>
+  <!-- ══ ESTATÍSTICAS ══ -->
+  <section class="stats" *ngIf="!resultsMode" aria-label="O Busca Missa em números">
+    <div class="stats__item">
+      <span class="stats__icon stats__icon--orange"><i class="pi pi-home"></i></span>
+      <span class="stats__num">{{ fmt(stats.igrejas) }}+</span>
+      <span class="stats__label">igrejas cadastradas</span>
+    </div>
+    <div class="stats__item">
+      <span class="stats__icon stats__icon--green"><i class="pi pi-clock"></i></span>
+      <span class="stats__num">{{ fmt(stats.horarios) }}+</span>
+      <span class="stats__label">horários cadastrados</span>
+    </div>
+    <div class="stats__item">
+      <span class="stats__icon stats__icon--blue"><i class="pi pi-map-marker"></i></span>
+      <span class="stats__num">{{ stats.cidades }}+</span>
+      <span class="stats__label">cidades atendidas</span>
+    </div>
+    <div class="stats__item">
+      <span class="stats__icon stats__icon--purple"><i class="pi pi-map"></i></span>
+      <span class="stats__num">{{ stats.estados }}</span>
+      <span class="stats__label">estados brasileiros</span>
     </div>
   </section>
 
@@ -224,36 +209,96 @@
     </aside>
   </section>
 
-  <!-- ══ BLOCO DE CONFIANÇA (4 cards) ══ -->
-  <section class="trust-cards" *ngIf="!resultsMode">
-    <div class="trust-card">
-      <span class="trust-card__icon"><i class="pi pi-home"></i></span>
-      <div>
-        <p class="trust-card__titulo">Encontre facilmente</p>
-        <p class="trust-card__desc">Missas perto de você em poucos cliques.</p>
+  <!-- ══ FEITO PELA COMUNIDADE (3 passos + CTA) ══ -->
+  <section class="colab" *ngIf="!resultsMode">
+    <h2 class="colab__titulo"><i class="pi pi-heart-fill"></i> Feito pela comunidade católica</h2>
+    <p class="colab__sub">Milhares de fiéis ajudam a manter os horários das missas sempre atualizados.</p>
+
+    <div class="colab__steps">
+      <div class="colab__step">
+        <span class="colab__step-icon"><i class="pi pi-users"></i></span>
+        <p class="colab__step-titulo">A comunidade envia</p>
+        <p class="colab__step-desc">Qualquer pessoa pode cadastrar igrejas ou sugerir horários.</p>
+      </div>
+      <i class="pi pi-arrow-right colab__arrow" aria-hidden="true"></i>
+      <div class="colab__step">
+        <span class="colab__step-icon"><i class="pi pi-send"></i></span>
+        <p class="colab__step-titulo">Publicado na plataforma</p>
+        <p class="colab__step-desc">As informações ficam disponíveis e podem ser atualizadas continuamente.</p>
+      </div>
+      <i class="pi pi-arrow-right colab__arrow" aria-hidden="true"></i>
+      <div class="colab__step">
+        <span class="colab__step-icon"><i class="pi pi-check-circle"></i></span>
+        <p class="colab__step-titulo">Disponível para todos</p>
+        <p class="colab__step-desc">Os horários ficam acessíveis para milhares de pessoas.</p>
       </div>
     </div>
-    <div class="trust-card">
-      <span class="trust-card__icon"><i class="pi pi-calendar"></i></span>
-      <div>
-        <p class="trust-card__titulo">Horários atualizados</p>
-        <p class="trust-card__desc">Informações mantidas pelas paróquias.</p>
+
+    <div class="colab__cta">
+      <div class="colab__cta-text">
+        <p class="colab__cta-titulo"><i class="pi pi-heart-fill"></i> Ajude outras pessoas a encontrar uma missa</p>
+        <p class="colab__cta-desc">Sua contribuição ajuda milhares de fiéis a celebrarem a fé.</p>
+      </div>
+      <div class="colab__cta-actions">
+        <a routerLink="/nova" class="btn-primary"><i class="pi pi-plus"></i> Cadastrar uma igreja</a>
       </div>
     </div>
-    <a routerLink="/minhas-igrejas" class="trust-card trust-card--link">
-      <span class="trust-card__icon"><i class="pi pi-heart-fill"></i></span>
-      <div>
-        <p class="trust-card__titulo">Salve suas favoritas</p>
-        <p class="trust-card__desc">Guarde igrejas e horários preferidos.</p>
+  </section>
+
+  <!-- ══ COMO FUNCIONA (timeline) ══ -->
+  <section class="timeline" *ngIf="!resultsMode">
+    <h2 class="sec-header__titulo timeline__titulo">Como funciona</h2>
+    <ol class="timeline__list">
+      <li class="timeline__step">
+        <span class="timeline__num">1</span>
+        <div class="timeline__body">
+          <p class="timeline__step-titulo">A comunidade envia</p>
+          <p class="timeline__step-desc">Fiéis, paróquias e dioceses cadastram igrejas e horários.</p>
+        </div>
+      </li>
+      <li class="timeline__step">
+        <span class="timeline__num">2</span>
+        <div class="timeline__body">
+          <p class="timeline__step-titulo">É publicado na plataforma</p>
+          <p class="timeline__step-desc">Os horários ficam disponíveis para toda a comunidade encontrar.</p>
+        </div>
+      </li>
+      <li class="timeline__step">
+        <span class="timeline__num">3</span>
+        <div class="timeline__body">
+          <p class="timeline__step-titulo">Você encontra</p>
+          <p class="timeline__step-desc">Busque por localização, cidade ou CEP e veja os horários.</p>
+        </div>
+      </li>
+      <li class="timeline__step">
+        <span class="timeline__num">4</span>
+        <div class="timeline__body">
+          <p class="timeline__step-titulo">Você participa</p>
+          <p class="timeline__step-desc">Compareça à celebração e viva sua fé na comunidade.</p>
+        </div>
+      </li>
+      <li class="timeline__step">
+        <span class="timeline__num">5</span>
+        <div class="timeline__body">
+          <p class="timeline__step-titulo">Você ajuda a manter atualizado</p>
+          <p class="timeline__step-desc">Cadastre igrejas, sugira correções e mantenha a comunidade sempre informada.</p>
+        </div>
+      </li>
+    </ol>
+  </section>
+
+  <!-- ══ NÃO ENCONTROU ══ -->
+  <section class="nao-encontrou" *ngIf="!resultsMode">
+    <div class="nao-encontrou__inner">
+      <span class="nao-encontrou__icon"><i class="pi pi-search"></i></span>
+      <div class="nao-encontrou__text">
+        <p class="nao-encontrou__titulo">Não encontrou sua paróquia?</p>
+        <p class="nao-encontrou__sub">Ajude outras pessoas cadastrando a igreja e os horários de missa. Leva menos de 2 minutos.</p>
       </div>
-    </a>
-    <a routerLink="/como-funciona" class="trust-card trust-card--link">
-      <span class="trust-card__icon"><i class="pi pi-users"></i></span>
-      <div>
-        <p class="trust-card__titulo">Comunidade</p>
-        <p class="trust-card__desc">Participe da vida da sua comunidade.</p>
-      </div>
-    </a>
+      <a routerLink="/nova" class="btn-primary nao-encontrou__btn">
+        <i class="pi pi-plus"></i> Cadastrar igreja e missas
+      </a>
+    </div>
   </section>
 
   <!-- ══ SEUS FAVORITOS ══ -->
@@ -314,17 +359,20 @@
       <a routerLink="/cidades" class="sec-header__link">Ver todas as cidades →</a>
     </div>
 
-    <a *ngIf="geoStatus === 'found' && cidadeDetectada"
-       [routerLink]="['/missas', cidadeDetectada!.uf.toLowerCase(), cidadeDetectada!.slug]"
-       class="cidade-destaque">
-      <div class="cidade-destaque__icon" aria-hidden="true"><i class="pi pi-map-marker"></i></div>
-      <div class="cidade-destaque__info">
-        <span class="cidade-destaque__label">Sua cidade</span>
-        <span class="cidade-destaque__nome">{{ cidadeDetectada!.nome }}</span>
-      </div>
-      <span class="cidade-destaque__estado">{{ cidadeDetectada!.uf }}</span>
-      <i class="pi pi-arrow-right cidade-destaque__arrow"></i>
-    </a>
+    <!-- Wrapper com min-height reservado para evitar CLS quando geo resolve -->
+    <div class="cidades-chips__geo-wrap">
+      <a *ngIf="geoStatus === 'found' && cidadeDetectada"
+         [routerLink]="['/missas', cidadeDetectada!.uf.toLowerCase(), cidadeDetectada!.slug]"
+         class="cidade-destaque">
+        <div class="cidade-destaque__icon" aria-hidden="true"><i class="pi pi-map-marker"></i></div>
+        <div class="cidade-destaque__info">
+          <span class="cidade-destaque__label">Sua cidade</span>
+          <span class="cidade-destaque__nome">{{ cidadeDetectada!.nome }}</span>
+        </div>
+        <span class="cidade-destaque__estado">{{ cidadeDetectada!.uf }}</span>
+        <i class="pi pi-arrow-right cidade-destaque__arrow"></i>
+      </a>
+    </div>
 
     <div class="cidades-chips__lista">
       <a *ngFor="let c of cidadesExibidas; let i = index"
@@ -345,7 +393,15 @@
     <i class="pi pi-search"></i>
     <p class="resultados-feedback__titulo">Nenhuma igreja encontrada para os filtros aplicados.</p>
     <p class="resultados-feedback__sub">Tente ampliar a busca — remova o bairro, o dia ou o horário.</p>
-    <a routerLink="/nova" class="btn-primary"><i class="pi pi-plus"></i> Cadastrar igreja</a>
+    <div class="resultados-feedback__cadastro">
+      <p class="resultados-feedback__cadastro-titulo">Sua paróquia não está aqui?</p>
+      <p class="resultados-feedback__cadastro-sub">
+        Cadastrar é simples e rápido. Você ajuda milhares de fiéis a encontrarem uma missa perto deles. 🙏
+      </p>
+      <a routerLink="/nova" class="btn-primary resultados-feedback__cadastro-btn">
+        <i class="pi pi-plus"></i> Cadastrar minha igreja
+      </a>
+    </div>
   </div>
 
   <!-- ══ ORDENAÇÃO DOS RESULTADOS ══ -->
@@ -375,71 +431,28 @@
       [rowsPerPageOptions]="[5, 10, 20]" (onPageChange)="onPageChange($event)"></p-paginator>
   </div>
 
-  <div class="flex justify-center w-full">
+  <div class="adsense-wrap">
     <app-adsense-banner></app-adsense-banner>
   </div>
 
-  <!-- ══ CTA FINAL: CADASTRAR IGREJA ══ -->
-  <section class="cadastrar-cta">
-    <div class="cadastrar-cta__art" aria-hidden="true">
-      <svg viewBox="0 0 80 72" xmlns="http://www.w3.org/2000/svg">
-        <rect x="22" y="36" width="36" height="30" rx="2" fill="#f0e2d3"/>
-        <rect x="35" y="15" width="10" height="51" rx="1.5" fill="#f5ede3"/>
-        <polygon points="22,36 40,22 58,36" fill="#e6c9a8"/>
-        <polygon points="40,7 32,17 48,17" fill="#e6c9a8"/>
-        <rect x="38" y="2" width="4" height="7" rx="1" fill="#d4a97a"/>
-        <rect x="36" y="5" width="8" height="3" rx="1" fill="#d4a97a"/>
-        <rect x="37.5" y="48" width="5" height="18" rx="1" fill="#d4a97a"/>
-        <rect x="26" y="42" width="7" height="10" rx="1.5" fill="#d4a97a"/>
-        <rect x="47" y="42" width="7" height="10" rx="1.5" fill="#d4a97a"/>
-      </svg>
-    </div>
-    <div class="cadastrar-cta__text">
-      <h2 class="cadastrar-cta__titulo">Sua igreja ainda não aparece no Busca Missa?</h2>
-      <p class="cadastrar-cta__desc">Ajude mais pessoas a encontrarem horários de missa na sua região.</p>
-    </div>
-    <a routerLink="/nova" class="btn-primary cadastrar-cta__btn">
-      <i class="pi pi-plus"></i> Cadastrar igreja
-    </a>
-  </section>
-
-  <!-- ══ BANNER: AJUDE A MANTER OS HORÁRIOS ══ -->
-  <div class="confirmar-banner">
-    <div class="confirmar-banner__art" aria-hidden="true">
-      <svg viewBox="0 0 80 72" xmlns="http://www.w3.org/2000/svg">
-        <rect x="22" y="36" width="36" height="30" rx="2" fill="#f0e2d3"/>
-        <rect x="35" y="15" width="10" height="51" rx="1.5" fill="#f5ede3"/>
-        <polygon points="22,36 40,22 58,36" fill="#e6c9a8"/>
-        <polygon points="40,7 32,17 48,17" fill="#e6c9a8"/>
-        <rect x="38" y="2" width="4" height="7" rx="1" fill="#d4a97a"/>
-        <rect x="36" y="5" width="8" height="3" rx="1" fill="#d4a97a"/>
-        <rect x="37.5" y="48" width="5" height="18" rx="1" fill="#d4a97a"/>
-        <rect x="26" y="42" width="7" height="10" rx="1.5" fill="#d4a97a"/>
-        <rect x="47" y="42" width="7" height="10" rx="1.5" fill="#d4a97a"/>
-      </svg>
-    </div>
-    <div class="confirmar-banner__text flex-1 min-w-0">
-      <p class="font-bold text-gray-800 text-sm leading-snug">Ajude a manter os horários sempre atualizados</p>
-      <p class="text-gray-500 text-xs mt-1 leading-relaxed">
-        Sua confirmação faz toda a diferença para que todos encontrem a missa certa, na hora certa.
-      </p>
-    </div>
-    <a routerLink="/cidades" class="confirmar-banner__btn shrink-0">
-      <i class="pi pi-thumbs-up"></i> Quero confirmar
-    </a>
-  </div>
 
   <!-- ══ INSTAGRAM ══ -->
-  <div class="home-instagram">
-    <a href="https://www.instagram.com/buscamissa/" target="_blank" rel="noopener noreferrer" class="home-instagram__link">
-      <svg class="home-instagram__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="currentColor" stroke-width="1.8"/>
-        <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/>
-        <circle cx="17.5" cy="6.5" r="1" fill="currentColor"/>
-      </svg>
-      <span>Siga o BuscaMissa no Instagram</span>
-      <i class="pi pi-arrow-right" style="font-size:0.75rem"></i>
+  <div class="home-instagram" *ngIf="!resultsMode">
+    <a href="https://www.instagram.com/buscamissa/" target="_blank" rel="noopener noreferrer" class="home-instagram__card">
+      <span class="home-instagram__icon-wrap" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="currentColor" stroke-width="1.8"/>
+          <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/>
+          <circle cx="17.5" cy="6.5" r="1" fill="currentColor"/>
+        </svg>
+      </span>
+      <div class="home-instagram__text">
+        <span class="home-instagram__titulo">Siga o BuscaMissa</span>
+        <span class="home-instagram__sub">Novidades, igrejas e horários no Instagram</span>
+      </div>
+      <i class="pi pi-arrow-right home-instagram__arrow"></i>
     </a>
   </div>
+
 
 </div>

@@ -50,12 +50,15 @@
     </div>
 
     <div class="city-card__meta">
-      <span *ngIf="igreja.endereco?.bairro" class="city-card__bairro">
-        {{ igreja.endereco.bairro }}<span *ngIf="cidadeNome">, {{ cidadeNome }}/{{ ufLabel }}</span>
+      <span *ngIf="igreja.endereco?.logradouro" class="city-card__logradouro">
+        {{ igreja.endereco.logradouro }}
       </span>
-      <span *ngIf="distanciaMetros() as d" class="city-card__distancia">
-        <i class="pi pi-map-marker"></i>
-        {{ d < 1000 ? (d | number:'1.0-0') + ' m' : ((d / 1000) | number:'1.1-1') + ' km' }}
+      <span class="city-card__bairro">
+        <ng-container *ngIf="igreja.endereco?.bairro">{{ igreja.endereco.bairro }}<ng-container *ngIf="cidadeNome">, {{ cidadeNome }}/{{ ufLabel }}</ng-container></ng-container>
+        <span *ngIf="distanciaMetros() as d" class="city-card__distancia">
+          <i class="pi pi-map-marker"></i>
+          {{ d < 1000 ? (d | number:'1.0-0') + ' m' : ((d / 1000) | number:'1.1-1') + ' km' }}
+        </span>
       </span>
     </div>
 
