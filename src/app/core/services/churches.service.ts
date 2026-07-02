@@ -66,8 +66,8 @@ export class ChurchesService {
     return this.http.get(`v1/Igreja/buscar-por-atualizacoes/${churchId}`);
   }
 
-  report(churchId: number, body: any) {
-    return this.http.post(`v1/Igreja/denunciar/${churchId}`, body);
+  reportarProblema(churchId: number, body: { nome: string; email: string; descricao: string }) {
+    return this.http.post(`v1/Igreja/reportar-problema/${churchId}`, body);
   }
 
   proximasMissas(lat?: number | null, lng?: number | null, raioKm = 10): Observable<any> {

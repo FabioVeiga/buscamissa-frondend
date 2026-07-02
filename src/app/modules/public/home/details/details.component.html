@@ -125,90 +125,90 @@
       </ng-template>
     </section>
 
-    <!-- ══ GRID DUAS COLUNAS ══ -->
+    <!-- HORÁRIOS (largura total) -->
+    <section id="horarios" class="mt-6 scroll-mt-4">
+      <h2 class="section-title">
+        <i class="pi pi-calendar text-gray-400"></i> Horários de Missa
+      </h2>
+
+      <!-- Sem missas -->
+      <div *ngIf="!churchInfo.missas?.length"
+           class="rounded-xl border border-dashed border-surface-300 bg-surface-50 px-6 py-8 flex flex-col items-center text-center">
+        <i class="pi pi-calendar-plus text-4xl text-gray-300 mb-3"></i>
+        <p class="text-gray-700 font-semibold">Ainda não há horários cadastrados</p>
+        <p class="text-gray-500 text-sm mt-1 max-w-md">
+          Conhece os horários? Faça sua contribuição e ajude toda a comunidade.
+        </p>
+        <button pButton type="button" icon="pi pi-plus" label="Adicionar horários"
+          class="p-button-sm mt-4" (click)="reportarErro()"></button>
+      </div>
+
+      <div *ngIf="churchInfo.missas?.length" class="flex flex-col gap-2">
+        <div *ngFor="let grupo of agendaSemana"
+             class="schedule-row"
+             [ngClass]="isHoje(grupo.dia) ? 'schedule-row--hoje' : ''">
+
+          <!-- Dia -->
+          <div class="schedule-row__day">
+            <span class="text-sm font-bold uppercase tracking-wide"
+                  [ngClass]="isHoje(grupo.dia) ? 'text-primary' : 'text-gray-500'">
+              {{ grupo.label }}
+            </span>
+            <span *ngIf="isHoje(grupo.dia)" class="hoje-pill">HOJE</span>
+          </div>
+
+          <!-- Chips -->
+          <div class="flex flex-wrap gap-2 flex-1">
+            <ng-container *ngIf="grupo.missas.length; else semMissa">
+              <div *ngFor="let m of grupo.missas" class="mass-chip">
+                <span class="mass-chip__time">{{ formatarHorario(m.horario) }}</span>
+                <span *ngIf="m.observacao" class="mass-chip__obs">{{ m.observacao }}</span>
+              </div>
+            </ng-container>
+            <ng-template #semMissa>
+              <span class="text-gray-300 text-xl leading-none">—</span>
+            </ng-template>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CONFIRMAR (largura total) -->
+    <div *ngIf="churchInfo.missas?.length"
+         class="mt-4 rounded-xl border border-green-200 bg-green-50 px-5 py-4
+                flex flex-col sm:flex-row sm:items-center gap-4">
+      <div class="flex items-start gap-3 flex-1">
+        <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
+          <i class="pi pi-check-circle text-green-600"></i>
+        </div>
+        <div>
+          <p class="text-sm font-semibold text-green-800">Os horários estão corretos?</p>
+          <p class="text-xs text-green-700/70 mt-0.5">Ajude a comunidade a manter as informações atualizadas.</p>
+        </div>
+      </div>
+      <div class="shrink-0 flex flex-col items-center gap-1">
+        <button pButton
+          [icon]="confirmacaoEnviada || jaConfirmou() ? 'pi pi-check' : 'pi pi-thumbs-up'"
+          [label]="confirmacaoEnviada || jaConfirmou() ? 'Confirmado!' : 'Confirmar horários'"
+          [disabled]="confirmacaoEnviada || jaConfirmou() || confirmandoHorarios"
+          [loading]="confirmandoHorarios"
+          class="p-button-success"
+          (click)="confirmarHorarios()">
+        </button>
+        <p *ngIf="ultimaConfirmacao" class="text-xs text-green-700/60">
+          Última confirmação: {{ ultimaConfirmacaoLabel }}
+        </p>
+      </div>
+    </div>
+
+    <!-- ══ GRID DUAS COLUNAS: Como chegar (esquerda) | Informações da comunidade (direita) ══ -->
     <div class="page-grid mt-6">
 
       <!-- ── Coluna principal ── -->
       <div class="min-w-0">
 
-        <!-- HORÁRIOS -->
-        <section id="horarios" class="scroll-mt-4">
-          <h2 class="section-title">
-            <i class="pi pi-calendar text-gray-400"></i> Horários de Missa
-          </h2>
-
-          <!-- Sem missas -->
-          <div *ngIf="!churchInfo.missas?.length"
-               class="rounded-xl border border-dashed border-surface-300 bg-surface-50 px-6 py-8 flex flex-col items-center text-center">
-            <i class="pi pi-calendar-plus text-4xl text-gray-300 mb-3"></i>
-            <p class="text-gray-700 font-semibold">Ainda não há horários cadastrados</p>
-            <p class="text-gray-500 text-sm mt-1 max-w-md">
-              Conhece os horários? Faça sua contribuição e ajude toda a comunidade.
-            </p>
-            <button pButton type="button" icon="pi pi-plus" label="Adicionar horários"
-              class="p-button-sm mt-4" (click)="reportarErro()"></button>
-          </div>
-
-          <div *ngIf="churchInfo.missas?.length" class="flex flex-col gap-2">
-            <div *ngFor="let grupo of agendaSemana"
-                 class="schedule-row"
-                 [ngClass]="isHoje(grupo.dia) ? 'schedule-row--hoje' : ''">
-
-              <!-- Dia -->
-              <div class="schedule-row__day">
-                <span class="text-sm font-bold uppercase tracking-wide"
-                      [ngClass]="isHoje(grupo.dia) ? 'text-primary' : 'text-gray-500'">
-                  {{ grupo.label }}
-                </span>
-                <span *ngIf="isHoje(grupo.dia)" class="hoje-pill">HOJE</span>
-              </div>
-
-              <!-- Chips -->
-              <div class="flex flex-wrap gap-2 flex-1">
-                <ng-container *ngIf="grupo.missas.length; else semMissa">
-                  <div *ngFor="let m of grupo.missas" class="mass-chip">
-                    <span class="mass-chip__time">{{ formatarHorario(m.horario) }}</span>
-                    <span *ngIf="m.observacao" class="mass-chip__obs">{{ m.observacao }}</span>
-                  </div>
-                </ng-container>
-                <ng-template #semMissa>
-                  <span class="text-gray-300 text-xl leading-none">—</span>
-                </ng-template>
-              </div>
-            </div>
-          </div>
-
-          <!-- Confirmar -->
-          <div *ngIf="churchInfo.missas?.length"
-               class="mt-4 rounded-xl border border-green-200 bg-green-50 px-5 py-4
-                      flex flex-col sm:flex-row sm:items-center gap-4">
-            <div class="flex items-start gap-3 flex-1">
-              <div class="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center shrink-0">
-                <i class="pi pi-check-circle text-green-600"></i>
-              </div>
-              <div>
-                <p class="text-sm font-semibold text-green-800">Os horários estão corretos?</p>
-                <p class="text-xs text-green-700/70 mt-0.5">Ajude a comunidade a manter as informações atualizadas.</p>
-              </div>
-            </div>
-            <div class="shrink-0 flex flex-col items-center gap-1">
-              <button pButton
-                [icon]="confirmacaoEnviada || jaConfirmou() ? 'pi pi-check' : 'pi pi-thumbs-up'"
-                [label]="confirmacaoEnviada || jaConfirmou() ? 'Confirmado!' : 'Confirmar horários'"
-                [disabled]="confirmacaoEnviada || jaConfirmou() || confirmandoHorarios"
-                [loading]="confirmandoHorarios"
-                class="p-button-success"
-                (click)="confirmarHorarios()">
-              </button>
-              <p *ngIf="ultimaConfirmacao" class="text-xs text-green-700/60">
-                Última confirmação: {{ ultimaConfirmacaoLabel }}
-              </p>
-            </div>
-          </div>
-        </section>
-
         <!-- COMO CHEGAR -->
-        <section id="como-chegar" class="mt-8 scroll-mt-4">
+        <section id="como-chegar" class="scroll-mt-4">
           <h2 class="section-title">
             <i class="pi pi-map-marker text-gray-400"></i> Como chegar
           </h2>
@@ -249,6 +249,7 @@
             </div>
           </div>
         </section>
+
       </div>
 
       <!-- ── Sidebar ── -->
@@ -267,7 +268,7 @@
               Conhece o telefone, site ou redes sociais desta paróquia? Ajude a comunidade adicionando.
             </p>
             <button pButton type="button" icon="pi pi-plus" label="Adicionar informações"
-              class="p-button-sm mt-4" (click)="reportarErro()"></button>
+              class="p-button-sm mt-4" (click)="abrirModalReportarProblema()"></button>
           </div>
 
           <div *ngIf="temContato" class="flex flex-col divide-y divide-surface-100">
@@ -363,15 +364,112 @@
           <p class="text-xs text-gray-400">Nos ajude a manter as informações corretas para toda a comunidade.</p>
         </div>
       </div>
-      <button pButton type="button" icon="pi pi-flag" label="Reportar problema"
-        class="p-button-outlined p-button-secondary p-button-sm shrink-0"
-        (click)="reportarErro()">
-      </button>
+      <div class="flex gap-2 shrink-0">
+        <button pButton type="button" icon="pi pi-pencil" label="Realizar alteração"
+          class="p-button-outlined p-button-secondary p-button-sm"
+          (click)="reportarErro()">
+        </button>
+        <button pButton type="button" icon="pi pi-flag" label="Reportar problema"
+          class="p-button-outlined p-button-danger p-button-sm"
+          (click)="abrirModalReportarProblema()">
+        </button>
+      </div>
     </section>
+
+    <!-- ══ MODAL REPORTAR PROBLEMA ══ -->
+    <app-modal
+      [(visible)]="modalReportarProblemaVisible"
+      header="Reportar problema"
+      [styleClass]="'reportar-problema-modal'"
+      (onHide)="fecharModalReportarProblema()">
+      <div class="flex flex-col gap-4" style="min-width: 280px; max-width: 34rem;">
+
+        <div>
+          <h3 class="flex items-center gap-2 text-base font-bold text-gray-800">
+            <i class="pi pi-exclamation-triangle text-amber-500"></i>
+            Encontrou alguma informação incorreta?
+          </h3>
+          <p class="text-sm text-gray-500 mt-1">
+            Ajude-nos a manter as informações desta igreja sempre atualizadas. Se identificar algum dado incorreto
+            ou desatualizado, informe abaixo. Nossa equipe analisará sua sugestão.
+          </p>
+        </div>
+
+        <div class="rounded-lg bg-blue-50 border border-blue-100 px-3 py-2 text-xs text-blue-700 flex items-start gap-1.5">
+          <i class="pi pi-info-circle mt-0.5 shrink-0"></i>
+          <span>
+            Deseja corrigir horários de missa, fotos ou outras informações da igreja? Utilize o botão
+            "Realizar alteração", onde é possível enviar uma proposta completa de atualização. Este formulário é
+            indicado para comunicar erros ou informações que não podem ser alteradas diretamente.
+          </span>
+        </div>
+
+        <div>
+          <p class="text-sm font-semibold text-gray-700 mb-2">O que deseja informar?</p>
+
+          <div class="flex flex-col gap-3">
+            <div *ngFor="let item of itensReportar">
+              <div class="flex items-start gap-2">
+                <p-checkbox [(ngModel)]="item.marcado" [binary]="true" [inputId]="'item-' + item.key" [name]="item.key"></p-checkbox>
+                <label [for]="'item-' + item.key" class="flex items-center gap-1.5 text-sm font-medium text-gray-700 cursor-pointer">
+                  <i class="pi" [ngClass]="item.icon"></i> {{ item.label }}
+                </label>
+              </div>
+              <p *ngIf="item.subtitle" class="text-xs text-gray-400 ml-7">{{ item.subtitle }}</p>
+
+              <ng-container *ngIf="item.marcado">
+                <textarea *ngIf="!item.especial" pTextarea rows="2"
+                  class="mt-1.5" style="width: calc(100% - 1.75rem); margin-left: 1.75rem;"
+                  [(ngModel)]="item.texto" [name]="item.key + '-texto'" [placeholder]="item.placeholder"></textarea>
+
+                <div *ngIf="item.especial" class="mt-1.5 rounded-lg bg-surface-50 border border-surface-100 px-3 py-2 flex flex-col gap-2"
+                     style="margin-left: 1.75rem;">
+                  <p class="text-xs text-gray-500 flex items-start gap-1.5">
+                    <i class="pi pi-info-circle mt-0.5 shrink-0"></i>
+                    Os horários de missa podem ser atualizados diretamente pelo botão "Realizar alteração". Esse
+                    processo é mais rápido e permite que sua sugestão seja analisada com todas as informações
+                    necessárias.
+                  </p>
+                  <button pButton type="button" label="Ir para alterar informações" icon="pi pi-arrow-right"
+                    class="p-button-sm self-start" (click)="irParaAlterarInformacoes()"></button>
+                </div>
+              </ng-container>
+            </div>
+          </div>
+        </div>
+
+        <div class="border-t border-surface-100 pt-3">
+          <p class="text-sm font-semibold text-gray-700 mb-2">Seus dados</p>
+          <div class="flex flex-col gap-3">
+            <div class="field">
+              <p-iftalabel>
+                <input type="text" pInputText id="reportar-nome" name="reportarNome" class="w-full" [(ngModel)]="reportarNome" />
+                <label htmlFor="reportar-nome">Nome *</label>
+              </p-iftalabel>
+            </div>
+            <div class="field">
+              <p-iftalabel>
+                <input type="email" pInputText id="reportar-email" name="reportarEmail" class="w-full" [(ngModel)]="reportarEmail" />
+                <label htmlFor="reportar-email">E-mail *</label>
+              </p-iftalabel>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 mt-1">
+          <button pButton type="button" label="Cancelar" class="p-button-text"
+            (click)="fecharModalReportarProblema()"></button>
+          <button pButton type="button" label="Enviar sugestão" icon="pi pi-send"
+            [disabled]="!reportarProblemaValido"
+            [loading]="enviandoReportarProblema"
+            (click)="enviarReportarProblema()"></button>
+        </div>
+      </div>
+    </app-modal>
 
     <!-- Voltar -->
     <div class="mt-4">
-      <button pButton type="button" icon="pi pi-arrow-left" label="Voltar para resultados"
+      <button pButton type="button" icon="pi pi-arrow-left" label="Voltar"
         class="p-button-text text-primary" (click)="voltar()"></button>
     </div>
 
