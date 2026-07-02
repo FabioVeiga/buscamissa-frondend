@@ -302,8 +302,6 @@ export class HomeComponent {
   mostrarMaisFiltros = false;
   /** Loading do botão da aba "perto de mim" (GPS ou CEP) */
   isLoadingCep = false;
-  /** Já houve uma busca por localização bem-sucedida */
-  cepBuscado = false;
   /** Raio (km) da busca por localização */
   raioCep = 5;
 
@@ -360,60 +358,42 @@ export class HomeComponent {
   }
 
   private _geocodeCep(cep: string): void {
-    // Passo 1: ViaCEP → obtém cidade/UF do CEP (cobertura 100% brasileira)
+    // ViaCEP → obtém cidade/UF; a busca acontece em /buscar (URL própria,
+    // com histórico — o "Voltar" do browser e o link p/ home funcionam)
     fetch(`https://viacep.com.br/ws/${cep}/json/`)
       .then(r => r.json())
       .then((addr: any) => {
+        this.isLoadingCep = false;
         if (!addr || addr.erro) { this._cepNaoEncontrado(); return; }
 
-        const { logradouro, bairro, localidade, uf } = addr;
-
-        // Passo 2: busca todas as igrejas da cidade (sem filtro de horário)
-        const filters: FilterSearchChurch = {
-          Uf: uf,
-          Localidade: localidade,
-          'Paginacao.PageIndex': 1,
-          'Paginacao.PageSize': 20,
-        };
-
-        this._churchService.searchByFilters(filters).subscribe({
-          next: (data: any) => {
-            const items: Church[] = data?.data?.items ?? [];
-            this.isLoadingCep = false;
-
-            if (!items.length) {
-              this._cepNaoEncontrado();
-              return;
-            }
-
-            this.churchInfo = items;
-            this.totalRecords = data?.data?.totalItems ?? items.length;
-            this.cepBuscado = true;
-            this.resultsMode = true;
-
-            // Passo 3: geocodifica o endereço para ordenar por proximidade (fire-and-forget)
-            const query = encodeURIComponent(
-              [logradouro, bairro, localidade, uf, 'Brazil'].filter(Boolean).join(', ')
-            );
-            fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&countrycodes=br`)
-              .then(r => r.json())
-              .then((arr: any[]) => {
-                const hit = arr?.[0];
-                if (hit?.lat && hit?.lon) {
-                  this._userLat = parseFloat(hit.lat);
-                  this._userLng = parseFloat(hit.lon);
-                  this.ordenacaoResultados = 'proximidade';
-                }
-              })
-              .catch(() => {});
-          },
-          error: () => {
-            this.isLoadingCep = false;
-            this._cepNaoEncontrado();
-          },
+        this._router.navigate(['/buscar'], {
+          queryParams: { uf: addr.uf, cidade: addr.localidade, cep, pagina: 1 },
         });
       })
       .catch(() => this._cepNaoEncontrado());
+  }
+
+  /** Geocodifica o CEP apenas para ordenar os resultados por proximidade (fire-and-forget) */
+  private _ordenarPorProximidadeDoCep(cep: string): void {
+    fetch(`https://viacep.com.br/ws/${cep}/json/`)
+      .then(r => r.json())
+      .then((addr: any) => {
+        if (!addr || addr.erro) return;
+        const query = encodeURIComponent(
+          [addr.logradouro, addr.bairro, addr.localidade, addr.uf, 'Brazil'].filter(Boolean).join(', ')
+        );
+        return fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&countrycodes=br`)
+          .then(r => r.json())
+          .then((arr: any[]) => {
+            const hit = arr?.[0];
+            if (hit?.lat && hit?.lon) {
+              this._userLat = parseFloat(hit.lat);
+              this._userLng = parseFloat(hit.lon);
+              this.ordenacaoResultados = 'proximidade';
+            }
+          });
+      })
+      .catch(() => {});
   }
 
   private _cepNaoEncontrado(): void {
@@ -789,6 +769,14 @@ export class HomeComponent {
     }
     if (p['pagina']) this.pageIndex = Number(p['pagina']);
 
+    // Busca veio do CEP: abre a aba de CEP com o valor preenchido (continuidade),
+    // preserva o param na URL e ordena por proximidade
+    if (p['cep']) {
+      this.searchTab = 'local';
+      this.form.get('Cep')?.setValue(p['cep']);
+      this._ordenarPorProximidadeDoCep(String(p['cep']));
+    }
+
     this.searchFilter(false);
   }
 
@@ -832,6 +820,7 @@ export class HomeComponent {
     dia: number | null;
     horario: string | null;
     horarioFim: string | null;
+    cep: string | null;
   } {
     const uf = this.form.get("Uf")?.value;
     const localidade = this.form.get("Localidade")?.value;
@@ -841,6 +830,7 @@ export class HomeComponent {
     const horario = horarioRaw ? (typeof horarioRaw === 'string' ? horarioRaw : this._datePipe.transform(horarioRaw, 'HH:mm')) : null;
     const horarioFimRaw = this.form.value.HorarioFim;
     const horarioFim = horarioFimRaw ? (typeof horarioFimRaw === 'string' ? horarioFimRaw : this._datePipe.transform(horarioFimRaw, 'HH:mm')) : null;
+    const cepRaw = String(this.form.get('Cep')?.value ?? '').replace(/\D/g, '');
 
     return {
       uf: uf ?? null,
@@ -849,6 +839,7 @@ export class HomeComponent {
       dia: diaDaSemana ?? null,
       horario: horario ?? null,
       horarioFim: horarioFim ?? null,
+      cep: cepRaw.length === 8 ? cepRaw : null,
     };
   }
 

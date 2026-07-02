@@ -35,26 +35,46 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
   favoritasIds = new Set<number>();
   isLoading = false;
   cidadeDetectada: string | null = null;
+  cidadeDetectadaUf: string | null = null;
   horaAtual = '';
   cidadesProximas: { nome: string; uf: string; slug: string }[] = [];
   private _clockInterval: any;
 
+  // ── Busca por CEP ──
+  cepBusca = '';
+  isLoadingCep = false;
+
+  // ── Busca por cidade (sugestões a partir de 3 letras) ──
+  cidadeQuery = '';
+  cidadeSugestoes: { nome: string; uf: string; slug: string }[] = [];
+  private _todasCidades: { nome: string; uf: string; slug: string }[] | null = null;
+  private _carregandoCidades = false;
+
+  // ── Ajuda de permissão de localização (alert colapsado) ──
+  mostrarAjudaGeo = false;
+
+  // Fallback estático — substituir por métrica de acessos do banco quando existir
   readonly cidadesFallback = [
-    { nome: 'São Paulo',           uf: 'sp', slug: 'sao-paulo' },
-    { nome: 'Campinas',            uf: 'sp', slug: 'campinas' },
-    { nome: 'Rio de Janeiro',      uf: 'rj', slug: 'rio-de-janeiro' },
-    { nome: 'Belo Horizonte',      uf: 'mg', slug: 'belo-horizonte' },
-    { nome: 'Brasília',            uf: 'df', slug: 'brasilia' },
-    { nome: 'Santos',              uf: 'sp', slug: 'santos' },
-    { nome: 'Curitiba',            uf: 'pr', slug: 'curitiba' },
-    { nome: 'São José dos Campos', uf: 'sp', slug: 'sao-jose-dos-campos' },
-    { nome: 'Sorocaba',            uf: 'sp', slug: 'sorocaba' },
+    { nome: 'São Paulo',      uf: 'sp', slug: 'sao-paulo' },
+    { nome: 'Campinas',       uf: 'sp', slug: 'campinas' },
+    { nome: 'Rio de Janeiro', uf: 'rj', slug: 'rio-de-janeiro' },
+    { nome: 'Brasília',       uf: 'df', slug: 'brasilia' },
+    { nome: 'Belo Horizonte', uf: 'mg', slug: 'belo-horizonte' },
+    { nome: 'Curitiba',       uf: 'pr', slug: 'curitiba' },
+    { nome: 'Porto Alegre',   uf: 'rs', slug: 'porto-alegre' },
   ];
 
+  /** Há missas na tela (cards de busca ficam compactos, mas nunca somem) */
+  get temResultados(): boolean {
+    return this.geoStatus === 'found' && !this.isLoading && this.missas.length > 0;
+  }
+
+  /** 7 chips: cidades próximas reais quando há geo; senão o fallback estático */
   get cidadesExibidas() {
-    return this.geoStatus === 'found' && this.cidadesProximas.length
+    const lista = this.geoStatus === 'found' && this.cidadesProximas.length
       ? this.cidadesProximas
       : this.cidadesFallback;
+    return lista.slice(0, 7);
   }
 
   private _loadFavoritas(): void {
@@ -148,8 +168,115 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
       .then((data: any) => {
         const addr = data.address ?? {};
         this.cidadeDetectada = addr.city || addr.town || addr.village || null;
+        this.cidadeDetectadaUf = addr.state_code?.toUpperCase?.() || null;
       })
       .catch(() => {});
+  }
+
+  /** Busca por CEP: ViaCEP → geocodifica → mesma busca por raio de 10km / próximas 2h da geolocalização */
+  buscarPorCep(): void {
+    const cep = String(this.cepBusca ?? '').replace(/\D/g, '');
+    if (cep.length !== 8) {
+      this._toast.add({
+        severity: 'warn',
+        summary: 'CEP inválido',
+        detail: 'Digite um CEP com 8 dígitos.',
+      });
+      return;
+    }
+    this.isLoadingCep = true;
+    this.geoStatus = 'loading';
+    this._analytics.searchStarted();
+    fetch(`https://viacep.com.br/ws/${cep}/json/`)
+      .then(r => r.json())
+      .then((addr: any) => {
+        if (!addr || addr.erro) {
+          this._cepOuCidadeNaoEncontrada('Confira o CEP ou busque pela cidade.');
+          return;
+        }
+        const query = encodeURIComponent(
+          [addr.logradouro, addr.bairro, addr.localidade, addr.uf, 'Brazil'].filter(Boolean).join(', ')
+        );
+        this._geocodeEBuscar(query, addr.localidade, addr.uf, 'Confira o CEP ou busque pela cidade.');
+      })
+      .catch(() => this._cepOuCidadeNaoEncontrada('Não foi possível buscar o CEP.'))
+      .finally(() => { this.isLoadingCep = false; });
+  }
+
+  /** Geocodifica um endereço/cidade via Nominatim e roda a mesma busca da geolocalização (raio 10km / próximas 2h) */
+  private _geocodeEBuscar(query: string, cidadeNome: string, uf: string, msgFalha: string): void {
+    fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&countrycodes=br`)
+      .then(r => r.json())
+      .then((arr: any[]) => {
+        const hit = arr?.[0];
+        if (!hit?.lat || !hit?.lon) {
+          this._cepOuCidadeNaoEncontrada(msgFalha);
+          return;
+        }
+        const lat = parseFloat(hit.lat);
+        const lng = parseFloat(hit.lon);
+        this.cidadeDetectada = cidadeNome;
+        this.cidadeDetectadaUf = uf?.toUpperCase() || null;
+        this.geoStatus = 'found';
+        this.permissaoNegadaPeloBrowser = false;
+        this._buscarMissas(lat, lng);
+        this._loadCidadesProximas(lat, lng);
+      })
+      .catch(() => this._cepOuCidadeNaoEncontrada(msgFalha));
+  }
+
+  /** Mesma tela de "sem resultados" da geolocalização — sem beco sem saída */
+  private _cepOuCidadeNaoEncontrada(detail: string): void {
+    this.geoStatus = 'found';
+    this.missas = [];
+    this.isLoading = false;
+    this.cidadeDetectada = null;
+    this.cidadeDetectadaUf = null;
+    this._toast.add({ severity: 'warn', summary: 'Local não encontrado', detail });
+  }
+
+  /** Carrega a lista de cidades só no primeiro focus do campo (não pesa o load da página).
+   *  Se a lista crescer significativamente, substituir por autocomplete remoto. */
+  onCidadeFocus(): void {
+    if (this._todasCidades || this._carregandoCidades) return;
+    this._carregandoCidades = true;
+    this._church.addressRange().subscribe({
+      next: ({ data }: any) => {
+        this._todasCidades = Object.entries(data ?? {}).flatMap(([uf, cities]: [string, any]) =>
+          Object.keys(cities).map(nome => ({ nome, uf: uf.toLowerCase(), slug: this._slugify(nome) }))
+        );
+        this._carregandoCidades = false;
+        this.onCidadeInput();
+      },
+      error: () => { this._carregandoCidades = false; },
+    });
+  }
+
+  /** Sugestões só a partir de 3 caracteres (estilo Google), máx. 8 */
+  onCidadeInput(): void {
+    const q = this._normalizar(this.cidadeQuery);
+    if (q.length < 3 || !this._todasCidades) {
+      this.cidadeSugestoes = [];
+      return;
+    }
+    this.cidadeSugestoes = this._todasCidades
+      .filter(c => this._normalizar(c.nome).includes(q))
+      .slice(0, 8);
+  }
+
+  selecionarCidade(c: { nome: string; uf: string; slug: string }): void {
+    this.cidadeQuery = '';
+    this.cidadeSugestoes = [];
+    this.irParaCidade(c);
+  }
+
+  private _slugify(s: string): string {
+    return s.normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+  }
+
+  private _normalizar(s: string): string {
+    return (s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
   }
 
   getUrgency(card: MassCardData) {
@@ -164,7 +291,7 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
   }
 
   irParaCidade(cidade: { uf: string; slug: string }): void {
-    this._router.navigate(['/missas', cidade.uf, cidade.slug]);
+    this._router.navigate(['/missas', cidade.uf.toLowerCase(), cidade.slug]);
   }
 
   onCardClick(card: MassCardData): void {

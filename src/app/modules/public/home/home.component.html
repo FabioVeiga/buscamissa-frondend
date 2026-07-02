@@ -11,11 +11,22 @@
 
   <div class="hero__inner">
 
-    <!-- Título e subtítulo sobre a imagem -->
-    <div class="hero__text" *ngIf="!resultsMode">
-      <div class="hero__badge" *ngIf="urgencyBadgeText">{{ urgencyBadgeText }}</div>
-      <h1 class="hero__titulo">Encontre uma missa<br>perto de você.</h1>
-      <p class="hero__emocional">Onde você estiver, sempre haverá uma comunidade esperando por você.</p>
+    <!-- Título à esquerda + card de cadastro à direita (sobre a imagem) -->
+    <div class="hero__top" *ngIf="!resultsMode">
+      <div class="hero__text">
+        <h1 class="hero__titulo">Encontre uma missa<br><span class="hero__titulo-destaque">perto de você.</span></h1>
+        <p class="hero__emocional">Onde você estiver, sempre haverá<br>uma comunidade esperando por você.</p>
+        <p class="hero__colaborativo">Também é possível cadastrar gratuitamente uma igreja e ajudar a manter os horários atualizados.</p>
+      </div>
+
+      <div class="hero__card-igreja">
+        <span class="hero__card-icon"><i class="pi pi-home"></i></span>
+        <div class="hero__card-body">
+          <p class="hero__card-titulo">Sua igreja ainda não está aqui?</p>
+          <p class="hero__card-desc">Cadastre gratuitamente e ajude mais pessoas a encontrarem sua comunidade.</p>
+        </div>
+        <a routerLink="/nova" class="btn-primary hero__card-btn">Cadastrar igreja</a>
+      </div>
     </div>
 
     <p class="hero__subtitulo--results" *ngIf="resultsMode && searchTab === 'cidade'">Refine os filtros ou explore os resultados abaixo.</p>
@@ -71,19 +82,20 @@
               <label for="DiasSemana">Dia</label>
             </p-iftalabel>
 
-            <p-iftalabel class="search-form__field">
+            <p-iftalabel class="search-form__field search-form__field--horario">
               <p-datepicker formControlName="Horario" [timeOnly]="true" [showClear]="true" inputId="Horario"
                             [readonlyInput]="false" showIcon iconDisplay="input" appendTo="body" [stepMinute]="15"
+                            placeholder="Qualquer horário" class="w-full"
                             (onFocus)="setDefaultTimeIfNull()" />
               <label for="Horario">Horário</label>
             </p-iftalabel>
-          </div>
 
-          <button type="button" class="btn-primary search-form__submit"
-                  [disabled]="form.invalid || isLoading" (click)="onBuscarClick()">
-            <i class="pi" [ngClass]="isLoading ? 'pi-spin pi-spinner' : 'pi-search'"></i>
-            Buscar missas
-          </button>
+            <button type="button" class="btn-primary search-form__submit"
+                    [disabled]="form.invalid || isLoading" (click)="onBuscarClick()">
+              <i class="pi" [ngClass]="isLoading ? 'pi-spin pi-spinner' : 'pi-search'"></i>
+              Buscar missas
+            </button>
+          </div>
         </form>
       </div>
 
@@ -135,6 +147,7 @@
 
   <!-- ══ ESTATÍSTICAS ══ -->
   <section class="stats" *ngIf="!resultsMode" aria-label="O Busca Missa em números">
+    <p class="stats__caption"><i class="pi pi-heart-fill"></i> Mantido pela comunidade católica — informações atualizadas continuamente</p>
     <div class="stats__item">
       <span class="stats__icon stats__icon--orange"><i class="pi pi-home"></i></span>
       <span class="stats__num">{{ fmt(stats.igrejas) }}+</span>
@@ -209,82 +222,36 @@
     </aside>
   </section>
 
-  <!-- ══ FEITO PELA COMUNIDADE (3 passos + CTA) ══ -->
-  <section class="colab" *ngIf="!resultsMode">
-    <h2 class="colab__titulo"><i class="pi pi-heart-fill"></i> Feito pela comunidade católica</h2>
-    <p class="colab__sub">Milhares de fiéis ajudam a manter os horários das missas sempre atualizados.</p>
+  <!-- ══ COMO FUNCIONA (4 passos visuais) ══ -->
+  <section class="como-funciona" *ngIf="!resultsMode">
+    <h2 class="como-funciona__titulo">Como funciona</h2>
+    <p class="como-funciona__sub">O Busca Missa é construído em colaboração com igrejas e fiéis para manter os horários sempre atualizados.</p>
 
-    <div class="colab__steps">
-      <div class="colab__step">
-        <span class="colab__step-icon"><i class="pi pi-users"></i></span>
-        <p class="colab__step-titulo">A comunidade envia</p>
-        <p class="colab__step-desc">Qualquer pessoa pode cadastrar igrejas ou sugerir horários.</p>
+    <div class="como-funciona__steps">
+      <div class="como-funciona__step">
+        <span class="como-funciona__icon"><i class="pi pi-plus-circle"></i></span>
+        <p class="como-funciona__step-titulo">Cadastre uma igreja</p>
+        <p class="como-funciona__step-desc">Qualquer pessoa pode cadastrar igrejas e horários.</p>
       </div>
-      <i class="pi pi-arrow-right colab__arrow" aria-hidden="true"></i>
-      <div class="colab__step">
-        <span class="colab__step-icon"><i class="pi pi-send"></i></span>
-        <p class="colab__step-titulo">Publicado na plataforma</p>
-        <p class="colab__step-desc">As informações ficam disponíveis e podem ser atualizadas continuamente.</p>
+      <i class="pi pi-arrow-right como-funciona__arrow" aria-hidden="true"></i>
+      <div class="como-funciona__step">
+        <span class="como-funciona__icon"><i class="pi pi-send"></i></span>
+        <p class="como-funciona__step-titulo">Publicamos na plataforma</p>
+        <p class="como-funciona__step-desc">A informação fica disponível para todo o Brasil.</p>
       </div>
-      <i class="pi pi-arrow-right colab__arrow" aria-hidden="true"></i>
-      <div class="colab__step">
-        <span class="colab__step-icon"><i class="pi pi-check-circle"></i></span>
-        <p class="colab__step-titulo">Disponível para todos</p>
-        <p class="colab__step-desc">Os horários ficam acessíveis para milhares de pessoas.</p>
+      <i class="pi pi-arrow-right como-funciona__arrow" aria-hidden="true"></i>
+      <div class="como-funciona__step">
+        <span class="como-funciona__icon"><i class="pi pi-search"></i></span>
+        <p class="como-funciona__step-titulo">Milhares encontram a missa</p>
+        <p class="como-funciona__step-desc">Por localização, cidade ou CEP.</p>
+      </div>
+      <i class="pi pi-arrow-right como-funciona__arrow" aria-hidden="true"></i>
+      <div class="como-funciona__step">
+        <span class="como-funciona__icon"><i class="pi pi-refresh"></i></span>
+        <p class="como-funciona__step-titulo">Mantenha os horários atualizados</p>
+        <p class="como-funciona__step-desc">Sugira correções e ajude a comunidade.</p>
       </div>
     </div>
-
-    <div class="colab__cta">
-      <div class="colab__cta-text">
-        <p class="colab__cta-titulo"><i class="pi pi-heart-fill"></i> Ajude outras pessoas a encontrar uma missa</p>
-        <p class="colab__cta-desc">Sua contribuição ajuda milhares de fiéis a celebrarem a fé.</p>
-      </div>
-      <div class="colab__cta-actions">
-        <a routerLink="/nova" class="btn-primary"><i class="pi pi-plus"></i> Cadastrar uma igreja</a>
-      </div>
-    </div>
-  </section>
-
-  <!-- ══ COMO FUNCIONA (timeline) ══ -->
-  <section class="timeline" *ngIf="!resultsMode">
-    <h2 class="sec-header__titulo timeline__titulo">Como funciona</h2>
-    <ol class="timeline__list">
-      <li class="timeline__step">
-        <span class="timeline__num">1</span>
-        <div class="timeline__body">
-          <p class="timeline__step-titulo">A comunidade envia</p>
-          <p class="timeline__step-desc">Fiéis, paróquias e dioceses cadastram igrejas e horários.</p>
-        </div>
-      </li>
-      <li class="timeline__step">
-        <span class="timeline__num">2</span>
-        <div class="timeline__body">
-          <p class="timeline__step-titulo">É publicado na plataforma</p>
-          <p class="timeline__step-desc">Os horários ficam disponíveis para toda a comunidade encontrar.</p>
-        </div>
-      </li>
-      <li class="timeline__step">
-        <span class="timeline__num">3</span>
-        <div class="timeline__body">
-          <p class="timeline__step-titulo">Você encontra</p>
-          <p class="timeline__step-desc">Busque por localização, cidade ou CEP e veja os horários.</p>
-        </div>
-      </li>
-      <li class="timeline__step">
-        <span class="timeline__num">4</span>
-        <div class="timeline__body">
-          <p class="timeline__step-titulo">Você participa</p>
-          <p class="timeline__step-desc">Compareça à celebração e viva sua fé na comunidade.</p>
-        </div>
-      </li>
-      <li class="timeline__step">
-        <span class="timeline__num">5</span>
-        <div class="timeline__body">
-          <p class="timeline__step-titulo">Você ajuda a manter atualizado</p>
-          <p class="timeline__step-desc">Cadastre igrejas, sugira correções e mantenha a comunidade sempre informada.</p>
-        </div>
-      </li>
-    </ol>
   </section>
 
   <!-- ══ NÃO ENCONTROU ══ -->
@@ -292,11 +259,11 @@
     <div class="nao-encontrou__inner">
       <span class="nao-encontrou__icon"><i class="pi pi-search"></i></span>
       <div class="nao-encontrou__text">
-        <p class="nao-encontrou__titulo">Não encontrou sua paróquia?</p>
-        <p class="nao-encontrou__sub">Ajude outras pessoas cadastrando a igreja e os horários de missa. Leva menos de 2 minutos.</p>
+        <p class="nao-encontrou__titulo">Sua igreja ainda não aparece no Busca Missa?</p>
+        <p class="nao-encontrou__sub">Cadastre gratuitamente. Leva menos de 2 minutos e ajuda milhares de pessoas a encontrar uma missa.</p>
       </div>
       <a routerLink="/nova" class="btn-primary nao-encontrou__btn">
-        <i class="pi pi-plus"></i> Cadastrar igreja e missas
+        <i class="pi pi-plus"></i> Cadastrar igreja
       </a>
     </div>
   </section>

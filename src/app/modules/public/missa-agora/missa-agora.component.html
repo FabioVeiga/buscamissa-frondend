@@ -1,139 +1,57 @@
-<div class="missa-agora max-w-lg mx-auto px-3 pb-10">
+<div class="missa-agora">
 
-  <!-- ══ HEADER ══ -->
-  <div class="missa-agora__header">
-    <a routerLink="/home" class="missa-agora__back">
-      <i class="pi pi-arrow-left"></i>
-    </a>
-    <div class="missa-agora__header-text">
-      <h1 class="missa-agora__titulo">
-        <span class="missa-agora__dot"></span>
-        Missa agora
-      </h1>
-      <p class="missa-agora__sub">Missas começando nas próximas 2 horas</p>
-    </div>
-  </div>
-
-  <!-- ══ ESTADO 1: IDLE ══ -->
-  <div *ngIf="geoStatus === 'idle'" class="missa-agora__hero">
-    <div class="missa-agora__hero-content">
-      <i class="pi pi-map-marker missa-agora__hero-icon"></i>
-      <h2 class="missa-agora__hero-titulo">Veja missas perto de você</h2>
-      <p class="missa-agora__hero-desc">Permita sua localização para encontrar missas próximas automaticamente.</p>
-    </div>
-    <button (click)="tentar()" class="missa-agora__btn-primary">
-      <i class="pi pi-map-marker"></i> Encontrar perto de mim
-    </button>
-    <div class="missa-agora__divider">ou escolha uma cidade</div>
-  </div>
-
-  <!-- ══ ESTADO 2: LOADING GEOLOC ══ -->
-  <div *ngIf="geoStatus === 'loading'" class="missa-agora__hero">
-    <div class="missa-agora__hero-content">
-      <div class="missa-agora__spinner">
-        <i class="pi pi-spin pi-spinner"></i>
-      </div>
-      <h2 class="missa-agora__hero-titulo">Localizando você…</h2>
-      <p class="missa-agora__hero-desc">Isso vai levar alguns segundos.</p>
-    </div>
-  </div>
-
-  <!-- ══ ESTADO 3: DENIED ══ -->
-  <div *ngIf="(geoStatus === 'denied' || geoStatus === 'error') && !permissaoNegadaPeloBrowser" class="missa-agora__hero">
-    <div class="missa-agora__hero-content">
-      <i class="pi pi-map-marker missa-agora__hero-icon"></i>
-      <h2 class="missa-agora__hero-titulo">Veja missas perto de você</h2>
-      <p class="missa-agora__hero-desc">Permita sua localização para encontrar missas próximas automaticamente.</p>
-    </div>
-    <button (click)="tentar()" class="missa-agora__btn-primary">
-      <i class="pi pi-map-marker"></i> Encontrar perto de mim
-    </button>
-    <div class="missa-agora__divider">ou escolha uma cidade</div>
-  </div>
-
-  <!-- ══ ESTADO 4: PERMISSION BLOCKED ══ -->
-  <div *ngIf="permissaoNegadaPeloBrowser" class="missa-agora__blocked">
-    <div class="missa-agora__blocked-icon">
-      <i class="pi pi-map-marker"></i>
-    </div>
-    <h2 class="missa-agora__blocked-titulo">Localização bloqueada</h2>
-    <p class="missa-agora__blocked-desc">Você bloqueou o acesso à sua localização. Para liberar:</p>
-    <div class="missa-agora__blocked-instrs">
-      <div class="missa-agora__blocked-instr">
-        <strong>Chrome:</strong> clique no 🔒 na barra de endereço → Localização → Permitir
-      </div>
-      <div class="missa-agora__blocked-instr">
-        <strong>Safari:</strong> Ajustes → Safari → Localização → Permitir
-      </div>
-    </div>
-    <button (click)="tentar()" class="missa-agora__btn-secondary">
-      Tentar novamente
-    </button>
-    <div class="missa-agora__divider">ou escolha uma cidade</div>
-  </div>
-
-  <!-- ══ GRID DE CIDADES ══ (sempre visível se não tem geoloc) -->
-  <div *ngIf="geoStatus !== 'found' || !isLoading || missas.length === 0" class="missa-agora__cidades-grid">
-    <h3 class="missa-agora__cidades-titulo">Escolha uma cidade</h3>
-    <div class="missa-agora__cidades">
-      <button
-        *ngFor="let c of cidadesExibidas"
-        class="missa-agora__cidade-card"
-        (click)="irParaCidade(c)">
-        <i class="pi pi-map-marker"></i>
-        <span class="missa-agora__cidade-nome">{{ c.nome }}</span>
-        <span class="missa-agora__cidade-uf">{{ c.uf.toUpperCase() }}</span>
-      </button>
-    </div>
-    <a routerLink="/cidades" class="missa-agora__ver-todas">
-      Ver todas as cidades <i class="pi pi-arrow-right"></i>
-    </a>
-  </div>
-
-  <!-- ══ ESTADO 5: LOADING MISSAS ══ -->
-  <div *ngIf="geoStatus === 'found' && isLoading" class="missa-agora__hero">
-    <div class="missa-agora__hero-content">
-      <div class="missa-agora__spinner">
-        <i class="pi pi-spin pi-spinner"></i>
-      </div>
-      <h2 class="missa-agora__hero-titulo">Buscando missas…</h2>
-      <p *ngIf="cidadeDetectada" class="missa-agora__hero-desc">perto de {{ cidadeDetectada }}</p>
-    </div>
-  </div>
-
-  <!-- ══ ESTADO 6: SEM RESULTADOS ══ -->
-  <div *ngIf="geoStatus === 'found' && !isLoading && missas.length === 0" class="missa-agora__vazio">
-    <div class="missa-agora__vazio-icon">
-      <i class="pi pi-clock"></i>
-    </div>
-    <h2 class="missa-agora__vazio-titulo">Nenhuma missa próxima</h2>
-    <p class="missa-agora__vazio-desc">
-      Não encontramos missas nos próximos 2 horas num raio de 10 km<span *ngIf="cidadeDetectada"> de {{ cidadeDetectada }}</span>.
+  <!-- ══ HEADER CENTRALIZADO ══ -->
+  <header class="missa-agora__header">
+    <h1 class="missa-agora__titulo">Encontre uma missa <span class="missa-agora__titulo-destaque">perto</span> de você</h1>
+    <p class="missa-agora__sub">
+      <span class="missa-agora__sub-icon"><i class="pi pi-clock"></i></span>
+      Veja as próximas missas acontecendo perto de você nas próximas 2 horas.
     </p>
-    <button (click)="irParaCidade(cidadesExibidas[0])" class="missa-agora__btn-secondary mt-3">
-      Buscar em São Paulo
-    </button>
+  </header>
 
-    <div class="missa-agora__divider">ou escolha outra cidade</div>
-    <div class="missa-agora__cidades">
-      <button
-        *ngFor="let c of cidadesExibidas"
-        class="missa-agora__cidade-card"
-        (click)="irParaCidade(c)">
-        <i class="pi pi-map-marker"></i>
-        <span class="missa-agora__cidade-nome">{{ c.nome }}</span>
-        <span class="missa-agora__cidade-uf">{{ c.uf.toUpperCase() }}</span>
+  <!-- ══ CARD: USAR MINHA LOCALIZAÇÃO ══ -->
+  <div class="acao-card acao-card--destaque" [class.acao-card--compacto]="temResultados">
+
+    <!-- loading dentro do card -->
+    <ng-container *ngIf="geoStatus === 'loading' || (geoStatus === 'found' && isLoading); else geoIdle">
+      <span class="acao-card__icon"><i class="pi pi-spin pi-spinner"></i></span>
+      <div class="acao-card__body">
+        <p class="acao-card__titulo">Procurando missas próximas…</p>
+        <p class="acao-card__desc" *ngIf="!temResultados">Isso leva só alguns segundos.</p>
+      </div>
+    </ng-container>
+
+    <ng-template #geoIdle>
+      <span class="acao-card__icon"><i class="pi pi-map-marker"></i></span>
+      <div class="acao-card__body">
+        <p class="acao-card__titulo">Usar minha localização</p>
+        <p class="acao-card__desc" *ngIf="!temResultados">
+          <ng-container *ngIf="geoStatus !== 'denied' && geoStatus !== 'error'">
+            Encontre as missas mais próximas de onde você está.
+          </ng-container>
+          <ng-container *ngIf="geoStatus === 'denied' || geoStatus === 'error'">
+            Não foi possível acessar sua localização. Você ainda pode buscar por CEP ou escolher uma cidade abaixo.
+          </ng-container>
+        </p>
+      </div>
+      <button type="button" class="acao-card__btn-primary" (click)="tentar()">
+        <i class="pi pi-map-marker"></i> Usar minha localização
       </button>
-    </div>
+    </ng-template>
   </div>
 
-  <!-- ══ LISTA DE MISSAS ══ -->
-  <p-toast></p-toast>
-  <div *ngIf="geoStatus === 'found' && !isLoading && missas.length > 0">
-    <p class="missa-agora__contagem">
-      {{ missas.length }} {{ missas.length === 1 ? 'missa' : 'missas' }} nas próximas 2h
-      <span *ngIf="cidadeDetectada"> perto de {{ cidadeDetectada }}</span>
-    </p>
+  <!-- ══ RESULTADOS: contagem + lista (cards de busca continuam acima, compactos) ══ -->
+  <ng-container *ngIf="temResultados">
+    <div class="missa-agora__contagem">
+      <p class="missa-agora__contagem-num">
+        {{ missas.length }} {{ missas.length === 1 ? 'missa encontrada' : 'missas encontradas' }}
+      </p>
+      <p class="missa-agora__contagem-local" *ngIf="cidadeDetectada">
+        <i class="pi pi-map-marker"></i>
+        Próximo de {{ cidadeDetectada }}<ng-container *ngIf="cidadeDetectadaUf">/{{ cidadeDetectadaUf }}</ng-container>
+      </p>
+    </div>
+
     <div class="missa-agora__lista">
       <app-mass-time-card
         *ngFor="let card of missas"
@@ -145,14 +63,100 @@
         (favoriteClick)="onFavorite($event)"
       />
     </div>
-  </div>
+  </ng-container>
 
-  <!-- ══ FAQ ══ -->
-  <div class="missa-agora__faq">
-    <h3 class="missa-agora__faq-titulo">Como funciona?</h3>
-    <p class="missa-agora__faq-desc">
-      Mostramos missas que começam nas próximas 2 horas, ordenadas por horário e proximidade.
+  <!-- ══ VAZIO ══ -->
+  <div class="missa-agora__vazio" *ngIf="geoStatus === 'found' && !isLoading && missas.length === 0">
+    <i class="pi pi-clock missa-agora__vazio-icon"></i>
+    <p class="missa-agora__vazio-titulo">Nenhuma missa próxima</p>
+    <p class="missa-agora__vazio-desc">
+      Não encontramos missas nas próximas 2 horas num raio de 10 km<span *ngIf="cidadeDetectada"> de {{ cidadeDetectada }}</span>.
+      Tente buscar por CEP ou por cidade abaixo.
     </p>
   </div>
 
+  <!-- ══ DIVIDER ══ -->
+  <div class="missa-agora__divider" [class.missa-agora__divider--compacto]="temResultados">
+    <span>ou &nbsp;·&nbsp; informe um local</span>
+  </div>
+
+  <!-- ══ CARD: PROCURAR UM LUGAR (CEP + cidade) ══ -->
+  <div class="acao-card" [class.acao-card--compacto]="temResultados">
+    <span class="acao-card__icon acao-card__icon--claro"><i class="pi pi-search"></i></span>
+    <div class="acao-card__body acao-card__body--form">
+      <p class="acao-card__titulo">Buscar por cidade ou CEP</p>
+      <p class="acao-card__desc" *ngIf="!temResultados">Informe um CEP ou o nome de uma cidade.</p>
+
+      <!-- CEP -->
+      <form class="lugar-form" (ngSubmit)="buscarPorCep()">
+        <p-inputmask [(ngModel)]="cepBusca" name="cep" mask="99999-999" placeholder="Ex: 13083-852"
+                     styleClass="lugar-form__input" [unmask]="false" />
+        <button type="submit" class="lugar-form__btn" [disabled]="isLoadingCep">
+          <i class="pi" [ngClass]="isLoadingCep ? 'pi-spin pi-spinner' : 'pi-search'"></i> Buscar
+        </button>
+      </form>
+
+      <span class="lugar-form__ou">ou</span>
+
+      <!-- Cidade (sugestões a partir de 3 letras) -->
+      <div class="lugar-cidade">
+        <input type="text" class="lugar-cidade__input" placeholder="Digite o nome da cidade"
+               [(ngModel)]="cidadeQuery" (focus)="onCidadeFocus()" (input)="onCidadeInput()"
+               autocomplete="off" aria-label="Buscar cidade" />
+        <ul class="lugar-cidade__sugestoes" *ngIf="cidadeSugestoes.length">
+          <li *ngFor="let c of cidadeSugestoes">
+            <button type="button" (click)="selecionarCidade(c)">
+              <i class="pi pi-map-marker"></i> {{ c.nome }} <span class="lugar-cidade__uf">{{ c.uf.toUpperCase() }}</span>
+            </button>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ CIDADES MAIS ACESSADAS ══ -->
+  <div class="missa-agora__cidades" *ngIf="!temResultados">
+    <p class="missa-agora__cidades-titulo">Cidades mais acessadas</p>
+    <div class="missa-agora__chips">
+      <button type="button" class="cidade-chip" *ngFor="let c of cidadesExibidas" (click)="irParaCidade(c)">
+        <span class="cidade-chip__nome">{{ c.nome }}</span>
+        <span class="cidade-chip__uf">{{ c.uf.toUpperCase() }}</span>
+      </button>
+      <a routerLink="/cidades" class="cidade-chip cidade-chip--mais">
+        <span class="cidade-chip__nome">Ver todas</span>
+        <i class="pi pi-arrow-right"></i>
+      </a>
+    </div>
+  </div>
+
+  <!-- ══ ALERT: AJUDA COM LOCALIZAÇÃO ══ -->
+  <div class="geo-ajuda" *ngIf="!temResultados">
+    <button type="button" class="geo-ajuda__toggle" (click)="mostrarAjudaGeo = !mostrarAjudaGeo"
+            [attr.aria-expanded]="mostrarAjudaGeo">
+      <span>💡 Não conseguiu liberar sua localização? <strong>Saiba como</strong></span>
+      <i class="pi" [ngClass]="mostrarAjudaGeo ? 'pi-chevron-up' : 'pi-chevron-down'"></i>
+    </button>
+    <div class="geo-ajuda__conteudo" *ngIf="mostrarAjudaGeo">
+      <p><strong>Chrome:</strong> clique no 🔒 na barra de endereço → Localização → Permitir</p>
+      <p><strong>Safari:</strong> Ajustes → Safari → Localização → Permitir</p>
+    </div>
+  </div>
+
+  <!-- ══ PROVA SOCIAL / CADASTRO ══ -->
+  <div class="missa-agora__cadastro" *ngIf="geoStatus === 'found' && !isLoading">
+    <div class="missa-agora__cadastro-text">
+      <p class="missa-agora__cadastro-titulo">Sua igreja não aparece ou está com horários desatualizados?</p>
+      <p class="missa-agora__cadastro-sub">Ajude a comunidade cadastrando uma igreja ou atualizando horários.</p>
+    </div>
+    <a routerLink="/nova" class="acao-card__btn-primary missa-agora__cadastro-btn">
+      <i class="pi pi-plus"></i> Cadastrar igreja
+    </a>
+  </div>
+
+  <!-- ══ FAQ ══ -->
+  <p class="missa-agora__faq">
+    Mostramos missas que começam nas próximas 2 horas, ordenadas por horário e proximidade.
+  </p>
+
+  <p-toast></p-toast>
 </div>
