@@ -278,7 +278,6 @@ $texto-2: #6b7280;
 }
 
 .search-panel { padding: 1.5rem 1.75rem; }
-.search-panel__titulo { font-size: 1rem; font-weight: 700; color: $texto; margin: 0 0 0.25rem; }
 .search-panel__desc { font-size: 0.82rem; color: $texto-2; margin: 0.5rem 0 0; line-height: 1.5; }
 .search-panel__hint { font-size: 0.8rem; color: #b45309; margin: 0.6rem 0 0; }
 
@@ -348,66 +347,8 @@ $texto-2: #6b7280;
       }
     }
   }
-  &__more {
-    align-self: flex-start;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: $laranja;
-    font-size: 0.82rem;
-    font-weight: 600;
-    padding: 0;
-    .pi { font-size: 0.75rem; }
-  }
   &__advanced { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: stretch; }
   &__submit { flex: 1 1 150px; min-width: 150px; }
-
-  &__horario-range {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    flex: 1 1 180px;
-  }
-  &__horario-label {
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: $texto-2;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    padding-left: 0.1rem;
-  }
-  &__horario-inputs {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    background: #fff;
-    border: 1px solid $borda;
-    border-radius: 0.5rem;
-    padding: 0 0.6rem;
-    height: 3rem;
-
-    ::ng-deep .p-inputmask {
-      border: none !important;
-      box-shadow: none !important;
-      padding: 0;
-      width: 4.5rem;
-      font-size: 1rem;
-      font-weight: 600;
-      color: $texto;
-      text-align: center;
-    }
-  }
-  &__horario-sep {
-    color: $texto-2;
-    font-weight: 600;
-    flex-shrink: 0;
-  }
-  &__horario-input {
-    flex: 0 0 auto;
-  }
 
   @media (max-width: 560px) {
     &__row, &__advanced { flex-direction: column; }
@@ -426,31 +367,10 @@ $texto-2: #6b7280;
     ::ng-deep input { width: 100%; min-height: 3rem; }
   }
   &__btn { flex: 0 0 auto; min-height: 3rem; }
-  &__raio {
-    display: flex;
-    align-items: center;
-    gap: 0.4rem;
-    margin-top: 0.85rem;
-    flex-wrap: wrap;
-  }
-  &__raio-label { font-size: 0.8rem; color: $texto-2; font-weight: 600; }
 
   @media (max-width: 480px) {
     &__btn { width: 100%; }
   }
-}
-.raio-chip {
-  padding: 0.3rem 0.8rem;
-  border-radius: 999px;
-  border: 1.5px solid $borda;
-  background: #fff;
-  color: $texto-2;
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all .15s;
-  &:hover { border-color: $laranja; color: $laranja; }
-  &--ativo { background: $laranja; border-color: $laranja; color: #fff; }
 }
 
 // ── PÁGINA DE RESULTADOS ──────────────────────────────────────────────────────
@@ -684,21 +604,6 @@ $texto-2: #6b7280;
   &__btn { flex-shrink: 0; }
 }
 
-// ── FAIXA DE CONFIANÇA FINAL ──────────────────────────────────────────────────
-.confia-faixa {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  margin-top: 1.5rem;
-  padding: 1rem 1.25rem;
-  background: #fff9f4;
-  border: 1px solid #f0e2d3;
-  border-radius: 1rem;
-  .pi { color: $laranja; font-size: 1.25rem; flex-shrink: 0; }
-  p { font-size: 0.85rem; color: $texto-2; margin: 0; line-height: 1.5; }
-  strong { color: $texto; }
-}
-
 // ── MISSAS + MAPA ─────────────────────────────────────────────────────────────
 .missas-mapa {
   display: grid;
@@ -913,29 +818,6 @@ $texto-2: #6b7280;
   &__arrow { color: $laranja; flex-shrink: 0; font-size: 0.875rem; }
 }
 
-// ── Banner confirmar ──────────────────────────────────────────────────────────
-.confirmar-banner {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  margin-top: 1.25rem;
-  padding: 1rem 1.25rem;
-  background: #fff;
-  border: 1px solid $borda;
-  border-radius: 1rem;
-  flex-wrap: wrap;
-
-  &__art { width: 3.5rem; flex-shrink: 0; svg { width: 100%; height: auto; } }
-  &__text { flex: 1; min-width: 12rem; }
-  &__btn {
-    display: inline-flex; align-items: center; gap: 0.5rem;
-    padding: 0.5rem 1.125rem; border: 1.5px solid $laranja; border-radius: 0.5rem;
-    color: $laranja; font-size: 0.8125rem; font-weight: 600; text-decoration: none; white-space: nowrap;
-    transition: background 0.15s;
-    &:hover { background: #fff4ed; }
-  }
-}
-
 // ── Chips de ordenação ────────────────────────────────────────────────────────
 .sort-chip {
   display: inline-flex; align-items: center; gap: 0.3rem;
@@ -953,16 +835,6 @@ $texto-2: #6b7280;
   gap: 0.75rem;
   margin-top: 0.75rem;
 }
-
-// ── Resultados (legado dataview — mantido p/ compat) ──────────────────────────
-.church-name-link { cursor: pointer; &:hover { text-decoration: underline; } }
-.image-container {
-  width: 150px; height: 200px; border-radius: 8px; border: 1px solid #ccc; margin: 0 auto;
-  background-size: cover; background-position: center center; background-repeat: no-repeat;
-}
-.social-icons { display: flex; justify-content: center; gap: 10px; margin-top: 8px; }
-.icon-link { font-size: 1.2rem; color: #555; transition: color 0.3s; &:hover { color: #000; } }
-.text-lg { font-size: 1.5rem; }
 
 .home-instagram {
   margin-top: 1.25rem;
