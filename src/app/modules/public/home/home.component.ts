@@ -17,7 +17,6 @@ import {
   Mass,
 } from "../../../core/interfaces/church.interface";
 import { HttpErrorResponse } from "@angular/common/http";
-import { ModalComponent } from "../../../core/components/modal/modal.component";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import { ShareButtons } from "ngx-sharebuttons/buttons";
 import { STATES } from "../../../core/constants/states";
@@ -43,7 +42,6 @@ interface AddressData {
     CommonModule,
     ReactiveFormsModule,
     PrimeNgModule,
-    ModalComponent,
     RouterModule,
     ShareButtons,
     MassTimeCardComponent,
@@ -260,19 +258,7 @@ export class HomeComponent {
   public isLoadingDistricts = false;
   public showNoChurchCard = false;
 
-  public isModalVisible: boolean = false;
-  public modalHeader: string = "Denunciar igreja";
   public totalRecords: any;
-
-  public reportForm: FormGroup = new FormGroup({
-    titulo: new FormControl("", Validators.required),
-    descricao: new FormControl("", Validators.required),
-    nomeDenunciador: new FormControl("", Validators.required),
-    emailDenunciador: new FormControl("", [
-      Validators.required,
-      Validators.email,
-    ]),
-  });
 
   public churchInfo: Church[] = [];
   public weakDays = WEEK_DAYS;
@@ -1013,53 +999,6 @@ export class HomeComponent {
     // Redireciona para a página de edição com o CPF da igreja
     this._router.navigate(["/editar", church.id]);
   }
-
-  reportChurch(idChurch: any): void {
-    // Renomeie a função para usar os dados do form
-    if (this.reportForm.valid) {
-      const reportData = this.reportForm.value;
-      this._churchService.report(idChurch.id, reportData).subscribe({
-        next: (res: any) => {
-          if (!res.data.resultadoDenuncia) {
-            this.isModalVisible = false;
-            return this._toast.add({
-              severity: "warn",
-              summary: "Alerta",
-              detail: res.data.messagemAplicacao,
-              
-            });
-          } else {
-            this.isModalVisible = false;
-            this._toast.add({
-              severity: "success",
-              summary: "Sucesso",
-              detail: "Denúncia enviada com sucesso!",
-            });
-          }
-        },
-        error: (err: HttpErrorResponse) => {
-          this._toast.add({
-            severity: "warn",
-            summary: "Igreja não encontrada",
-            detail: "Igreja não encontrada.",
-          });
-        },
-      });
-    }
-  }
-
-  abrirModalDenuncia(): void {
-    // Crie uma função específica para abrir o modal de denúncia
-    this.isModalVisible = true;
-    this.reportForm.reset(); // Limpa o formulário ao abrir o modal
-  }
-
-  fecharModal(): void {
-    this.isModalVisible = false;
-    this.reportForm.reset();
-  }
-
-  onModalShow(): void {}
 
   // Converte dia da semana de número para nome
   getDayName(dia: number): string {

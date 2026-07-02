@@ -5,7 +5,7 @@ const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 export function formatMassTime(horario: string): string {
   const [h, m] = horario.split(':').map(Number);
-  return m > 0 ? `${h}h${m.toString().padStart(2, '0')}` : `${h}h`;
+  return `${h.toString().padStart(2, '0')}h${m.toString().padStart(2, '0')}`;
 }
 
 export function formatDistance(meters: number): string {

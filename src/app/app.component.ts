@@ -4,6 +4,7 @@ import { filter, map, pairwise, startWith } from "rxjs/operators";
 import { SeoService } from "./core/services/seo.service";
 import { AnalyticsService } from "./core/services/analytics.service";
 import { ClarityService } from "./core/services/clarity.service";
+import { NavigationHistoryService } from "./core/services/navigation-history.service";
 
 @Component({
   selector: "app-root",
@@ -16,6 +17,7 @@ export class AppComponent implements OnInit {
   private _seo = inject(SeoService);
   private _analytics = inject(AnalyticsService);
   private _clarity = inject(ClarityService);
+  private _navHistory = inject(NavigationHistoryService);
 
   ngOnInit(): void {
     this._analytics.initPageTracking();
@@ -28,7 +30,10 @@ export class AppComponent implements OnInit {
       map(e => (e as NavigationEnd).urlAfterRedirects),
       startWith(''),
       pairwise()
-    ).subscribe(([prev]) => this._clarity.setPrevRoute(prev));
+    ).subscribe(([prev]) => {
+      this._clarity.setPrevRoute(prev);
+      this._navHistory.track(prev);
+    });
 
     navEnd$.pipe(
       map(() => {
