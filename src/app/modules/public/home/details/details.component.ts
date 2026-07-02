@@ -1,5 +1,6 @@
 import { Component, inject, OnInit } from "@angular/core";
 import { finalize } from "rxjs/operators";
+import { FormsModule } from "@angular/forms";
 import { ChurchesService } from "../../../../core/services/churches.service";
 import { SeoService } from "../../../../core/services/seo.service";
 import { SkeletonModule } from "primeng/skeleton";
@@ -7,7 +8,7 @@ import { MessageService } from "primeng/api";
 import { PrimeNgModule } from "../../../../shared/primeng.module";
 import { CommonModule } from "@angular/common";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
-import { Location } from "@angular/common";
+import { ModalComponent } from "../../../../core/components/modal/modal.component";
 import { DomSanitizer, SafeResourceUrl } from "@angular/platform-browser";
 import { Mass } from "../../church/models/church.model";
 import { ConfidenceBadgeComponent } from "../../../../shared/components/confidence-badge/confidence-badge.component";
@@ -19,6 +20,32 @@ import { ClarityService } from "../../../../core/services/clarity.service";
 import { RedesSociaisService, TipoRedeSocial } from "../../../../core/services/redes-sociais.service";
 import { MetricasService } from "../../../../core/services/metricas.service";
 import { getSocialIconFromTipos } from "../../../../shared/utils/social-icon.utils";
+import { NavigationHistoryService } from "../../../../core/services/navigation-history.service";
+
+interface ItemReportarProblema {
+  key: string;
+  label: string;
+  icon: string;
+  emoji: string;
+  subtitle?: string;
+  placeholder?: string;
+  especial?: boolean;
+  marcado: boolean;
+  texto: string;
+}
+
+function criarItensReportarProblema(): ItemReportarProblema[] {
+  return [
+    { key: "endereco", label: "Endereço", icon: "pi-map-marker", emoji: "📍", placeholder: "Descreva o que está incorreto ou informe o endereço correto.", marcado: false, texto: "" },
+    { key: "contato", label: "Dados de contato", icon: "pi-phone", emoji: "☎️", subtitle: "Telefone, e-mail, Instagram, Facebook ou outras redes sociais.", placeholder: "Informe quais dados estão incorretos ou quais são os dados corretos.", marcado: false, texto: "" },
+    { key: "nomeIgreja", label: "Nome da igreja", icon: "pi-building", emoji: "⛪", placeholder: "Informe o nome correto da igreja, comunidade ou paróquia.", marcado: false, texto: "" },
+    { key: "incompleta", label: "Página incompleta", icon: "pi-file", emoji: "📄", placeholder: "Quais informações você acredita que estão faltando?", marcado: false, texto: "" },
+    { key: "horarios", label: "Horários de Missa", icon: "pi-clock", emoji: "🕐", especial: true, marcado: false, texto: "" },
+    { key: "outro", label: "Outro", icon: "pi-comment", emoji: "💬", placeholder: "Descreva o que deseja informar.", marcado: false, texto: "" },
+  ];
+}
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 @Component({
   selector: "app-details",
@@ -27,9 +54,11 @@ import { getSocialIconFromTipos } from "../../../../shared/utils/social-icon.uti
     CommonModule,
     SkeletonModule,
     RouterLink,
+    FormsModule,
     ConfidenceBadgeComponent,
     CountdownChipComponent,
     ChurchPlaceholderComponent,
+    ModalComponent,
   ],
   providers: [MessageService],
   templateUrl: "./details.component.html",
@@ -41,8 +70,8 @@ export class DetailsComponent implements OnInit {
   _seo = inject(SeoService);
   _route = inject(ActivatedRoute);
   _router = inject(Router);
-  _location = inject(Location);
   _sanitizer = inject(DomSanitizer);
+  _navHistory = inject(NavigationHistoryService);
   private _analytics = inject(AnalyticsService);
   private _clarity = inject(ClarityService);
   private _redesSociais = inject(RedesSociaisService);
@@ -64,6 +93,13 @@ export class DetailsComponent implements OnInit {
 
   // Favorito
   isFavorita = false;
+
+  // Reportar problema
+  modalReportarProblemaVisible = false;
+  enviandoReportarProblema = false;
+  itensReportar: ItemReportarProblema[] = criarItensReportarProblema();
+  reportarNome = "";
+  reportarEmail = "";
 
   ngOnInit(): void {
     this._redesSociais.obterTipos().subscribe((tipos) => (this.tiposRedeSocial = tipos));
@@ -423,7 +459,8 @@ export class DetailsComponent implements OnInit {
 
 
   voltar(): void {
-    this._location.back();
+    const anterior = this._navHistory.previousUrl;
+    this._router.navigateByUrl(anterior ?? "/home");
   }
 
   /** Compartilhar: usa a API nativa quando disponível, senão copia o link */
@@ -448,16 +485,97 @@ export class DetailsComponent implements OnInit {
     document.getElementById("como-chegar")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  editChurch(church: any): void {
-    this._router.navigate(['/editar', church.id]);
-  }
-
   reportarErro(): void {
     if (this.churchInfo?.id) {
       this._analytics.userContribution('report', this.churchInfo.nome);
       this._metricas.registrarSugestaoEdicao(this.churchInfo.id);
       this._router.navigate(['/editar', this.churchInfo.id]);
     }
+  }
+
+  abrirModalReportarProblema(): void {
+    this.itensReportar = criarItensReportarProblema();
+    this.reportarNome = "";
+    this.reportarEmail = "";
+    this.modalReportarProblemaVisible = true;
+  }
+
+  fecharModalReportarProblema(): void {
+    this.modalReportarProblemaVisible = false;
+  }
+
+  /**
+   * Fecha o modal e leva o usuário para o fluxo de alteração. Se algum outro item já foi
+   * preenchido, envia essa sugestão antes de redirecionar; caso contrário, redireciona direto.
+   */
+  irParaAlterarInformacoes(): void {
+    const temItemPreenchido = this.itensReportar.some((item) => !item.especial && item.marcado && item.texto.trim());
+
+    if (!temItemPreenchido) {
+      this.modalReportarProblemaVisible = false;
+      this.reportarErro();
+      return;
+    }
+
+    if (!this.reportarProblemaValido) {
+      this._toast.add({
+        severity: 'warn',
+        summary: 'Preencha seus dados',
+        detail: 'Informe nome e e-mail para enviar sua sugestão antes de continuar.',
+      });
+      return;
+    }
+
+    this.enviarReportarProblema(() => this.reportarErro());
+  }
+
+  get reportarProblemaValido(): boolean {
+    const temNomeEEmail = !!this.reportarNome.trim() && EMAIL_REGEX.test(this.reportarEmail.trim());
+    const temItemPreenchido = this.itensReportar.some((item) => !item.especial && item.marcado && item.texto.trim());
+    return temNomeEEmail && temItemPreenchido;
+  }
+
+  private montarDescricaoReportarProblema(): string {
+    const secoes = this.itensReportar
+      .filter((item) => !item.especial && item.marcado && item.texto.trim())
+      .map((item) => `${item.emoji} ${item.label}\n${item.texto.trim()}`);
+    return `Correções sugeridas\n\n${secoes.join("\n\n")}`;
+  }
+
+  /** Envia a sugestão. Se `aoConcluir` for informado (fluxo "Ir para alterar"), não mostra toast de sucesso nem fecha o modal aqui — quem chamou decide o próximo passo. */
+  enviarReportarProblema(aoConcluir?: () => void): void {
+    if (!this.reportarProblemaValido || !this.churchInfo?.id) return;
+
+    this.enviandoReportarProblema = true;
+    const body = {
+      nome: this.reportarNome.trim(),
+      email: this.reportarEmail.trim(),
+      descricao: this.montarDescricaoReportarProblema(),
+    };
+    this._church.reportarProblema(this.churchInfo.id, body)
+      .pipe(finalize(() => (this.enviandoReportarProblema = false)))
+      .subscribe({
+        next: () => {
+          this._analytics.userContribution('report', this.churchInfo.nome);
+          this.modalReportarProblemaVisible = false;
+          if (aoConcluir) {
+            aoConcluir();
+            return;
+          }
+          this._toast.add({
+            severity: 'success',
+            summary: 'Obrigado!',
+            detail: 'Sugestão enviada com sucesso. Nossa equipe vai analisar.',
+          });
+        },
+        error: () => {
+          this._toast.add({
+            severity: 'error',
+            summary: 'Erro',
+            detail: 'Não foi possível enviar sua sugestão. Tente novamente.',
+          });
+        },
+      });
   }
 
   // ── Confirmação de horários ─────────────────────────────────────────────────
