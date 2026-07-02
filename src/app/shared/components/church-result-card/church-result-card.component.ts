@@ -112,8 +112,11 @@ export class ChurchResultCardComponent implements OnInit {
   }
 
   diasMissa(): string {
-    const pm = this.proximaMissa();
-    return pm ? this.diaNome(pm.diaSemana) : "";
+    const missas: any[] = this.igreja?.missas ?? [];
+    if (!missas.length) return '';
+    const dias = [...new Set(missas.map((m: any) => m.diaSemana as number))]
+      .sort((a, b) => a - b);
+    return dias.map(d => this.diaNome(d)).join(', ');
   }
 
   // ── Distância ───────────────────────────────────────────────────────────────

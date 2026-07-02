@@ -1,0 +1,12 @@
+:host {
+  display: block;
+  width: 100%;
+  // Reserva espaço antes do ad carregar — principal causa de CLS
+  min-height: 100px;
+}
+
+ins.adsbygoogle {
+  display: block !important;
+  width: 100%;
+  min-height: 100px;
+}
