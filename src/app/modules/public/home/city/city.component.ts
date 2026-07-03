@@ -1,4 +1,5 @@
-import { Component, inject, OnDestroy, OnInit } from "@angular/core";
+import { Component, DestroyRef, inject, OnDestroy, OnInit } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { CommonModule } from "@angular/common";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { finalize } from "rxjs/operators";
@@ -63,6 +64,7 @@ const DIAS: { label: string; slug: string; idx: number }[] = [
 })
 export class CityComponent implements OnInit, OnDestroy {
   private _route = inject(ActivatedRoute);
+  private _destroyRef = inject(DestroyRef);
   private _router = inject(Router);
   private _church = inject(ChurchesService);
   private _seo = inject(SeoService);
@@ -125,7 +127,7 @@ export class CityComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this._redesSociais.obterTipos().subscribe((tipos) => (this.tiposRedeSocial = tipos));
 
-    this._route.params.subscribe((params) => {
+    this._route.params.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((params) => {
       this.uf = params["uf"];
       this.cidade = params["cidade"];
       this.cidadeNome = this.cidade
@@ -133,7 +135,7 @@ export class CityComponent implements OnInit, OnDestroy {
         .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
         .join(' ');
 
-      this._route.queryParams.subscribe((qp) => {
+      this._route.queryParams.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((qp) => {
         this.diaAtivo = this.parseDiaSlug(qp["dia"]);
         this.periodoAtivo = qp["periodo"] ?? null;
         this.carregar();

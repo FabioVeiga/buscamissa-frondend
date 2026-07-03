@@ -1,4 +1,5 @@
-import { Component, inject, OnInit } from "@angular/core";
+import { Component, DestroyRef, inject, OnInit } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { finalize } from "rxjs/operators";
 import { FormsModule } from "@angular/forms";
 import { ChurchesService } from "../../../../core/services/churches.service";
@@ -69,6 +70,7 @@ export class DetailsComponent implements OnInit {
   _church = inject(ChurchesService);
   _seo = inject(SeoService);
   _route = inject(ActivatedRoute);
+  private _destroyRef = inject(DestroyRef);
   _router = inject(Router);
   _sanitizer = inject(DomSanitizer);
   _navHistory = inject(NavigationHistoryService);
@@ -104,7 +106,7 @@ export class DetailsComponent implements OnInit {
   ngOnInit(): void {
     this._redesSociais.obterTipos().subscribe((tipos) => (this.tiposRedeSocial = tipos));
 
-    this._route.params.subscribe((params) => {
+    this._route.params.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((params) => {
       const uf = params["uf"];
       const cidade = params["cidade"];
       const slug = params["slug"];

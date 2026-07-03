@@ -1,4 +1,5 @@
-import { Component, inject } from "@angular/core";
+import { Component, DestroyRef, inject } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { CommonModule, DatePipe } from "@angular/common";
 import {
   FormControl,
@@ -59,6 +60,7 @@ export class HomeComponent {
   private _fb = inject(FormBuilder);
   public _router = inject(Router);
   private _route = inject(ActivatedRoute);
+  private _destroyRef = inject(DestroyRef);
   private _analytics = inject(AnalyticsService);
   private _redesSociais = inject(RedesSociaisService);
   tiposRedeSocial: TipoRedeSocial[] = [];
@@ -419,7 +421,7 @@ export class HomeComponent {
     // Limpa resultados quando o usuário navega para home sem filtros (ex: clique no logo).
     // Usa a key 'uf' (minúscula) — a mesma gravada por searchFilter — senão o form
     // seria resetado a cada busca/paginação, deixando-o inválido e travando a paginação.
-    this._route.queryParams.subscribe(params => {
+    this._route.queryParams.pipe(takeUntilDestroyed(this._destroyRef)).subscribe(params => {
       if (!params['uf']) {
         this.churchInfo = [];
         this.showNoChurchCard = false;

@@ -25,6 +25,7 @@ import { PrimeNgModule } from "../../../../../shared/primeng.module";
 import { ChurchFormData, Mass } from "../../models/church.model";
 import { MessageService } from "primeng/api";
 import { RedesSociaisService, TipoRedeSocial } from "../../../../../core/services/redes-sociais.service";
+import { LoggerService } from "../../../../../core/services/logger.service";
 
 interface TypeChurchOption {
   name: string;
@@ -42,6 +43,7 @@ interface TypeChurchOption {
 export class ChurchFormComponent implements OnInit, OnChanges {
   private messageService = inject(MessageService);
   private redesSociaisService = inject(RedesSociaisService);
+  private logger = inject(LoggerService);
 
   tiposRedeSocial: TipoRedeSocial[] = [];
   @Input() initialData: ChurchFormData | null = null;
@@ -262,7 +264,7 @@ export class ChurchFormComponent implements OnInit, OnChanges {
       date.setHours(hours, minutes, seconds ?? 0, 0);
       return date;
     } catch (e) {
-      console.error("Erro ao converter string para Date:", timeString, e);
+      this.logger.logError(e, `church-form:stringParaDate(${timeString})`);
       return null;
     }
   }

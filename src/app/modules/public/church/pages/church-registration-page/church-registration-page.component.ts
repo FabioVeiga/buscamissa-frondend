@@ -21,6 +21,7 @@ import { PrimeNgModule } from "../../../../../shared/primeng.module";
 import { ChurchesService } from "../../../../../core/services/churches.service";
 import { ClarityService } from "../../../../../core/services/clarity.service";
 import { RedesSociaisService, TipoRedeSocial } from "../../../../../core/services/redes-sociais.service";
+import { LoggerService } from "../../../../../core/services/logger.service";
 
 @Component({
   selector: "app-church-registration-page",
@@ -41,6 +42,7 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
   private cd = inject(ChangeDetectorRef);
   private _clarity = inject(ClarityService);
   private redesSociaisService = inject(RedesSociaisService);
+  private logger = inject(LoggerService);
 
   private tiposRedeSocial: TipoRedeSocial[] = [];
   isLoading = false;
@@ -71,13 +73,13 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
           // Navega para a página de validação
           this.router.navigate(["/enviar-codigo", controleId]); // Ajuste a rota se necessário
         } else {
-          console.warn("Controle ID não recebido, navegando para a home.");
+          this.logger.logWarning("Controle ID não recebido, navegando para a home.", "church-registration");
           this.router.navigate(["/"]); // Fallback
         }
         this.cd.markForCheck(); // Atualiza view
       },
       error: (error: HttpErrorResponse) => {
-        console.log(error);
+        this.logger.logError(error, "church-registration:cadastrar");
         this.isLoading = false;
         this.showErrorToast(error, "Erro ao cadastrar igreja");
         this.cd.markForCheck(); // Atualiza view
@@ -154,7 +156,7 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
 
   private patchAddressForm(address: Address | any): void {
     if (!address || !this.churchFormComponent?.form) {
-      console.warn("Formulário ainda não está disponível.");
+      this.logger.logWarning("Formulário ainda não está disponível.", "church-registration");
       return;
     }
 

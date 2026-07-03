@@ -22,6 +22,7 @@ import { ChurchFormComponent } from "../../components/church-form/church-form.co
 import { PrimeNgModule } from "../../../../../shared/primeng.module";
 import { ChurchesService } from "../../../../../core/services/churches.service";
 import { ClarityService } from "../../../../../core/services/clarity.service";
+import { LoggerService } from "../../../../../core/services/logger.service";
 
 @Component({
   selector: "app-church-edit-page",
@@ -40,6 +41,7 @@ export class ChurchEditPageComponent implements OnInit {
   private location = inject(Location);
   public router = inject(Router);
   private _clarity = inject(ClarityService);
+  private logger = inject(LoggerService);
 
   isLoading = false;
   isSaving = false;
@@ -84,7 +86,7 @@ export class ChurchEditPageComponent implements OnInit {
           }),
           catchError((error: HttpErrorResponse) => {
             this.showErrorToast(error, "Erro ao carregar dados da igreja");
-            console.log(error);
+            this.logger.logError(error, "church-edit:carregar");
             return of(null);
           }),
           finalize(() => {
@@ -119,7 +121,7 @@ export class ChurchEditPageComponent implements OnInit {
         if (controleId) {
           this.router.navigate(["/enviar-codigo", controleId]);
         } else {
-          console.warn("Controle ID não recebido, navegando para a home.");
+          this.logger.logWarning("Controle ID não recebido, navegando para a home.", "church-edit");
           this.router.navigate(["/"]);
         }
         this.cd.markForCheck();

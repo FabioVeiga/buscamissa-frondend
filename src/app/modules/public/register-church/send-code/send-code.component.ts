@@ -12,6 +12,7 @@ import {
 import { MessageService } from "primeng/api";
 import { PrimeNgModule } from "../../../../shared/primeng.module";
 import { LoadingComponent } from "../../../../core/components/loading/loading.component";
+import { LoggerService } from "../../../../core/services/logger.service";
 
 @Component({
   selector: "app-send-code",
@@ -33,6 +34,7 @@ export class SendCodeComponent implements OnInit {
   private _service = inject(ChurchesService);
   private _toast = inject(MessageService);
   private _clarity = inject(ClarityService);
+  private _logger = inject(LoggerService);
 
   isLoading = false;
   controleId!: number;
@@ -83,10 +85,6 @@ export class SendCodeComponent implements OnInit {
               controleId: body.controleId,
             },
           });
-          console.log('Enviando para /validar com:', {
-            email: body.email,
-            controleId: body.controleId,
-          });
         } else {
           this.isLoading = false;
           this._toast.add({ severity: 'error', summary: 'Aviso!', detail: response?.data?.mensagemTela });
@@ -95,7 +93,7 @@ export class SendCodeComponent implements OnInit {
       error: (error: any) => {
         this.isLoading = false;
         this._toast.add({ severity: 'error', summary: 'Aviso!', detail: error.error.data.mensagemTela ?? error.error.data.mensagemInterno });
-        console.log("Erro ao gerar código", error);
+        this._logger.logError(error, "send-code:gerar-codigo");
       },
     });
   }

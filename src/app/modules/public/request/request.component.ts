@@ -10,6 +10,7 @@ import {
 import { RequestService } from "../../../core/services/request.service";
 import { NgIf } from "@angular/common";
 import { MessageService } from "primeng/api";
+import { LoggerService } from "../../../core/services/logger.service";
 
 @Component({
   selector: "app-request",
@@ -22,6 +23,7 @@ export class RequestComponent implements OnInit {
   private readonly _service = inject(RequestService);
   private _message = inject(MessageService);
   private _fb = inject(FormBuilder);
+  private _logger = inject(LoggerService);
   public isLoading = false;
   public form!: FormGroup;
   public tipos: any[] = [];
@@ -68,7 +70,7 @@ export class RequestComponent implements OnInit {
           summary: "Erro",
           detail: "Não foi possível enviar uma solicitação.",
         });
-        console.error(error);
+        this._logger.logError(error, "request:enviar");
       },
       complete: () => {
         this.isLoading = false;
