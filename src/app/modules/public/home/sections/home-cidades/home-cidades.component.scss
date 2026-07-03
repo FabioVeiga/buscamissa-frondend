@@ -1,0 +1,56 @@
+@use '../shared' as *;
+
+// ── EXPLORE POR CIDADE ──
+.cidades-chips {
+  margin-top: 1.5rem;
+
+  // Reserva altura para o card de cidade detectada (evita CLS quando geo resolve)
+  &__geo-wrap {
+    min-height: 4rem; // altura do .cidade-destaque
+    margin-bottom: 1rem;
+  }
+
+  &__lista {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+}
+
+.cidade-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background: #fff;
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 500;
+  border-radius: 999px;
+  border: 1px solid $borda;
+  text-decoration: none;
+  transition: all 0.15s;
+
+  &:hover { background: #fff4ed; border-color: #f3b989; color: $laranja; }
+  &--skip { display: none; }
+}
+
+// ── CIDADE DESTAQUE ──
+.cidade-destaque {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  background: #fff;
+  border: 1px solid #f3b989;
+  border-radius: 0.875rem;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+
+  &:hover { background: #fff4ed; border-color: $laranja; }
+  &__icon { width: 2.5rem; height: 2.5rem; background: $laranja; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #fff; font-size: 1rem; }
+  &__info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
+  &__label { font-size: 0.68rem; font-weight: 600; color: $laranja; text-transform: uppercase; letter-spacing: 0.04em; }
+  &__nome { font-size: 1rem; font-weight: 700; color: #1f2937; line-height: 1.2; }
+  &__estado { font-size: 0.75rem; font-weight: 700; color: #9ca3af; flex-shrink: 0; }
+  &__arrow { color: $laranja; flex-shrink: 0; font-size: 0.875rem; }
+}

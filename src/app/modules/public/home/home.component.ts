@@ -18,7 +18,6 @@ import {
 } from "../../../core/interfaces/church.interface";
 import { HttpErrorResponse } from "@angular/common/http";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
-import { ShareButtons } from "ngx-sharebuttons/buttons";
 import { STATES } from "../../../core/constants/states";
 import { MassTimeCardComponent } from "../../../shared/components/mass-time-card/mass-time-card.component";
 import { ChurchResultCardComponent } from "../../../shared/components/church-result-card/church-result-card.component";
@@ -32,6 +31,10 @@ import { getSocialIconFromTipos } from "../../../shared/utils/social-icon.utils"
 import { distanciaMetrosAte } from "../../../shared/utils/distance.utils";
 import { CIDADES_POPULARES } from "../../../core/constants/cidades-populares";
 import { GeolocationService } from "../../../core/services/geolocation.service";
+import { HomeStatsComponent } from "./sections/home-stats/home-stats.component";
+import { HomeComoFuncionaComponent } from "./sections/home-como-funciona/home-como-funciona.component";
+import { HomeFavoritosComponent } from "./sections/home-favoritos/home-favoritos.component";
+import { HomeCidadesComponent } from "./sections/home-cidades/home-cidades.component";
 
 interface AddressData {
   [uf: string]: {
@@ -47,10 +50,13 @@ interface AddressData {
     ReactiveFormsModule,
     PrimeNgModule,
     RouterModule,
-    ShareButtons,
     MassTimeCardComponent,
     ChurchResultCardComponent,
     CityMapComponent,
+    HomeStatsComponent,
+    HomeComoFuncionaComponent,
+    HomeFavoritosComponent,
+    HomeCidadesComponent,
   ],
   providers: [MessageService, DatePipe],
   templateUrl: "./home.component.html",
@@ -294,11 +300,6 @@ export class HomeComponent {
     this._router.navigate([], { queryParams: {}, replaceUrl: true });
     this.churchInfo = [];
     this.showNoChurchCard = false;
-  }
-
-  /** Formata número com separador de milhar pt-BR (ex.: 2000 → "2.000") */
-  fmt(n: number): string {
-    return (n ?? 0).toLocaleString('pt-BR');
   }
 
   toggleMaisFiltros(): void {
@@ -562,21 +563,6 @@ export class HomeComponent {
   /** Verifica se uma igreja é favorita */
   ehFavorita(churchId: number): boolean {
     return this.paroquiasFavoritas.some(f => f.id === churchId);
-  }
-
-  /** Retorna urgência de um favorito específico */
-  getUrgenciaFavorita(fav: any): 'hot' | 'soon' | null {
-    if (!fav || fav.diaSemana == null || !fav.horario) return null;
-    const mins = getNextOccurrenceMinutes(fav.diaSemana, fav.horario);
-    if (mins <= 180) return 'hot';
-    if (new Date().getDay() === fav.diaSemana) return 'soon';
-    return null;
-  }
-
-  /** Label da próxima missa para um favorito */
-  getProximaLabelFavorita(fav: any): string {
-    if (!fav || fav.diaSemana == null || !fav.horario) return '';
-    return getCountdownLabel(fav.diaSemana, fav.horario);
   }
 
   onCtaClick(): void {

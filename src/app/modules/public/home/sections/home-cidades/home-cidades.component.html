@@ -1,0 +1,33 @@
+<section class="cidades-chips">
+  <div class="sec-header">
+    <div class="flex items-center gap-2">
+      <i class="pi pi-map-marker" style="color: #bc5d10;"></i>
+      <h2 class="sec-header__titulo">Explore por cidade</h2>
+    </div>
+    <a routerLink="/cidades" class="sec-header__link">Ver todas as cidades →</a>
+  </div>
+
+  <!-- Wrapper com min-height reservado para evitar CLS quando geo resolve -->
+  <div class="cidades-chips__geo-wrap">
+    <a *ngIf="geoEncontrada && cidadeDetectada"
+       [routerLink]="['/missas', cidadeDetectada!.uf.toLowerCase(), cidadeDetectada!.slug]"
+       class="cidade-destaque">
+      <div class="cidade-destaque__icon" aria-hidden="true"><i class="pi pi-map-marker"></i></div>
+      <div class="cidade-destaque__info">
+        <span class="cidade-destaque__label">Sua cidade</span>
+        <span class="cidade-destaque__nome">{{ cidadeDetectada!.nome }}</span>
+      </div>
+      <span class="cidade-destaque__estado">{{ cidadeDetectada!.uf }}</span>
+      <i class="pi pi-arrow-right cidade-destaque__arrow"></i>
+    </a>
+  </div>
+
+  <div class="cidades-chips__lista">
+    <a *ngFor="let c of cidades; let i = index"
+       [routerLink]="['/missas', c.uf.toLowerCase(), c.slug]"
+       class="cidade-chip"
+       [class.cidade-chip--skip]="geoEncontrada && i === 0">
+      {{ c.nome }}
+    </a>
+  </div>
+</section>
