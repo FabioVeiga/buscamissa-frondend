@@ -10,6 +10,8 @@ import { MassTimeCardComponent } from "../../../shared/components/mass-time-card
 import { MassCardData } from "../../../shared/models/mass-card.model";
 import { Mass } from "../../../core/interfaces/church.interface";
 import { getMissaAgoraUrgency, getCountdownLabel } from "../../../shared/utils/mass-time.utils";
+import { CIDADES_POPULARES_MISSA_AGORA } from "../../../core/constants/cidades-populares";
+import { GeolocationService } from "../../../core/services/geolocation.service";
 import { MessageService } from "primeng/api";
 import { PrimeNgModule } from "../../../shared/primeng.module";
 
@@ -30,6 +32,7 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
   private _analytics = inject(AnalyticsService);
   private _toast = inject(MessageService);
   private _favorites = inject(FavoritesService);
+  private _geo = inject(GeolocationService);
 
   geoStatus: GeoStatus = 'idle';
   permissaoNegadaPeloBrowser = false;
@@ -56,15 +59,7 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
   mostrarAjudaGeo = false;
 
   // Fallback estático — substituir por métrica de acessos do banco quando existir
-  readonly cidadesFallback = [
-    { nome: 'São Paulo',      uf: 'sp', slug: 'sao-paulo' },
-    { nome: 'Campinas',       uf: 'sp', slug: 'campinas' },
-    { nome: 'Rio de Janeiro', uf: 'rj', slug: 'rio-de-janeiro' },
-    { nome: 'Brasília',       uf: 'df', slug: 'brasilia' },
-    { nome: 'Belo Horizonte', uf: 'mg', slug: 'belo-horizonte' },
-    { nome: 'Curitiba',       uf: 'pr', slug: 'curitiba' },
-    { nome: 'Porto Alegre',   uf: 'rs', slug: 'porto-alegre' },
-  ];
+  readonly cidadesFallback = CIDADES_POPULARES_MISSA_AGORA;
 
   /** Há missas na tela (cards de busca ficam compactos, mas nunca somem) */
   get temResultados(): boolean {
@@ -162,14 +157,11 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
   }
 
   private _reverseGeocode(lat: number, lng: number): void {
-    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=pt-BR`)
-      .then(r => r.json())
-      .then((data: any) => {
-        const addr = data.address ?? {};
-        this.cidadeDetectada = addr.city || addr.town || addr.village || null;
-        this.cidadeDetectadaUf = addr.state_code?.toUpperCase?.() || null;
-      })
-      .catch(() => {});
+    this._geo.reverseGeocode(lat, lng).then((addr) => {
+      if (!addr) return;
+      this.cidadeDetectada = addr.city || addr.town || addr.village || null;
+      this.cidadeDetectadaUf = addr.state_code?.toUpperCase?.() || null;
+    });
   }
 
   /** Busca por CEP: ViaCEP → geocodifica → mesma busca por raio de 10km / próximas 2h da geolocalização */

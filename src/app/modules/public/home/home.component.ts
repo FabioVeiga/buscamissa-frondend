@@ -2,7 +2,6 @@ import { Component, DestroyRef, inject } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { CommonModule, DatePipe } from "@angular/common";
 import {
-  FormControl,
   FormGroup,
   Validators,
   ReactiveFormsModule,
@@ -30,6 +29,9 @@ import { AnalyticsService } from "../../../core/services/analytics.service";
 import { FavoritesService, IgrejaFavorita } from "../../../core/services/favorites.service";
 import { RedesSociaisService, TipoRedeSocial } from "../../../core/services/redes-sociais.service";
 import { getSocialIconFromTipos } from "../../../shared/utils/social-icon.utils";
+import { distanciaMetrosAte } from "../../../shared/utils/distance.utils";
+import { CIDADES_POPULARES } from "../../../core/constants/cidades-populares";
+import { GeolocationService } from "../../../core/services/geolocation.service";
 
 interface AddressData {
   [uf: string]: {
@@ -65,6 +67,7 @@ export class HomeComponent {
   private _analytics = inject(AnalyticsService);
   private _favorites = inject(FavoritesService);
   private _redesSociais = inject(RedesSociaisService);
+  private _geo = inject(GeolocationService);
   tiposRedeSocial: TipoRedeSocial[] = [];
 
   /** Status da geolocalização */
@@ -77,17 +80,7 @@ export class HomeComponent {
   cidadesGrid: { nome: string; uf: string; slug: string }[] = [];
 
   /** Cidades populares — exibidas quando sem geoloc */
-  readonly cidadesFallback = [
-    { nome: 'São Paulo',           uf: 'SP', slug: 'sao-paulo' },
-    { nome: 'Campinas',            uf: 'SP', slug: 'campinas' },
-    { nome: 'São José dos Campos', uf: 'SP', slug: 'sao-jose-dos-campos' },
-    { nome: 'Ribeirão Preto',      uf: 'SP', slug: 'ribeirao-preto' },
-    { nome: 'Santos',              uf: 'SP', slug: 'santos' },
-    { nome: 'Sorocaba',            uf: 'SP', slug: 'sorocaba' },
-    { nome: 'Curitiba',            uf: 'PR', slug: 'curitiba' },
-    { nome: 'Brasília',            uf: 'DF', slug: 'brasilia' },
-    { nome: 'Belo Horizonte',      uf: 'MG', slug: 'belo-horizonte' },
-  ];
+  readonly cidadesFallback = CIDADES_POPULARES;
 
   get cidadesExibidas() {
     return this.geoStatus === 'found' && this.cidadesGrid.length
@@ -652,10 +645,9 @@ export class HomeComponent {
   }
 
   private _reverseGeocode(lat: number, lng: number): void {
-    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=pt-BR`)
-      .then(r => r.json())
-      .then((data: any) => {
-        const addr = data.address ?? {};
+    this._geo.reverseGeocode(lat, lng)
+      .then((addr) => {
+        if (!addr) { this.geoStatus = 'error'; return; }
         const nomeCidade = addr.city || addr.town || addr.village || addr.municipality || '';
         const nomeEstado = addr.state || '';
         const estado = STATES.find(s =>
@@ -949,17 +941,12 @@ export class HomeComponent {
   }
 
   private _distHome(church: any): number | null {
-    if (this._userLat === null || this._userLng === null) return null;
-    const lat2 = church.endereco?.latitude;
-    const lng2 = church.endereco?.longitude;
-    if (!lat2 || !lng2) return null;
-    const R = 6371000;
-    const toRad = (d: number) => (d * Math.PI) / 180;
-    const dLat = toRad(lat2 - this._userLat!);
-    const dLng = toRad(lng2 - this._userLng!);
-    const a = Math.sin(dLat / 2) ** 2 +
-      Math.cos(toRad(this._userLat!)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return distanciaMetrosAte(
+      this._userLat,
+      this._userLng,
+      church.endereco?.latitude,
+      church.endereco?.longitude
+    );
   }
 
   get temGeolocalizacao(): boolean {

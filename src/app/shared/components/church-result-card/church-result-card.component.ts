@@ -9,6 +9,7 @@ import {
   formatMassTime,
   getCountdownLabel,
 } from "../../utils/mass-time.utils";
+import { distanciaMetrosAte } from "../../utils/distance.utils";
 
 /**
  * Card de igreja reutilizável (resultado de busca / página de cidade).
@@ -125,22 +126,12 @@ export class ChurchResultCardComponent implements OnInit {
   // ── Distância ───────────────────────────────────────────────────────────────
 
   distanciaMetros(): number | null {
-    if (this.userLat === null || this.userLng === null) return null;
-    const lat2 = this.igreja?.endereco?.latitude;
-    const lng2 = this.igreja?.endereco?.longitude;
-    if (!lat2 || !lng2) return null;
-    return this.haversine(this.userLat, this.userLng, lat2, lng2);
-  }
-
-  private haversine(lat1: number, lng1: number, lat2: number, lng2: number): number {
-    const R = 6371000;
-    const toRad = (d: number) => (d * Math.PI) / 180;
-    const dLat = toRad(lat2 - lat1);
-    const dLng = toRad(lng2 - lng1);
-    const a =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return distanciaMetrosAte(
+      this.userLat,
+      this.userLng,
+      this.igreja?.endereco?.latitude,
+      this.igreja?.endereco?.longitude
+    );
   }
 
   // ── Ações ───────────────────────────────────────────────────────────────────

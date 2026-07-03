@@ -6,6 +6,8 @@ import { finalize } from "rxjs/operators";
 import { SkeletonModule } from "primeng/skeleton";
 import { PrimeNgModule } from "../../../../shared/primeng.module";
 import { ChurchesService } from "../../../../core/services/churches.service";
+import { distanciaMetrosAte } from "../../../../shared/utils/distance.utils";
+import { CIDADES_POPULARES } from "../../../../core/constants/cidades-populares";
 import { SeoService } from "../../../../core/services/seo.service";
 import { ConfidenceBadgeComponent } from "../../../../shared/components/confidence-badge/confidence-badge.component";
 import { CountdownChipComponent } from "../../../../shared/components/countdown-chip/countdown-chip.component";
@@ -26,17 +28,6 @@ const PERIODOS: Record<string, { de: number; ate: number; label: string }> = {
 };
 
 // Cidades populares para internal linking (SEO) no rodapé da página de cidade
-const CIDADES_POPULARES: { nome: string; uf: string; slug: string }[] = [
-  { nome: 'São Paulo',           uf: 'SP', slug: 'sao-paulo' },
-  { nome: 'Campinas',            uf: 'SP', slug: 'campinas' },
-  { nome: 'São José dos Campos', uf: 'SP', slug: 'sao-jose-dos-campos' },
-  { nome: 'Ribeirão Preto',      uf: 'SP', slug: 'ribeirao-preto' },
-  { nome: 'Santos',              uf: 'SP', slug: 'santos' },
-  { nome: 'Sorocaba',            uf: 'SP', slug: 'sorocaba' },
-  { nome: 'Curitiba',            uf: 'PR', slug: 'curitiba' },
-  { nome: 'Brasília',            uf: 'DF', slug: 'brasilia' },
-  { nome: 'Belo Horizonte',      uf: 'MG', slug: 'belo-horizonte' },
-];
 
 const DIAS: { label: string; slug: string; idx: number }[] = [
   { label: "Dom", slug: "domingo", idx: 0 },
@@ -387,22 +378,12 @@ export class CityComponent implements OnInit, OnDestroy {
   // ── Distância ─────────────────────────────────────────────────────────────
 
   distanciaMetros(igreja: any): number | null {
-    if (this.userLat === null || this.userLng === null) return null;
-    const lat2 = igreja.endereco?.latitude;
-    const lng2 = igreja.endereco?.longitude;
-    if (!lat2 || !lng2) return null;
-    return this.haversine(this.userLat, this.userLng, lat2, lng2);
-  }
-
-  private haversine(lat1: number, lng1: number, lat2: number, lng2: number): number {
-    const R = 6371000;
-    const toRad = (d: number) => (d * Math.PI) / 180;
-    const dLat = toRad(lat2 - lat1);
-    const dLng = toRad(lng2 - lng1);
-    const a =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return distanciaMetrosAte(
+      this.userLat,
+      this.userLng,
+      igreja.endereco?.latitude,
+      igreja.endereco?.longitude
+    );
   }
 
   private pedirGeolocalizacao(): void {
