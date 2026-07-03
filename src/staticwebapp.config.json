@@ -11,5 +11,13 @@
       "/*.html",
       "/*.map"
     ]
+  },
+  "globalHeaders": {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "SAMEORIGIN",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+    "Permissions-Policy": "geolocation=(self), camera=(), microphone=(), payment=()",
+    "Content-Security-Policy-Report-Only": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://www.google-analytics.com https://www.clarity.ms https://pagead2.googlesyndication.com https://*.googlesyndication.com https://tpc.googlesyndication.com https://www.googleadservices.com https://adservice.google.com https://*.google.com https://tag.goadopt.io https://*.goadopt.io; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: https:; connect-src 'self' https://busca-missa.azurewebsites.net https://busca-missa-dev.azurewebsites.net https://nominatim.openstreetmap.org https://viacep.com.br https://*.google-analytics.com https://*.clarity.ms https://pagead2.googlesyndication.com https://*.googlesyndication.com; frame-src https://googleads.g.doubleclick.net https://tpc.googlesyndication.com https://maps.google.com https://www.google.com https://*.goadopt.io; frame-ancestors 'self'; object-src 'none'; base-uri 'self'"
   }
 }
