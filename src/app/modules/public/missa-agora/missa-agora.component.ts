@@ -5,6 +5,7 @@ import { FormsModule } from "@angular/forms";
 import { ChurchesService } from "../../../core/services/churches.service";
 import { SeoService } from "../../../core/services/seo.service";
 import { AnalyticsService } from "../../../core/services/analytics.service";
+import { FavoritesService } from "../../../core/services/favorites.service";
 import { MassTimeCardComponent } from "../../../shared/components/mass-time-card/mass-time-card.component";
 import { MassCardData } from "../../../shared/models/mass-card.model";
 import { Mass } from "../../../core/interfaces/church.interface";
@@ -28,6 +29,7 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
   private _router = inject(Router);
   private _analytics = inject(AnalyticsService);
   private _toast = inject(MessageService);
+  private _favorites = inject(FavoritesService);
 
   geoStatus: GeoStatus = 'idle';
   permissaoNegadaPeloBrowser = false;
@@ -78,10 +80,7 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
   }
 
   private _loadFavoritas(): void {
-    try {
-      const arr = JSON.parse(localStorage.getItem('buscamissa_favoritas') || '[]');
-      this.favoritasIds = new Set(Array.isArray(arr) ? arr.map((f: any) => f.id) : []);
-    } catch { this.favoritasIds = new Set(); }
+    this.favoritasIds = new Set(this._favorites.listar().map((f) => f.id));
   }
 
   ngOnInit(): void {
@@ -314,42 +313,31 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
 
   onFavorite(card: MassCardData): void {
     try {
-      const raw = localStorage.getItem('buscamissa_favoritas');
-      let favoritas = Array.isArray(JSON.parse(raw || '[]')) ? JSON.parse(raw!) : [];
+      const agoraFavorita = this._favorites.alternar({
+        id: card.churchId,
+        nome: card.churchName,
+        uf: card.uf,
+        cidadeSlug: card.cidadeSlug,
+        slug: card.slug,
+        diaSemana: card.mass.diaSemana,
+        horario: card.mass.horario,
+      });
 
-      const jaExiste = favoritas.some((f: any) => f.id === card.churchId);
-
-      if (jaExiste) {
-        favoritas = favoritas.filter((f: any) => f.id !== card.churchId);
-      } else {
-        const novaFavorita = {
-          id: card.churchId,
-          nome: card.churchName,
-          uf: card.uf,
-          cidadeSlug: card.cidadeSlug,
-          slug: card.slug,
-          diaSemana: card.mass.diaSemana,
-          horario: card.mass.horario,
-        };
-        favoritas.push(novaFavorita);
-      }
-
-      localStorage.setItem('buscamissa_favoritas', JSON.stringify(favoritas));
       // atualiza o Set reativo para que o ícone mude imediatamente
-      if (jaExiste) {
-        this.favoritasIds.delete(card.churchId);
-      } else {
+      if (agoraFavorita) {
         this.favoritasIds.add(card.churchId);
+      } else {
+        this.favoritasIds.delete(card.churchId);
       }
       this.favoritasIds = new Set(this.favoritasIds); // nova referência → trigger change detection
 
       this._analytics.favoriteParishSaved(card.churchName);
       this._toast.add({
         severity: 'success',
-        summary: jaExiste ? 'Removido' : 'Salvo!',
-        detail: jaExiste
-          ? `${card.churchName} foi removida.`
-          : `${card.churchName} foi salva como favorita.`
+        summary: agoraFavorita ? 'Salvo!' : 'Removido',
+        detail: agoraFavorita
+          ? `${card.churchName} foi salva como favorita.`
+          : `${card.churchName} foi removida.`
       });
     } catch (e) {
       this._toast.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível salvar.' });

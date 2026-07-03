@@ -1,8 +1,9 @@
-import { Component, EventEmitter, Input, OnInit, Output } from "@angular/core";
+import { Component, EventEmitter, inject, Input, OnInit, Output } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { RouterLink } from "@angular/router";
 import { ConfidenceBadgeComponent } from "../confidence-badge/confidence-badge.component";
 import { ChurchPlaceholderComponent } from "../church-placeholder/church-placeholder.component";
+import { FavoritesService } from "../../../core/services/favorites.service";
 import {
   getNextOccurrenceMinutes,
   formatMassTime,
@@ -46,6 +47,8 @@ export class ChurchResultCardComponent implements OnInit {
 
   @Output() churchClick = new EventEmitter<any>();
   @Output() favoriteToggled = new EventEmitter<any>();
+
+  private favorites = inject(FavoritesService);
 
   imagemQuebrada = false;
   favorita = false;
@@ -160,37 +163,23 @@ export class ChurchResultCardComponent implements OnInit {
   // ── Favoritar ─────────────────────────────────────────────────────────────
 
   private _syncFavorita(): void {
-    try {
-      const arr = JSON.parse(localStorage.getItem("buscamissa_favoritas") || "[]");
-      this.favorita = Array.isArray(arr) && arr.some((f: any) => f.id === this.igreja?.id);
-    } catch { this.favorita = false; }
+    this.favorita = this.igreja?.id != null && this.favorites.isFavorita(this.igreja.id);
   }
 
   toggleFavoritar(event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
 
-    let favoritas: any[] = [];
-    try { favoritas = JSON.parse(localStorage.getItem("buscamissa_favoritas") || "[]"); } catch { }
-    if (!Array.isArray(favoritas)) favoritas = [];
-
-    if (this.favorita) {
-      favoritas = favoritas.filter((f) => f.id !== this.igreja.id);
-      this.favorita = false;
-    } else {
-      const pm = this.proximaMissa() ?? this.igreja?.missas?.[0] ?? null;
-      favoritas.push({
-        id: this.igreja.id,
-        nome: this.igreja.nome,
-        uf: this.ufResolved,
-        cidadeSlug: this.cidadeResolved,
-        slug: this.igreja.slug,
-        diaSemana: pm?.diaSemana,
-        horario: pm?.horario,
-      });
-      this.favorita = true;
-    }
-    localStorage.setItem("buscamissa_favoritas", JSON.stringify(favoritas));
+    const pm = this.proximaMissa() ?? this.igreja?.missas?.[0] ?? null;
+    this.favorita = this.favorites.alternar({
+      id: this.igreja.id,
+      nome: this.igreja.nome,
+      uf: this.ufResolved,
+      cidadeSlug: this.cidadeResolved,
+      slug: this.igreja.slug,
+      diaSemana: pm?.diaSemana,
+      horario: pm?.horario,
+    });
     this.favoriteToggled.emit(this.igreja);
   }
 }

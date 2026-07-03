@@ -1,6 +1,7 @@
 import { CommonModule } from '@angular/common';
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { FavoritesService } from '../../../services/favorites.service';
 
 @Component({
   selector: 'app-header-home',
@@ -10,15 +11,10 @@ import { RouterModule } from '@angular/router';
   styleUrl: './header.component.scss'
 })
 export class HeaderHomeComponent {
+  private favorites = inject(FavoritesService);
   menuAberto = false;
 
   get favoritosCount(): number {
-    try {
-      const raw = localStorage.getItem('buscamissa_favoritas');
-      const arr = JSON.parse(raw || '[]');
-      return Array.isArray(arr) ? arr.length : 0;
-    } catch {
-      return 0;
-    }
+    return this.favorites.quantidade();
   }
 }

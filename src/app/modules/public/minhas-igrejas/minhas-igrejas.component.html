@@ -37,7 +37,7 @@
 
       <div class="minhas-igrejas__card-body">
         <div class="minhas-igrejas__card-meta">
-          <span class="minhas-igrejas__badge">{{ igreja.uf.toUpperCase() }}</span>
+          <span class="minhas-igrejas__badge">{{ (igreja.uf ?? '') | uppercase }}</span>
           <span class="minhas-igrejas__separador">•</span>
           <span class="minhas-igrejas__slug">{{ igreja.cidadeSlug | uppercase }}</span>
         </div>

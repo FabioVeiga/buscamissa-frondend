@@ -13,6 +13,7 @@ import { DistanceChipComponent } from "../../../../shared/components/distance-ch
 import { ChurchPlaceholderComponent } from "../../../../shared/components/church-placeholder/church-placeholder.component";
 import { getNextOccurrenceMinutes, formatMassTime, getCountdownLabel } from "../../../../shared/utils/mass-time.utils";
 import { AnalyticsService } from "../../../../core/services/analytics.service";
+import { FavoritesService } from "../../../../core/services/favorites.service";
 import { ClarityService } from "../../../../core/services/clarity.service";
 import { CityMapComponent, MapChurch } from "../../../../shared/components/city-map/city-map.component";
 import { RedesSociaisService, TipoRedeSocial } from "../../../../core/services/redes-sociais.service";
@@ -69,6 +70,7 @@ export class CityComponent implements OnInit, OnDestroy {
   private _church = inject(ChurchesService);
   private _seo = inject(SeoService);
   private _analytics = inject(AnalyticsService);
+  private _favorites = inject(FavoritesService);
   private _clarity = inject(ClarityService);
   private _redesSociais = inject(RedesSociaisService);
   tiposRedeSocial: TipoRedeSocial[] = [];
@@ -443,11 +445,7 @@ export class CityComponent implements OnInit, OnDestroy {
   // ── Favoritar ─────────────────────────────────────────────────────────────
 
   private _loadFavorita(): void {
-    try {
-      const raw = localStorage.getItem('buscamissa_favoritas');
-      const arr = raw ? JSON.parse(raw) : [];
-      this.favoritasIds = Array.isArray(arr) ? arr.map((f: any) => f.id) : [];
-    } catch { this.favoritasIds = []; }
+    this.favoritasIds = this._favorites.listar().map((f) => f.id);
   }
 
   ehFavorita(ig: any): boolean {
@@ -458,28 +456,23 @@ export class CityComponent implements OnInit, OnDestroy {
     event.preventDefault();
     event.stopPropagation();
 
-    let favoritas: any[] = [];
-    try { favoritas = JSON.parse(localStorage.getItem('buscamissa_favoritas') || '[]'); } catch { }
-    if (!Array.isArray(favoritas)) favoritas = [];
+    const pm = ig.proximaMissa ?? (ig.missas && ig.missas[0]) ?? null;
+    const agoraFavorita = this._favorites.alternar({
+      id: ig.id,
+      nome: ig.nome,
+      uf: this.uf?.toLowerCase(),
+      cidadeSlug: this.cidade,
+      slug: ig.slug,
+      diaSemana: pm?.diaSemana,
+      horario: pm?.horario,
+    });
 
-    if (this.ehFavorita(ig)) {
-      favoritas = favoritas.filter((f) => f.id !== ig.id);
-      this.favoritasIds = this.favoritasIds.filter((id) => id !== ig.id);
-    } else {
-      const pm = ig.proximaMissa ?? (ig.missas && ig.missas[0]) ?? null;
-      favoritas.push({
-        id: ig.id,
-        nome: ig.nome,
-        uf: this.uf?.toLowerCase(),
-        cidadeSlug: this.cidade,
-        slug: ig.slug,
-        diaSemana: pm?.diaSemana,
-        horario: pm?.horario,
-      });
+    if (agoraFavorita) {
       this.favoritasIds = [...this.favoritasIds, ig.id];
       this._analytics.favoriteParishSaved(ig.nome);
+    } else {
+      this.favoritasIds = this.favoritasIds.filter((id) => id !== ig.id);
     }
-    localStorage.setItem('buscamissa_favoritas', JSON.stringify(favoritas));
   }
 
   // ── Compartilhar ──────────────────────────────────────────────────────────

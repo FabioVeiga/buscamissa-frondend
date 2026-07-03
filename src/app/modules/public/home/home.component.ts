@@ -27,6 +27,7 @@ import { CityMapComponent } from "../../../shared/components/city-map/city-map.c
 import { MassCardData } from "../../../shared/models/mass-card.model";
 import { getMissaAgoraUrgency, getCountdownLabel, getNextOccurrenceMinutes, formatMassTime } from "../../../shared/utils/mass-time.utils";
 import { AnalyticsService } from "../../../core/services/analytics.service";
+import { FavoritesService, IgrejaFavorita } from "../../../core/services/favorites.service";
 import { RedesSociaisService, TipoRedeSocial } from "../../../core/services/redes-sociais.service";
 import { getSocialIconFromTipos } from "../../../shared/utils/social-icon.utils";
 
@@ -62,6 +63,7 @@ export class HomeComponent {
   private _route = inject(ActivatedRoute);
   private _destroyRef = inject(DestroyRef);
   private _analytics = inject(AnalyticsService);
+  private _favorites = inject(FavoritesService);
   private _redesSociais = inject(RedesSociaisService);
   tiposRedeSocial: TipoRedeSocial[] = [];
 
@@ -239,10 +241,7 @@ export class HomeComponent {
   tituloProximasMissas = 'Missas acontecendo hoje';
 
   // Sprint 3B — Minhas Paróquias (múltiplas)
-  paroquiasFavoritas: Array<{
-    id: number; nome: string; uf: string; cidadeSlug: string; slug: string;
-    proximaMissaLabel?: string; diaSemana?: number; horario?: string;
-  }> = [];
+  paroquiasFavoritas: IgrejaFavorita[] = [];
 
   /** Flag loading do CTA */
   isLoadingGeoNav = false;
@@ -631,8 +630,8 @@ export class HomeComponent {
       diaSemana: card.mass.diaSemana,
       horario: card.mass.horario,
     };
+    this._favorites.adicionar(novaFavorita);
     this.paroquiasFavoritas = [...this.paroquiasFavoritas, novaFavorita];
-    this._salvarFavoritas();
     this._analytics.favoriteParishSaved(card.churchName);
   }
 
@@ -641,26 +640,15 @@ export class HomeComponent {
       event.preventDefault();
       event.stopPropagation();
     }
+    this._favorites.remover(churchId);
     this.paroquiasFavoritas = this.paroquiasFavoritas.filter(f => f.id !== churchId);
-    this._salvarFavoritas();
-  }
-
-  private _salvarFavoritas(): void {
-    localStorage.setItem('buscamissa_favoritas', JSON.stringify(this.paroquiasFavoritas));
   }
 
   private _loadFavorita(): void {
-    const raw = localStorage.getItem('buscamissa_favoritas');
-    if (!raw) return;
-    try {
-      const saved = JSON.parse(raw);
-      if (Array.isArray(saved)) {
-        this.paroquiasFavoritas = saved.map((f: any) => ({
-          ...f,
-          proximaMissaLabel: f.diaSemana != null && f.horario ? getCountdownLabel(f.diaSemana, f.horario) : undefined,
-        }));
-      }
-    } catch { /* ignora JSON inválido */ }
+    this.paroquiasFavoritas = this._favorites.listar().map((f) => ({
+      ...f,
+      proximaMissaLabel: f.diaSemana != null && f.horario ? getCountdownLabel(f.diaSemana, f.horario) : undefined,
+    }));
   }
 
   private _reverseGeocode(lat: number, lng: number): void {

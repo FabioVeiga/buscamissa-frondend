@@ -280,7 +280,7 @@
 
     <div class="minhas-paroquias__grid" *ngIf="paroquiasFavoritas.length > 0">
       <a *ngFor="let fav of paroquiasFavoritas"
-         [routerLink]="['/paroquia', fav.uf.toLowerCase(), fav.cidadeSlug, fav.slug]"
+         [routerLink]="['/paroquia', (fav.uf ?? '').toLowerCase(), fav.cidadeSlug, fav.slug]"
          class="minhas-paroquias__card"
          [class.minhas-paroquias__card--hot]="getUrgenciaFavorita(fav) === 'hot'"
          [class.minhas-paroquias__card--soon]="getUrgenciaFavorita(fav) === 'soon'">
