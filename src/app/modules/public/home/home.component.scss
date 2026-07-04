@@ -463,16 +463,7 @@ $texto-2: #6b7280;
 // (.favoritos-section, .favoritos-vazio, .minhas-paroquias, .cidades-chips e
 //  .cidade-chip movidos para sections/ — auditoria 2.1)
 
-// ── ADSENSE ───────────────────────────────────────────────────────────────────
-.adsense-wrap {
-  width: 100%;
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
-  margin-top: 1rem;
-  // sem min-height: o bloco só ocupa espaço quando o anúncio de fato carrega
-  app-adsense-banner { width: 100%; }
-}
+// (.adsense-wrap removido — AdSense desativado, auditoria 3.A)
 
 // (.cidade-destaque movido para sections/home-cidades — auditoria 2.1)
 
