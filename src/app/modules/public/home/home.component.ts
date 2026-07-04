@@ -19,9 +19,7 @@ import {
 import { HttpErrorResponse } from "@angular/common/http";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
 import { STATES } from "../../../core/constants/states";
-import { MassTimeCardComponent } from "../../../shared/components/mass-time-card/mass-time-card.component";
 import { ChurchResultCardComponent } from "../../../shared/components/church-result-card/church-result-card.component";
-import { CityMapComponent } from "../../../shared/components/city-map/city-map.component";
 import { MassCardData } from "../../../shared/models/mass-card.model";
 import { getMissaAgoraUrgency, getCountdownLabel, getNextOccurrenceMinutes, formatMassTime } from "../../../shared/utils/mass-time.utils";
 import { AnalyticsService } from "../../../core/services/analytics.service";
@@ -35,6 +33,7 @@ import { HomeStatsComponent } from "./sections/home-stats/home-stats.component";
 import { HomeComoFuncionaComponent } from "./sections/home-como-funciona/home-como-funciona.component";
 import { HomeFavoritosComponent } from "./sections/home-favoritos/home-favoritos.component";
 import { HomeCidadesComponent } from "./sections/home-cidades/home-cidades.component";
+import { HomeMissasMapaComponent } from "./sections/home-missas-mapa/home-missas-mapa.component";
 
 interface AddressData {
   [uf: string]: {
@@ -50,13 +49,12 @@ interface AddressData {
     ReactiveFormsModule,
     PrimeNgModule,
     RouterModule,
-    MassTimeCardComponent,
     ChurchResultCardComponent,
-    CityMapComponent,
     HomeStatsComponent,
     HomeComoFuncionaComponent,
     HomeFavoritosComponent,
     HomeCidadesComponent,
+    HomeMissasMapaComponent,
   ],
   providers: [MessageService, DatePipe],
   templateUrl: "./home.component.html",
@@ -220,18 +218,9 @@ export class HomeComponent {
     return this.quickFilter ? this.churchInfoFiltrado.length : this.totalRecords;
   }
 
-  /** Igrejas para o mapa lateral (a partir das próximas missas) */
-  get mapChurches(): { id: number; nome: string; lat: number | null; lng: number | null }[] {
-    return this.proximasMissasCards.map(c => ({
-      id: c.churchId,
-      nome: c.churchName,
-      lat: c.latitude ?? null,
-      lng: c.longitude ?? null,
-    }));
-  }
-
-  get temMapaComCoords(): boolean {
-    return this.mapChurches.some(m => m.lat != null && m.lng != null);
+  /** Ids das favoritas (para o coração dos cards da seção de missas) */
+  get favoritasIds(): number[] {
+    return this.paroquiasFavoritas.map(f => f.id);
   }
 
   /** Cards de próximas missas */
@@ -524,11 +513,6 @@ export class HomeComponent {
       },
       error: () => { /* silencioso — seção simplesmente não aparece */ },
     });
-  }
-
-  getUrgency(card: MassCardData) {
-    if (card.mass.diaSemana == null) return null;
-    return getMissaAgoraUrgency(card.mass.diaSemana, card.mass.horario);
   }
 
   /** CTA "Encontrar missas perto de mim" */

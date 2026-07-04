@@ -149,56 +149,19 @@
   <app-home-stats *ngIf="!resultsMode" [stats]="stats" />
 
   <!-- ══ MISSAS + MAPA ══ -->
-  <section id="proximas-section" class="missas-mapa" *ngIf="!resultsMode">
-    <div class="missas-mapa__col-missas">
-      <div class="sec-header">
-        <div class="flex items-center gap-2">
-          <i class="pi pi-star-fill" style="color: #bc5d10;"></i>
-          <h2 class="sec-header__titulo">{{ tituloProximasMissas }}</h2>
-        </div>
-        <a routerLink="/missa-agora" class="sec-header__link">Ver todas</a>
-      </div>
-
-      <div *ngIf="isLoadingProximas" class="proximas-loading">
-        <i class="pi pi-spin pi-spinner" style="color: #bc5d10; font-size: 1.25rem;"></i>
-        <span class="text-sm text-gray-500 ml-2">Buscando missas…</span>
-      </div>
-
-      <div *ngIf="!isLoadingProximas && proximasFiltradas.length === 0" class="proximas-vazia">
-        <i class="pi pi-calendar proximas-vazia__icon"></i>
-        <p class="proximas-vazia__texto">Nenhuma missa encontrada para este filtro.</p>
-        <a routerLink="/missa-agora" class="proximas-vazia__link">Ver todas as missas de hoje →</a>
-      </div>
-
-      <div class="missas-grid" *ngIf="!isLoadingProximas && proximasFiltradas.length > 0">
-        <app-mass-time-card
-          *ngFor="let card of proximasFiltradas"
-          [data]="card"
-          [urgency]="getUrgency(card)"
-          [isFavorite]="ehFavorita(card.churchId)"
-          (cardClick)="onCardClick($event)"
-          (navigateClick)="onNavigateClick($event)"
-          (favoriteClick)="onFavoriteClick($event)"
-        />
-      </div>
-    </div>
-
-    <aside class="missas-mapa__col-mapa" *ngIf="temMapaComCoords">
-      <div class="mapa-card">
-        <div class="mapa-card__header">
-          <span class="mapa-card__titulo"><i class="pi pi-map-marker"></i> Veja no mapa</span>
-        </div>
-        <app-city-map
-          [igrejas]="mapChurches"
-          [cidadeNome]="cidadeDetectada?.nome || ''"
-          [uf]="cidadeDetectada?.uf || ''"
-        />
-        <a routerLink="/missa-agora" class="mapa-card__full">
-          Abrir mapa completo <i class="pi pi-external-link"></i>
-        </a>
-      </div>
-    </aside>
-  </section>
+  <app-home-missas-mapa
+    *ngIf="!resultsMode"
+    [titulo]="tituloProximasMissas"
+    [isLoading]="isLoadingProximas"
+    [cards]="proximasFiltradas"
+    [todasAsCards]="proximasMissasCards"
+    [favoritasIds]="favoritasIds"
+    [cidadeNome]="cidadeDetectada?.nome || ''"
+    [cidadeUf]="cidadeDetectada?.uf || ''"
+    (cardClick)="onCardClick($event)"
+    (navigateClick)="onNavigateClick($event)"
+    (favoriteClick)="onFavoriteClick($event)"
+  />
 
   <!-- ══ COMO FUNCIONA + NÃO ENCONTROU ══ -->
   <app-home-como-funciona *ngIf="!resultsMode" />
