@@ -9,10 +9,8 @@ export const environment = {
   config: {
     production: false,
     apiURL: "https://busca-missa-dev.azurewebsites.net/api/",
-    // TODO(auditoria 1.7): token pendente de regeneração com o SecretApp rotacionado
-    // do Key Vault de dev. Gerar com backend/Scripts/gerar-token-app.ps1 (inclui iss/aud)
-    // e substituir aqui. Requer também restart do App Service busca-missa-dev para
-    // recarregar o secret. O valor abaixo NÃO valida contra o dev atual.
-    token:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImRyb2lkYmluaG9AZ21haWwuY29tIiwicm9sZSI6IkFwcCIsIm5iZiI6MTc4MzA0Mjg2NCwiZXhwIjoyMDk4NjYyMDY0LCJpYXQiOjE3ODMwNDI4NjR9.PYMYhl4T1gvKtqhBHWXWcZr0JrAVCdeSyrE_V6rdQV4",
+    // Token App rotacionado (SecretApp novo do Key Vault de dev), já com claims iss/aud.
+    // Requer restart do App Service busca-missa-dev para recarregar o secret.
+    token:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImRyb2lkYmluaG9AZ21haWwuY29tIiwicm9sZSI6IkFwcCIsIm5iZiI6MTc4MzE2NTczOCwiZXhwIjoyMDk4Nzg0OTM4LCJpYXQiOjE3ODMxNjU3MzgsImlzcyI6IkJ1c2NhTWlzc2EiLCJhdWQiOiJCdXNjYU1pc3NhQXBpIn0.OrQTwTkloZMHvRk-C4IcAZ5I6M3gtWXmv3uGksTrmD4",
   },
 };
