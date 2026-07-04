@@ -250,11 +250,15 @@
 
     <!-- MAPA (desktop) + rodapé -->
     <aside class="city-mapa" [class.city-mapa--visible]="mapVisible">
-      <app-city-map
-        [igrejas]="mapIgrejas"
-        [cidadeNome]="cidadeNome"
-        [uf]="uf">
-      </app-city-map>
+      @defer (on viewport) {
+        <app-city-map
+          [igrejas]="mapIgrejas"
+          [cidadeNome]="cidadeNome"
+          [uf]="uf">
+        </app-city-map>
+      } @placeholder {
+        <div class="city-mapa__placeholder" aria-hidden="true"></div>
+      }
 
       <!-- Rodapé "Não encontrou sua paróquia?" -->
       <div class="city-mapa-cta">
