@@ -146,210 +146,40 @@
   </div>
 
   <!-- ══ ESTATÍSTICAS ══ -->
-  <section class="stats" *ngIf="!resultsMode" aria-label="O Busca Missa em números">
-    <p class="stats__caption"><i class="pi pi-heart-fill"></i> Mantido pela comunidade católica — informações atualizadas continuamente</p>
-    <div class="stats__item">
-      <span class="stats__icon stats__icon--orange"><i class="pi pi-home"></i></span>
-      <span class="stats__num">{{ fmt(stats.igrejas) }}+</span>
-      <span class="stats__label">igrejas cadastradas</span>
-    </div>
-    <div class="stats__item">
-      <span class="stats__icon stats__icon--green"><i class="pi pi-clock"></i></span>
-      <span class="stats__num">{{ fmt(stats.horarios) }}+</span>
-      <span class="stats__label">horários cadastrados</span>
-    </div>
-    <div class="stats__item">
-      <span class="stats__icon stats__icon--blue"><i class="pi pi-map-marker"></i></span>
-      <span class="stats__num">{{ stats.cidades }}+</span>
-      <span class="stats__label">cidades atendidas</span>
-    </div>
-    <div class="stats__item">
-      <span class="stats__icon stats__icon--purple"><i class="pi pi-map"></i></span>
-      <span class="stats__num">{{ stats.estados }}</span>
-      <span class="stats__label">estados brasileiros</span>
-    </div>
-  </section>
+  <app-home-stats *ngIf="!resultsMode" [stats]="stats" />
 
   <!-- ══ MISSAS + MAPA ══ -->
-  <section id="proximas-section" class="missas-mapa" *ngIf="!resultsMode">
-    <div class="missas-mapa__col-missas">
-      <div class="sec-header">
-        <div class="flex items-center gap-2">
-          <i class="pi pi-star-fill" style="color: #bc5d10;"></i>
-          <h2 class="sec-header__titulo">{{ tituloProximasMissas }}</h2>
-        </div>
-        <a routerLink="/missa-agora" class="sec-header__link">Ver todas</a>
-      </div>
+  <app-home-missas-mapa
+    *ngIf="!resultsMode"
+    [titulo]="tituloProximasMissas"
+    [isLoading]="isLoadingProximas"
+    [cards]="proximasFiltradas"
+    [todasAsCards]="proximasMissasCards"
+    [favoritasIds]="favoritasIds"
+    [cidadeNome]="cidadeDetectada?.nome || ''"
+    [cidadeUf]="cidadeDetectada?.uf || ''"
+    (cardClick)="onCardClick($event)"
+    (navigateClick)="onNavigateClick($event)"
+    (favoriteClick)="onFavoriteClick($event)"
+  />
 
-      <div *ngIf="isLoadingProximas" class="proximas-loading">
-        <i class="pi pi-spin pi-spinner" style="color: #bc5d10; font-size: 1.25rem;"></i>
-        <span class="text-sm text-gray-500 ml-2">Buscando missas…</span>
-      </div>
-
-      <div *ngIf="!isLoadingProximas && proximasFiltradas.length === 0" class="proximas-vazia">
-        <i class="pi pi-calendar proximas-vazia__icon"></i>
-        <p class="proximas-vazia__texto">Nenhuma missa encontrada para este filtro.</p>
-        <a routerLink="/missa-agora" class="proximas-vazia__link">Ver todas as missas de hoje →</a>
-      </div>
-
-      <div class="missas-grid" *ngIf="!isLoadingProximas && proximasFiltradas.length > 0">
-        <app-mass-time-card
-          *ngFor="let card of proximasFiltradas"
-          [data]="card"
-          [urgency]="getUrgency(card)"
-          [isFavorite]="ehFavorita(card.churchId)"
-          (cardClick)="onCardClick($event)"
-          (navigateClick)="onNavigateClick($event)"
-          (favoriteClick)="onFavoriteClick($event)"
-        />
-      </div>
-    </div>
-
-    <aside class="missas-mapa__col-mapa" *ngIf="temMapaComCoords">
-      <div class="mapa-card">
-        <div class="mapa-card__header">
-          <span class="mapa-card__titulo"><i class="pi pi-map-marker"></i> Veja no mapa</span>
-        </div>
-        <app-city-map
-          [igrejas]="mapChurches"
-          [cidadeNome]="cidadeDetectada?.nome || ''"
-          [uf]="cidadeDetectada?.uf || ''"
-        />
-        <a routerLink="/missa-agora" class="mapa-card__full">
-          Abrir mapa completo <i class="pi pi-external-link"></i>
-        </a>
-      </div>
-    </aside>
-  </section>
-
-  <!-- ══ COMO FUNCIONA (4 passos visuais) ══ -->
-  <section class="como-funciona" *ngIf="!resultsMode">
-    <h2 class="como-funciona__titulo">Como funciona</h2>
-    <p class="como-funciona__sub">O Busca Missa é construído em colaboração com igrejas e fiéis para manter os horários sempre atualizados.</p>
-
-    <div class="como-funciona__steps">
-      <div class="como-funciona__step">
-        <span class="como-funciona__icon"><i class="pi pi-plus-circle"></i></span>
-        <p class="como-funciona__step-titulo">Cadastre uma igreja</p>
-        <p class="como-funciona__step-desc">Qualquer pessoa pode cadastrar igrejas e horários.</p>
-      </div>
-      <i class="pi pi-arrow-right como-funciona__arrow" aria-hidden="true"></i>
-      <div class="como-funciona__step">
-        <span class="como-funciona__icon"><i class="pi pi-send"></i></span>
-        <p class="como-funciona__step-titulo">Publicamos na plataforma</p>
-        <p class="como-funciona__step-desc">A informação fica disponível para todo o Brasil.</p>
-      </div>
-      <i class="pi pi-arrow-right como-funciona__arrow" aria-hidden="true"></i>
-      <div class="como-funciona__step">
-        <span class="como-funciona__icon"><i class="pi pi-search"></i></span>
-        <p class="como-funciona__step-titulo">Milhares encontram a missa</p>
-        <p class="como-funciona__step-desc">Por localização, cidade ou CEP.</p>
-      </div>
-      <i class="pi pi-arrow-right como-funciona__arrow" aria-hidden="true"></i>
-      <div class="como-funciona__step">
-        <span class="como-funciona__icon"><i class="pi pi-refresh"></i></span>
-        <p class="como-funciona__step-titulo">Mantenha os horários atualizados</p>
-        <p class="como-funciona__step-desc">Sugira correções e ajude a comunidade.</p>
-      </div>
-    </div>
-  </section>
-
-  <!-- ══ NÃO ENCONTROU ══ -->
-  <section class="nao-encontrou" *ngIf="!resultsMode">
-    <div class="nao-encontrou__inner">
-      <span class="nao-encontrou__icon"><i class="pi pi-search"></i></span>
-      <div class="nao-encontrou__text">
-        <p class="nao-encontrou__titulo">Sua igreja ainda não aparece no Busca Missa?</p>
-        <p class="nao-encontrou__sub">Cadastre gratuitamente. Leva menos de 2 minutos e ajuda milhares de pessoas a encontrar uma missa.</p>
-      </div>
-      <a routerLink="/nova" class="btn-primary nao-encontrou__btn">
-        <i class="pi pi-plus"></i> Cadastrar igreja
-      </a>
-    </div>
-  </section>
+  <!-- ══ COMO FUNCIONA + NÃO ENCONTROU ══ -->
+  <app-home-como-funciona *ngIf="!resultsMode" />
 
   <!-- ══ SEUS FAVORITOS ══ -->
-  <section class="favoritos-section" *ngIf="!resultsMode">
-    <div class="sec-header">
-      <div class="flex items-center gap-2">
-        <i class="pi pi-heart-fill" style="color: #bc5d10;"></i>
-        <h2 class="sec-header__titulo">Seus favoritos</h2>
-      </div>
-      <a routerLink="/minhas-igrejas" *ngIf="paroquiasFavoritas.length > 0" class="sec-header__link">Ver todos</a>
-    </div>
-
-    <div class="minhas-paroquias__grid" *ngIf="paroquiasFavoritas.length > 0">
-      <a *ngFor="let fav of paroquiasFavoritas"
-         [routerLink]="['/paroquia', fav.uf.toLowerCase(), fav.cidadeSlug, fav.slug]"
-         class="minhas-paroquias__card"
-         [class.minhas-paroquias__card--hot]="getUrgenciaFavorita(fav) === 'hot'"
-         [class.minhas-paroquias__card--soon]="getUrgenciaFavorita(fav) === 'soon'">
-        <div class="minhas-paroquias__topo">
-          <span class="minhas-paroquias__nome">{{ fav.nome }}</span>
-          <button class="minhas-paroquias__remover" (click)="removerFavorita(fav.id, $event)" aria-label="Remover favorita">
-            <i class="pi pi-times"></i>
-          </button>
-        </div>
-        <div class="minhas-paroquias__info">
-          <div class="minhas-paroquias__missa" *ngIf="getProximaLabelFavorita(fav)">
-            <span class="minhas-paroquias__missa-icone">
-              <ng-container *ngIf="getUrgenciaFavorita(fav) === 'hot'">🔥</ng-container>
-              <ng-container *ngIf="getUrgenciaFavorita(fav) === 'soon'">🟢</ng-container>
-              <ng-container *ngIf="!getUrgenciaFavorita(fav)">⏰</ng-container>
-            </span>
-            <span class="minhas-paroquias__missa-label">{{ getProximaLabelFavorita(fav) }}</span>
-          </div>
-        </div>
-        <span class="minhas-paroquias__cta">Ver horários →</span>
-      </a>
-    </div>
-
-    <div class="favoritos-vazio" *ngIf="paroquiasFavoritas.length === 0">
-      <i class="pi pi-heart favoritos-vazio__icon"></i>
-      <p class="favoritos-vazio__titulo">Salve suas igrejas favoritas</p>
-      <p class="favoritos-vazio__sub">
-        Acompanhe horários das suas igrejas rapidamente, sem precisar buscar novamente.
-      </p>
-      <a routerLink="/missa-agora" class="btn-secondary">
-        <i class="pi pi-search"></i> Explorar igrejas
-      </a>
-    </div>
-  </section>
+  <app-home-favoritos
+    *ngIf="!resultsMode"
+    [favoritas]="paroquiasFavoritas"
+    (remover)="removerFavorita($event)"
+  />
 
   <!-- ══ EXPLORE POR CIDADE ══ -->
-  <section class="cidades-chips" *ngIf="!resultsMode">
-    <div class="sec-header">
-      <div class="flex items-center gap-2">
-        <i class="pi pi-map-marker" style="color: #bc5d10;"></i>
-        <h2 class="sec-header__titulo">Explore por cidade</h2>
-      </div>
-      <a routerLink="/cidades" class="sec-header__link">Ver todas as cidades →</a>
-    </div>
-
-    <!-- Wrapper com min-height reservado para evitar CLS quando geo resolve -->
-    <div class="cidades-chips__geo-wrap">
-      <a *ngIf="geoStatus === 'found' && cidadeDetectada"
-         [routerLink]="['/missas', cidadeDetectada!.uf.toLowerCase(), cidadeDetectada!.slug]"
-         class="cidade-destaque">
-        <div class="cidade-destaque__icon" aria-hidden="true"><i class="pi pi-map-marker"></i></div>
-        <div class="cidade-destaque__info">
-          <span class="cidade-destaque__label">Sua cidade</span>
-          <span class="cidade-destaque__nome">{{ cidadeDetectada!.nome }}</span>
-        </div>
-        <span class="cidade-destaque__estado">{{ cidadeDetectada!.uf }}</span>
-        <i class="pi pi-arrow-right cidade-destaque__arrow"></i>
-      </a>
-    </div>
-
-    <div class="cidades-chips__lista">
-      <a *ngFor="let c of cidadesExibidas; let i = index"
-         [routerLink]="['/missas', c.uf.toLowerCase(), c.slug]"
-         class="cidade-chip"
-         [class.cidade-chip--skip]="geoStatus === 'found' && i === 0">
-        {{ c.nome }}
-      </a>
-    </div>
-  </section>
+  <app-home-cidades
+    *ngIf="!resultsMode"
+    [cidades]="cidadesExibidas"
+    [cidadeDetectada]="cidadeDetectada"
+    [geoEncontrada]="geoStatus === 'found'"
+  />
 
   <!-- ══ RESULTADOS: carregando / vazio ══ -->
   <div *ngIf="resultsMode && isLoading" class="resultados-feedback">
@@ -397,11 +227,6 @@
     <p-paginator [rows]="pageSize" [first]="(pageIndex - 1) * pageSize" [totalRecords]="totalRecordsFiltrado"
       [rowsPerPageOptions]="[5, 10, 20]" (onPageChange)="onPageChange($event)"></p-paginator>
   </div>
-
-  <div class="adsense-wrap">
-    <app-adsense-banner></app-adsense-banner>
-  </div>
-
 
   <!-- ══ INSTAGRAM ══ -->
   <div class="home-instagram" *ngIf="!resultsMode">

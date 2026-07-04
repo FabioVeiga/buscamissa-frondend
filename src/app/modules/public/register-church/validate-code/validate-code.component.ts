@@ -1,5 +1,6 @@
 import { CommonModule, NgIf } from "@angular/common";
-import { Component, inject } from "@angular/core";
+import { Component, DestroyRef, inject } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import {
   FormBuilder,
   FormGroup,
@@ -30,6 +31,7 @@ import { MessageService } from "primeng/api";
 export class ValidateCodeComponent {
   private _fb = inject(FormBuilder);
   private _route = inject(ActivatedRoute);
+  private _destroyRef = inject(DestroyRef);
   private _router = inject(Router);
   private _service = inject(ChurchesService);
   private _toast = inject(MessageService);
@@ -50,7 +52,7 @@ export class ValidateCodeComponent {
   }
 
   ngOnInit(): void {
-    this._route.queryParams.subscribe((params) => {
+    this._route.queryParams.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((params) => {
       this.email = params["email"];
       this.controleId = params["controleId"];
     });

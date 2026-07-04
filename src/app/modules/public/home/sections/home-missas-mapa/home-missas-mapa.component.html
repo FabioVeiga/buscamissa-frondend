@@ -1,0 +1,50 @@
+<section id="proximas-section" class="missas-mapa">
+  <div class="missas-mapa__col-missas">
+    <div class="sec-header">
+      <div class="flex items-center gap-2">
+        <i class="pi pi-star-fill" style="color: #bc5d10;"></i>
+        <h2 class="sec-header__titulo">{{ titulo }}</h2>
+      </div>
+      <a routerLink="/missa-agora" class="sec-header__link">Ver todas</a>
+    </div>
+
+    <!-- Skeleton: reserva o espaço final dos cards durante o carregamento (evita CLS) -->
+    <div *ngIf="isLoading" class="missas-grid" aria-hidden="true">
+      <div class="missa-skeleton" *ngFor="let s of skeletons"></div>
+    </div>
+
+    <div *ngIf="!isLoading && cards.length === 0" class="proximas-vazia">
+      <i class="pi pi-calendar proximas-vazia__icon"></i>
+      <p class="proximas-vazia__texto">Nenhuma missa encontrada para este filtro.</p>
+      <a routerLink="/missa-agora" class="proximas-vazia__link">Ver todas as missas de hoje →</a>
+    </div>
+
+    <div class="missas-grid" *ngIf="!isLoading && cards.length > 0">
+      <app-mass-time-card
+        *ngFor="let card of cards"
+        [data]="card"
+        [urgency]="getUrgency(card)"
+        [isFavorite]="ehFavorita(card.churchId)"
+        (cardClick)="cardClick.emit($event)"
+        (navigateClick)="navigateClick.emit($event)"
+        (favoriteClick)="favoriteClick.emit($event)"
+      />
+    </div>
+  </div>
+
+  <aside class="missas-mapa__col-mapa" *ngIf="temMapaComCoords">
+    <div class="mapa-card">
+      <div class="mapa-card__header">
+        <span class="mapa-card__titulo"><i class="pi pi-map-marker"></i> Veja no mapa</span>
+      </div>
+      <app-city-map
+        [igrejas]="mapChurches"
+        [cidadeNome]="cidadeNome"
+        [uf]="cidadeUf"
+      />
+      <a routerLink="/missa-agora" class="mapa-card__full">
+        Abrir mapa completo <i class="pi pi-external-link"></i>
+      </a>
+    </div>
+  </aside>
+</section>

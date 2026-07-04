@@ -9,17 +9,7 @@ import { getCountdownLabel } from '../../../shared/utils/mass-time.utils';
 import { getMissaAgoraUrgency } from '../../../shared/utils/mass-time.utils';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
-
-interface IgrejaFavorita {
-  id: number;
-  nome: string;
-  uf: string;
-  cidadeSlug: string;
-  slug: string;
-  diaSemana?: number;
-  horario?: string;
-  proximaMissaLabel?: string;
-}
+import { FavoritesService, IgrejaFavorita } from '../../../core/services/favorites.service';
 
 @Component({
   selector: 'app-minhas-igrejas',
@@ -34,6 +24,7 @@ export class MinhasIgrejasComponent implements OnInit, OnDestroy {
   private _router = inject(Router);
   private _toast = inject(MessageService);
   private _clarity = inject(ClarityService);
+  private _favorites = inject(FavoritesService);
 
   igrejas: IgrejaFavorita[] = [];
   private _navSub: Subscription | null = null;
@@ -57,24 +48,12 @@ export class MinhasIgrejasComponent implements OnInit, OnDestroy {
   }
 
   private _carregarIgrejas(): void {
-    const raw = localStorage.getItem('buscamissa_favoritas');
-    if (!raw) {
-      this.igrejas = [];
-      return;
-    }
-    try {
-      const saved = JSON.parse(raw);
-      if (Array.isArray(saved)) {
-        this.igrejas = saved.map((f: any) => ({
-          ...f,
-          proximaMissaLabel: f.diaSemana != null && f.horario
-            ? getCountdownLabel(f.diaSemana, f.horario)
-            : undefined,
-        }));
-      }
-    } catch {
-      this.igrejas = [];
-    }
+    this.igrejas = this._favorites.listar().map((f) => ({
+      ...f,
+      proximaMissaLabel: f.diaSemana != null && f.horario
+        ? getCountdownLabel(f.diaSemana, f.horario)
+        : undefined,
+    }));
   }
 
   getUrgency(igreja: IgrejaFavorita) {
@@ -86,9 +65,7 @@ export class MinhasIgrejasComponent implements OnInit, OnDestroy {
     event.preventDefault();
     event.stopPropagation();
 
-    const igrejas = JSON.parse(localStorage.getItem('buscamissa_favoritas') || '[]');
-    const filtradas = igrejas.filter((i: any) => i.id !== id);
-    localStorage.setItem('buscamissa_favoritas', JSON.stringify(filtradas));
+    this._favorites.remover(id);
 
     this._clarity.track('favorito_removido', { igrejaId: String(id) });
     this._carregarIgrejas();
@@ -101,6 +78,6 @@ export class MinhasIgrejasComponent implements OnInit, OnDestroy {
 
   irParaIgreja(igreja: IgrejaFavorita): void {
     this._clarity.track('favorito_clicado', { igrejaId: String(igreja.id) });
-    this._router.navigate(['/paroquia', igreja.uf.toLowerCase(), igreja.cidadeSlug, igreja.slug]);
+    this._router.navigate(['/paroquia', (igreja.uf ?? '').toLowerCase(), igreja.cidadeSlug, igreja.slug]);
   }
 }

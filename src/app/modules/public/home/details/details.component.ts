@@ -1,4 +1,5 @@
-import { Component, inject, OnInit } from "@angular/core";
+import { Component, DestroyRef, inject, OnInit } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { finalize } from "rxjs/operators";
 import { FormsModule } from "@angular/forms";
 import { ChurchesService } from "../../../../core/services/churches.service";
@@ -19,6 +20,7 @@ import { AnalyticsService } from "../../../../core/services/analytics.service";
 import { ClarityService } from "../../../../core/services/clarity.service";
 import { RedesSociaisService, TipoRedeSocial } from "../../../../core/services/redes-sociais.service";
 import { MetricasService } from "../../../../core/services/metricas.service";
+import { FavoritesService } from "../../../../core/services/favorites.service";
 import { getSocialIconFromTipos } from "../../../../shared/utils/social-icon.utils";
 import { NavigationHistoryService } from "../../../../core/services/navigation-history.service";
 
@@ -69,10 +71,12 @@ export class DetailsComponent implements OnInit {
   _church = inject(ChurchesService);
   _seo = inject(SeoService);
   _route = inject(ActivatedRoute);
+  private _destroyRef = inject(DestroyRef);
   _router = inject(Router);
   _sanitizer = inject(DomSanitizer);
   _navHistory = inject(NavigationHistoryService);
   private _analytics = inject(AnalyticsService);
+  private _favorites = inject(FavoritesService);
   private _clarity = inject(ClarityService);
   private _redesSociais = inject(RedesSociaisService);
   private _metricas = inject(MetricasService);
@@ -104,7 +108,7 @@ export class DetailsComponent implements OnInit {
   ngOnInit(): void {
     this._redesSociais.obterTipos().subscribe((tipos) => (this.tiposRedeSocial = tipos));
 
-    this._route.params.subscribe((params) => {
+    this._route.params.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((params) => {
       const uf = params["uf"];
       const cidade = params["cidade"];
       const slug = params["slug"];
@@ -325,45 +329,33 @@ export class DetailsComponent implements OnInit {
   // ── Favorito ───────────────────────────────────────────────────────────────
 
   private _loadFavoritaState(): void {
-    try {
-      const arr = JSON.parse(localStorage.getItem('buscamissa_favoritas') || '[]');
-      this.isFavorita = Array.isArray(arr) && arr.some((f: any) => f.id === this.churchInfo?.id);
-    } catch {
-      this.isFavorita = false;
-    }
+    this.isFavorita = this.churchInfo?.id != null && this._favorites.isFavorita(this.churchInfo.id);
   }
 
   toggleFavorita(): void {
     if (!this.churchInfo?.id) return;
 
-    let favoritas: any[] = [];
-    try { favoritas = JSON.parse(localStorage.getItem('buscamissa_favoritas') || '[]'); } catch { }
-    if (!Array.isArray(favoritas)) favoritas = [];
-
     const id = this.churchInfo.id;
+    const pm = this.proximaMissa;
+    const end = this.churchInfo.endereco ?? {};
+    this.isFavorita = this._favorites.alternar({
+      id,
+      nome: this.churchInfo.nome,
+      uf: (end.uf ?? '').toLowerCase(),
+      cidadeSlug: end.cidadeSlug,
+      slug: this.churchInfo.slug,
+      diaSemana: pm?.diaSemana,
+      horario: pm?.horario,
+    });
+
     if (this.isFavorita) {
-      favoritas = favoritas.filter((f) => f.id !== id);
-      this.isFavorita = false;
-      this._toast.add({ severity: 'info', summary: 'Removida dos favoritos', detail: this.churchInfo.nome });
-    } else {
-      const pm = this.proximaMissa;
-      const end = this.churchInfo.endereco ?? {};
-      favoritas.push({
-        id,
-        nome: this.churchInfo.nome,
-        uf: (end.uf ?? '').toLowerCase(),
-        cidadeSlug: end.cidadeSlug,
-        slug: this.churchInfo.slug,
-        diaSemana: pm?.diaSemana,
-        horario: pm?.horario,
-      });
-      this.isFavorita = true;
       this._analytics.favoriteParishSaved(this.churchInfo.nome);
       this.trackObjetivoAlcancado('favoritar');
       this._metricas.registrarFavorito(id);
       this._toast.add({ severity: 'success', summary: 'Adicionada aos favoritos!', detail: this.churchInfo.nome });
+    } else {
+      this._toast.add({ severity: 'info', summary: 'Removida dos favoritos', detail: this.churchInfo.nome });
     }
-    localStorage.setItem('buscamissa_favoritas', JSON.stringify(favoritas));
   }
 
   // ── Prova social + mapa ────────────────────────────────────────────────────
