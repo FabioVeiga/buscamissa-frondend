@@ -25,6 +25,7 @@ import { PrimeNgModule } from "../../../../../shared/primeng.module";
 import { ChurchFormData, Mass } from "../../models/church.model";
 import { MessageService } from "primeng/api";
 import { RedesSociaisService, TipoRedeSocial } from "../../../../../core/services/redes-sociais.service";
+import { LoggerService } from "../../../../../core/services/logger.service";
 
 interface TypeChurchOption {
   name: string;
@@ -42,6 +43,7 @@ interface TypeChurchOption {
 export class ChurchFormComponent implements OnInit, OnChanges {
   private messageService = inject(MessageService);
   private redesSociaisService = inject(RedesSociaisService);
+  private logger = inject(LoggerService);
 
   tiposRedeSocial: TipoRedeSocial[] = [];
   @Input() initialData: ChurchFormData | null = null;
@@ -146,20 +148,20 @@ export class ChurchFormComponent implements OnInit, OnChanges {
     this.form = this.fb.group({
       id: [null], // Necessário para saber qual registro atualizar
       typeChurchValue: [null, this.isEditMode ? "" : Validators.required], // Campo separado para o tipo
-      nomeIgreja: ["", Validators.required], // Apenas o nome
-      nomeParoco: [""],
-      cep: ["", Validators.required], // CEP é sempre obrigatório inicialmente
+      nomeIgreja: ["", [Validators.required, Validators.minLength(3), Validators.maxLength(150)]], // Apenas o nome
+      nomeParoco: ["", Validators.maxLength(150)],
+      cep: ["", [Validators.required, Validators.pattern(/^\d{5}-?\d{3}$/)]], // CEP é sempre obrigatório inicialmente
       endereco: [{ value: "", disabled: true }], // Habilitado por padrão
-      numero: ["", Validators.required],
-      complemento: [""],
+      numero: ["", [Validators.required, Validators.maxLength(20)]],
+      complemento: ["", Validators.maxLength(100)],
       bairro: [{ value: "", disabled: true }],
       cidade: [{ value: "", disabled: true }],
       estado: [{ value: "", disabled: true }],
       uf: [{ value: "", disabled: true }], // Manter UF se a API precisar
       regiao: [{ value: "", disabled: true }], // Manter Região se a API precisar
-      telefone: [""],
-      whatsapp: [""],
-      emailContato: ["", Validators.email],
+      telefone: ["", Validators.pattern(/^[\d\s()+-]{8,20}$/)],
+      whatsapp: ["", Validators.pattern(/^[\d\s()+-]{8,20}$/)],
+      emailContato: ["", [Validators.email, Validators.maxLength(120)]],
       missas: this.fb.array([], Validators.required), // Pelo menos uma missa?
       imagem: [""], // Armazena base64
     });
@@ -205,7 +207,7 @@ export class ChurchFormComponent implements OnInit, OnChanges {
           missa?.horario ? this.stringParaDate(missa.horario as string) : null,
           [Validators.required, this.minutosValidos()],
         ],
-        observacao: [missa?.observacao ?? ""],
+        observacao: [missa?.observacao ?? "", Validators.maxLength(200)],
       })
     );
   }
@@ -262,7 +264,7 @@ export class ChurchFormComponent implements OnInit, OnChanges {
       date.setHours(hours, minutes, seconds ?? 0, 0);
       return date;
     } catch (e) {
-      console.error("Erro ao converter string para Date:", timeString, e);
+      this.logger.logError(e, `church-form:stringParaDate(${timeString})`);
       return null;
     }
   }
@@ -286,8 +288,6 @@ export class ChurchFormComponent implements OnInit, OnChanges {
 
         // Força a detecção de mudanças para atualizar o estado do formulário
         this.cd.markForCheck();
-
-        console.log(this.form.get("imagem")?.value); // Verifica o valor atual da imagem
       };
 
       reader.onerror = () => {

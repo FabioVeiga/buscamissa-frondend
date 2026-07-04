@@ -1,0 +1,49 @@
+@use '../shared' as *;
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+  background: #fff;
+  border: 1px solid $borda;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  margin-bottom: 2rem;
+
+  // Prova social discreta acima dos números
+  &__caption {
+    grid-column: 1 / -1;
+    text-align: center;
+    font-size: 0.8rem;
+    color: $texto-2;
+    margin: 0 0 0.25rem;
+    .pi { color: $laranja; font-size: 0.75rem; margin-right: 0.25rem; }
+  }
+
+  &__item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.35rem;
+    text-align: center;
+  }
+
+  &__icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    border-radius: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    &--orange { background: #fff4ed; color: $laranja; }
+    &--green  { background: #ecfdf3; color: #16a34a; }
+    &--blue   { background: #eff6ff; color: #2563eb; }
+    &--purple { background: #f5f3ff; color: #7c3aed; }
+  }
+
+  &__num { font-size: 1.6rem; font-weight: 800; color: $texto; line-height: 1; }
+  &__label { font-size: 0.78rem; color: $texto-2; font-weight: 500; }
+
+  @media (max-width: 600px) { grid-template-columns: repeat(2, 1fr); gap: 1.25rem; }
+}

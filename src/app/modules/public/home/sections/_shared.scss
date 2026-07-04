@@ -1,0 +1,61 @@
+// Tokens e blocos compartilhados pelas seções extraídas da home (2.1).
+// Mantidos também em home.component.scss para as seções que permaneceram lá.
+
+$laranja: #bc5d10;
+$laranja-hover: #a34f0c;
+$borda: #e5e7eb;
+$texto: #111827;
+$texto-2: #6b7280;
+
+// ── Cabeçalho de seção ──
+.sec-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+
+  &__titulo {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: $texto;
+    margin: 0;
+  }
+
+  &__link {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: $laranja;
+    text-decoration: none;
+    white-space: nowrap;
+    &:hover { text-decoration: underline; }
+  }
+}
+
+// ── Botões reutilizáveis ──
+.btn-primary,
+.btn-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.15s;
+  border: none;
+  white-space: nowrap;
+}
+.btn-primary {
+  background: $laranja;
+  color: #fff;
+  &:hover { background: $laranja-hover; transform: translateY(-1px); box-shadow: 0 2px 8px rgba(188,93,16,.2); }
+}
+.btn-secondary {
+  background: #fff;
+  color: $laranja;
+  border: 1.5px solid #f3b989;
+  &:hover { background: #fff4ed; }
+}

@@ -1,0 +1,46 @@
+<section class="favoritos-section">
+  <div class="sec-header">
+    <div class="flex items-center gap-2">
+      <i class="pi pi-heart-fill" style="color: #bc5d10;"></i>
+      <h2 class="sec-header__titulo">Seus favoritos</h2>
+    </div>
+    <a routerLink="/minhas-igrejas" *ngIf="favoritas.length > 0" class="sec-header__link">Ver todos</a>
+  </div>
+
+  <div class="minhas-paroquias__grid" *ngIf="favoritas.length > 0">
+    <a *ngFor="let fav of favoritas"
+       [routerLink]="['/paroquia', (fav.uf ?? '').toLowerCase(), fav.cidadeSlug, fav.slug]"
+       class="minhas-paroquias__card"
+       [class.minhas-paroquias__card--hot]="getUrgencia(fav) === 'hot'"
+       [class.minhas-paroquias__card--soon]="getUrgencia(fav) === 'soon'">
+      <div class="minhas-paroquias__topo">
+        <span class="minhas-paroquias__nome">{{ fav.nome }}</span>
+        <button class="minhas-paroquias__remover" (click)="onRemover(fav.id, $event)" aria-label="Remover favorita">
+          <i class="pi pi-times"></i>
+        </button>
+      </div>
+      <div class="minhas-paroquias__info">
+        <div class="minhas-paroquias__missa" *ngIf="getProximaLabel(fav)">
+          <span class="minhas-paroquias__missa-icone">
+            <ng-container *ngIf="getUrgencia(fav) === 'hot'">🔥</ng-container>
+            <ng-container *ngIf="getUrgencia(fav) === 'soon'">🟢</ng-container>
+            <ng-container *ngIf="!getUrgencia(fav)">⏰</ng-container>
+          </span>
+          <span class="minhas-paroquias__missa-label">{{ getProximaLabel(fav) }}</span>
+        </div>
+      </div>
+      <span class="minhas-paroquias__cta">Ver horários →</span>
+    </a>
+  </div>
+
+  <div class="favoritos-vazio" *ngIf="favoritas.length === 0">
+    <i class="pi pi-heart favoritos-vazio__icon"></i>
+    <p class="favoritos-vazio__titulo">Salve suas igrejas favoritas</p>
+    <p class="favoritos-vazio__sub">
+      Acompanhe horários das suas igrejas rapidamente, sem precisar buscar novamente.
+    </p>
+    <a routerLink="/missa-agora" class="btn-secondary">
+      <i class="pi pi-search"></i> Explorar igrejas
+    </a>
+  </div>
+</section>

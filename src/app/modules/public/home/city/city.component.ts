@@ -1,10 +1,13 @@
-import { Component, inject, OnDestroy, OnInit } from "@angular/core";
+import { Component, DestroyRef, inject, OnDestroy, OnInit } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { CommonModule } from "@angular/common";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { finalize } from "rxjs/operators";
 import { SkeletonModule } from "primeng/skeleton";
 import { PrimeNgModule } from "../../../../shared/primeng.module";
 import { ChurchesService } from "../../../../core/services/churches.service";
+import { distanciaMetrosAte } from "../../../../shared/utils/distance.utils";
+import { CIDADES_POPULARES } from "../../../../core/constants/cidades-populares";
 import { SeoService } from "../../../../core/services/seo.service";
 import { ConfidenceBadgeComponent } from "../../../../shared/components/confidence-badge/confidence-badge.component";
 import { CountdownChipComponent } from "../../../../shared/components/countdown-chip/countdown-chip.component";
@@ -12,6 +15,7 @@ import { DistanceChipComponent } from "../../../../shared/components/distance-ch
 import { ChurchPlaceholderComponent } from "../../../../shared/components/church-placeholder/church-placeholder.component";
 import { getNextOccurrenceMinutes, formatMassTime, getCountdownLabel } from "../../../../shared/utils/mass-time.utils";
 import { AnalyticsService } from "../../../../core/services/analytics.service";
+import { FavoritesService } from "../../../../core/services/favorites.service";
 import { ClarityService } from "../../../../core/services/clarity.service";
 import { CityMapComponent, MapChurch } from "../../../../shared/components/city-map/city-map.component";
 import { RedesSociaisService, TipoRedeSocial } from "../../../../core/services/redes-sociais.service";
@@ -24,17 +28,6 @@ const PERIODOS: Record<string, { de: number; ate: number; label: string }> = {
 };
 
 // Cidades populares para internal linking (SEO) no rodapé da página de cidade
-const CIDADES_POPULARES: { nome: string; uf: string; slug: string }[] = [
-  { nome: 'São Paulo',           uf: 'SP', slug: 'sao-paulo' },
-  { nome: 'Campinas',            uf: 'SP', slug: 'campinas' },
-  { nome: 'São José dos Campos', uf: 'SP', slug: 'sao-jose-dos-campos' },
-  { nome: 'Ribeirão Preto',      uf: 'SP', slug: 'ribeirao-preto' },
-  { nome: 'Santos',              uf: 'SP', slug: 'santos' },
-  { nome: 'Sorocaba',            uf: 'SP', slug: 'sorocaba' },
-  { nome: 'Curitiba',            uf: 'PR', slug: 'curitiba' },
-  { nome: 'Brasília',            uf: 'DF', slug: 'brasilia' },
-  { nome: 'Belo Horizonte',      uf: 'MG', slug: 'belo-horizonte' },
-];
 
 const DIAS: { label: string; slug: string; idx: number }[] = [
   { label: "Dom", slug: "domingo", idx: 0 },
@@ -63,10 +56,12 @@ const DIAS: { label: string; slug: string; idx: number }[] = [
 })
 export class CityComponent implements OnInit, OnDestroy {
   private _route = inject(ActivatedRoute);
+  private _destroyRef = inject(DestroyRef);
   private _router = inject(Router);
   private _church = inject(ChurchesService);
   private _seo = inject(SeoService);
   private _analytics = inject(AnalyticsService);
+  private _favorites = inject(FavoritesService);
   private _clarity = inject(ClarityService);
   private _redesSociais = inject(RedesSociaisService);
   tiposRedeSocial: TipoRedeSocial[] = [];
@@ -125,7 +120,7 @@ export class CityComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this._redesSociais.obterTipos().subscribe((tipos) => (this.tiposRedeSocial = tipos));
 
-    this._route.params.subscribe((params) => {
+    this._route.params.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((params) => {
       this.uf = params["uf"];
       this.cidade = params["cidade"];
       this.cidadeNome = this.cidade
@@ -133,7 +128,7 @@ export class CityComponent implements OnInit, OnDestroy {
         .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
         .join(' ');
 
-      this._route.queryParams.subscribe((qp) => {
+      this._route.queryParams.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((qp) => {
         this.diaAtivo = this.parseDiaSlug(qp["dia"]);
         this.periodoAtivo = qp["periodo"] ?? null;
         this.carregar();
@@ -383,22 +378,12 @@ export class CityComponent implements OnInit, OnDestroy {
   // ── Distância ─────────────────────────────────────────────────────────────
 
   distanciaMetros(igreja: any): number | null {
-    if (this.userLat === null || this.userLng === null) return null;
-    const lat2 = igreja.endereco?.latitude;
-    const lng2 = igreja.endereco?.longitude;
-    if (!lat2 || !lng2) return null;
-    return this.haversine(this.userLat, this.userLng, lat2, lng2);
-  }
-
-  private haversine(lat1: number, lng1: number, lat2: number, lng2: number): number {
-    const R = 6371000;
-    const toRad = (d: number) => (d * Math.PI) / 180;
-    const dLat = toRad(lat2 - lat1);
-    const dLng = toRad(lng2 - lng1);
-    const a =
-      Math.sin(dLat / 2) ** 2 +
-      Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return distanciaMetrosAte(
+      this.userLat,
+      this.userLng,
+      igreja.endereco?.latitude,
+      igreja.endereco?.longitude
+    );
   }
 
   private pedirGeolocalizacao(): void {
@@ -441,11 +426,7 @@ export class CityComponent implements OnInit, OnDestroy {
   // ── Favoritar ─────────────────────────────────────────────────────────────
 
   private _loadFavorita(): void {
-    try {
-      const raw = localStorage.getItem('buscamissa_favoritas');
-      const arr = raw ? JSON.parse(raw) : [];
-      this.favoritasIds = Array.isArray(arr) ? arr.map((f: any) => f.id) : [];
-    } catch { this.favoritasIds = []; }
+    this.favoritasIds = this._favorites.listar().map((f) => f.id);
   }
 
   ehFavorita(ig: any): boolean {
@@ -456,28 +437,23 @@ export class CityComponent implements OnInit, OnDestroy {
     event.preventDefault();
     event.stopPropagation();
 
-    let favoritas: any[] = [];
-    try { favoritas = JSON.parse(localStorage.getItem('buscamissa_favoritas') || '[]'); } catch { }
-    if (!Array.isArray(favoritas)) favoritas = [];
+    const pm = ig.proximaMissa ?? (ig.missas && ig.missas[0]) ?? null;
+    const agoraFavorita = this._favorites.alternar({
+      id: ig.id,
+      nome: ig.nome,
+      uf: this.uf?.toLowerCase(),
+      cidadeSlug: this.cidade,
+      slug: ig.slug,
+      diaSemana: pm?.diaSemana,
+      horario: pm?.horario,
+    });
 
-    if (this.ehFavorita(ig)) {
-      favoritas = favoritas.filter((f) => f.id !== ig.id);
-      this.favoritasIds = this.favoritasIds.filter((id) => id !== ig.id);
-    } else {
-      const pm = ig.proximaMissa ?? (ig.missas && ig.missas[0]) ?? null;
-      favoritas.push({
-        id: ig.id,
-        nome: ig.nome,
-        uf: this.uf?.toLowerCase(),
-        cidadeSlug: this.cidade,
-        slug: ig.slug,
-        diaSemana: pm?.diaSemana,
-        horario: pm?.horario,
-      });
+    if (agoraFavorita) {
       this.favoritasIds = [...this.favoritasIds, ig.id];
       this._analytics.favoriteParishSaved(ig.nome);
+    } else {
+      this.favoritasIds = this.favoritasIds.filter((id) => id !== ig.id);
     }
-    localStorage.setItem('buscamissa_favoritas', JSON.stringify(favoritas));
   }
 
   // ── Compartilhar ──────────────────────────────────────────────────────────

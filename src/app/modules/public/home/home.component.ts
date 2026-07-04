@@ -1,7 +1,7 @@
-import { Component, inject } from "@angular/core";
+import { Component, DestroyRef, inject } from "@angular/core";
+import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { CommonModule, DatePipe } from "@angular/common";
 import {
-  FormControl,
   FormGroup,
   Validators,
   ReactiveFormsModule,
@@ -18,16 +18,22 @@ import {
 } from "../../../core/interfaces/church.interface";
 import { HttpErrorResponse } from "@angular/common/http";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
-import { ShareButtons } from "ngx-sharebuttons/buttons";
 import { STATES } from "../../../core/constants/states";
-import { MassTimeCardComponent } from "../../../shared/components/mass-time-card/mass-time-card.component";
 import { ChurchResultCardComponent } from "../../../shared/components/church-result-card/church-result-card.component";
-import { CityMapComponent } from "../../../shared/components/city-map/city-map.component";
 import { MassCardData } from "../../../shared/models/mass-card.model";
 import { getMissaAgoraUrgency, getCountdownLabel, getNextOccurrenceMinutes, formatMassTime } from "../../../shared/utils/mass-time.utils";
 import { AnalyticsService } from "../../../core/services/analytics.service";
+import { FavoritesService, IgrejaFavorita } from "../../../core/services/favorites.service";
 import { RedesSociaisService, TipoRedeSocial } from "../../../core/services/redes-sociais.service";
 import { getSocialIconFromTipos } from "../../../shared/utils/social-icon.utils";
+import { distanciaMetrosAte } from "../../../shared/utils/distance.utils";
+import { CIDADES_POPULARES } from "../../../core/constants/cidades-populares";
+import { GeolocationService } from "../../../core/services/geolocation.service";
+import { HomeStatsComponent } from "./sections/home-stats/home-stats.component";
+import { HomeComoFuncionaComponent } from "./sections/home-como-funciona/home-como-funciona.component";
+import { HomeFavoritosComponent } from "./sections/home-favoritos/home-favoritos.component";
+import { HomeCidadesComponent } from "./sections/home-cidades/home-cidades.component";
+import { HomeMissasMapaComponent } from "./sections/home-missas-mapa/home-missas-mapa.component";
 
 interface AddressData {
   [uf: string]: {
@@ -43,10 +49,12 @@ interface AddressData {
     ReactiveFormsModule,
     PrimeNgModule,
     RouterModule,
-    ShareButtons,
-    MassTimeCardComponent,
     ChurchResultCardComponent,
-    CityMapComponent,
+    HomeStatsComponent,
+    HomeComoFuncionaComponent,
+    HomeFavoritosComponent,
+    HomeCidadesComponent,
+    HomeMissasMapaComponent,
   ],
   providers: [MessageService, DatePipe],
   templateUrl: "./home.component.html",
@@ -59,8 +67,11 @@ export class HomeComponent {
   private _fb = inject(FormBuilder);
   public _router = inject(Router);
   private _route = inject(ActivatedRoute);
+  private _destroyRef = inject(DestroyRef);
   private _analytics = inject(AnalyticsService);
+  private _favorites = inject(FavoritesService);
   private _redesSociais = inject(RedesSociaisService);
+  private _geo = inject(GeolocationService);
   tiposRedeSocial: TipoRedeSocial[] = [];
 
   /** Status da geolocalização */
@@ -73,17 +84,7 @@ export class HomeComponent {
   cidadesGrid: { nome: string; uf: string; slug: string }[] = [];
 
   /** Cidades populares — exibidas quando sem geoloc */
-  readonly cidadesFallback = [
-    { nome: 'São Paulo',           uf: 'SP', slug: 'sao-paulo' },
-    { nome: 'Campinas',            uf: 'SP', slug: 'campinas' },
-    { nome: 'São José dos Campos', uf: 'SP', slug: 'sao-jose-dos-campos' },
-    { nome: 'Ribeirão Preto',      uf: 'SP', slug: 'ribeirao-preto' },
-    { nome: 'Santos',              uf: 'SP', slug: 'santos' },
-    { nome: 'Sorocaba',            uf: 'SP', slug: 'sorocaba' },
-    { nome: 'Curitiba',            uf: 'PR', slug: 'curitiba' },
-    { nome: 'Brasília',            uf: 'DF', slug: 'brasilia' },
-    { nome: 'Belo Horizonte',      uf: 'MG', slug: 'belo-horizonte' },
-  ];
+  readonly cidadesFallback = CIDADES_POPULARES;
 
   get cidadesExibidas() {
     return this.geoStatus === 'found' && this.cidadesGrid.length
@@ -217,18 +218,9 @@ export class HomeComponent {
     return this.quickFilter ? this.churchInfoFiltrado.length : this.totalRecords;
   }
 
-  /** Igrejas para o mapa lateral (a partir das próximas missas) */
-  get mapChurches(): { id: number; nome: string; lat: number | null; lng: number | null }[] {
-    return this.proximasMissasCards.map(c => ({
-      id: c.churchId,
-      nome: c.churchName,
-      lat: c.latitude ?? null,
-      lng: c.longitude ?? null,
-    }));
-  }
-
-  get temMapaComCoords(): boolean {
-    return this.mapChurches.some(m => m.lat != null && m.lng != null);
+  /** Ids das favoritas (para o coração dos cards da seção de missas) */
+  get favoritasIds(): number[] {
+    return this.paroquiasFavoritas.map(f => f.id);
   }
 
   /** Cards de próximas missas */
@@ -237,10 +229,7 @@ export class HomeComponent {
   tituloProximasMissas = 'Missas acontecendo hoje';
 
   // Sprint 3B — Minhas Paróquias (múltiplas)
-  paroquiasFavoritas: Array<{
-    id: number; nome: string; uf: string; cidadeSlug: string; slug: string;
-    proximaMissaLabel?: string; diaSemana?: number; horario?: string;
-  }> = [];
+  paroquiasFavoritas: IgrejaFavorita[] = [];
 
   /** Flag loading do CTA */
   isLoadingGeoNav = false;
@@ -300,11 +289,6 @@ export class HomeComponent {
     this._router.navigate([], { queryParams: {}, replaceUrl: true });
     this.churchInfo = [];
     this.showNoChurchCard = false;
-  }
-
-  /** Formata número com separador de milhar pt-BR (ex.: 2000 → "2.000") */
-  fmt(n: number): string {
-    return (n ?? 0).toLocaleString('pt-BR');
   }
 
   toggleMaisFiltros(): void {
@@ -419,7 +403,7 @@ export class HomeComponent {
     // Limpa resultados quando o usuário navega para home sem filtros (ex: clique no logo).
     // Usa a key 'uf' (minúscula) — a mesma gravada por searchFilter — senão o form
     // seria resetado a cada busca/paginação, deixando-o inválido e travando a paginação.
-    this._route.queryParams.subscribe(params => {
+    this._route.queryParams.pipe(takeUntilDestroyed(this._destroyRef)).subscribe(params => {
       if (!params['uf']) {
         this.churchInfo = [];
         this.showNoChurchCard = false;
@@ -500,6 +484,7 @@ export class HomeComponent {
   }
 
   private _loadProximasMissas(lat?: number | null, lng?: number | null, raioKm = 10): void {
+    this.isLoadingProximas = true;
     this._churchService.proximasMissas(lat, lng, raioKm).subscribe({
       next: (res: any) => {
         const items: any[] = res?.data ?? res ?? [];
@@ -526,14 +511,10 @@ export class HomeComponent {
           latitude: item.latitude,
           longitude: item.longitude,
         }));
+        this.isLoadingProximas = false;
       },
-      error: () => { /* silencioso — seção simplesmente não aparece */ },
+      error: () => { this.isLoadingProximas = false; /* silencioso — seção simplesmente não aparece */ },
     });
-  }
-
-  getUrgency(card: MassCardData) {
-    if (card.mass.diaSemana == null) return null;
-    return getMissaAgoraUrgency(card.mass.diaSemana, card.mass.horario);
   }
 
   /** CTA "Encontrar missas perto de mim" */
@@ -568,21 +549,6 @@ export class HomeComponent {
   /** Verifica se uma igreja é favorita */
   ehFavorita(churchId: number): boolean {
     return this.paroquiasFavoritas.some(f => f.id === churchId);
-  }
-
-  /** Retorna urgência de um favorito específico */
-  getUrgenciaFavorita(fav: any): 'hot' | 'soon' | null {
-    if (!fav || fav.diaSemana == null || !fav.horario) return null;
-    const mins = getNextOccurrenceMinutes(fav.diaSemana, fav.horario);
-    if (mins <= 180) return 'hot';
-    if (new Date().getDay() === fav.diaSemana) return 'soon';
-    return null;
-  }
-
-  /** Label da próxima missa para um favorito */
-  getProximaLabelFavorita(fav: any): string {
-    if (!fav || fav.diaSemana == null || !fav.horario) return '';
-    return getCountdownLabel(fav.diaSemana, fav.horario);
   }
 
   onCtaClick(): void {
@@ -629,8 +595,8 @@ export class HomeComponent {
       diaSemana: card.mass.diaSemana,
       horario: card.mass.horario,
     };
+    this._favorites.adicionar(novaFavorita);
     this.paroquiasFavoritas = [...this.paroquiasFavoritas, novaFavorita];
-    this._salvarFavoritas();
     this._analytics.favoriteParishSaved(card.churchName);
   }
 
@@ -639,33 +605,21 @@ export class HomeComponent {
       event.preventDefault();
       event.stopPropagation();
     }
+    this._favorites.remover(churchId);
     this.paroquiasFavoritas = this.paroquiasFavoritas.filter(f => f.id !== churchId);
-    this._salvarFavoritas();
-  }
-
-  private _salvarFavoritas(): void {
-    localStorage.setItem('buscamissa_favoritas', JSON.stringify(this.paroquiasFavoritas));
   }
 
   private _loadFavorita(): void {
-    const raw = localStorage.getItem('buscamissa_favoritas');
-    if (!raw) return;
-    try {
-      const saved = JSON.parse(raw);
-      if (Array.isArray(saved)) {
-        this.paroquiasFavoritas = saved.map((f: any) => ({
-          ...f,
-          proximaMissaLabel: f.diaSemana != null && f.horario ? getCountdownLabel(f.diaSemana, f.horario) : undefined,
-        }));
-      }
-    } catch { /* ignora JSON inválido */ }
+    this.paroquiasFavoritas = this._favorites.listar().map((f) => ({
+      ...f,
+      proximaMissaLabel: f.diaSemana != null && f.horario ? getCountdownLabel(f.diaSemana, f.horario) : undefined,
+    }));
   }
 
   private _reverseGeocode(lat: number, lng: number): void {
-    fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=pt-BR`)
-      .then(r => r.json())
-      .then((data: any) => {
-        const addr = data.address ?? {};
+    this._geo.reverseGeocode(lat, lng)
+      .then((addr) => {
+        if (!addr) { this.geoStatus = 'error'; return; }
         const nomeCidade = addr.city || addr.town || addr.village || addr.municipality || '';
         const nomeEstado = addr.state || '';
         const estado = STATES.find(s =>
@@ -959,17 +913,12 @@ export class HomeComponent {
   }
 
   private _distHome(church: any): number | null {
-    if (this._userLat === null || this._userLng === null) return null;
-    const lat2 = church.endereco?.latitude;
-    const lng2 = church.endereco?.longitude;
-    if (!lat2 || !lng2) return null;
-    const R = 6371000;
-    const toRad = (d: number) => (d * Math.PI) / 180;
-    const dLat = toRad(lat2 - this._userLat!);
-    const dLng = toRad(lng2 - this._userLng!);
-    const a = Math.sin(dLat / 2) ** 2 +
-      Math.cos(toRad(this._userLat!)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
-    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return distanciaMetrosAte(
+      this._userLat,
+      this._userLng,
+      church.endereco?.latitude,
+      church.endereco?.longitude
+    );
   }
 
   get temGeolocalizacao(): boolean {
