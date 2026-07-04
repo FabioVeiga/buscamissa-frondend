@@ -8,9 +8,9 @@
       <a routerLink="/missa-agora" class="sec-header__link">Ver todas</a>
     </div>
 
-    <div *ngIf="isLoading" class="proximas-loading">
-      <i class="pi pi-spin pi-spinner" style="color: #bc5d10; font-size: 1.25rem;"></i>
-      <span class="text-sm text-gray-500 ml-2">Buscando missas…</span>
+    <!-- Skeleton: reserva o espaço final dos cards durante o carregamento (evita CLS) -->
+    <div *ngIf="isLoading" class="missas-grid" aria-hidden="true">
+      <div class="missa-skeleton" *ngFor="let s of skeletons"></div>
     </div>
 
     <div *ngIf="!isLoading && cards.length === 0" class="proximas-vazia">

@@ -34,6 +34,9 @@ export class HomeMissasMapaComponent {
   @Output() navigateClick = new EventEmitter<MassCardData>();
   @Output() favoriteClick = new EventEmitter<MassCardData>();
 
+  /** Placeholders do skeleton (reserva espaço enquanto carrega — evita CLS). */
+  readonly skeletons = [0, 1, 2, 3];
+
   ehFavorita(churchId: number): boolean {
     return this.favoritasIds.includes(churchId);
   }

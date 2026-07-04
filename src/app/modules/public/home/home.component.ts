@@ -484,6 +484,7 @@ export class HomeComponent {
   }
 
   private _loadProximasMissas(lat?: number | null, lng?: number | null, raioKm = 10): void {
+    this.isLoadingProximas = true;
     this._churchService.proximasMissas(lat, lng, raioKm).subscribe({
       next: (res: any) => {
         const items: any[] = res?.data ?? res ?? [];
@@ -510,8 +511,9 @@ export class HomeComponent {
           latitude: item.latitude,
           longitude: item.longitude,
         }));
+        this.isLoadingProximas = false;
       },
-      error: () => { /* silencioso — seção simplesmente não aparece */ },
+      error: () => { this.isLoadingProximas = false; /* silencioso — seção simplesmente não aparece */ },
     });
   }
 
