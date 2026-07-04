@@ -94,11 +94,20 @@
     <!-- Canonical -->
     <link rel="canonical" href="https://buscamissa.com.br/" />
 
-    <!-- Fonte da aplicação: Poppins (apenas os pesos utilizados, sem itálico) -->
+    <!-- Fonte da aplicação: Poppins (pesos utilizados, sem itálico) -->
+    <!-- Carregada fora do caminho crítico de render: preload + troca p/ stylesheet no onload -->
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap"
-      rel="stylesheet"
+      rel="preload"
+      as="style"
+      onload="this.onload=null;this.rel='stylesheet'"
     />
+    <noscript>
+      <link
+        href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap"
+        rel="stylesheet"
+      />
+    </noscript>
 
     <base href="/" />
   </head>
