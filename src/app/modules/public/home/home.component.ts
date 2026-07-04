@@ -155,8 +155,16 @@ export class HomeComponent {
     }
   }
 
+  // Memo: evita realocar o array a cada ciclo de CD (relevante p/ filhos OnPush — 3.L)
+  private _proximasFiltradasCache: MassCardData[] = [];
+  private _proximasFiltradasKey = '';
   get proximasFiltradas(): MassCardData[] {
-    return this._aplicarQuickFilterCards(this.proximasMissasCards);
+    const key = `${this.quickFilter ?? ''}|${this.proximasMissasCards.length}|${this.proximasMissasCards[0]?.churchId ?? ''}`;
+    if (key !== this._proximasFiltradasKey) {
+      this._proximasFiltradasKey = key;
+      this._proximasFiltradasCache = this._aplicarQuickFilterCards(this.proximasMissasCards);
+    }
+    return this._proximasFiltradasCache;
   }
 
   private _aplicarQuickFilterChurches(igrejas: Church[]): Church[] {

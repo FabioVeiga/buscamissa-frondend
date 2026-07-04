@@ -127,7 +127,7 @@
       <!-- Resultados -->
       <ng-container *ngIf="!isLoading">
         <article
-          *ngFor="let igreja of igrejasFiltradas; let i = index"
+          *ngFor="let igreja of igrejasFiltradas; let i = index; trackBy: trackByIgrejaId"
           class="city-card"
           [class.city-card--destaque]="i === 0">
 

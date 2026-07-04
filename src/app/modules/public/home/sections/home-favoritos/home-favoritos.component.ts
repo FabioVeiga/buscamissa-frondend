@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { IgrejaFavorita } from '../../../../../core/services/favorites.service';
@@ -11,6 +11,7 @@ import { getCountdownLabel, getNextOccurrenceMinutes } from '../../../../../shar
   imports: [CommonModule, RouterModule],
   templateUrl: './home-favoritos.component.html',
   styleUrls: ['./home-favoritos.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomeFavoritosComponent {
   @Input({ required: true }) favoritas: IgrejaFavorita[] = [];

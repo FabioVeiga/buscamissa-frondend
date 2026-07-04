@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MassCardData } from '../../../../../shared/models/mass-card.model';
@@ -17,6 +17,7 @@ import { getMissaAgoraUrgency } from '../../../../../shared/utils/mass-time.util
   imports: [CommonModule, RouterModule, MassTimeCardComponent, CityMapComponent],
   templateUrl: './home-missas-mapa.component.html',
   styleUrls: ['./home-missas-mapa.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomeMissasMapaComponent {
   @Input({ required: true }) titulo = '';

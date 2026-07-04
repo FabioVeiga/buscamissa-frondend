@@ -20,15 +20,16 @@
     </div>
 
     <div class="missas-grid" *ngIf="!isLoading && cards.length > 0">
-      <app-mass-time-card
-        *ngFor="let card of cards"
-        [data]="card"
-        [urgency]="getUrgency(card)"
-        [isFavorite]="ehFavorita(card.churchId)"
-        (cardClick)="cardClick.emit($event)"
-        (navigateClick)="navigateClick.emit($event)"
-        (favoriteClick)="favoriteClick.emit($event)"
-      />
+      @for (card of cards; track card.churchId + '-' + card.mass.horario) {
+        <app-mass-time-card
+          [data]="card"
+          [urgency]="getUrgency(card)"
+          [isFavorite]="ehFavorita(card.churchId)"
+          (cardClick)="cardClick.emit($event)"
+          (navigateClick)="navigateClick.emit($event)"
+          (favoriteClick)="favoriteClick.emit($event)"
+        />
+      }
     </div>
   </div>
 

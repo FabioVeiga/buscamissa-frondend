@@ -233,13 +233,14 @@
   </div>
 
   <div *ngIf="churchInfo && churchInfo.length > 0" class="resultados-cards">
-    <app-church-result-card
-      *ngFor="let church of (resultsMode ? churchInfoOrdenaFiltrado : churchInfoOrdenada)"
-      [igreja]="church"
-      [userLat]="geoLat"
-      [userLng]="geoLng"
-      (churchClick)="onResultCardClick($event)"
-    />
+    @for (church of (resultsMode ? churchInfoOrdenaFiltrado : churchInfoOrdenada); track church.id) {
+      <app-church-result-card
+        [igreja]="church"
+        [userLat]="geoLat"
+        [userLng]="geoLng"
+        (churchClick)="onResultCardClick($event)"
+      />
+    }
     <p-paginator [rows]="pageSize" [first]="(pageIndex - 1) * pageSize" [totalRecords]="totalRecordsFiltrado"
       [rowsPerPageOptions]="[5, 10, 20]" (onPageChange)="onPageChange($event)"></p-paginator>
   </div>

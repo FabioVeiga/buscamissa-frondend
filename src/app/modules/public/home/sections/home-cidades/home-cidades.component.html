@@ -23,11 +23,12 @@
   </div>
 
   <div class="cidades-chips__lista">
-    <a *ngFor="let c of cidades; let i = index"
-       [routerLink]="['/missas', c.uf.toLowerCase(), c.slug]"
+    @for (c of cidades; track c.uf + '-' + c.slug; let i = $index) {
+    <a [routerLink]="['/missas', c.uf.toLowerCase(), c.slug]"
        class="cidade-chip"
        [class.cidade-chip--skip]="geoEncontrada && i === 0">
       {{ c.nome }}
     </a>
+    }
   </div>
 </section>
