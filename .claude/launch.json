@@ -14,6 +14,20 @@
       "runtimeArgs": ["ng", "serve", "--configuration=staging", "--no-open", "--port", "4201"],
       "port": 4201,
       "autoPort": true
+    },
+    {
+      "name": "admin-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "../buscamissa-frondend-admin", "run", "dev", "--", "--port", "5173"],
+      "port": 5173,
+      "autoPort": true
+    },
+    {
+      "name": "admin-localdev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "../buscamissa-frondend-admin", "run", "dev:localdev", "--", "--port", "5173"],
+      "port": 5173,
+      "autoPort": false
     }
   ]
 }
