@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { MassCardData, MassUrgency } from '../../models/mass-card.model';
 import { formatMassTime } from '../../utils/mass-time.utils';
+import { linkParoquia } from '../../utils/church-link.utils';
 import { ConfidenceBadgeComponent } from '../confidence-badge/confidence-badge.component';
 import { CountdownChipComponent } from '../countdown-chip/countdown-chip.component';
 import { DistanceChipComponent } from '../distance-chip/distance-chip.component';
@@ -36,12 +37,11 @@ export class MassTimeCardComponent implements OnChanges {
 
   ngOnChanges(): void {
     this.formattedTime = formatMassTime(this.data.mass.horario);
-    this.parishRoute = [
-      '/paroquia',
-      this.data.uf,
-      this.data.cidadeSlug,
-      this.data.slug,
-    ];
+    this.parishRoute = linkParoquia({
+      slug: this.data.slug,
+      nomeUnico: this.data.nomeUnico ?? this.data.slug,
+      endereco: { uf: this.data.uf, cidadeSlug: this.data.cidadeSlug },
+    });
   }
 
   onNavigate(event: Event): void {

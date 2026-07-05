@@ -382,6 +382,7 @@ export class CityComponent implements OnInit, OnDestroy {
       uf: this.uf?.toLowerCase(),
       cidadeSlug: this.cidade,
       slug: ig.slug,
+      nomeUnico: ig.nomeUnico,
       diaSemana: pm?.diaSemana,
       horario: pm?.horario,
     });

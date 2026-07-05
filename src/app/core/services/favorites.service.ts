@@ -11,6 +11,8 @@ export interface IgrejaFavorita {
   uf?: string;
   cidadeSlug?: string;
   slug?: string;
+  /** Fallback para a rota legada /igrejas/:nomeUnico quando `slug` não é confiável. */
+  nomeUnico?: string;
   diaSemana?: number | null;
   horario?: string | null;
   proximaMissaLabel?: string;

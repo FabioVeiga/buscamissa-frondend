@@ -5,6 +5,7 @@ import { ConfidenceBadgeComponent } from '../../../../../../shared/components/co
 import { ChurchPlaceholderComponent } from '../../../../../../shared/components/church-placeholder/church-placeholder.component';
 import { getNextOccurrenceMinutes, formatMassTime, getCountdownLabel } from '../../../../../../shared/utils/mass-time.utils';
 import { distanciaMetrosAte } from '../../../../../../shared/utils/distance.utils';
+import { linkParoquia as buildLinkParoquia } from '../../../../../../shared/utils/church-link.utils';
 
 /** Card de igreja da lista da cidade (extraído do CityComponent — auditoria 2.x). */
 @Component({
@@ -35,7 +36,11 @@ export class CityCardComponent {
   imagemQuebrada = false;
 
   get linkParoquia(): string[] {
-    return ['/paroquia', this.uf, this.cidadeSlug, this.igreja.slug];
+    // Rota canônica com fallback para /igrejas/:nomeUnico quando falta slug (fix da dev, PR #73)
+    return buildLinkParoquia({
+      ...this.igreja,
+      endereco: { ...this.igreja?.endereco, uf: this.uf, cidadeSlug: this.cidadeSlug },
+    });
   }
 
   get distanciaMetros(): number | null {

@@ -10,6 +10,7 @@ import {
   getCountdownLabel,
 } from "../../utils/mass-time.utils";
 import { distanciaMetrosAte } from "../../utils/distance.utils";
+import { linkParoquia } from "../../utils/church-link.utils";
 
 /**
  * Card de igreja reutilizável (resultado de busca / página de cidade).
@@ -73,7 +74,10 @@ export class ChurchResultCardComponent implements OnInit {
   }
 
   linkParoquia(): string[] {
-    return ["/paroquia", this.ufResolved, this.cidadeResolved, this.igreja.slug];
+    return linkParoquia({
+      ...this.igreja,
+      endereco: { ...this.igreja?.endereco, uf: this.ufResolved, cidadeSlug: this.cidadeResolved },
+    });
   }
 
   // ── Próxima missa ───────────────────────────────────────────────────────────
@@ -168,6 +172,7 @@ export class ChurchResultCardComponent implements OnInit {
       uf: this.ufResolved,
       cidadeSlug: this.cidadeResolved,
       slug: this.igreja.slug,
+      nomeUnico: this.igreja.nomeUnico,
       diaSemana: pm?.diaSemana,
       horario: pm?.horario,
     });

@@ -214,6 +214,7 @@ export class DetailsComponent implements OnInit {
       uf: (end.uf ?? '').toLowerCase(),
       cidadeSlug: end.cidadeSlug,
       slug: this.churchInfo.slug,
+      nomeUnico: this.churchInfo.nomeUnico,
       diaSemana: pm?.diaSemana,
       horario: pm?.horario,
     });

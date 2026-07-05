@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { IgrejaFavorita } from '../../../../../core/services/favorites.service';
 import { getCountdownLabel, getNextOccurrenceMinutes } from '../../../../../shared/utils/mass-time.utils';
+import { linkParoquia } from '../../../../../shared/utils/church-link.utils';
 
 /** Seção "Seus favoritos" da home (extraída do HomeComponent — auditoria 2.1). */
 @Component({
@@ -16,6 +17,14 @@ import { getCountdownLabel, getNextOccurrenceMinutes } from '../../../../../shar
 export class HomeFavoritosComponent {
   @Input({ required: true }) favoritas: IgrejaFavorita[] = [];
   @Output() remover = new EventEmitter<number>();
+
+  linkFav(fav: IgrejaFavorita): string[] {
+    return linkParoquia({
+      slug: fav.slug,
+      nomeUnico: fav.nomeUnico,
+      endereco: { uf: (fav.uf ?? '').toLowerCase(), cidadeSlug: fav.cidadeSlug },
+    });
+  }
 
   onRemover(id: number, event: Event): void {
     event.preventDefault();
