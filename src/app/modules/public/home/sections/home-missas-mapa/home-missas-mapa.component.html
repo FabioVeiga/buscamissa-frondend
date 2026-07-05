@@ -20,15 +20,16 @@
     </div>
 
     <div class="missas-grid" *ngIf="!isLoading && cards.length > 0">
-      <app-mass-time-card
-        *ngFor="let card of cards"
-        [data]="card"
-        [urgency]="getUrgency(card)"
-        [isFavorite]="ehFavorita(card.churchId)"
-        (cardClick)="cardClick.emit($event)"
-        (navigateClick)="navigateClick.emit($event)"
-        (favoriteClick)="favoriteClick.emit($event)"
-      />
+      @for (card of cards; track card.churchId + '-' + card.mass.horario) {
+        <app-mass-time-card
+          [data]="card"
+          [urgency]="getUrgency(card)"
+          [isFavorite]="ehFavorita(card.churchId)"
+          (cardClick)="cardClick.emit($event)"
+          (navigateClick)="navigateClick.emit($event)"
+          (favoriteClick)="favoriteClick.emit($event)"
+        />
+      }
     </div>
   </div>
 
@@ -37,11 +38,15 @@
       <div class="mapa-card__header">
         <span class="mapa-card__titulo"><i class="pi pi-map-marker"></i> Veja no mapa</span>
       </div>
-      <app-city-map
-        [igrejas]="mapChurches"
-        [cidadeNome]="cidadeNome"
-        [uf]="cidadeUf"
-      />
+      @defer (on viewport) {
+        <app-city-map
+          [igrejas]="mapChurches"
+          [cidadeNome]="cidadeNome"
+          [uf]="cidadeUf"
+        />
+      } @placeholder {
+        <div class="mapa-card__placeholder" aria-hidden="true"></div>
+      }
       <a routerLink="/missa-agora" class="mapa-card__full">
         Abrir mapa completo <i class="pi pi-external-link"></i>
       </a>

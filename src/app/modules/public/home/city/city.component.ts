@@ -72,6 +72,7 @@ export class CityComponent implements OnInit, OnDestroy {
   cidadeNome = "";
   igrejas: any[] = [];
   igrejasFiltradas: any[] = [];
+  trackByIgrejaId = (_: number, igreja: any): number => igreja.id;
   naoEncontrado = false;
   faqs: { pergunta: string; resposta: string }[] = [];
 

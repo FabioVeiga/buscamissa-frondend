@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { CidadePopular } from '../../../../../core/constants/cidades-populares';
@@ -10,6 +10,7 @@ import { CidadePopular } from '../../../../../core/constants/cidades-populares';
   imports: [CommonModule, RouterModule],
   templateUrl: './home-cidades.component.html',
   styleUrls: ['./home-cidades.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomeCidadesComponent {
   @Input({ required: true }) cidades: CidadePopular[] = [];

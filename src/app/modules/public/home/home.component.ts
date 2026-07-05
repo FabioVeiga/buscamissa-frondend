@@ -155,8 +155,16 @@ export class HomeComponent {
     }
   }
 
+  // Memo: evita realocar o array a cada ciclo de CD (relevante p/ filhos OnPush — 3.L)
+  private _proximasFiltradasCache: MassCardData[] = [];
+  private _proximasFiltradasKey = '';
   get proximasFiltradas(): MassCardData[] {
-    return this._aplicarQuickFilterCards(this.proximasMissasCards);
+    const key = `${this.quickFilter ?? ''}|${this.proximasMissasCards.length}|${this.proximasMissasCards[0]?.churchId ?? ''}`;
+    if (key !== this._proximasFiltradasKey) {
+      this._proximasFiltradasKey = key;
+      this._proximasFiltradasCache = this._aplicarQuickFilterCards(this.proximasMissasCards);
+    }
+    return this._proximasFiltradasCache;
   }
 
   private _aplicarQuickFilterChurches(igrejas: Church[]): Church[] {
@@ -476,8 +484,15 @@ export class HomeComponent {
         const d = res?.data ?? res ?? {};
         const igrejas = d.quantidadesIgrejas ?? d.quantidadeIgrejas ?? d.totalIgrejas;
         const horarios = d.quantidadeMissas ?? d.quantidadesMissas ?? d.totalMissas;
-        if (igrejas) this.stats.igrejas = igrejas;
-        if (horarios) this.stats.horarios = horarios;
+        // Nova referência (não mutar): HomeStatsComponent é OnPush e só
+        // re-renderiza quando a referência do input muda.
+        if (igrejas || horarios) {
+          this.stats = {
+            ...this.stats,
+            ...(igrejas ? { igrejas } : {}),
+            ...(horarios ? { horarios } : {}),
+          };
+        }
       },
       error: () => { /* silencioso — mantém fallback */ },
     });
