@@ -41,17 +41,11 @@
       name="adopt-website-id"
       content="0b3ece11-386e-4ab4-85f6-75334c157dc5"
     />
-    <!-- AdOpt carregado após o load da página: o injector puxa ~1MB (script
-         v2) que, baixado desde o tempo 0, disputava banda com a imagem do
-         hero e atrasava o LCP no Lighthouse. -->
-    <script>
-      window.addEventListener('load', function () {
-        var s = document.createElement('script');
-        s.src = '//tag.goadopt.io/injector.js?website_code=0b3ece11-386e-4ab4-85f6-75334c157dc5';
-        s.className = 'adopt-injector';
-        document.body.appendChild(s);
-      });
-    </script>
+    <script
+      src="//tag.goadopt.io/injector.js?website_code=0b3ece11-386e-4ab4-85f6-75334c157dc5"
+      class="adopt-injector"
+      defer
+    ></script>
     <!-- SEO Básico -->
     <title>BuscaMissa | Encontre ou cadastre missas</title>
     <meta
