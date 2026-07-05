@@ -311,6 +311,7 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
         uf: card.uf,
         cidadeSlug: card.cidadeSlug,
         slug: card.slug,
+        nomeUnico: card.nomeUnico,
         diaSemana: card.mass.diaSemana,
         horario: card.mass.horario,
       });

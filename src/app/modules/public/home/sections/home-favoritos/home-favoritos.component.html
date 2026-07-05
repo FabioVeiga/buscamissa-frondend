@@ -9,7 +9,7 @@
 
   <div class="minhas-paroquias__grid" *ngIf="favoritas.length > 0">
     @for (fav of favoritas; track fav.id) {
-    <a [routerLink]="['/paroquia', (fav.uf ?? '').toLowerCase(), fav.cidadeSlug, fav.slug]"
+    <a [routerLink]="linkFav(fav)"
        class="minhas-paroquias__card"
        [class.minhas-paroquias__card--hot]="getUrgencia(fav) === 'hot'"
        [class.minhas-paroquias__card--soon]="getUrgencia(fav) === 'soon'">
