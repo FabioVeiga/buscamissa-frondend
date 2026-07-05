@@ -484,8 +484,15 @@ export class HomeComponent {
         const d = res?.data ?? res ?? {};
         const igrejas = d.quantidadesIgrejas ?? d.quantidadeIgrejas ?? d.totalIgrejas;
         const horarios = d.quantidadeMissas ?? d.quantidadesMissas ?? d.totalMissas;
-        if (igrejas) this.stats.igrejas = igrejas;
-        if (horarios) this.stats.horarios = horarios;
+        // Nova referência (não mutar): HomeStatsComponent é OnPush e só
+        // re-renderiza quando a referência do input muda.
+        if (igrejas || horarios) {
+          this.stats = {
+            ...this.stats,
+            ...(igrejas ? { igrejas } : {}),
+            ...(horarios ? { horarios } : {}),
+          };
+        }
       },
       error: () => { /* silencioso — mantém fallback */ },
     });
