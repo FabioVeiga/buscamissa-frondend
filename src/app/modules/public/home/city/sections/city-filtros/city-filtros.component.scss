@@ -1,0 +1,158 @@
+@use '../tokens' as *;
+
+// ── Quick filters ─────────────────────────────────────────────────────────────
+.city-filtros {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+
+  &__chips {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    flex: 1;
+  }
+
+  &__limpar {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    color: #9ca3af;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.25rem 0;
+    white-space: nowrap;
+    &:hover { color: #ef4444; }
+  }
+}
+
+// ── Período + Ordenar row ──────────────────────────────────────────────────────
+.city-periodo-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  margin-bottom: 0.75rem;
+}
+
+.city-periodo-chips {
+  display: flex;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+
+.city-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.875rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border: 1.5px solid #e5e7eb;
+  background: #f9fafb;
+  color: #4b5563;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  white-space: nowrap;
+
+  &:hover {
+    border-color: $primary;
+    color: $primary;
+    background: $primary-light;
+  }
+
+  &--outline {
+    background: #fff;
+    border-style: dashed;
+  }
+
+  // Depois de --outline: quando ativo, o fundo primário deve vencer o branco
+  // do outline (senão o texto fica branco sobre branco).
+  &--ativo {
+    background: $primary;
+    border-color: $primary;
+    color: #fff;
+    &:hover { background: $primary-dark; color: #fff; }
+  }
+
+  &--sm {
+    padding: 0.3rem 0.625rem;
+    font-size: 0.75rem;
+  }
+
+  &--periodo {
+    background: #fff;
+    border: 1.5px solid #e5e7eb;
+    color: #6b7280;
+
+    .pi { font-size: 0.7rem; }
+  }
+}
+
+.city-sort {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+
+  &__label {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    white-space: nowrap;
+  }
+
+  &__select {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #374151;
+    border: 1.5px solid #e5e7eb;
+    border-radius: 0.5rem;
+    padding: 0.35rem 0.625rem;
+    background: #fff;
+    cursor: pointer;
+    outline: none;
+    transition: border-color 0.15s;
+    &:focus { border-color: $primary; }
+  }
+}
+
+// ── Advanced filters ──────────────────────────────────────────────────────────
+.city-filtros-avancados {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.875rem;
+  padding: 0.875rem 1rem;
+  margin-bottom: 0.875rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+
+  &__grupo {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    flex-wrap: wrap;
+  }
+
+  &__label {
+    font-size: 0.7rem;
+    font-weight: 700;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    min-width: 2.5rem;
+    flex-shrink: 0;
+  }
+
+  &__chips {
+    display: flex;
+    gap: 0.375rem;
+    flex-wrap: wrap;
+  }
+}

@@ -4,52 +4,37 @@ import { CommonModule } from "@angular/common";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { finalize } from "rxjs/operators";
 import { SkeletonModule } from "primeng/skeleton";
-import { PrimeNgModule } from "../../../../shared/primeng.module";
 import { ChurchesService } from "../../../../core/services/churches.service";
 import { distanciaMetrosAte } from "../../../../shared/utils/distance.utils";
 import { CIDADES_POPULARES } from "../../../../core/constants/cidades-populares";
 import { SeoService } from "../../../../core/services/seo.service";
-import { ConfidenceBadgeComponent } from "../../../../shared/components/confidence-badge/confidence-badge.component";
-import { CountdownChipComponent } from "../../../../shared/components/countdown-chip/countdown-chip.component";
-import { DistanceChipComponent } from "../../../../shared/components/distance-chip/distance-chip.component";
-import { ChurchPlaceholderComponent } from "../../../../shared/components/church-placeholder/church-placeholder.component";
-import { getNextOccurrenceMinutes, formatMassTime, getCountdownLabel } from "../../../../shared/utils/mass-time.utils";
+import { getNextOccurrenceMinutes } from "../../../../shared/utils/mass-time.utils";
 import { AnalyticsService } from "../../../../core/services/analytics.service";
 import { FavoritesService } from "../../../../core/services/favorites.service";
 import { ClarityService } from "../../../../core/services/clarity.service";
 import { CityMapComponent, MapChurch } from "../../../../shared/components/city-map/city-map.component";
-import { RedesSociaisService, TipoRedeSocial } from "../../../../core/services/redes-sociais.service";
-import { getSocialIconFromTipos } from "../../../../shared/utils/social-icon.utils";
+import { DIAS, PERIODOS } from "./city.constants";
+import { CityFiltrosComponent, Ordenacao, QuickFilter } from "./sections/city-filtros/city-filtros.component";
+import { CityCardComponent } from "./sections/city-card/city-card.component";
+import { CityFaqComponent } from "./sections/city-faq/city-faq.component";
+import { CityOutrasComponent } from "./sections/city-outras/city-outras.component";
 
-const PERIODOS: Record<string, { de: number; ate: number; label: string }> = {
-  manha: { de: 5 * 60, ate: 11 * 60 + 59, label: "Manhã" },
-  tarde: { de: 12 * 60, ate: 17 * 60 + 59, label: "Tarde" },
-  noite: { de: 18 * 60, ate: 23 * 60 + 59, label: "Noite" },
-};
-
-// Cidades populares para internal linking (SEO) no rodapé da página de cidade
-
-const DIAS: { label: string; slug: string; idx: number }[] = [
-  { label: "Dom", slug: "domingo", idx: 0 },
-  { label: "Seg", slug: "segunda", idx: 1 },
-  { label: "Ter", slug: "terca", idx: 2 },
-  { label: "Qua", slug: "quarta", idx: 3 },
-  { label: "Qui", slug: "quinta", idx: 4 },
-  { label: "Sex", slug: "sexta", idx: 5 },
-  { label: "Sáb", slug: "sabado", idx: 6 },
-];
-
+/**
+ * Página de cidade — orquestra carregamento, filtros/URL, SEO/Schema.org e tracking.
+ * As seções visuais foram extraídas para ./sections (auditoria 2.x).
+ */
 @Component({
   selector: "app-city",
   standalone: true,
   imports: [
-    PrimeNgModule,
     CommonModule,
     RouterLink,
     SkeletonModule,
-    ConfidenceBadgeComponent,
     CityMapComponent,
-    ChurchPlaceholderComponent,
+    CityFiltrosComponent,
+    CityCardComponent,
+    CityFaqComponent,
+    CityOutrasComponent,
   ],
   templateUrl: "./city.component.html",
   styleUrl: "./city.component.scss",
@@ -63,8 +48,6 @@ export class CityComponent implements OnInit, OnDestroy {
   private _analytics = inject(AnalyticsService);
   private _favorites = inject(FavoritesService);
   private _clarity = inject(ClarityService);
-  private _redesSociais = inject(RedesSociaisService);
-  tiposRedeSocial: TipoRedeSocial[] = [];
 
   isLoading = false;
   uf = "";
@@ -76,20 +59,18 @@ export class CityComponent implements OnInit, OnDestroy {
   naoEncontrado = false;
   faqs: { pergunta: string; resposta: string }[] = [];
 
-  imagensQuebradas = new Set<number>();
   favoritasIds: number[] = [];
 
   // Filtros
   diaAtivo: number | null = null;
   periodoAtivo: string | null = null;
-  quickFilter: 'hoje' | 'amanha' | 'fds' | null = null;
+  quickFilter: QuickFilter | null = null;
 
   // UI
-  mostrarFiltrosAvancados = false;
   mapVisible = false;
 
   // Ordenação
-  ordenacaoAtiva: 'az' | 'za' | 'proximidade' | 'proxima-missa' = 'proxima-missa';
+  ordenacaoAtiva: Ordenacao = 'proxima-missa';
 
   // Geolocalização
   userLat: number | null = null;
@@ -108,9 +89,6 @@ export class CityComponent implements OnInit, OnDestroy {
   get diaHoje(): number { return new Date().getDay(); }
   get diaAmanha(): number { return (new Date().getDay() + 1) % 7; }
 
-  readonly dias = DIAS;
-  readonly periodos = Object.entries(PERIODOS).map(([slug, v]) => ({ slug, label: v.label }));
-
   /** Cidades populares para links internos (exclui a cidade atual) — SEO/navegação */
   get cidadesRelacionadas(): { nome: string; uf: string; slug: string }[] {
     return CIDADES_POPULARES
@@ -119,8 +97,6 @@ export class CityComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
-    this._redesSociais.obterTipos().subscribe((tipos) => (this.tiposRedeSocial = tipos));
-
     this._route.params.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((params) => {
       this.uf = params["uf"];
       this.cidade = params["cidade"];
@@ -202,7 +178,7 @@ export class CityComponent implements OnInit, OnDestroy {
 
   // ── Quick filters ─────────────────────────────────────────────────────────
 
-  setQuickFilter(f: 'hoje' | 'amanha' | 'fds' | null): void {
+  setQuickFilter(f: QuickFilter | null): void {
     this.quickFilter = this.quickFilter === f ? null : f;
     this.diaAtivo = null;
     this.periodoAtivo = null;
@@ -242,7 +218,7 @@ export class CityComponent implements OnInit, OnDestroy {
     this.aplicarFiltros();
   }
 
-  setOrdenacao(o: 'az' | 'za' | 'proximidade' | 'proxima-missa'): void {
+  setOrdenacao(o: Ordenacao): void {
     this.ordenacaoAtiva = o;
     this.aplicarFiltros();
   }
@@ -349,33 +325,6 @@ export class CityComponent implements OnInit, OnDestroy {
     });
   }
 
-  countdownLabel(m: any): string {
-    return getCountdownLabel(m.diaSemana, m.horario);
-  }
-
-  formatarHorario(horario: string): string {
-    return formatMassTime(horario);
-  }
-
-  diaNome(dia: number): string {
-    return ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"][dia] ?? "";
-  }
-
-  ehUrgente(m: any): boolean {
-    return getNextOccurrenceMinutes(m.diaSemana, m.horario) <= 180;
-  }
-
-  diaLabelRelativo(m: any): string {
-    const min = getNextOccurrenceMinutes(m.diaSemana, m.horario);
-    const alvo = new Date(Date.now() + min * 60_000);
-    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
-    const dAlvo = new Date(alvo); dAlvo.setHours(0, 0, 0, 0);
-    const diff = Math.round((dAlvo.getTime() - hoje.getTime()) / 86_400_000);
-    if (diff === 0) return "Hoje";
-    if (diff === 1) return "Amanhã";
-    return this.diaNome(m.diaSemana);
-  }
-
   // ── Distância ─────────────────────────────────────────────────────────────
 
   distanciaMetros(igreja: any): number | null {
@@ -411,15 +360,6 @@ export class CityComponent implements OnInit, OnDestroy {
     this._analytics.getDirections(igreja.nome);
   }
 
-  abrirMapaCidade(): void {
-    const url = `https://www.google.com/maps/search/missa+${encodeURIComponent(this.cidadeNome)}+${this.uf.toUpperCase()}`;
-    window.open(url, "_blank", "noopener");
-  }
-
-  linkParoquia(igreja: any): string[] {
-    return ["/paroquia", this.uf, this.cidade, igreja.slug];
-  }
-
   onChurchClick(igreja: any): void {
     this._analytics.resultClicked(igreja.nome, this.cidadeNome, this.uf);
   }
@@ -434,10 +374,7 @@ export class CityComponent implements OnInit, OnDestroy {
     return this.favoritasIds.includes(ig.id);
   }
 
-  toggleFavoritar(ig: any, event: MouseEvent): void {
-    event.preventDefault();
-    event.stopPropagation();
-
+  toggleFavoritar(ig: any): void {
     const pm = ig.proximaMissa ?? (ig.missas && ig.missas[0]) ?? null;
     const agoraFavorita = this._favorites.alternar({
       id: ig.id,
@@ -466,22 +403,6 @@ export class CityComponent implements OnInit, OnDestroy {
     } else {
       navigator.clipboard?.writeText(window.location.href);
     }
-  }
-
-  // ── Dia da missa ──────────────────────────────────────────────────────────
-
-  diasMissa(ig: any): string {
-    const pm = this.proximaMissa(ig);
-    if (!pm) return '';
-    return this.diaNome(pm.diaSemana);
-  }
-
-  linkCidade(): string[] {
-    return ["/missas", this.uf.toLowerCase(), this.cidade];
-  }
-
-  getSocialIcon(url: string): string {
-    return getSocialIconFromTipos(url, this.tiposRedeSocial);
   }
 
   // ── SEO ───────────────────────────────────────────────────────────────────

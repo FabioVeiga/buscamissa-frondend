@@ -1,0 +1,7 @@
+<section *ngIf="faqs.length" class="city-faq">
+  <h2 class="city-faq__titulo">Perguntas frequentes</h2>
+  <details *ngFor="let f of faqs" class="city-faq__item">
+    <summary class="city-faq__pergunta">{{ f.pergunta }}</summary>
+    <p class="city-faq__resposta">{{ f.resposta }}</p>
+  </details>
+</section>
