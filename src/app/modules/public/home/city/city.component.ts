@@ -20,6 +20,7 @@ import { ClarityService } from "../../../../core/services/clarity.service";
 import { CityMapComponent, MapChurch } from "../../../../shared/components/city-map/city-map.component";
 import { RedesSociaisService, TipoRedeSocial } from "../../../../core/services/redes-sociais.service";
 import { getSocialIconFromTipos } from "../../../../shared/utils/social-icon.utils";
+import { linkParoquia as buildLinkParoquia } from "../../../../shared/utils/church-link.utils";
 
 const PERIODOS: Record<string, { de: number; ate: number; label: string }> = {
   manha: { de: 5 * 60, ate: 11 * 60 + 59, label: "Manhã" },
@@ -417,7 +418,10 @@ export class CityComponent implements OnInit, OnDestroy {
   }
 
   linkParoquia(igreja: any): string[] {
-    return ["/paroquia", this.uf, this.cidade, igreja.slug];
+    return buildLinkParoquia({
+      ...igreja,
+      endereco: { ...igreja?.endereco, uf: this.uf, cidadeSlug: this.cidade },
+    });
   }
 
   onChurchClick(igreja: any): void {
@@ -445,6 +449,7 @@ export class CityComponent implements OnInit, OnDestroy {
       uf: this.uf?.toLowerCase(),
       cidadeSlug: this.cidade,
       slug: ig.slug,
+      nomeUnico: ig.nomeUnico,
       diaSemana: pm?.diaSemana,
       horario: pm?.horario,
     });

@@ -8,6 +8,8 @@ export interface MassCardData {
   churchId: number;
   churchName: string;
   slug: string;
+  /** Fallback para a rota legada /igrejas/:nomeUnico quando `slug` não é confiável. */
+  nomeUnico?: string;
   uf: string;
   cidadeSlug: string;
   bairro: string;

@@ -34,6 +34,7 @@ import { HomeComoFuncionaComponent } from "./sections/home-como-funciona/home-co
 import { HomeFavoritosComponent } from "./sections/home-favoritos/home-favoritos.component";
 import { HomeCidadesComponent } from "./sections/home-cidades/home-cidades.component";
 import { HomeMissasMapaComponent } from "./sections/home-missas-mapa/home-missas-mapa.component";
+import { linkParoquia } from "../../../shared/utils/church-link.utils";
 
 interface AddressData {
   [uf: string]: {
@@ -1042,12 +1043,7 @@ export class HomeComponent {
 
   // Usa a URL canônica nova se houver slug+cidade; senão cai no legado /igrejas
   linkParoquia(church: any): string[] {
-    const uf = church?.endereco?.uf;
-    const cidadeSlug = church?.endereco?.cidadeSlug;
-    if (uf && cidadeSlug && church?.slug) {
-      return ["/paroquia", uf.toLowerCase(), cidadeSlug, church.slug];
-    }
-    return ["/igrejas", church?.nomeUnico];
+    return linkParoquia(church);
   }
 
   /** URL completa para compartilhamento (SEO3 revisado) */
