@@ -1,10 +1,9 @@
 import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { PrimeNgModule } from '../../../../shared/primeng.module';
 
 @Component({
   selector: 'app-footer-home',
-  imports: [RouterModule, PrimeNgModule],
+  imports: [RouterModule],
   templateUrl: './footer.component.html',
   styleUrl: './footer.component.scss'
 })
