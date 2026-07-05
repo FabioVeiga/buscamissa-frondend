@@ -1,0 +1,52 @@
+<header class="church-header">
+
+  <!-- Thumbnail -->
+  <div class="church-thumb shrink-0">
+    <img *ngIf="igreja.imagemUrl && !fotoQuebrou"
+      [src]="igreja.imagemUrl" [alt]="igreja.nome"
+      (error)="fotoQuebrou = true"
+      loading="lazy"
+      class="w-full h-full object-cover">
+    <app-church-placeholder *ngIf="!igreja.imagemUrl || fotoQuebrou" [showLabel]="false" />
+  </div>
+
+  <!-- Info -->
+  <div class="church-info flex flex-col justify-center gap-2 p-4 sm:p-5 flex-1 min-w-0">
+    <h1 class="text-base sm:text-lg font-extrabold text-gray-900 leading-snug">
+      {{ igreja.nome }}
+    </h1>
+    <p *ngIf="igreja.endereco?.logradouro" class="flex items-center gap-1.5 text-sm text-gray-500">
+      <i class="pi pi-home text-gray-400 shrink-0"></i>
+      {{ igreja.endereco?.logradouro }}<span *ngIf="igreja.endereco?.numero && igreja.endereco?.numero !== 0">, {{ igreja.endereco?.numero }}</span><span *ngIf="igreja.endereco?.complemento"> — {{ igreja.endereco?.complemento }}</span>
+    </p>
+    <p class="flex items-center gap-1.5 text-sm text-gray-500">
+      <i class="pi pi-map-marker text-gray-400 shrink-0"></i>
+      {{ igreja.endereco?.bairro }}, {{ igreja.endereco?.localidade }}/{{ igreja.endereco?.uf }}
+    </p>
+    <p *ngIf="igreja.paroco" class="flex items-center gap-1.5 text-sm text-gray-500">
+      <i class="pi pi-user text-gray-400 shrink-0"></i>
+      {{ igreja.paroco }}
+    </p>
+    <div *ngIf="proximaMissa">
+      <app-confidence-badge [mass]="proximaMissa" />
+    </div>
+    <div class="flex gap-2 flex-wrap mt-1">
+      <a [href]="linkGoogleMaps" target="_blank" rel="noopener" class="action-btn" (click)="direcoesClick.emit()">
+        <i class="pi pi-map"></i> Google Maps
+      </a>
+      <a [href]="linkWaze" target="_blank" rel="noopener" class="action-btn" (click)="direcoesClick.emit()">
+        <i class="pi pi-car"></i> Waze
+      </a>
+      <button (click)="compartilharClick.emit()" class="action-btn">
+        <i class="pi pi-share-alt"></i> Compartilhar
+      </button>
+      <button (click)="favoritarClick.emit()" class="action-btn action-btn--fav"
+              [class.action-btn--fav-ativo]="isFavorita"
+              [attr.aria-pressed]="isFavorita"
+              [attr.aria-label]="isFavorita ? 'Remover dos favoritos' : 'Adicionar aos favoritos'">
+        <i class="pi" [ngClass]="isFavorita ? 'pi-heart-fill' : 'pi-heart'"></i>
+        {{ isFavorita ? 'Favoritada' : 'Favoritar' }}
+      </button>
+    </div>
+  </div>
+</header>

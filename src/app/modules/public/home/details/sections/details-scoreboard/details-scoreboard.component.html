@@ -1,0 +1,45 @@
+<section class="scoreboard mt-4">
+  <ng-container *ngIf="proximaMissa; else semProximaMissa">
+    <div class="flex items-start gap-4">
+      <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0">
+        <i class="pi pi-clock" style="color: #bc5d10;"></i>
+      </div>
+      <div class="flex-1">
+        <span class="scoreboard-label">Próxima missa</span>
+        <div class="flex items-end gap-3 mt-1">
+          <span class="scoreboard-time">{{ formatarHorario(proximaMissa.horario) }}</span>
+          <span class="scoreboard-day">{{ proximaMissaDiaLabel }}</span>
+        </div>
+        <div *ngIf="mostrarContador" class="scoreboard-countdown mt-1.5 flex items-center gap-1.5">
+          <i class="pi pi-clock text-sm"></i>
+          <app-countdown-chip [diaSemana]="proximaMissa.diaSemana!" [horario]="proximaMissa.horario" />
+        </div>
+      </div>
+      <span class="text-sm text-gray-500 capitalize hidden sm:block self-center">{{ proximaMissaData }}</span>
+    </div>
+    <div class="flex items-center justify-between mt-3 pt-3 border-t border-orange-200/60">
+      <span class="text-sm text-gray-500 capitalize sm:hidden">{{ proximaMissaData }}</span>
+      <button (click)="verTodas.emit()"
+        class="flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg bg-white/70 hover:bg-white transition-colors ml-auto"
+        style="color: #bc5d10;">
+        Ver todas as missas <i class="pi pi-chevron-right text-xs"></i>
+      </button>
+    </div>
+  </ng-container>
+
+  <ng-template #semProximaMissa>
+    <div class="flex items-start gap-4 opacity-60">
+      <div class="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center shrink-0">
+        <i class="pi pi-clock text-gray-400"></i>
+      </div>
+      <div class="flex-1">
+        <span class="scoreboard-label text-gray-500">Próxima missa</span>
+        <p class="text-gray-600 text-sm mt-2">Ainda não há horários cadastrados para esta paróquia.</p>
+        <button (click)="verTodas.emit()"
+          class="flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors mt-2 text-gray-700">
+          Ver detalhes <i class="pi pi-chevron-right text-xs"></i>
+        </button>
+      </div>
+    </div>
+  </ng-template>
+</section>

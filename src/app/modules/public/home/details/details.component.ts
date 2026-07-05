@@ -1,7 +1,6 @@
 import { Component, DestroyRef, inject, OnInit } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { finalize } from "rxjs/operators";
-import { FormsModule } from "@angular/forms";
 import { ChurchesService } from "../../../../core/services/churches.service";
 import { SeoService } from "../../../../core/services/seo.service";
 import { SkeletonModule } from "primeng/skeleton";
@@ -9,46 +8,26 @@ import { MessageService } from "primeng/api";
 import { PrimeNgModule } from "../../../../shared/primeng.module";
 import { CommonModule } from "@angular/common";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
-import { ModalComponent } from "../../../../core/components/modal/modal.component";
-import { DomSanitizer, SafeResourceUrl } from "@angular/platform-browser";
 import { Mass } from "../../church/models/church.model";
-import { ConfidenceBadgeComponent } from "../../../../shared/components/confidence-badge/confidence-badge.component";
-import { CountdownChipComponent } from "../../../../shared/components/countdown-chip/countdown-chip.component";
-import { ChurchPlaceholderComponent } from "../../../../shared/components/church-placeholder/church-placeholder.component";
-import { getNextOccurrenceMinutes, formatMassTime, getCountdownLabel } from "../../../../shared/utils/mass-time.utils";
+import { getNextOccurrenceMinutes } from "../../../../shared/utils/mass-time.utils";
 import { AnalyticsService } from "../../../../core/services/analytics.service";
 import { ClarityService } from "../../../../core/services/clarity.service";
 import { RedesSociaisService, TipoRedeSocial } from "../../../../core/services/redes-sociais.service";
 import { MetricasService } from "../../../../core/services/metricas.service";
 import { FavoritesService } from "../../../../core/services/favorites.service";
-import { getSocialIconFromTipos } from "../../../../shared/utils/social-icon.utils";
 import { NavigationHistoryService } from "../../../../core/services/navigation-history.service";
+import { DetailsHeaderComponent } from "./sections/details-header/details-header.component";
+import { DetailsScoreboardComponent } from "./sections/details-scoreboard/details-scoreboard.component";
+import { DetailsHorariosComponent } from "./sections/details-horarios/details-horarios.component";
+import { DetailsConfirmarComponent } from "./sections/details-confirmar/details-confirmar.component";
+import { DetailsComoChegarComponent } from "./sections/details-como-chegar/details-como-chegar.component";
+import { DetailsContatoComponent } from "./sections/details-contato/details-contato.component";
+import { DetailsReportarModalComponent } from "./sections/details-reportar-modal/details-reportar-modal.component";
 
-interface ItemReportarProblema {
-  key: string;
-  label: string;
-  icon: string;
-  emoji: string;
-  subtitle?: string;
-  placeholder?: string;
-  especial?: boolean;
-  marcado: boolean;
-  texto: string;
-}
-
-function criarItensReportarProblema(): ItemReportarProblema[] {
-  return [
-    { key: "endereco", label: "Endereço", icon: "pi-map-marker", emoji: "📍", placeholder: "Descreva o que está incorreto ou informe o endereço correto.", marcado: false, texto: "" },
-    { key: "contato", label: "Dados de contato", icon: "pi-phone", emoji: "☎️", subtitle: "Telefone, e-mail, Instagram, Facebook ou outras redes sociais.", placeholder: "Informe quais dados estão incorretos ou quais são os dados corretos.", marcado: false, texto: "" },
-    { key: "nomeIgreja", label: "Nome da igreja", icon: "pi-building", emoji: "⛪", placeholder: "Informe o nome correto da igreja, comunidade ou paróquia.", marcado: false, texto: "" },
-    { key: "incompleta", label: "Página incompleta", icon: "pi-file", emoji: "📄", placeholder: "Quais informações você acredita que estão faltando?", marcado: false, texto: "" },
-    { key: "horarios", label: "Horários de Missa", icon: "pi-clock", emoji: "🕐", especial: true, marcado: false, texto: "" },
-    { key: "outro", label: "Outro", icon: "pi-comment", emoji: "💬", placeholder: "Descreva o que deseja informar.", marcado: false, texto: "" },
-  ];
-}
-
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
+/**
+ * Página da paróquia — orquestra o carregamento, SEO/Schema.org e tracking.
+ * As seções visuais foram extraídas para ./sections (auditoria 2.x).
+ */
 @Component({
   selector: "app-details",
   imports: [
@@ -56,11 +35,13 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     CommonModule,
     SkeletonModule,
     RouterLink,
-    FormsModule,
-    ConfidenceBadgeComponent,
-    CountdownChipComponent,
-    ChurchPlaceholderComponent,
-    ModalComponent,
+    DetailsHeaderComponent,
+    DetailsScoreboardComponent,
+    DetailsHorariosComponent,
+    DetailsConfirmarComponent,
+    DetailsComoChegarComponent,
+    DetailsContatoComponent,
+    DetailsReportarModalComponent,
   ],
   providers: [MessageService],
   templateUrl: "./details.component.html",
@@ -73,7 +54,6 @@ export class DetailsComponent implements OnInit {
   _route = inject(ActivatedRoute);
   private _destroyRef = inject(DestroyRef);
   _router = inject(Router);
-  _sanitizer = inject(DomSanitizer);
   _navHistory = inject(NavigationHistoryService);
   private _analytics = inject(AnalyticsService);
   private _favorites = inject(FavoritesService);
@@ -85,25 +65,12 @@ export class DetailsComponent implements OnInit {
   isLoading = false;
   nomeUnico: string | null = null;
   churchInfo: any;
-  fotoQuebrou = false;
-
-  // Prova social
-  totalConfirmacoes = 0;
-  ultimaConfirmacao: string | null = null;
-
-  // Confirmação de horários
-  confirmacaoEnviada = false;
-  confirmandoHorarios = false;
 
   // Favorito
   isFavorita = false;
 
   // Reportar problema
   modalReportarProblemaVisible = false;
-  enviandoReportarProblema = false;
-  itensReportar: ItemReportarProblema[] = criarItensReportarProblema();
-  reportarNome = "";
-  reportarEmail = "";
 
   ngOnInit(): void {
     this._redesSociais.obterTipos().subscribe((tipos) => (this.tiposRedeSocial = tipos));
@@ -133,7 +100,6 @@ export class DetailsComponent implements OnInit {
         const igreja = response?.data?.igreja ?? response?.data;
         const seo = response?.data?.seo;
         this.churchInfo = igreja;
-        this.fotoQuebrou = false;
 
         if (!igreja) {
           this._toast.add({ severity: "error", summary: "Erro", detail: "Dados da igreja não encontrados." });
@@ -141,7 +107,6 @@ export class DetailsComponent implements OnInit {
           return;
         }
 
-        if (igreja.id) this.carregarResumoConfirmacoes(igreja.id);
         this._loadFavoritaState();
         this._analytics.churchView(igreja.nome, igreja.endereco?.localidade ?? '', igreja.endereco?.uf ?? '');
         if (igreja.id) this._metricas.registrarVisualizacaoIgreja(igreja.id);
@@ -218,7 +183,7 @@ export class DetailsComponent implements OnInit {
     });
   }
 
-  // ── Próxima missa (scoreboard) ─────────────────────────────────────────────
+  // ── Próxima missa ──────────────────────────────────────────────────────────
 
   /** Próxima missa que vai acontecer (menor tempo até o início) */
   get proximaMissa(): Mass | null {
@@ -229,101 +194,6 @@ export class DetailsComponent implements OnInit {
       const melhorMin = getNextOccurrenceMinutes(melhor.diaSemana!, melhor.horario);
       return min < melhorMin ? m : melhor;
     });
-  }
-
-  /** Minutos até a próxima missa */
-  get minutosProximaMissa(): number | null {
-    const pm = this.proximaMissa;
-    return pm ? getNextOccurrenceMinutes(pm.diaSemana!, pm.horario) : null;
-  }
-
-  /** Só mostra o contador regressivo quando cria urgência real (até 3h) — evita redundância com o dia */
-  get mostrarContador(): boolean {
-    const min = this.minutosProximaMissa;
-    return min !== null && min <= 180;
-  }
-
-  /** Rótulo curto do dia da próxima missa: "Hoje" / "Amanhã" / "Sábado" */
-  get proximaMissaDiaLabel(): string {
-    const pm = this.proximaMissa;
-    if (!pm) return "";
-    const min = getNextOccurrenceMinutes(pm.diaSemana!, pm.horario);
-    const alvo = new Date(Date.now() + min * 60_000);
-
-    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
-    const dAlvo = new Date(alvo); dAlvo.setHours(0, 0, 0, 0);
-    const diff = Math.round((dAlvo.getTime() - hoje.getTime()) / 86_400_000);
-
-    if (diff === 0) return "Hoje";
-    if (diff === 1) return "Amanhã";
-    return ["Domingo","Segunda","Terça","Quarta","Quinta","Sexta","Sábado"][pm.diaSemana!] ?? "";
-  }
-
-  /** Data completa da próxima ocorrência: "quinta-feira, 15 de maio" */
-  get proximaMissaData(): string {
-    const pm = this.proximaMissa;
-    if (!pm) return "";
-    const min = getNextOccurrenceMinutes(pm.diaSemana!, pm.horario);
-    const data = new Date(Date.now() + min * 60_000);
-    return data.toLocaleDateString("pt-BR", { weekday: "long", day: "numeric", month: "long" });
-  }
-
-  formatarHorario(horario: string): string {
-    return formatMassTime(horario);
-  }
-
-  isHoje(diaSemana: number): boolean {
-    return new Date().getDay() === diaSemana;
-  }
-
-  /** CEP só é exibível se não for placeholder/zerado dos imports */
-  get cepValido(): boolean {
-    const cep = (this.churchInfo?.endereco?.cep ?? "").replace(/\D/g, "");
-    return cep.length === 8 && cep !== "00000000";
-  }
-
-  /** Observações distintas das missas — resumo para "Informações da comunidade" */
-  get observacoes(): string[] {
-    const missas: Mass[] = this.churchInfo?.missas ?? [];
-    const set = new Set<string>();
-    missas.forEach((m) => {
-      const o = (m.observacao ?? "").trim();
-      if (o) set.add(o);
-    });
-    return Array.from(set);
-  }
-
-  get temContato(): boolean {
-    const c = this.churchInfo?.contato;
-    return !!(c?.telefone || c?.telefoneWhatsApp || c?.emailContato || c?.site || this.churchInfo?.redesSociais?.length);
-  }
-
-  /** Semana completa (7 dias) — dias sem missa entram vazios para mostrar "—" */
-  get agendaSemana(): { dia: number; label: string; missas: Mass[] }[] {
-    const labels = ["Domingo","Segunda-feira","Terça-feira","Quarta-feira","Quinta-feira","Sexta-feira","Sábado"];
-    const missas: Mass[] = this.churchInfo?.missas ?? [];
-    const grupos: Record<number, Mass[]> = {};
-    missas.forEach((m) => {
-      if (m.diaSemana !== undefined && m.diaSemana !== null) {
-        (grupos[m.diaSemana] = grupos[m.diaSemana] ?? []).push(m);
-      }
-    });
-    return labels.map((label, dia) => ({
-      dia,
-      label,
-      missas: (grupos[dia] ?? []).sort((a, b) => a.horario.localeCompare(b.horario)),
-    }));
-  }
-
-  /** "última confirmação há 3 dias" — formato relativo */
-  get ultimaConfirmacaoLabel(): string {
-    if (!this.ultimaConfirmacao) return "";
-    const dias = Math.floor((Date.now() - new Date(this.ultimaConfirmacao).getTime()) / 86_400_000);
-    if (dias <= 0) return "hoje";
-    if (dias === 1) return "ontem";
-    if (dias < 7) return `há ${dias} dias`;
-    if (dias < 30) { const s = Math.floor(dias / 7); return `há ${s} ${s === 1 ? "semana" : "semanas"}`; }
-    const m = Math.floor(dias / 30); return `há ${m} ${m === 1 ? "mês" : "meses"}`;
   }
 
   // ── Favorito ───────────────────────────────────────────────────────────────
@@ -358,56 +228,12 @@ export class DetailsComponent implements OnInit {
     }
   }
 
-  // ── Prova social + mapa ────────────────────────────────────────────────────
-
-  private carregarResumoConfirmacoes(igrejaId: number): void {
-    this.totalConfirmacoes = 0;
-    this.ultimaConfirmacao = null;
-    this._church.getResumoConfirmacoes(igrejaId).subscribe({
-      next: (res: any) => {
-        this.totalConfirmacoes = res?.data?.totalConfirmacoes ?? 0;
-        this.ultimaConfirmacao = res?.data?.ultimaConfirmacao ?? null;
-      },
-      error: () => { /* prova social é opcional — silencioso */ },
-    });
-  }
-
-  /** Mapa embarcado (Google Maps embed, sem API key) */
-  get mapEmbedUrl(): SafeResourceUrl | null {
-    const e = this.churchInfo?.endereco;
-    if (!e) return null;
-    const q = e.latitude && e.longitude
-      ? `${e.latitude},${e.longitude}`
-      : encodeURIComponent(`${this.churchInfo.nome}, ${e.logradouro}, ${e.localidade} ${e.uf}`);
-    return this._sanitizer.bypassSecurityTrustResourceUrl(
-      `https://maps.google.com/maps?q=${q}&z=16&output=embed`
-    );
-  }
-
-  // ── Navegação / compartilhamento ───────────────────────────────────────────
+  // ── Navegação / compartilhamento / tracking ────────────────────────────────
 
   trackDirections(): void {
     this._analytics.getDirections(this.churchInfo?.nome ?? '');
     this.trackObjetivoAlcancado('tracar_rota');
     if (this.churchInfo?.id) this._metricas.registrarCliqueRota(this.churchInfo.id);
-  }
-
-  get linkGoogleMaps(): string {
-    const e = this.churchInfo?.endereco;
-    if (!e) return '#';
-    if (e.latitude && e.longitude)
-      return `https://www.google.com/maps/search/?api=1&query=${e.latitude},${e.longitude}`;
-    const q = encodeURIComponent(`${this.churchInfo.nome}, ${e.logradouro}, ${e.localidade} ${e.uf}`);
-    return `https://www.google.com/maps/search/?api=1&query=${q}`;
-  }
-
-  get linkWaze(): string {
-    const e = this.churchInfo?.endereco;
-    if (!e) return '#';
-    if (e.latitude && e.longitude)
-      return `https://waze.com/ul?ll=${e.latitude},${e.longitude}&navigate=yes`;
-    const q = encodeURIComponent(`${this.churchInfo.nome}, ${e.logradouro}, ${e.localidade}`);
-    return `https://waze.com/ul?q=${q}&navigate=yes`;
   }
 
   get shareUrl(): string {
@@ -427,11 +253,7 @@ export class DetailsComponent implements OnInit {
     return ["/home"];
   }
 
-  getSocialIcon(url: string): string {
-    return getSocialIconFromTipos(url, this.tiposRedeSocial);
-  }
-
-  getSocialTrackName(url: string): string {
+  private getSocialTrackName(url: string): string {
     if (url.includes('facebook.com')) return 'facebook';
     if (url.includes('instagram.com')) return 'instagram';
     if (url.includes('youtube.com')) return 'youtube';
@@ -448,7 +270,6 @@ export class DetailsComponent implements OnInit {
   trackCliqueTelefone(): void {
     if (this.churchInfo?.id) this._metricas.registrarCliqueTelefone(this.churchInfo.id);
   }
-
 
   voltar(): void {
     const anterior = this._navHistory.previousUrl;
@@ -473,10 +294,6 @@ export class DetailsComponent implements OnInit {
     document.getElementById("horarios")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  scrollToLocal(): void {
-    document.getElementById("como-chegar")?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
   reportarErro(): void {
     if (this.churchInfo?.id) {
       this._analytics.userContribution('report', this.churchInfo.nome);
@@ -486,126 +303,7 @@ export class DetailsComponent implements OnInit {
   }
 
   abrirModalReportarProblema(): void {
-    this.itensReportar = criarItensReportarProblema();
-    this.reportarNome = "";
-    this.reportarEmail = "";
     this.modalReportarProblemaVisible = true;
-  }
-
-  fecharModalReportarProblema(): void {
-    this.modalReportarProblemaVisible = false;
-  }
-
-  /**
-   * Fecha o modal e leva o usuário para o fluxo de alteração. Se algum outro item já foi
-   * preenchido, envia essa sugestão antes de redirecionar; caso contrário, redireciona direto.
-   */
-  irParaAlterarInformacoes(): void {
-    const temItemPreenchido = this.itensReportar.some((item) => !item.especial && item.marcado && item.texto.trim());
-
-    if (!temItemPreenchido) {
-      this.modalReportarProblemaVisible = false;
-      this.reportarErro();
-      return;
-    }
-
-    if (!this.reportarProblemaValido) {
-      this._toast.add({
-        severity: 'warn',
-        summary: 'Preencha seus dados',
-        detail: 'Informe nome e e-mail para enviar sua sugestão antes de continuar.',
-      });
-      return;
-    }
-
-    this.enviarReportarProblema(() => this.reportarErro());
-  }
-
-  get reportarProblemaValido(): boolean {
-    const temNomeEEmail = !!this.reportarNome.trim() && EMAIL_REGEX.test(this.reportarEmail.trim());
-    const temItemPreenchido = this.itensReportar.some((item) => !item.especial && item.marcado && item.texto.trim());
-    return temNomeEEmail && temItemPreenchido;
-  }
-
-  private montarDescricaoReportarProblema(): string {
-    const secoes = this.itensReportar
-      .filter((item) => !item.especial && item.marcado && item.texto.trim())
-      .map((item) => `${item.emoji} ${item.label}\n${item.texto.trim()}`);
-    return `Correções sugeridas\n\n${secoes.join("\n\n")}`;
-  }
-
-  /** Envia a sugestão. Se `aoConcluir` for informado (fluxo "Ir para alterar"), não mostra toast de sucesso nem fecha o modal aqui — quem chamou decide o próximo passo. */
-  enviarReportarProblema(aoConcluir?: () => void): void {
-    if (!this.reportarProblemaValido || !this.churchInfo?.id) return;
-
-    this.enviandoReportarProblema = true;
-    const body = {
-      nome: this.reportarNome.trim(),
-      email: this.reportarEmail.trim(),
-      descricao: this.montarDescricaoReportarProblema(),
-    };
-    this._church.reportarProblema(this.churchInfo.id, body)
-      .pipe(finalize(() => (this.enviandoReportarProblema = false)))
-      .subscribe({
-        next: () => {
-          this._analytics.userContribution('report', this.churchInfo.nome);
-          this.modalReportarProblemaVisible = false;
-          if (aoConcluir) {
-            aoConcluir();
-            return;
-          }
-          this._toast.add({
-            severity: 'success',
-            summary: 'Obrigado!',
-            detail: 'Sugestão enviada com sucesso. Nossa equipe vai analisar.',
-          });
-        },
-        error: () => {
-          this._toast.add({
-            severity: 'error',
-            summary: 'Erro',
-            detail: 'Não foi possível enviar sua sugestão. Tente novamente.',
-          });
-        },
-      });
-  }
-
-  // ── Confirmação de horários ─────────────────────────────────────────────────
-
-  confirmarHorarios(): void {
-    if (!this.churchInfo?.id) return;
-
-    const localKey = `buscamissa_confirmacao_${this.churchInfo.id}`;
-    if (localStorage.getItem(localKey)) {
-      this._toast.add({ severity: 'info', summary: 'Já confirmado', detail: 'Você já confirmou os horários desta paróquia.' });
-      return;
-    }
-
-    this.confirmandoHorarios = true;
-    this._church.confirmarHorarios(this.churchInfo.id).subscribe({
-      next: () => {
-        localStorage.setItem(localKey, '1');
-        this.confirmacaoEnviada = true;
-        this.totalConfirmacoes++;
-        this._analytics.userContribution('confirm', this.churchInfo.nome);
-        this._toast.add({ severity: 'success', summary: 'Obrigado!', detail: 'Sua confirmação ajuda outras pessoas da comunidade.' });
-      },
-      error: (err) => {
-        if (err.status === 409) {
-          localStorage.setItem(localKey, '1');
-          this.confirmacaoEnviada = true;
-          this._toast.add({ severity: 'info', summary: 'Já registrado', detail: 'Você já confirmou os horários desta paróquia.' });
-        } else {
-          this._toast.add({ severity: 'error', summary: 'Erro', detail: 'Não foi possível enviar sua confirmação. Tente novamente.' });
-        }
-      },
-      complete: () => { this.confirmandoHorarios = false; }
-    });
-  }
-
-  jaConfirmou(): boolean {
-    if (!this.churchInfo?.id) return false;
-    return !!localStorage.getItem(`buscamissa_confirmacao_${this.churchInfo.id}`);
   }
 
   // ── SEO / Schema.org ────────────────────────────────────────────────────────

@@ -1,0 +1,44 @@
+// ── Scoreboard ─────────────────────────────────────────────────────────────────
+.scoreboard {
+  border-radius: 1rem;
+  padding: 1.125rem 1.375rem;
+  background: linear-gradient(135deg, #fff4ea 0%, #ffe8d2 100%);
+  border: 1px solid #f3d3b3;
+}
+
+.scoreboard-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #b06a2c;
+}
+
+.scoreboard-time {
+  font-size: 2.75rem;
+  line-height: 1;
+  font-weight: 800;
+  color: #bc5d10;
+
+  @media (min-width: 640px) {
+    font-size: 3.25rem;
+  }
+}
+
+.scoreboard-day {
+  font-size: 1rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #8a4a12;
+  padding-bottom: 0.3rem;
+}
+
+.scoreboard-countdown {
+  color: #bc5d10;
+
+  ::ng-deep .countdown-chip {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #bc5d10;
+  }
+}
