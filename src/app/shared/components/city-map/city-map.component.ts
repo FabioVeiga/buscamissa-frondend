@@ -10,7 +10,9 @@ import {
   NgZone,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import * as L from 'leaflet';
+// Apenas tipos em tempo de compilação — a biblioteca é carregada sob demanda
+// via import() em ngAfterViewInit, mantendo o Leaflet fora do bundle inicial (3.E).
+import type * as L from 'leaflet';
 
 export interface MapChurch {
   id: number;
@@ -79,6 +81,7 @@ export class CityMapComponent implements AfterViewInit, OnChanges, OnDestroy {
   @Input() cidadeNome = '';
   @Input() uf = '';
 
+  private _L: typeof import('leaflet') | null = null;
   private _map: L.Map | null = null;
   private _markers: L.Marker[] = [];
 
@@ -88,7 +91,10 @@ export class CityMapComponent implements AfterViewInit, OnChanges, OnDestroy {
 
   constructor(private _zone: NgZone) {}
 
-  ngAfterViewInit(): void {
+  async ngAfterViewInit(): Promise<void> {
+    const leaflet = await import('leaflet');
+    // O default export tem a API; fallback para o namespace conforme empacotamento
+    this._L = ((leaflet as any).default ?? leaflet) as typeof import('leaflet');
     this._zone.runOutsideAngular(() => {
       this._initMap();
     });
@@ -106,7 +112,8 @@ export class CityMapComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   private _initMap(): void {
-    if (this._map) return;
+    if (this._map || !this._L) return;
+    const L = this._L;
 
     this._map = L.map(this.mapEl.nativeElement, {
       zoomControl: true,
@@ -121,7 +128,8 @@ export class CityMapComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   private _renderMarkers(): void {
-    if (!this._map) return;
+    if (!this._map || !this._L) return;
+    const L = this._L;
 
     this._markers.forEach((m) => m.remove());
     this._markers = [];
@@ -151,7 +159,7 @@ export class CityMapComponent implements AfterViewInit, OnChanges, OnDestroy {
   }
 
   private _numberIcon(n: number): L.DivIcon {
-    return L.divIcon({
+    return this._L!.divIcon({
       className: '',
       html: `
         <div style="

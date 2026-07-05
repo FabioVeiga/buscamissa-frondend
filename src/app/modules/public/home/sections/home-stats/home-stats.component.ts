@@ -1,4 +1,4 @@
-import { Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 
 export interface HomeStats {
   igrejas: number;
@@ -13,6 +13,7 @@ export interface HomeStats {
   standalone: true,
   templateUrl: './home-stats.component.html',
   styleUrls: ['./home-stats.component.scss'],
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class HomeStatsComponent {
   @Input({ required: true }) stats!: HomeStats;

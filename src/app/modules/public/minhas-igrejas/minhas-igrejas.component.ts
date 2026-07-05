@@ -10,6 +10,7 @@ import { getMissaAgoraUrgency } from '../../../shared/utils/mass-time.utils';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { FavoritesService, IgrejaFavorita } from '../../../core/services/favorites.service';
+import { linkParoquia } from '../../../shared/utils/church-link.utils';
 
 @Component({
   selector: 'app-minhas-igrejas',
@@ -78,6 +79,10 @@ export class MinhasIgrejasComponent implements OnInit, OnDestroy {
 
   irParaIgreja(igreja: IgrejaFavorita): void {
     this._clarity.track('favorito_clicado', { igrejaId: String(igreja.id) });
-    this._router.navigate(['/paroquia', (igreja.uf ?? '').toLowerCase(), igreja.cidadeSlug, igreja.slug]);
+    this._router.navigate(linkParoquia({
+      slug: igreja.slug,
+      nomeUnico: igreja.nomeUnico,
+      endereco: { uf: (igreja.uf ?? '').toLowerCase(), cidadeSlug: igreja.cidadeSlug },
+    }));
   }
 }

@@ -1,12 +1,16 @@
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { inject, Injectable } from "@angular/core";
-import { Observable } from "rxjs";
+import { Observable, shareReplay } from "rxjs";
 
 @Injectable({
   providedIn: "root",
 })
 export class ChurchesService {
   private http = inject(HttpClient);
+
+  /** Caches de dados quase estáticos — compartilhados entre telas (3.D) */
+  private addressRange$?: Observable<any>;
+  private info$?: Observable<any>;
 
   /** Cria uma nova igreja */
   newChurch(church: any) {
@@ -47,7 +51,10 @@ export class ChurchesService {
 
   /** Busca cidades e bairros através da UF, Localidade e Bairro */
   public addressRange(): Observable<any> {
-    return this.http.get<any>("v1/Igreja/v2/obter-enderecos");
+    this.addressRange$ ??= this.http
+      .get<any>("v1/Igreja/v2/obter-enderecos")
+      .pipe(shareReplay({ bufferSize: 1, refCount: false }));
+    return this.addressRange$;
   }
 
   /** Busca igrejas filtradas pelos parâmetros informados */
@@ -90,7 +97,10 @@ export class ChurchesService {
   }
 
   getInfo() {
-    return this.http.get(`v1/Igreja/infos`);
+    this.info$ ??= this.http
+      .get(`v1/Igreja/infos`)
+      .pipe(shareReplay({ bufferSize: 1, refCount: false }));
+    return this.info$;
   }
 
   /** Busca paróquia pelo slug (nomeUnico) — endpoint público v2 (legado) */

@@ -34,6 +34,7 @@ import { HomeComoFuncionaComponent } from "./sections/home-como-funciona/home-co
 import { HomeFavoritosComponent } from "./sections/home-favoritos/home-favoritos.component";
 import { HomeCidadesComponent } from "./sections/home-cidades/home-cidades.component";
 import { HomeMissasMapaComponent } from "./sections/home-missas-mapa/home-missas-mapa.component";
+import { linkParoquia } from "../../../shared/utils/church-link.utils";
 
 interface AddressData {
   [uf: string]: {
@@ -155,8 +156,16 @@ export class HomeComponent {
     }
   }
 
+  // Memo: evita realocar o array a cada ciclo de CD (relevante p/ filhos OnPush — 3.L)
+  private _proximasFiltradasCache: MassCardData[] = [];
+  private _proximasFiltradasKey = '';
   get proximasFiltradas(): MassCardData[] {
-    return this._aplicarQuickFilterCards(this.proximasMissasCards);
+    const key = `${this.quickFilter ?? ''}|${this.proximasMissasCards.length}|${this.proximasMissasCards[0]?.churchId ?? ''}`;
+    if (key !== this._proximasFiltradasKey) {
+      this._proximasFiltradasKey = key;
+      this._proximasFiltradasCache = this._aplicarQuickFilterCards(this.proximasMissasCards);
+    }
+    return this._proximasFiltradasCache;
   }
 
   private _aplicarQuickFilterChurches(igrejas: Church[]): Church[] {
@@ -476,8 +485,15 @@ export class HomeComponent {
         const d = res?.data ?? res ?? {};
         const igrejas = d.quantidadesIgrejas ?? d.quantidadeIgrejas ?? d.totalIgrejas;
         const horarios = d.quantidadeMissas ?? d.quantidadesMissas ?? d.totalMissas;
-        if (igrejas) this.stats.igrejas = igrejas;
-        if (horarios) this.stats.horarios = horarios;
+        // Nova referência (não mutar): HomeStatsComponent é OnPush e só
+        // re-renderiza quando a referência do input muda.
+        if (igrejas || horarios) {
+          this.stats = {
+            ...this.stats,
+            ...(igrejas ? { igrejas } : {}),
+            ...(horarios ? { horarios } : {}),
+          };
+        }
       },
       error: () => { /* silencioso — mantém fallback */ },
     });
@@ -1027,12 +1043,7 @@ export class HomeComponent {
 
   // Usa a URL canônica nova se houver slug+cidade; senão cai no legado /igrejas
   linkParoquia(church: any): string[] {
-    const uf = church?.endereco?.uf;
-    const cidadeSlug = church?.endereco?.cidadeSlug;
-    if (uf && cidadeSlug && church?.slug) {
-      return ["/paroquia", uf.toLowerCase(), cidadeSlug, church.slug];
-    }
-    return ["/igrejas", church?.nomeUnico];
+    return linkParoquia(church);
   }
 
   /** URL completa para compartilhamento (SEO3 revisado) */

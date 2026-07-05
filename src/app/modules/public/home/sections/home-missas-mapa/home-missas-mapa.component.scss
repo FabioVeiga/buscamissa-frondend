@@ -88,6 +88,13 @@
 
   app-city-map { display: block; min-height: 320px; }
 
+  // Reserva o espaço do mapa enquanto o @defer não dispara (evita CLS)
+  &__placeholder {
+    display: block;
+    min-height: 320px;
+    background: #f9fafb;
+  }
+
   &__full {
     display: flex;
     align-items: center;

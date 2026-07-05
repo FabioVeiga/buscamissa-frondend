@@ -164,22 +164,38 @@
   />
 
   <!-- ══ COMO FUNCIONA + NÃO ENCONTROU ══ -->
-  <app-home-como-funciona *ngIf="!resultsMode" />
+  @if (!resultsMode) {
+    @defer (on viewport) {
+      <app-home-como-funciona />
+    } @placeholder {
+      <div class="secao-defer-ph" aria-hidden="true"></div>
+    }
+  }
 
   <!-- ══ SEUS FAVORITOS ══ -->
-  <app-home-favoritos
-    *ngIf="!resultsMode"
-    [favoritas]="paroquiasFavoritas"
-    (remover)="removerFavorita($event)"
-  />
+  @if (!resultsMode) {
+    @defer (on viewport) {
+      <app-home-favoritos
+        [favoritas]="paroquiasFavoritas"
+        (remover)="removerFavorita($event)"
+      />
+    } @placeholder {
+      <div class="secao-defer-ph" aria-hidden="true"></div>
+    }
+  }
 
   <!-- ══ EXPLORE POR CIDADE ══ -->
-  <app-home-cidades
-    *ngIf="!resultsMode"
-    [cidades]="cidadesExibidas"
-    [cidadeDetectada]="cidadeDetectada"
-    [geoEncontrada]="geoStatus === 'found'"
-  />
+  @if (!resultsMode) {
+    @defer (on viewport) {
+      <app-home-cidades
+        [cidades]="cidadesExibidas"
+        [cidadeDetectada]="cidadeDetectada"
+        [geoEncontrada]="geoStatus === 'found'"
+      />
+    } @placeholder {
+      <div class="secao-defer-ph" aria-hidden="true"></div>
+    }
+  }
 
   <!-- ══ RESULTADOS: carregando / vazio ══ -->
   <div *ngIf="resultsMode && isLoading" class="resultados-feedback">
@@ -217,13 +233,14 @@
   </div>
 
   <div *ngIf="churchInfo && churchInfo.length > 0" class="resultados-cards">
-    <app-church-result-card
-      *ngFor="let church of (resultsMode ? churchInfoOrdenaFiltrado : churchInfoOrdenada)"
-      [igreja]="church"
-      [userLat]="geoLat"
-      [userLng]="geoLng"
-      (churchClick)="onResultCardClick($event)"
-    />
+    @for (church of (resultsMode ? churchInfoOrdenaFiltrado : churchInfoOrdenada); track church.id) {
+      <app-church-result-card
+        [igreja]="church"
+        [userLat]="geoLat"
+        [userLng]="geoLng"
+        (churchClick)="onResultCardClick($event)"
+      />
+    }
     <p-paginator [rows]="pageSize" [first]="(pageIndex - 1) * pageSize" [totalRecords]="totalRecordsFiltrado"
       [rowsPerPageOptions]="[5, 10, 20]" (onPageChange)="onPageChange($event)"></p-paginator>
   </div>

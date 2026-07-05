@@ -600,6 +600,14 @@ $primary-light: #fff4ed;
     border-radius: 1rem;
     overflow: hidden;
   }
+
+  // Reserva o espaço do mapa enquanto o @defer não dispara (evita CLS)
+  &__placeholder {
+    flex: 1;
+    min-height: 24rem;
+    border-radius: 1rem;
+    background: #f9fafb;
+  }
 }
 
 // ── Rodapé "Não encontrou sua paróquia?" (abaixo do mapa) ────────────────────

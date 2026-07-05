@@ -7,6 +7,12 @@ $texto-2: #6b7280;
 
 :host { display: block; }
 
+// Placeholder das seções lazy (@defer on viewport) — reserva espaço p/ evitar CLS
+.secao-defer-ph {
+  display: block;
+  min-height: 320px;
+}
+
 // ── Container central ─────────────────────────────────────────────────────────
 .page {
   max-width: 1440px;
