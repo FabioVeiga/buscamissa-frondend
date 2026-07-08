@@ -33,6 +33,21 @@
   line-gap-override: 8.92%;
 }
 
+/* ── A11y: foco visível por teclado (5.1.e) ─────────────────────────────────
+   Só dispara na navegação por teclado (:focus-visible), não no clique de mouse.
+   Cobre links e elementos custom que não tinham indicador de foco. */
+a:focus-visible,
+button:focus-visible,
+[tabindex]:focus-visible,
+.search-tab:focus-visible,
+.city-card__favoritar:focus-visible,
+.city-card__btn:focus-visible,
+.city-card__nome:focus-visible {
+  outline: 2px solid #bc5d10;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
 /* Estas páginas usam layout largo (alinhado ao header). Demais mantêm 640px de leitura. */
 .layout-main > .card:has(app-home),
 .layout-main > .card:has(app-missa-agora),
