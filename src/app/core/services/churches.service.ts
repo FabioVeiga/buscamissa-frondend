@@ -1,6 +1,7 @@
 import { HttpClient, HttpParams } from "@angular/common/http";
 import { inject, Injectable } from "@angular/core";
 import { Observable, shareReplay } from "rxjs";
+import { FilterSearchChurch } from "../interfaces/church.interface";
 
 @Injectable({
   providedIn: "root",
@@ -13,22 +14,22 @@ export class ChurchesService {
   private info$?: Observable<any>;
 
   /** Cria uma nova igreja */
-  newChurch(church: any) {
+  newChurch(church: unknown) {
     return this.http.post(`v1/Igreja`, church);
   }
 
   /** Atualiza os dados de uma igreja existente */
-  updateChurch(church: any) {
+  updateChurch(church: unknown) {
     return this.http.put(`v1/Igreja`, church);
   }
 
   /** Gera código para criar ou editar igreja */
-  generateCode(body: any) {
+  generateCode(body: unknown) {
     return this.http.post(`v1/Usuario/gerar-codigo-validador`, body);
   }
 
   /** Valida código da igreja */
-  validateCode(body: any) {
+  validateCode(body: unknown) {
     return this.http.post(`v1/CodigoValidador/validar-igreja`, body);
   }
 
@@ -58,7 +59,7 @@ export class ChurchesService {
   }
 
   /** Busca igrejas filtradas pelos parâmetros informados */
-  searchByFilters(filters: any) {
+  searchByFilters(filters: FilterSearchChurch) {
     let params = new HttpParams();
     Object.entries(filters).forEach(([key, value]) => {
       if (value !== undefined && value !== null && value !== "") {
@@ -140,7 +141,7 @@ export class ChurchesService {
       screen.width.toString(),
       screen.height.toString(),
       new Date().getTimezoneOffset().toString(),
-      (navigator as any).hardwareConcurrency?.toString() ?? ''
+      navigator.hardwareConcurrency?.toString() ?? ''
     ].join('|');
     let hash = 0;
     for (let i = 0; i < data.length; i++) {

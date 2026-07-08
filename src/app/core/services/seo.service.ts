@@ -6,6 +6,8 @@ export interface SeoData {
   title: string;
   description?: string;
   canonical?: string;
+  /** Imagem de compartilhamento específica da rota (og:image / twitter:image). */
+  image?: string;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -34,6 +36,15 @@ export class SeoService {
       this._doc.head.appendChild(link);
     }
     link.setAttribute('href', canonicalUrl);
+
+    // og:url acompanha a URL canônica da rota (evita ficar preso na home).
+    this._meta.updateTag({ property: 'og:url', content: canonicalUrl });
+
+    // og:image/twitter:image específicos da rota, quando informados.
+    if (data.image) {
+      this._meta.updateTag({ property: 'og:image', content: data.image });
+      this._meta.updateTag({ name: 'twitter:image', content: data.image });
+    }
   }
 
   /**

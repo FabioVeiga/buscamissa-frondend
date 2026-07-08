@@ -121,6 +121,7 @@ export class DetailsComponent implements OnInit {
             : `${igreja.nome} — Horários de Missa | BuscaMissa`),
           description: seo?.description ?? `Confira os horários de missa, endereço e contato da ${igreja.nome}${cidadeUf ? ' em ' + cidadeUf : ''}. Encontre missas perto de você no BuscaMissa.`,
           canonical: seo?.canonicalUrl,
+          image: igreja.imagemUrl || undefined,
         });
         this.aplicarBreadcrumbSchema(igreja);
         this.aplicarPlaceSchema(igreja);
