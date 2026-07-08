@@ -429,7 +429,6 @@ export class HomeComponent {
    * WebSite/SearchAction (habilita a sitelinks searchbox do Google).
    * title/description/canonical são aplicados centralmente pelo AppComponent via
    * route.data — não repetir aqui (a home também serve /buscar).
-   * O `sameAs` (Instagram/Facebook oficiais) pode ser adicionado quando disponível.
    */
   private _setSeo(): void {
     const base = "https://buscamissa.com.br";
@@ -440,6 +439,7 @@ export class HomeComponent {
       name: "BuscaMissa",
       url: base,
       logo: `${base}/android-chrome-512x512.png`,
+      sameAs: ["https://www.instagram.com/buscamissa/"],
     });
 
     this._seo.setJsonLd("website", {

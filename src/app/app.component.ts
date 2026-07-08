@@ -49,6 +49,9 @@ export class AppComponent implements OnInit {
           canonical: data['canonical'],
         });
       }
+      // A11y: move o foco para o <main> a cada navegação SPA, para que leitores
+      // de tela anunciem a nova página. preventScroll não interfere no scroll.
+      document.getElementById('conteudo')?.focus({ preventScroll: true });
     });
   }
 
