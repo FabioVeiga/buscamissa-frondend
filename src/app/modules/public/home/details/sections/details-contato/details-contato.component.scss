@@ -1,0 +1,69 @@
+// ── Sidebar ────────────────────────────────────────────────────────────────────
+.sidebar-card {
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.875rem;
+  overflow: hidden;
+
+  &__title {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: #1f2937;
+    padding: 0.875rem 1rem 0.625rem;
+    border-bottom: 1px solid #f3f4f6;
+  }
+}
+
+// ── Linhas de contato na sidebar ───────────────────────────────────────────────
+.contact-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  text-decoration: none;
+  transition: background 0.15s;
+  cursor: pointer;
+
+  &:hover:not(.contact-row--no-link) {
+    background: #f9fafb;
+  }
+
+  &--no-link {
+    cursor: default;
+    align-items: flex-start;
+  }
+
+  &__icon {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    flex-shrink: 0;
+
+    &--green  { background: #dcfce7; color: #16a34a; }
+    &--blue   { background: #dbeafe; color: #2563eb; }
+    &--orange { background: #ffedd5; color: #ea580c; }
+    &--purple { background: #f3e8ff; color: #7c3aed; }
+    &--social { background: #f3f4f6; color: #6b7280; }
+  }
+
+  &__label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    line-height: 1;
+  }
+
+  &__value {
+    font-size: 0.8125rem;
+    color: #374151;
+    font-weight: 500;
+    margin-top: 0.2rem;
+    line-height: 1.3;
+  }
+}

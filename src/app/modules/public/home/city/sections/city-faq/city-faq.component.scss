@@ -1,0 +1,45 @@
+// ── FAQ ───────────────────────────────────────────────────────────────────────
+.city-faq {
+  display: block;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #f0f0f0;
+
+  &__titulo {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 0.875rem;
+  }
+
+  &__item {
+    border-bottom: 1px solid #f0f0f0;
+    padding: 0.625rem 0;
+
+    &:last-child { border-bottom: none; }
+  }
+
+  &__pergunta {
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #374151;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+
+    &::-webkit-details-marker { display: none; }
+    &::after { content: '+'; color: #9ca3af; font-size: 1rem; flex-shrink: 0; }
+  }
+
+  details[open] &__pergunta::after { content: '−'; }
+
+  &__resposta {
+    font-size: 0.8125rem;
+    color: #6b7280;
+    margin: 0.5rem 0 0;
+    line-height: 1.6;
+  }
+}

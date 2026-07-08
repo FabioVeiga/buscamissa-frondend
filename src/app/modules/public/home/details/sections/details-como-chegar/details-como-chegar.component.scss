@@ -1,0 +1,12 @@
+@use '../shared' as *;
+
+// ── Como chegar (mapa + endereço lado a lado) ──────────────────────────────────
+.como-chegar-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+
+  @media (min-width: 560px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}

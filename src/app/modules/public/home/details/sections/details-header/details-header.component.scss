@@ -1,0 +1,46 @@
+@use '../shared' as *;
+
+// ── Header clean ───────────────────────────────────────────────────────────────
+.church-header {
+  display: flex;
+  flex-direction: column;   // mobile: foto como banner no topo, info abaixo
+  gap: 0;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+
+  @media (min-width: 640px) {
+    flex-direction: row;
+  }
+}
+
+.church-thumb {
+  width: 100%;
+  height: 11rem;            // banner com altura fixa no mobile (evita tira vertical)
+  flex-shrink: 0;
+
+  @media (min-width: 640px) {
+    width: 12rem;
+    height: auto;
+    min-height: 10rem;
+    align-self: stretch;    // ao lado da info: estica até a altura do bloco
+  }
+}
+
+.church-info {
+  flex: 1;
+  min-width: 0;
+
+  // O global `h1 { font-size: 2.5rem }` (assets/layout/_typography.scss) vence as
+  // utilitárias do Tailwind v4 (layered). Reafirmamos um tamanho legível aqui.
+  h1 {
+    font-size: 1.25rem;
+    line-height: 1.25;
+
+    @media (min-width: 640px) {
+      font-size: 1.375rem;
+    }
+  }
+}
