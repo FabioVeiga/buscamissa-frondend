@@ -35,6 +35,7 @@ import { HomeFavoritosComponent } from "./sections/home-favoritos/home-favoritos
 import { HomeCidadesComponent } from "./sections/home-cidades/home-cidades.component";
 import { HomeMissasMapaComponent } from "./sections/home-missas-mapa/home-missas-mapa.component";
 import { linkParoquia } from "../../../shared/utils/church-link.utils";
+import { SeoService } from "../../../core/services/seo.service";
 
 interface AddressData {
   [uf: string]: {
@@ -73,6 +74,7 @@ export class HomeComponent {
   private _favorites = inject(FavoritesService);
   private _redesSociais = inject(RedesSociaisService);
   private _geo = inject(GeolocationService);
+  private _seo = inject(SeoService);
   tiposRedeSocial: TipoRedeSocial[] = [];
 
   /** Status da geolocalização */
@@ -390,6 +392,7 @@ export class HomeComponent {
   }
 
   ngOnInit(): void {
+    this._setSeo();
     this._redesSociais.obterTipos().subscribe((tipos) => (this.tiposRedeSocial = tipos));
     this.resultsMode = !!this._route.snapshot.data['resultsMode'];
 
@@ -419,6 +422,55 @@ export class HomeComponent {
         this.form.reset();
       }
     });
+  }
+
+  /**
+   * Dados estruturados site-wide injetados a partir da home: Organization e
+   * WebSite/SearchAction (habilita a sitelinks searchbox do Google).
+   * title/description/canonical são aplicados centralmente pelo AppComponent via
+   * route.data — não repetir aqui (a home também serve /buscar).
+   * O `sameAs` (Instagram/Facebook oficiais) pode ser adicionado quando disponível.
+   */
+  private _setSeo(): void {
+    const base = "https://buscamissa.com.br";
+
+    this._seo.setJsonLd("organization", {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: "BuscaMissa",
+      url: base,
+      logo: `${base}/android-chrome-512x512.png`,
+    });
+
+    this._seo.setJsonLd("website", {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      name: "BuscaMissa",
+      url: base,
+      potentialAction: {
+        "@type": "SearchAction",
+        target: {
+          "@type": "EntryPoint",
+          urlTemplate: `${base}/buscar?busca={search_term_string}`,
+        },
+        "query-input": "required name=search_term_string",
+      },
+    });
+
+    // Breadcrumb só na página de resultados (/buscar). Na home limpa qualquer
+    // breadcrumb deixado por uma navegação anterior (details/city usam o mesmo id).
+    if (this._route.snapshot.data["resultsMode"]) {
+      this._seo.setJsonLd("breadcrumb", {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Início", item: `${base}/home` },
+          { "@type": "ListItem", position: 2, name: "Buscar", item: `${base}/buscar` },
+        ],
+      });
+    } else {
+      this._seo.removeJsonLd("breadcrumb");
+    }
   }
 
   setDefaultTimeIfNull() {
