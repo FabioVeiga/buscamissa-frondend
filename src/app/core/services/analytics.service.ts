@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter } from 'rxjs/operators';
 
-declare function gtag(...args: any[]): void;
+declare function gtag(...args: unknown[]): void;
 
 @Injectable({ providedIn: 'root' })
 export class AnalyticsService {
@@ -12,8 +12,8 @@ export class AnalyticsService {
   /** Registra pageviews automáticos em cada navegação SPA */
   initPageTracking(): void {
     this.router.events
-      .pipe(filter(e => e instanceof NavigationEnd))
-      .subscribe((e: any) => {
+      .pipe(filter((e): e is NavigationEnd => e instanceof NavigationEnd))
+      .subscribe((e) => {
         if (typeof gtag === 'undefined') return;
         gtag('event', 'page_view', { page_path: e.urlAfterRedirects });
       });

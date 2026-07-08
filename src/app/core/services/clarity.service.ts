@@ -1,5 +1,8 @@
 import { Injectable } from '@angular/core';
 
+/** Assinatura do global `clarity` injetado pelo script do Microsoft Clarity. */
+type ClarityFn = (command: string, ...args: unknown[]) => void;
+
 @Injectable({ providedIn: 'root' })
 export class ClarityService {
   /** Rota anterior — atualizada pelo AppComponent a cada NavigationEnd */
@@ -8,7 +11,9 @@ export class ClarityService {
   get prevRoute(): string { return this._prevRoute; }
   setPrevRoute(route: string): void { this._prevRoute = route; }
 
-  private get c(): any { return (window as any).clarity; }
+  private get c(): ClarityFn | undefined {
+    return (window as unknown as { clarity?: ClarityFn }).clarity;
+  }
 
   track(event: string, params?: Record<string, string | number | boolean>): void {
     if (!this.c) return;

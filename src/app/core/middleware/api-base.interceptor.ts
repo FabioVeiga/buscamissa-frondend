@@ -6,7 +6,7 @@ import { environment } from '../../../environments/environment';
 @Injectable()
 export class ApiBaseUrlInterceptor implements HttpInterceptor {
   private baseUrl = environment.config.apiURL; // Obtendo a base URL
-  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+  intercept(req: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     // Verifica se a URL já contém "http" (caso seja uma URL externa, não modifica)
     if (!req.url.startsWith('http')) {
       const modifiedReq = req.clone({

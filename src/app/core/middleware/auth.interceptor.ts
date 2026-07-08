@@ -5,7 +5,7 @@ import { environment } from '../../../environments/environment';
 
 @Injectable()
 export class AuthInterceptor implements HttpInterceptor {
-  intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
+  intercept(req: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     const token = environment.config.token;
     if (token) {
       const clonedReq = req.clone({

@@ -6,8 +6,8 @@ export interface FilterSearchChurch {
   Nome?: string;
   Ativo?: boolean;
   DiaDaSemana?: number;
-  Horario?: any;
-  HorarioFim?: any;
+  Horario?: string;
+  HorarioFim?: string;
   "Paginacao.PageIndex": number;
   "Paginacao.PageSize": number;
 }
