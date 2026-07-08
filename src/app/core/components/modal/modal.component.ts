@@ -11,6 +11,8 @@ export class ModalComponent {
   @Input() visible: boolean = false;
   @Input() header: string = '';
   @Input() closable: boolean = true;
+  /** Modal real: backdrop + focus trap + aria-modal (a11y). Habilita o dismissableMask. */
+  @Input() modal: boolean = true;
   @Input() dismissableMask: boolean = true;
   @Input() styleClass: string = '';
   @Input() contentStyle: any = {};
