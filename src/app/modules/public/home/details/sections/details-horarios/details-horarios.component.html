@@ -1,0 +1,46 @@
+<section id="horarios" class="mt-6 scroll-mt-4">
+  <h2 class="section-title">
+    <i class="pi pi-calendar text-gray-400"></i> Horários de Missa
+  </h2>
+
+  <!-- Sem missas -->
+  <div *ngIf="!missas?.length"
+       class="rounded-xl border border-dashed border-surface-300 bg-surface-50 px-6 py-8 flex flex-col items-center text-center">
+    <i class="pi pi-calendar-plus text-4xl text-gray-300 mb-3"></i>
+    <p class="text-gray-700 font-semibold">Ainda não há horários cadastrados</p>
+    <p class="text-gray-500 text-sm mt-1 max-w-md">
+      Conhece os horários? Faça sua contribuição e ajude toda a comunidade.
+    </p>
+    <button pButton type="button" icon="pi pi-plus" label="Adicionar horários"
+      class="p-button-sm mt-4" (click)="adicionarHorarios.emit()"></button>
+  </div>
+
+  <div *ngIf="missas?.length" class="flex flex-col gap-2">
+    <div *ngFor="let grupo of agendaSemana"
+         class="schedule-row"
+         [ngClass]="isHoje(grupo.dia) ? 'schedule-row--hoje' : ''">
+
+      <!-- Dia -->
+      <div class="schedule-row__day">
+        <span class="text-sm font-bold uppercase tracking-wide"
+              [ngClass]="isHoje(grupo.dia) ? 'text-primary' : 'text-gray-500'">
+          {{ grupo.label }}
+        </span>
+        <span *ngIf="isHoje(grupo.dia)" class="hoje-pill">HOJE</span>
+      </div>
+
+      <!-- Chips -->
+      <div class="flex flex-wrap gap-2 flex-1">
+        <ng-container *ngIf="grupo.missas.length; else semMissa">
+          <div *ngFor="let m of grupo.missas" class="mass-chip">
+            <span class="mass-chip__time">{{ formatarHorario(m.horario) }}</span>
+            <span *ngIf="m.observacao" class="mass-chip__obs">{{ m.observacao }}</span>
+          </div>
+        </ng-container>
+        <ng-template #semMissa>
+          <span class="text-gray-300 text-xl leading-none">—</span>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+</section>

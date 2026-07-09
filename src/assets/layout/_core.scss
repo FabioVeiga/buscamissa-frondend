@@ -4,7 +4,8 @@ html {
 }
 
 body {
-  font-family: 'Poppins', 'Lato', sans-serif;
+  // Poppins-fallback = Arial com métricas ajustadas à Poppins (anti-CLS no font swap)
+  font-family: 'Poppins', 'Poppins-fallback', 'Lato', sans-serif;
   color: var(--text-color);
   background: #f8f9fb;
   margin: 0;

@@ -1,0 +1,51 @@
+// ── Links internos: outras cidades ──────────────────────────────────────────
+.city-outras {
+  display: block;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid #f0f0f0;
+
+  &__titulo {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: #111827;
+    margin: 0 0 0.875rem;
+  }
+
+  &__lista {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  &__link {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.4rem 0.875rem;
+    border-radius: 999px;
+    border: 1.5px solid #e5e7eb;
+    background: #f9fafb;
+    color: #4b5563;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.15s;
+
+    &:hover {
+      border-color: #bc5d10;
+      color: #bc5d10;
+      background: #fff4ed;
+    }
+  }
+
+  &__todas {
+    display: inline-block;
+    margin-top: 0.875rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #bc5d10;
+    text-decoration: none;
+
+    &:hover { text-decoration: underline; }
+  }
+}

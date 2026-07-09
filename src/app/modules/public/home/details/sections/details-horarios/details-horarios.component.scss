@@ -1,0 +1,83 @@
+@use '../shared' as *;
+
+// ── Linha da agenda semanal ────────────────────────────────────────────────────
+.schedule-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.75rem;
+  transition: background 0.15s;
+
+  @media (min-width: 480px) {
+    flex-direction: row;
+    align-items: center;
+  }
+
+  &--hoje {
+    background: #fff7f0;
+    border: 2px solid #f3a06e;
+  }
+
+  &__day {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    flex-shrink: 0;
+
+    @media (min-width: 480px) {
+      width: 9rem;
+    }
+  }
+}
+
+.hoje-pill {
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 9999px;
+  background: #bc5d10;
+  color: #fff;
+  letter-spacing: 0.04em;
+}
+
+// ── Chips de horário — altura FIXA, largura AUTO ───────────────────────────────
+.mass-chip {
+  display: inline-flex;
+  flex-direction: column;
+  justify-content: center;
+  height: 3rem;          // altura fixa — todos iguais
+  min-width: 4rem;
+  padding: 0 0.75rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.625rem;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  overflow: hidden;
+
+  .schedule-row--hoje & {
+    border-color: #f3a06e;
+  }
+}
+
+.mass-chip__time {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #bc5d10;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+.mass-chip__obs {
+  font-size: 0.68rem;
+  color: #9ca3af;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 10rem;
+  margin-top: 0.1rem;
+}

@@ -3,7 +3,8 @@
 
     <!-- Logo -->
     <a routerLink="/home" [queryParams]="{}" class="bm-header__logo">
-      <img src="assets/logo.png" alt="Busca Missa" class="h-8 w-auto" />
+      <!-- width/height intrínsecos (73x71) reservam o espaço antes do download (anti-CLS) -->
+      <img src="assets/logo.png" alt="Busca Missa" width="73" height="71" class="h-8 w-auto" />
       <span class="bm-header__brand">Busca Missa</span>
     </a>
 

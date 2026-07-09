@@ -1,0 +1,41 @@
+<section id="como-chegar" class="scroll-mt-4">
+  <h2 class="section-title">
+    <i class="pi pi-map-marker text-gray-400"></i> Como chegar
+  </h2>
+
+  <div class="como-chegar-grid">
+    <!-- Mapa -->
+    <div class="rounded-xl overflow-hidden border border-surface-200 shadow-sm">
+      <iframe *ngIf="mapEmbedUrl"
+        [src]="mapEmbedUrl"
+        class="w-full h-44 block border-0"
+        loading="lazy"
+        referrerpolicy="no-referrer-when-downgrade"
+        [title]="'Mapa de ' + igreja.nome">
+      </iframe>
+    </div>
+
+    <!-- Endereço + botões -->
+    <div class="flex flex-col gap-3 justify-center">
+      <div class="flex items-start gap-2">
+        <i class="pi pi-map-marker text-gray-400 mt-0.5 shrink-0"></i>
+        <div class="text-sm text-gray-700 leading-relaxed">
+          <p class="font-medium">
+            {{ igreja.endereco?.logradouro }},
+            {{ igreja.endereco?.numero === 0 ? 'S/N' : igreja.endereco?.numero }}
+          </p>
+          <p class="text-gray-500">{{ igreja.endereco?.bairro }}, {{ igreja.endereco?.localidade }}/{{ igreja.endereco?.uf }}</p>
+          <p *ngIf="cepValido" class="text-gray-400 text-xs mt-0.5">CEP {{ igreja.endereco.cep }}</p>
+        </div>
+      </div>
+      <div class="flex gap-2 flex-wrap">
+        <a [href]="linkGoogleMaps" target="_blank" rel="noopener" class="action-btn" (click)="direcoesClick.emit()">
+          <i class="pi pi-map"></i> Abrir no Google Maps
+        </a>
+        <a [href]="linkWaze" target="_blank" rel="noopener" class="action-btn" (click)="direcoesClick.emit()">
+          <i class="pi pi-car"></i> Abrir no Waze
+        </a>
+      </div>
+    </div>
+  </div>
+</section>

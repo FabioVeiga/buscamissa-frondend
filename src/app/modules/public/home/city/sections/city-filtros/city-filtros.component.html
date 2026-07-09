@@ -1,0 +1,60 @@
+<!-- ══ FILTROS RÁPIDOS ══ -->
+<div class="city-filtros">
+  <div class="city-filtros__chips">
+    <button class="city-chip" [class.city-chip--ativo]="quickFilter === 'hoje'" (click)="quickFilterClick.emit('hoje')">
+      <i class="pi pi-calendar"></i> Hoje
+    </button>
+    <button class="city-chip" [class.city-chip--ativo]="quickFilter === 'amanha'" (click)="quickFilterClick.emit('amanha')">
+      <i class="pi pi-calendar-plus"></i> Amanhã
+    </button>
+    <button class="city-chip" [class.city-chip--ativo]="quickFilter === 'fds'" (click)="quickFilterClick.emit('fds')">
+      <i class="pi pi-sun"></i> Fim de semana
+    </button>
+    <button class="city-chip city-chip--outline" [class.city-chip--ativo]="mostrarFiltrosAvancados"
+      (click)="mostrarFiltrosAvancados = !mostrarFiltrosAvancados">
+      <i class="pi pi-sliders-h"></i> Mais filtros
+    </button>
+  </div>
+  <button *ngIf="temFiltroAtivo" class="city-filtros__limpar" (click)="limparClick.emit()">
+    <i class="pi pi-times"></i> Limpar
+  </button>
+</div>
+
+<!-- ══ LINHA: PERÍODO + ORDENAR ══ -->
+<div class="city-periodo-row">
+  <div class="city-periodo-chips">
+    <button *ngFor="let p of periodos" class="city-chip city-chip--sm city-chip--periodo"
+      [class.city-chip--ativo]="periodoAtivo === p.slug"
+      (click)="periodoClick.emit(p.slug)">
+      <ng-container [ngSwitch]="p.slug">
+        <i *ngSwitchCase="'manha'" class="pi pi-sun"></i>
+        <i *ngSwitchCase="'tarde'" class="pi pi-sun"></i>
+        <i *ngSwitchCase="'noite'" class="pi pi-moon"></i>
+      </ng-container>
+      {{ p.label }}
+    </button>
+  </div>
+  <div class="city-sort" *ngIf="mostrarOrdenacao">
+    <span class="city-sort__label">Ordenar por:</span>
+    <select class="city-sort__select" (change)="ordenacaoChange.emit($any($event.target).value)" [value]="ordenacaoAtiva">
+      <option value="proxima-missa">Próxima missa</option>
+      <option value="az">A → Z</option>
+      <option value="za">Z → A</option>
+      <option value="proximidade" [disabled]="!temGeolocalizacao">Mais próximas</option>
+    </select>
+  </div>
+</div>
+
+<!-- ══ FILTROS AVANÇADOS (dias da semana) ══ -->
+<div class="city-filtros-avancados" *ngIf="mostrarFiltrosAvancados">
+  <div class="city-filtros-avancados__grupo">
+    <span class="city-filtros-avancados__label">Dia</span>
+    <div class="city-filtros-avancados__chips">
+      <button *ngFor="let d of dias" class="city-chip city-chip--sm"
+        [class.city-chip--ativo]="diaAtivo === d.idx"
+        (click)="diaClick.emit(d.idx)">
+        {{ d.label }}
+      </button>
+    </div>
+  </div>
+</div>

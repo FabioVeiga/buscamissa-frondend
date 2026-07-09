@@ -1,0 +1,90 @@
+<app-modal
+  [visible]="visible"
+  (visibleChange)="visibleChange.emit($event)"
+  header="Reportar problema"
+  [styleClass]="'reportar-problema-modal'"
+  (onHide)="fechar()">
+  <div class="flex flex-col gap-4" style="min-width: 280px; max-width: 34rem;">
+
+    <div>
+      <h3 class="flex items-center gap-2 text-base font-bold text-gray-800">
+        <i class="pi pi-exclamation-triangle text-amber-500"></i>
+        Encontrou alguma informação incorreta?
+      </h3>
+      <p class="text-sm text-gray-500 mt-1">
+        Ajude-nos a manter as informações desta igreja sempre atualizadas. Se identificar algum dado incorreto
+        ou desatualizado, informe abaixo. Nossa equipe analisará sua sugestão.
+      </p>
+    </div>
+
+    <div class="rounded-lg bg-blue-50 border border-blue-100 px-3 py-2 text-xs text-blue-700 flex items-start gap-1.5">
+      <i class="pi pi-info-circle mt-0.5 shrink-0"></i>
+      <span>
+        Deseja corrigir horários de missa, fotos ou outras informações da igreja? Utilize o botão
+        "Realizar alteração", onde é possível enviar uma proposta completa de atualização. Este formulário é
+        indicado para comunicar erros ou informações que não podem ser alteradas diretamente.
+      </span>
+    </div>
+
+    <div>
+      <p class="text-sm font-semibold text-gray-700 mb-2">O que deseja informar?</p>
+
+      <div class="flex flex-col gap-3">
+        <div *ngFor="let item of itensReportar">
+          <div class="flex items-start gap-2">
+            <p-checkbox [(ngModel)]="item.marcado" [binary]="true" [inputId]="'item-' + item.key" [name]="item.key"></p-checkbox>
+            <label [for]="'item-' + item.key" class="flex items-center gap-1.5 text-sm font-medium text-gray-700 cursor-pointer">
+              <i class="pi" [ngClass]="item.icon"></i> {{ item.label }}
+            </label>
+          </div>
+          <p *ngIf="item.subtitle" class="text-xs text-gray-400 ml-7">{{ item.subtitle }}</p>
+
+          <ng-container *ngIf="item.marcado">
+            <textarea *ngIf="!item.especial" pTextarea rows="2"
+              class="mt-1.5" style="width: calc(100% - 1.75rem); margin-left: 1.75rem;"
+              [(ngModel)]="item.texto" [name]="item.key + '-texto'" [placeholder]="item.placeholder"></textarea>
+
+            <div *ngIf="item.especial" class="mt-1.5 rounded-lg bg-surface-50 border border-surface-100 px-3 py-2 flex flex-col gap-2"
+                 style="margin-left: 1.75rem;">
+              <p class="text-xs text-gray-500 flex items-start gap-1.5">
+                <i class="pi pi-info-circle mt-0.5 shrink-0"></i>
+                Os horários de missa podem ser atualizados diretamente pelo botão "Realizar alteração". Esse
+                processo é mais rápido e permite que sua sugestão seja analisada com todas as informações
+                necessárias.
+              </p>
+              <button pButton type="button" label="Ir para alterar informações" icon="pi pi-arrow-right"
+                class="p-button-sm self-start" (click)="irParaAlterarInformacoes()"></button>
+            </div>
+          </ng-container>
+        </div>
+      </div>
+    </div>
+
+    <div class="border-t border-surface-100 pt-3">
+      <p class="text-sm font-semibold text-gray-700 mb-2">Seus dados</p>
+      <div class="flex flex-col gap-3">
+        <div class="field">
+          <p-iftalabel>
+            <input type="text" pInputText id="reportar-nome" name="reportarNome" class="w-full" [(ngModel)]="reportarNome" />
+            <label htmlFor="reportar-nome">Nome *</label>
+          </p-iftalabel>
+        </div>
+        <div class="field">
+          <p-iftalabel>
+            <input type="email" pInputText id="reportar-email" name="reportarEmail" class="w-full" [(ngModel)]="reportarEmail" />
+            <label htmlFor="reportar-email">E-mail *</label>
+          </p-iftalabel>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex justify-end gap-2 mt-1">
+      <button pButton type="button" label="Cancelar" class="p-button-text"
+        (click)="fechar()"></button>
+      <button pButton type="button" label="Enviar sugestão" icon="pi pi-send"
+        [disabled]="!valido"
+        [loading]="enviando"
+        (click)="enviar()"></button>
+    </div>
+  </div>
+</app-modal>

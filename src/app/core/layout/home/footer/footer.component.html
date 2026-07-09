@@ -5,7 +5,8 @@
     <!-- Logo -->
     <div class="flex items-center gap-2">
       <a [routerLink]="['/']" class="flex items-center gap-2">
-        <img src="assets/logo.png" alt="Busca Missa" class="h-7 w-auto" />
+        <!-- width/height intrínsecos (73x71) reservam o espaço antes do download (anti-CLS) -->
+        <img src="assets/logo.png" alt="Busca Missa" width="73" height="71" class="h-7 w-auto" />
         <h5 class="text-lg font-semibold">Busca Missa</h5>
       </a>
     </div>
@@ -29,9 +30,17 @@
     </nav>
     
 
-    <!-- Créditos -->
-    <div class="text-xs text-gray-400 mt-4 md:mt-0 text-center md:text-right">
-      © {{ currentYear }} BuscaMissa. Todos os direitos reservados.
+    <!-- Redes sociais + Créditos -->
+    <div class="flex flex-col items-center md:items-end gap-2 mt-4 md:mt-0">
+      <a href="https://www.instagram.com/buscamissa/" target="_blank" rel="noopener noreferrer"
+        aria-label="Instagram do BuscaMissa"
+        class="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition">
+        <i class="pi pi-instagram" aria-hidden="true"></i>
+        <span>&#64;buscamissa</span>
+      </a>
+      <div class="text-xs text-gray-400 text-center md:text-right">
+        © {{ currentYear }} BuscaMissa. Todos os direitos reservados.
+      </div>
     </div>
     
   </div>

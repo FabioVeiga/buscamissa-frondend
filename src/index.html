@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
   <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -70,7 +70,8 @@
       content="Plataforma para encontrar igrejas católicas e horários de missa. Cadastre uma nova igreja se não encontrar a sua!"
     />
     <meta property="og:image" content="/assets/images/og-image.jpg" />
-    <meta property="og:url" content="https://buscamissa.com.br" />
+    <!-- og:url é definido por rota pelo SeoService (= canonical da página).
+         Não declarar estático aqui: no HTML inicial (SPA sem SSR) apontaria a home em toda URL. -->
     <meta property="og:type" content="website" />
 
     <!-- Twitter Card -->
@@ -91,8 +92,10 @@
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
     <link rel="manifest" href="/site.webmanifest" />
 
-    <!-- Canonical -->
-    <link rel="canonical" href="https://buscamissa.com.br/" />
+    <!-- Canonical definido por rota pelo SeoService (self-referente por URL).
+         Sem canonical estático: no HTML inicial (SPA sem SSR) declararia a home
+         para TODA página, causando "Duplicate, Google chose different canonical". -->
+
 
     <!-- Fonte da aplicação: Poppins (pesos utilizados, sem itálico) -->
     <!-- Carregada fora do caminho crítico de render: preload + troca p/ stylesheet no onload -->

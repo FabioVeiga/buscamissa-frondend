@@ -1,0 +1,49 @@
+// Estilos compartilhados entre as seções da página de detalhes (auditoria 2.x)
+
+// ── Títulos de seção ───────────────────────────────────────────────────────────
+.section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin-bottom: 0.75rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+// ── Botões de ação ─────────────────────────────────────────────────────────────
+.action-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.9rem;
+  border-radius: 0.5rem;
+  background: #f3f4f6;
+  color: #374151;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+  text-decoration: none;
+
+  &:hover {
+    background: #fff4ed;
+    border-color: #bc5d10;
+    color: #bc5d10;
+  }
+
+  &--fav {
+    background: #f9fafb;
+    border-color: #e5e7eb;
+    color: #374151;
+  }
+
+  &--fav-ativo {
+    background: #fff4ed;
+    border-color: #bc5d10;
+    color: #bc5d10;
+
+    .pi { color: #e0245e; }
+  }
+}
