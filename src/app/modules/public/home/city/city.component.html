@@ -105,8 +105,15 @@
           <button (click)="limparFiltros()">Limpar filtros</button>
         </div>
 
+        <!-- Erro de carregamento (rede/API) -->
+        <div *ngIf="erroCarregar" class="city-vazio">
+          <i class="pi pi-wifi"></i>
+          <p>Não foi possível carregar as paróquias. Verifique sua conexão.</p>
+          <button type="button" (click)="carregar()">Tentar novamente</button>
+        </div>
+
         <!-- Vazio geral -->
-        <div *ngIf="naoEncontrado && !igrejas.length" class="city-vazio">
+        <div *ngIf="naoEncontrado && !igrejas.length && !erroCarregar" class="city-vazio">
           <i class="pi pi-search"></i>
           <p>Nenhuma paróquia cadastrada em {{ cidadeNome }} ainda.</p>
           <a routerLink="/nova">Cadastrar paróquia</a>

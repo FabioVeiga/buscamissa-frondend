@@ -10,6 +10,14 @@
     <p-skeleton height="1rem" *ngFor="let i of [1,2,3,4]" width="80%"></p-skeleton>
   </div>
 
+  <!-- Erro de carregamento (rede/API) -->
+  <div *ngIf="!isLoading && erroCarregar" class="flex flex-col items-center gap-2 py-16 text-center">
+    <i class="pi pi-wifi text-4xl text-gray-300"></i>
+    <p class="text-sm text-gray-500 m-0">Não foi possível carregar os dados da igreja. Verifique sua conexão.</p>
+    <button type="button" pButton label="Tentar novamente" icon="pi pi-refresh"
+      class="p-button-sm p-button-outlined mt-2" (click)="tentarNovamente()"></button>
+  </div>
+
   <ng-container *ngIf="!isLoading && churchInfo">
 
     <!-- Breadcrumb -->

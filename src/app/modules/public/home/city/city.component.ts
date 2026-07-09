@@ -57,6 +57,8 @@ export class CityComponent implements OnInit, OnDestroy {
   igrejasFiltradas: any[] = [];
   trackByIgrejaId = (_: number, igreja: any): number => igreja.id;
   naoEncontrado = false;
+  /** Erro de rede/API ao carregar — mostra estado com "Tentar novamente" (≠ cidade sem paróquias) */
+  erroCarregar = false;
   faqs: { pergunta: string; resposta: string }[] = [];
 
   favoritasIds: number[] = [];
@@ -119,6 +121,7 @@ export class CityComponent implements OnInit, OnDestroy {
   carregar(): void {
     this.isLoading = true;
     this.naoEncontrado = false;
+    this.erroCarregar = false;
     this._church.getByCidade(this.uf, this.cidade).pipe(
       finalize(() => { this.isLoading = false; })
     ).subscribe({
@@ -165,7 +168,8 @@ export class CityComponent implements OnInit, OnDestroy {
         }
       },
       error: () => {
-        this.naoEncontrado = true;
+        // Erro de rede/API ≠ "cidade sem paróquias": estado próprio com retry
+        this.erroCarregar = true;
         this._seo.update({ title: `Missas em ${this.cidade}/${this.uf?.toUpperCase()} | BuscaMissa` });
       },
     });

@@ -202,7 +202,15 @@
     <i class="pi pi-spin pi-spinner"></i>
     <span>Buscando igrejas…</span>
   </div>
-  <div *ngIf="resultsMode && !isLoading && churchInfo.length === 0" class="resultados-feedback resultados-feedback--vazio">
+  <div *ngIf="resultsMode && !isLoading && erroBusca" class="resultados-feedback resultados-feedback--vazio">
+    <i class="pi pi-wifi"></i>
+    <p class="resultados-feedback__titulo">Não foi possível buscar as igrejas.</p>
+    <p class="resultados-feedback__sub">Verifique sua conexão e tente novamente.</p>
+    <button type="button" class="btn-primary resultados-feedback__cadastro-btn" (click)="searchFilter(false)">
+      <i class="pi pi-refresh"></i> Tentar novamente
+    </button>
+  </div>
+  <div *ngIf="resultsMode && !isLoading && !erroBusca && churchInfo.length === 0" class="resultados-feedback resultados-feedback--vazio">
     <i class="pi pi-search"></i>
     <p class="resultados-feedback__titulo">Nenhuma igreja encontrada para os filtros aplicados.</p>
     <p class="resultados-feedback__sub">Tente ampliar a busca — remova o bairro, o dia ou o horário.</p>
