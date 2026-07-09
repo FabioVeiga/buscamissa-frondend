@@ -1,5 +1,6 @@
 import { Component, DestroyRef, inject } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
+import { finalize } from "rxjs/operators";
 import { CommonModule, DatePipe } from "@angular/common";
 import {
   FormGroup,
@@ -257,6 +258,8 @@ export class HomeComponent {
   public isLoadingCities = false;
   public isLoadingDistricts = false;
   public showNoChurchCard = false;
+  /** Erro de rede/API na busca — mostra estado com "Tentar novamente" (≠ busca sem resultados) */
+  public erroBusca = false;
 
   public totalRecords: any;
 
@@ -485,7 +488,19 @@ export class HomeComponent {
   public getAddress(): void {
     this.isLoadingAddress = true;
 
-    this._churchService.addressRange().subscribe({
+    // finalize (não complete): se o addressRange falhar, a continuação PRECISA rodar
+    // mesmo assim — senão a busca da URL (/buscar?uf=...) nunca dispara e o usuário
+    // vê o vazio enganoso "Nenhuma igreja encontrada" em vez do estado de erro.
+    this._churchService.addressRange().pipe(
+      finalize(() => {
+        this.isLoadingAddress = false;
+        this._restoreFromQueryParams();
+        if (!this.resultsMode) {
+          this._loadProximasMissas();
+          this._requestGeolocation();
+        }
+      })
+    ).subscribe({
       next: ({ data }: { data: AddressData }) => {
         this.fullAddressData = data;
         this.statesList = Object.keys(data).map((sigla) => {
@@ -502,14 +517,6 @@ export class HomeComponent {
           summary: "Erro ao carregar dados",
           detail: "Não foi possível carregar as cidades e bairros.",
         });
-      },
-      complete: () => {
-        this.isLoadingAddress = false;
-        this._restoreFromQueryParams();
-        if (!this.resultsMode) {
-          this._loadProximasMissas();
-          this._requestGeolocation();
-        }
       },
     });
   }
@@ -791,7 +798,9 @@ export class HomeComponent {
   public onStateChange(event: any): void {
     this.selectedState = event.value;
     if (this.selectedState) {
-      const cities = Object.keys(this.fullAddressData[this.selectedState]);
+      // Guarda: se o addressRange falhou, fullAddressData é undefined — não pode
+      // derrubar o fluxo (a busca da URL ainda precisa rodar e mostrar o erro dela)
+      const cities = Object.keys(this.fullAddressData?.[this.selectedState] ?? {});
       this.citiesList = cities.map((city) => ({
         label: city,
         value: city,
@@ -809,7 +818,7 @@ export class HomeComponent {
     this.selectedCity = event.value;
     if (this.selectedState && this.selectedCity) {
       const districts =
-        this.fullAddressData[this.selectedState][this.selectedCity];
+        this.fullAddressData?.[this.selectedState]?.[this.selectedCity] ?? [];
       this.districtsList = districts.map((district) => ({
         label: district,
         value: district,
@@ -875,6 +884,7 @@ export class HomeComponent {
     if (resetPage) this.pageIndex = 1;
 
     this.isLoading = true;
+    this.erroBusca = false;
     this.churchInfo = [];
 
     const params = this._buildFilterQueryParams();
@@ -914,7 +924,8 @@ export class HomeComponent {
       },
       error: (err: HttpErrorResponse) => {
         this.isLoading = false;
-        if (err.error.status === 404) {
+        // Acesso seguro: em erro de rede err.error é ProgressEvent/null (sem .status)
+        if (err?.error?.status === 404 || err?.status === 404) {
           this._toast.add({
             severity: "warn",
             summary: "Nenhuma igreja encontrada",
@@ -922,11 +933,8 @@ export class HomeComponent {
           });
           this.showNoChurchCard = true;
         } else {
-          this._toast.add({
-            severity: "error",
-            summary: "Erro na busca",
-            detail: "Não foi possível buscar igrejas.",
-          });
+          // Estado de erro persistente na página (com retry) — toast some
+          this.erroBusca = true;
           this.showNoChurchCard = false;
         }
       },

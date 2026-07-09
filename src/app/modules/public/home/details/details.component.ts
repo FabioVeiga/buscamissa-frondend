@@ -65,6 +65,10 @@ export class DetailsComponent implements OnInit {
   isLoading = false;
   nomeUnico: string | null = null;
   churchInfo: any;
+  /** Erro de rede/API ao carregar — mostra estado com "Tentar novamente" */
+  erroCarregar = false;
+  /** Última requisição (cold observable do HttpClient) — reusada pelo retry */
+  private _reqAtual: import("rxjs").Observable<any> | null = null;
 
   // Favorito
   isFavorita = false;
@@ -91,8 +95,15 @@ export class DetailsComponent implements OnInit {
     });
   }
 
+  /** Refaz a última requisição após um erro de carregamento. */
+  tentarNovamente(): void {
+    if (this._reqAtual) this.carregar(this._reqAtual);
+  }
+
   private carregar(req: import("rxjs").Observable<any>): void {
+    this._reqAtual = req;
     this.isLoading = true;
+    this.erroCarregar = false;
     req.pipe(
       finalize(() => { this.isLoading = false; })
     ).subscribe({
@@ -126,8 +137,9 @@ export class DetailsComponent implements OnInit {
         this.aplicarBreadcrumbSchema(igreja);
         this.aplicarPlaceSchema(igreja);
       },
-      error: (error) => {
-        this._toast.add({ severity: "error", summary: "Erro", detail: "Erro ao carregar dados da igreja." });
+      error: () => {
+        // Estado de erro na página (com retry) — toast some e deixava a tela em branco
+        this.erroCarregar = true;
       },
     });
   }
