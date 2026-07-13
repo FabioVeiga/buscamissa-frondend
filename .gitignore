@@ -44,3 +44,6 @@ ajuda/*
 
 # Sitemap gerado em build — não versionar
 /public/sitemap.xml
+
+# Claude Code — tooling e skills locais (não versionar, não vai para prod)
+.claude/
