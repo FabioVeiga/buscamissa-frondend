@@ -44,3 +44,6 @@ ajuda/*
 
 # Sitemap gerado em build — não versionar
 /public/sitemap.xml
+
+# Claude Code — apenas config pessoal local (skills e launch.json são versionados)
+.claude/settings.local.json
