@@ -19,22 +19,45 @@
     <link rel="preconnect" href="https://busca-missa.azurewebsites.net" />
     <link rel="dns-prefetch" href="https://tag.goadopt.io" />
 
-    <!-- Microsoft Clarity -->
-    <script type="text/javascript">
-      (function(c,l,a,r,i,t,y){
-          c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-          t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-          y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-      })(window, document, "clarity", "script", "xctugfdm46");
-    </script>
-
-    <!-- Google Analytics (GA4) -->
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-CGY94P6KSN"></script>
+    <!-- LGPD: Google Consent Mode com tudo negado por padrão.
+         O AdOpt (CMP) atualiza os sinais para "granted" quando o usuário consente;
+         até lá o GA4 opera sem cookies (pings anônimos do Consent Mode). -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
+      gtag('consent', 'default', {
+        ad_storage: 'denied',
+        ad_user_data: 'denied',
+        ad_personalization: 'denied',
+        analytics_storage: 'denied'
+      });
       gtag('js', new Date());
       gtag('config', 'G-CGY94P6KSN');
+    </script>
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-CGY94P6KSN"></script>
+
+    <!-- Microsoft Clarity — só carrega após decisão de consentimento no AdOpt
+         (callback documentado window.adoptCB). Sem consentimento, não carrega. -->
+    <script type="text/javascript">
+      (function () {
+        var clarityIniciado = false;
+        function iniciarClarity() {
+          if (clarityIniciado) return;
+          clarityIniciado = true;
+          (function(c,l,a,r,i,t,y){
+              c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+              t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+              y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+          })(window, document, "clarity", "script", "xctugfdm46");
+        }
+        var adoptCBAnterior = window.adoptCB;
+        window.adoptCB = function (consent) {
+          if (typeof adoptCBAnterior === 'function') adoptCBAnterior(consent);
+          if (consent && consent.optInTags && consent.optInTags.length > 0) {
+            iniciarClarity();
+          }
+        };
+      })();
     </script>
 
     <meta
@@ -51,10 +74,6 @@
     <meta
       name="description"
       content="Busque missas perto de você ou cadastre novas paróquias e comunidades. Encontre horários de missa e eventos religiosos."
-    />
-    <meta
-      name="keywords"
-      content="igreja católica, missa, paróquia, BuscaMissa, encontrar missa, horários de missa, eventos católicos, cadastrar igreja"
     />
     <meta name="robots" content="index, follow" />
     <meta name="author" content="BuscaMissa" />
