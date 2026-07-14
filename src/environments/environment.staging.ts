@@ -8,14 +8,12 @@ export const environment = {
   },
   config: {
     production: false,
-    apiURL: "https://busca-missa-dev.azurewebsites.net/api/",
-    // Token App rotacionado (SecretApp novo do Key Vault de dev), já com claims iss/aud.
-    // Requer restart do App Service busca-missa-dev para recarregar o secret.
+    apiURL: "https://app-buscamissa-dev-api-public.azurewebsites.net/api/",
+    // Token App (SecretApp do Key Vault de dev), já com claims iss/aud.
     token:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImRyb2lkYmluaG9AZ21haWwuY29tIiwicm9sZSI6IkFwcCIsIm5iZiI6MTc4MzE2NTczOCwiZXhwIjoyMDk4Nzg0OTM4LCJpYXQiOjE3ODMxNjU3MzgsImlzcyI6IkJ1c2NhTWlzc2EiLCJhdWQiOiJCdXNjYU1pc3NhQXBpIn0.OrQTwTkloZMHvRk-C4IcAZ5I6M3gtWXmv3uGksTrmD4",
   },
-  // Desligado enquanto staging apontar pro monólito (sem os endpoints de
-  // desafio). Ligar junto com o cutover para o api-public.
+  // Validação por desafio matemático (api-public tem os endpoints de desafio)
   features: {
-    validacaoSemEmail: false,
+    validacaoSemEmail: true,
   },
 };
