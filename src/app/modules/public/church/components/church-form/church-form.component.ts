@@ -83,6 +83,44 @@ export class ChurchFormComponent implements OnInit, OnChanges {
     { key: 6, label: "Sábado" },
   ];
 
+  // UFs padronizadas — usadas quando o CEP não resolve cidade/estado, para o
+  // usuário selecionar em vez de digitar livremente.
+  ufs: { sigla: string; nome: string; regiao: string }[] = [
+    { sigla: "AC", nome: "Acre", regiao: "Norte" },
+    { sigla: "AL", nome: "Alagoas", regiao: "Nordeste" },
+    { sigla: "AP", nome: "Amapá", regiao: "Norte" },
+    { sigla: "AM", nome: "Amazonas", regiao: "Norte" },
+    { sigla: "BA", nome: "Bahia", regiao: "Nordeste" },
+    { sigla: "CE", nome: "Ceará", regiao: "Nordeste" },
+    { sigla: "DF", nome: "Distrito Federal", regiao: "Centro-Oeste" },
+    { sigla: "ES", nome: "Espírito Santo", regiao: "Sudeste" },
+    { sigla: "GO", nome: "Goiás", regiao: "Centro-Oeste" },
+    { sigla: "MA", nome: "Maranhão", regiao: "Nordeste" },
+    { sigla: "MT", nome: "Mato Grosso", regiao: "Centro-Oeste" },
+    { sigla: "MS", nome: "Mato Grosso do Sul", regiao: "Centro-Oeste" },
+    { sigla: "MG", nome: "Minas Gerais", regiao: "Sudeste" },
+    { sigla: "PA", nome: "Pará", regiao: "Norte" },
+    { sigla: "PB", nome: "Paraíba", regiao: "Nordeste" },
+    { sigla: "PR", nome: "Paraná", regiao: "Sul" },
+    { sigla: "PE", nome: "Pernambuco", regiao: "Nordeste" },
+    { sigla: "PI", nome: "Piauí", regiao: "Nordeste" },
+    { sigla: "RJ", nome: "Rio de Janeiro", regiao: "Sudeste" },
+    { sigla: "RN", nome: "Rio Grande do Norte", regiao: "Nordeste" },
+    { sigla: "RS", nome: "Rio Grande do Sul", regiao: "Sul" },
+    { sigla: "RO", nome: "Rondônia", regiao: "Norte" },
+    { sigla: "RR", nome: "Roraima", regiao: "Norte" },
+    { sigla: "SC", nome: "Santa Catarina", regiao: "Sul" },
+    { sigla: "SP", nome: "São Paulo", regiao: "Sudeste" },
+    { sigla: "SE", nome: "Sergipe", regiao: "Nordeste" },
+    { sigla: "TO", nome: "Tocantins", regiao: "Norte" },
+  ];
+
+  // Estado da seleção padronizada de cidade/UF (quando o CEP não os resolve)
+  ufSelecionavel = false;
+  cidadeSelecionavel = false;
+  cidades: string[] = [];
+  carregandoCidades = false;
+
   ngOnInit(): void {
     this.initForm();
 
@@ -191,6 +229,94 @@ export class ChurchFormComponent implements OnInit, OnChanges {
     // Número e Complemento geralmente ficam habilitados
     this.form.get("numero")?.enable();
     this.form.get("complemento")?.enable();
+  }
+
+  /**
+   * Aplica o endereço retornado pela busca de CEP: campos que vieram
+   * preenchidos ficam travados; campos vazios (ex: logradouro em CEP genérico
+   * de cidade) ficam liberados para o usuário completar. Cidade/Estado nunca
+   * são texto livre — quando ausentes, viram seleção padronizada (UF fixa +
+   * municípios do IBGE).
+   */
+  applyCepAddress(address: any): void {
+    this.form.patchValue({
+      cep: address.cep,
+      endereco: address.logradouro,
+      complemento: address.complemento,
+      bairro: address.bairro,
+      cidade: address.localidade,
+      estado: address.estado,
+      uf: address.uf,
+      regiao: address.regiao,
+    });
+
+    const travarSePreenchido = (campo: string, valor: any) => {
+      const control = this.form.get(campo);
+      if (!control) return;
+      if (valor && String(valor).trim() !== "") control.disable({ emitEvent: false });
+      else control.enable({ emitEvent: false });
+    };
+
+    travarSePreenchido("endereco", address.logradouro);
+    travarSePreenchido("bairro", address.bairro);
+    this.form.get("complemento")?.enable({ emitEvent: false });
+    this.form.get("numero")?.enable({ emitEvent: false });
+
+    // Estado e Região são sempre derivados (da UF) — nunca digitados.
+    this.form.get("estado")?.disable({ emitEvent: false });
+    this.form.get("regiao")?.disable({ emitEvent: false });
+
+    if (address.uf && String(address.uf).trim() !== "") {
+      this.ufSelecionavel = false;
+      this.form.get("uf")?.disable({ emitEvent: false });
+
+      if (address.localidade && String(address.localidade).trim() !== "") {
+        this.cidadeSelecionavel = false;
+        this.form.get("cidade")?.disable({ emitEvent: false });
+      } else {
+        // UF veio, cidade não: dropdown padronizado de municípios da UF
+        this.habilitarSelecaoCidade(address.uf);
+      }
+    } else {
+      // Nem UF veio: usuário seleciona a UF (dropdown fixo) e depois a cidade
+      this.ufSelecionavel = true;
+      this.cidadeSelecionavel = false;
+      this.form.get("uf")?.enable({ emitEvent: false });
+      this.form.get("cidade")?.disable({ emitEvent: false });
+    }
+    this.cd.markForCheck();
+  }
+
+  /** Usuário escolheu a UF no dropdown: deriva estado/região e carrega municípios. */
+  onUfSelecionada(sigla: string): void {
+    const uf = this.ufs.find((x) => x.sigla === sigla);
+    if (!uf) return;
+    this.form.patchValue({ estado: uf.nome, regiao: uf.regiao, cidade: "" });
+    this.habilitarSelecaoCidade(sigla);
+  }
+
+  // Municípios padronizados do IBGE. fetch() direto de propósito: os
+  // interceptors do HttpClient anexam Authorization/baseURL, que não se
+  // aplicam a uma API externa.
+  private habilitarSelecaoCidade(uf: string): void {
+    this.cidadeSelecionavel = true;
+    this.carregandoCidades = true;
+    this.form.get("cidade")?.enable({ emitEvent: false });
+    this.cd.markForCheck();
+
+    fetch(`https://servicodados.ibge.gov.br/api/v1/localidades/estados/${uf}/municipios?orderBy=nome`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`IBGE ${r.status}`))))
+      .then((municipios: { nome: string }[]) => {
+        this.cidades = municipios.map((m) => m.nome);
+      })
+      .catch((err) => {
+        this.logger.logWarning(`Falha ao carregar municípios do IBGE: ${err}`, "church-form");
+        this.cidades = [];
+      })
+      .finally(() => {
+        this.carregandoCidades = false;
+        this.cd.markForCheck();
+      });
   }
 
   get horarios(): FormArray {

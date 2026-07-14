@@ -6,7 +6,7 @@
 <div class="container text-center">
   <p-toast position="top-right"></p-toast>
   <h3>Validação de usuário</h3>
-  <div>
+  <div *ngIf="!validacaoSemEmail">
     Para prosseguir com a alteração ou criação da Igreja, precisamos confirmar o
     seu e-mail, preencha os campos abaixo e você receberá um código.
     <div class="mt-4">
@@ -17,6 +17,11 @@
         >
       </small>
     </div>
+  </div>
+  <div *ngIf="validacaoSemEmail">
+    Para prosseguir com a alteração ou criação da Igreja, precisamos dos seus
+    dados. Preencha os campos abaixo e confirme respondendo uma pergunta rápida
+    na próxima etapa.
   </div>
   <form [formGroup]="form" class="flex flex-wrap gap-4">
     <p-inputgroup>

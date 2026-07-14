@@ -33,6 +33,16 @@ export class ChurchesService {
     return this.http.post(`v1/CodigoValidador/validar-igreja`, body);
   }
 
+  /** Obtém o desafio matemático de validação (feature validacaoSemEmail) */
+  getDesafio(controleId: number) {
+    return this.http.get(`v1/CodigoValidador/desafio/${controleId}`);
+  }
+
+  /** Valida a contribuição respondendo o desafio (feature validacaoSemEmail) */
+  validateDesafio(body: any) {
+    return this.http.post(`v1/CodigoValidador/validar-igreja-desafio`, body);
+  }
+
   /** Busca igrejas próximas pelo CEP */
   searchByCEP(cep: string) {
     return this.http.get(`v1/Igreja/buscar-por-cep?cep=${cep}`);

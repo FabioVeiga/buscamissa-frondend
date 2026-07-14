@@ -4,8 +4,36 @@
   <p></p>
 </div>
 <div class="auth-container text-center">
-  <form [formGroup]="form">
-    <p-toast position="top-right"></p-toast>
+  <p-toast position="top-right"></p-toast>
+
+  <!-- Validação por desafio matemático (validacaoSemEmail) -->
+  <form *ngIf="validacaoSemEmail" [formGroup]="formDesafio">
+    <div class="flex flex-col items-center">
+      <h3>Confirmação rápida</h3>
+      <p class="text-muted-color block mb-8">
+        Para confirmar sua contribuição, responda a pergunta abaixo:
+      </p>
+      <p class="text-xl font-semibold mb-4">{{ perguntaDesafio }}</p>
+      <p-inputnumber
+        formControlName="resposta"
+        inputId="resposta-desafio"
+        [useGrouping]="false"
+        placeholder="Sua resposta"
+      />
+      <div class="flex justify-between mt-8 self-stretch">
+        <p-button
+          label="Nova pergunta"
+          [link]="true"
+          class="p-0"
+          (click)="carregarDesafio()"
+        />
+        <p-button label="Confirmar" (click)="validarDesafio()" />
+      </div>
+    </div>
+  </form>
+
+  <!-- Validação por código enviado por e-mail (fluxo original) -->
+  <form *ngIf="!validacaoSemEmail" [formGroup]="form">
     <div class="flex flex-col items-center">
       <h3>Confirmação de usuário</h3>
       <p class="text-muted-color block mb-8">
