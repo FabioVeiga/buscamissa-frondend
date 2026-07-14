@@ -13,4 +13,9 @@ export const environment = {
     // Requer restart do App Service busca-missa-dev para recarregar o secret.
     token:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImRyb2lkYmluaG9AZ21haWwuY29tIiwicm9sZSI6IkFwcCIsIm5iZiI6MTc4MzE2NTczOCwiZXhwIjoyMDk4Nzg0OTM4LCJpYXQiOjE3ODMxNjU3MzgsImlzcyI6IkJ1c2NhTWlzc2EiLCJhdWQiOiJCdXNjYU1pc3NhQXBpIn0.OrQTwTkloZMHvRk-C4IcAZ5I6M3gtWXmv3uGksTrmD4",
   },
+  // Desligado enquanto staging apontar pro monólito (sem os endpoints de
+  // desafio). Ligar junto com o cutover para o api-public.
+  features: {
+    validacaoSemEmail: false,
+  },
 };
