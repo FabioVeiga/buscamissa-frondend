@@ -14,7 +14,6 @@ import { ConfirmationService, MessageService } from "primeng/api";
 import {
   ChurchFormData,
   ChurchApiData,
-  Address,
 } from "../../models/church.model";
 import { ChurchFormComponent } from "../../components/church-form/church-form.component";
 import { PrimeNgModule } from "../../../../../shared/primeng.module";
@@ -142,8 +141,10 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
               detail: "Endereço preenchido automaticamente.",
             });
             this.cd.detectChanges();
-            this.patchAddressForm(address);
-            this.churchFormComponent?.updateAddressFieldsState(true); // Desabilita campos de endereço
+            // Trava só o que veio preenchido; campos vazios ficam liberados e
+            // cidade/UF ausentes viram seleção padronizada (ver ChurchFormComponent).
+            this.churchFormComponent?.applyCepAddress(address);
+            setTimeout(() => document.getElementById("numero")?.focus(), 0);
           }
         } else {
           // Outro erro na busca de CEP
@@ -152,51 +153,6 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
         this.cd.markForCheck();
       },
     });
-  }
-
-  private patchAddressForm(address: Address | any): void {
-    if (!address || !this.churchFormComponent?.form) {
-      this.logger.logWarning("Formulário ainda não está disponível.", "church-registration");
-      return;
-    }
-
-    const addressFields = [
-      "cep",
-      "endereco",
-      "complemento",
-      "bairro",
-      "cidade",
-      "estado",
-      "uf",
-      "regiao",
-    ];
-
-    // Habilita campos
-    addressFields.forEach((field) => {
-      this.churchFormComponent.form.get(field)?.enable({ emitEvent: false });
-    });
-
-    // Preenche valores
-    this.churchFormComponent.form.patchValue({
-      cep: address.cep,
-      endereco: address.logradouro,
-      complemento: address.complemento,
-      bairro: address.bairro,
-      cidade: address.localidade,
-      estado: address.estado,
-      uf: address.uf,
-      regiao: address.regiao,
-    });
-
-    // Desabilita novamente
-    addressFields.forEach((field) => {
-      this.churchFormComponent.form.get(field)?.disable({ emitEvent: false });
-    });
-
-    // Foca no campo número
-    setTimeout(() => {
-      document.getElementById("numero")?.focus();
-    }, 0);
   }
 
   // Mapeia os dados do formulário para o formato esperado pela API de CRIAÇÃO

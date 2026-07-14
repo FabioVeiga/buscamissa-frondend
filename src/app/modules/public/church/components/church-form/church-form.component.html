@@ -67,9 +67,39 @@
         <label for="bairro">Bairro</label>
         <input pInputText id="bairro" formControlName="bairro" class="w-full" />
       </div>
+      <div class="field col-12 md:col-4" *ngIf="ufSelecionavel">
+        <label for="uf">UF*</label>
+        <p-select
+          inputId="uf"
+          formControlName="uf"
+          [options]="ufs"
+          optionValue="sigla"
+          optionLabel="nome"
+          placeholder="Selecione a UF"
+          [filter]="true"
+          class="w-full"
+          (onChange)="onUfSelecionada($event.value)"
+        />
+      </div>
       <div class="field col-12 md:col-4">
         <label for="cidade">Cidade</label>
-        <input pInputText id="cidade" formControlName="cidade" class="w-full" />
+        <input
+          *ngIf="!cidadeSelecionavel"
+          pInputText
+          id="cidade"
+          formControlName="cidade"
+          class="w-full"
+        />
+        <p-select
+          *ngIf="cidadeSelecionavel"
+          inputId="cidade"
+          formControlName="cidade"
+          [options]="cidades"
+          [placeholder]="carregandoCidades ? 'Carregando cidades…' : 'Selecione a cidade'"
+          [filter]="true"
+          [loading]="carregandoCidades"
+          class="w-full"
+        />
       </div>
       <div class="field col-12 md:col-4">
         <label for="estado">Estado</label>
