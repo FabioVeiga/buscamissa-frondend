@@ -111,9 +111,7 @@ export class ValidateCodeComponent {
           summary: "Aviso!",
           detail: response.data?.mensagemTela,
         });
-        setTimeout(() => {
-          this._router.navigate(["/detalhes", response.data.cep]);
-        }, 2000);
+        setTimeout(() => this._navegarParaIgreja(response.data), 2000);
         this.isLoading = false;
       },
       error: (error) => {
@@ -128,6 +126,17 @@ export class ValidateCodeComponent {
         if (error.error?.data?.desafioExpirado) this.carregarDesafio();
       },
     });
+  }
+
+  // Navega direto para a página da igreja criada/alterada (uf/cidadeSlug/slug),
+  // evitando o hop extra por /detalhes/:cep (que resolve o endereço via CEP e só
+  // então redireciona) e a resposta em cache dessa rota logo após o próprio edit.
+  private _navegarParaIgreja(data: any): void {
+    if (data?.uf && data?.cidadeSlug && data?.slug) {
+      this._router.navigate(["/paroquia", data.uf.toLowerCase(), data.cidadeSlug, data.slug]);
+    } else {
+      this._router.navigate(["/detalhes", data.cep]);
+    }
   }
 
   validateCode(): void {
@@ -157,9 +166,7 @@ export class ValidateCodeComponent {
           summary: "Aviso!",
           detail: response.data?.mensagemTela,
         });
-        setTimeout(() => {
-          this._router.navigate(["/detalhes", response.data.cep]);
-        }, 2000);
+        setTimeout(() => this._navegarParaIgreja(response.data), 2000);
         this.isLoading = false;
       },
       error: (error) => {
