@@ -1,6 +1,5 @@
 import { Routes } from "@angular/router";
 import { LayoutHomeComponent } from "./core/layout/home/layout/layout.component";
-import { featureToggleGuard } from "./core/guards/feature-toggle.guard";
 
 export const routes: Routes = [
   {
@@ -33,12 +32,10 @@ export const routes: Routes = [
       },
       {
         path: "nova",
-        canActivate: [featureToggleGuard],
         data: {
           title: 'Cadastrar Igreja | BuscaMissa',
           description: 'Cadastre sua paróquia ou comunidade católica no BuscaMissa e ajude fiéis a encontrarem missas perto deles.',
           canonical: 'https://buscamissa.com.br/nova',
-          featureToggleKey: 'cadastro-igreja-site',
         },
         loadComponent: () =>
           import(
@@ -47,11 +44,9 @@ export const routes: Routes = [
       },
       {
         path: "editar/:id",
-        canActivate: [featureToggleGuard],
         data: {
           title: 'Editar Igreja | BuscaMissa',
           description: 'Atualize as informações da sua paróquia ou comunidade católica no BuscaMissa.',
-          featureToggleKey: 'cadastro-igreja-site',
         },
         loadComponent: () =>
           import(
