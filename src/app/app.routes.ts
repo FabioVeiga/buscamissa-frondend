@@ -47,9 +47,11 @@ export const routes: Routes = [
       },
       {
         path: "editar/:id",
+        canActivate: [featureToggleGuard],
         data: {
           title: 'Editar Igreja | BuscaMissa',
           description: 'Atualize as informações da sua paróquia ou comunidade católica no BuscaMissa.',
+          featureToggleKey: 'cadastro-igreja-site',
         },
         loadComponent: () =>
           import(
