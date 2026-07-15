@@ -20,7 +20,7 @@
         <i class="pi pi-heart-fill"></i> Meus favoritos
         <span class="bm-header__contador" *ngIf="favoritosCount > 0">{{ favoritosCount }}</span>
       </a>
-      <a routerLink="/nova" routerLinkActive="bm-header__link--ativo" class="bm-header__link">Cadastrar igreja</a>
+      <a *ngIf="cadastroIgrejaHabilitado$ | async" routerLink="/nova" routerLinkActive="bm-header__link--ativo" class="bm-header__link">Cadastrar igreja</a>
     </nav>
 
     <!-- Hamburger (mobile) -->
@@ -41,6 +41,6 @@
       <i class="pi pi-heart-fill"></i> Meus favoritos
       <span class="bm-header__contador" *ngIf="favoritosCount > 0">{{ favoritosCount }}</span>
     </a>
-    <a routerLink="/nova" class="bm-header__mobile-link bm-header__mobile-link--cta">Cadastrar igreja</a>
+    <a *ngIf="cadastroIgrejaHabilitado$ | async" routerLink="/nova" class="bm-header__mobile-link bm-header__mobile-link--cta">Cadastrar igreja</a>
   </nav>
 </header>

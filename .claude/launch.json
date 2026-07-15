@@ -16,6 +16,13 @@
       "autoPort": true
     },
     {
+      "name": "frontend-org",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "/Users/fabioveiga/projects/buscamissa-org/buscamissa-frondend", "run", "start", "--", "--port", "4202", "--no-open"],
+      "port": 4202,
+      "autoPort": false
+    },
+    {
       "name": "admin-dev",
       "runtimeExecutable": "npm",
       "runtimeArgs": ["--prefix", "../buscamissa-frondend-admin", "run", "dev", "--", "--port", "5173"],
