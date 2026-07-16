@@ -49,6 +49,9 @@ export class ChurchFormComponent implements OnInit, OnChanges {
   @Input() initialData: ChurchFormData | null = null;
   @Input() isSaving: boolean = false;
   @Input() isEditMode: boolean = false; // Para desabilitar CEP na edição
+  // Trava o formulário inteiro (exceto o campo CEP) enquanto o usuário não confirma,
+  // na tela pai, que nenhuma das igrejas já cadastradas nesse CEP é a dele.
+  @Input() bloqueadoPorCep: boolean = false;
   @Output() formSubmit = new EventEmitter<ChurchFormData>();
   @Output() formCancel = new EventEmitter<void>(); // Opcional: Para botão Cancelar
   @Output() cepLookup = new EventEmitter<string>(); // Emitir evento para busca de CEP
@@ -135,6 +138,11 @@ export class ChurchFormComponent implements OnInit, OnChanges {
       if (this.initialData) {
         this.populateForm(this.initialData);
       }
+      // Controles de rede social são adicionados de forma assíncrona (depois do
+      // disable-all abaixo); re-sincroniza para não deixá-los "escapar" do bloqueio.
+      if (this.bloqueadoPorCep) {
+        this.aplicarBloqueioPorCep();
+      }
     });
 
     if (this.initialData) {
@@ -144,6 +152,12 @@ export class ChurchFormComponent implements OnInit, OnChanges {
     if (this.isEditMode) {
       this.disableFields(); // Desabilita campos se necessário
       this.form.get("cep")?.disable(); // Desabilita CEP na edição
+    }
+
+    // Cobre o caso do componente já nascer bloqueado (o form ainda não existia
+    // quando o primeiro ngOnChanges rodou com bloqueadoPorCep=true).
+    if (this.bloqueadoPorCep) {
+      this.aplicarBloqueioPorCep();
     }
 
     if (this.isEditMode && this.form.value.imagem) {
@@ -178,6 +192,32 @@ export class ChurchFormComponent implements OnInit, OnChanges {
         this.form.get("cep")?.enable();
       }
     }
+    // Sem !firstChange aqui de propósito: a tela de cadastro esconde o
+    // <app-church-form> com *ngIf durante o loading do CEP, o que destrói e
+    // recria o componente a cada busca — então um bloqueio ativo pode chegar
+    // já na criação (firstChange: true), não só numa mudança posterior.
+    if (changes["bloqueadoPorCep"] && this.form) {
+      this.aplicarBloqueioPorCep();
+    }
+  }
+
+  // Trava/destrava o formulário inteiro (menos o CEP) quando a tela pai encontra
+  // igreja(s) já cadastradas no CEP informado. Ao destravar, reaplica as regras de
+  // edição (CEP sempre desabilitado); as regras de endereço (cidade/uf/etc.) voltam
+  // a ser aplicadas pela própria applyCepAddress logo em seguida, no fluxo do pai.
+  private aplicarBloqueioPorCep(): void {
+    if (this.bloqueadoPorCep) {
+      Object.keys(this.form.controls).forEach((key) => {
+        if (key !== "cep") this.form.get(key)?.disable({ emitEvent: false });
+      });
+    } else {
+      this.form.enable({ emitEvent: false });
+      if (this.isEditMode) {
+        this.disableFields();
+        this.form.get("cep")?.disable({ emitEvent: false });
+      }
+    }
+    this.cd.markForCheck();
   }
 
   constructor(private cd: ChangeDetectorRef) {}
