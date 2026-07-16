@@ -12,8 +12,4 @@ export const environment = {
     // Token App (SecretApp do Key Vault de dev), já com claims iss/aud.
     token:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImRyb2lkYmluaG9AZ21haWwuY29tIiwicm9sZSI6IkFwcCIsIm5iZiI6MTc4MzE2NTczOCwiZXhwIjoyMDk4Nzg0OTM4LCJpYXQiOjE3ODMxNjU3MzgsImlzcyI6IkJ1c2NhTWlzc2EiLCJhdWQiOiJCdXNjYU1pc3NhQXBpIn0.OrQTwTkloZMHvRk-C4IcAZ5I6M3gtWXmv3uGksTrmD4",
   },
-  // Validação por desafio matemático (api-public tem os endpoints de desafio)
-  features: {
-    validacaoSemEmail: true,
-  },
 };
