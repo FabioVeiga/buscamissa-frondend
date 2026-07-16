@@ -6,22 +6,18 @@
 <div class="container text-center">
   <p-toast position="top-right"></p-toast>
   <h3>Validação de usuário</h3>
-  <div *ngIf="!validacaoSemEmail">
-    Para prosseguir com a alteração ou criação da Igreja, precisamos confirmar o
-    seu e-mail, preencha os campos abaixo e você receberá um código.
+  <div>
+    Para prosseguir com a alteração ou criação da Igreja, precisamos dos seus
+    dados. Preencha os campos abaixo para confirmar sua contribuição na
+    próxima etapa.
     <div class="mt-4">
       <small>
         <strong
-          >Lembre-se de verificar a caixa de spam ou lixo eletrônico do seu
-          e-mail.</strong
+          >Caso receba um código por e-mail, lembre-se de verificar também a
+          caixa de spam ou lixo eletrônico.</strong
         >
       </small>
     </div>
-  </div>
-  <div *ngIf="validacaoSemEmail">
-    Para prosseguir com a alteração ou criação da Igreja, precisamos dos seus
-    dados. Preencha os campos abaixo e confirme respondendo uma pergunta rápida
-    na próxima etapa.
   </div>
   <form [formGroup]="form" class="flex flex-wrap gap-4">
     <p-inputgroup>

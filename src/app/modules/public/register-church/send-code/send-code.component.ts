@@ -13,7 +13,6 @@ import { MessageService } from "primeng/api";
 import { PrimeNgModule } from "../../../../shared/primeng.module";
 import { LoadingComponent } from "../../../../core/components/loading/loading.component";
 import { LoggerService } from "../../../../core/services/logger.service";
-import { environment } from "../../../../../environments/environment";
 
 @Component({
   selector: "app-send-code",
@@ -42,10 +41,6 @@ export class SendCodeComponent implements OnInit {
   form!: FormGroup;
   showPromocaoModal = false;
   showTermosModal = false;
-
-  // Validação por desafio matemático (MailerSend indisponível) — muda só o
-  // texto da tela; o fluxo de navegação para /validar é o mesmo.
-  validacaoSemEmail = (environment as any).features?.validacaoSemEmail === true;
 
   ngOnInit(): void {
     this.controleId = Number(this._route.snapshot.paramMap.get("controleId"));

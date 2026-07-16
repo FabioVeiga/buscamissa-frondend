@@ -14,7 +14,6 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { PrimeNgModule } from "../../../../shared/primeng.module";
 import { LoadingComponent } from "../../../../core/components/loading/loading.component";
 import { MessageService } from "primeng/api";
-import { environment } from "../../../../../environments/environment";
 
 @Component({
   selector: "app-validate-code",
@@ -43,9 +42,10 @@ export class ValidateCodeComponent {
   email: string = "";
   controleId: number = 0;
 
-  // Validação por desafio matemático (MailerSend indisponível) — ver
-  // environment.features.validacaoSemEmail.
-  validacaoSemEmail = (environment as any).features?.validacaoSemEmail === true;
+  // Qual método de validação mostrar (desafio matemático x código por e-mail)
+  // é decidido pelo backend, não por uma flag estática do frontend — cada FT
+  // pode mudar em runtime pelo admin. null = ainda não sabemos, mostra loading.
+  mostrarDesafio: boolean | null = null;
   perguntaDesafio = "";
   formDesafio: FormGroup;
 
@@ -67,19 +67,31 @@ export class ValidateCodeComponent {
       this.controleId = params["controleId"];
     });
     this._clarity.track('contrib_tela_confirmacao');
-    if (this.validacaoSemEmail) this.carregarDesafio();
+    this.carregarDesafio();
   }
 
+  // Sempre tenta carregar o desafio primeiro; se o backend responder que ele
+  // não está habilitado (FT validacao-sem-email OFF, ou sem credencial de
+  // e-mail), cai pro formulário de código por e-mail. Isso reflete o estado
+  // real das feature toggles no momento da requisição, sem depender de nada
+  // fixado no build do frontend.
   carregarDesafio(): void {
     this.isLoading = true;
     this._service.getDesafio(this.controleId).subscribe({
       next: (response: any) => {
+        this.mostrarDesafio = true;
         this.perguntaDesafio = response?.data?.pergunta ?? "";
         this.formDesafio.reset();
         this.isLoading = false;
       },
       error: (error) => {
         this.isLoading = false;
+        const desafioIndisponivel = error?.status === 404;
+        if (desafioIndisponivel) {
+          this.mostrarDesafio = false;
+          return;
+        }
+        this.mostrarDesafio = false;
         this._toast.add({
           severity: "info",
           summary: "Aviso!",
