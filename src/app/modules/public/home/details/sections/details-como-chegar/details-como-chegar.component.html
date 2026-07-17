@@ -24,7 +24,7 @@
             {{ igreja.endereco?.logradouro }},
             {{ igreja.endereco?.numero === 0 ? 'S/N' : igreja.endereco?.numero }}
           </p>
-          <p class="text-gray-500">{{ igreja.endereco?.bairro }}, {{ igreja.endereco?.localidade }}/{{ igreja.endereco?.uf }}</p>
+          <p class="text-gray-500"><span *ngIf="igreja.endereco?.bairro">{{ igreja.endereco?.bairro }}, </span>{{ igreja.endereco?.localidade }}/{{ igreja.endereco?.uf }}</p>
           <p *ngIf="cepValido" class="text-gray-400 text-xs mt-0.5">CEP {{ igreja.endereco.cep }}</p>
         </div>
       </div>

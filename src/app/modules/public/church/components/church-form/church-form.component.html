@@ -420,28 +420,62 @@
     <div class="flex justify-center" *ngIf="loading">
       <p-progressSpinner styleClass="w-8 h-8" strokeWidth="4"></p-progressSpinner>
     </div>
-    
-    <div class="flex justify-center mb-2" *ngIf="!loading && imagePreview">
+
+    <div class="flex flex-col items-center gap-2 mb-2" *ngIf="!loading && imagePreview">
       <img
         [src]="imagePreview"
         alt="Imagem da Igreja"
         width="200"
         height="200"
       />
+      <p-button
+        label="Remover"
+        icon="pi pi-trash"
+        size="small"
+        styleClass="p-button-secondary"
+        (click)="removerImagem()"
+      ></p-button>
     </div>
-    
-    
-    <p-fileupload
-      mode="basic"
-      chooseIcon="pi pi-upload"
-      accept="image/*"
-      maxFileSize="1000000"
-      (onSelect)="onImageSelect($event)"
-      chooseLabel="{{
-        form.get('imagem')?.value ? 'Alterar imagem' : 'Selecionar foto'
-      }}"
+
+    <div
+      class="flex flex-col gap-2 border border-dashed border-surface-300 rounded-lg p-3"
+      tabindex="0"
+      (paste)="onPasteImagem($event)"
     >
-    </p-fileupload>
+      <span class="text-sm text-gray-500">
+        Selecione um arquivo, cole uma imagem (<strong>Ctrl+V</strong>) ou informe a URL de uma imagem.
+      </span>
+
+      <p-fileupload
+        mode="basic"
+        chooseIcon="pi pi-upload"
+        accept="image/*"
+        maxFileSize="1000000"
+        (onSelect)="onImageSelect($event)"
+        chooseLabel="{{
+          form.get('imagem')?.value ? 'Alterar imagem' : 'Selecionar foto'
+        }}"
+      >
+      </p-fileupload>
+
+      <div class="flex gap-2 items-center">
+        <input
+          pInputText
+          [(ngModel)]="imagemUrlInput"
+          [ngModelOptions]="{ standalone: true }"
+          placeholder="https://exemplo.com/foto.jpg"
+          class="w-full"
+        />
+        <p-button
+          label="Adicionar"
+          icon="pi pi-link"
+          size="small"
+          [loading]="carregandoImagemUrl"
+          [disabled]="!imagemUrlInput.trim()"
+          (click)="adicionarImagemPorUrl()"
+        ></p-button>
+      </div>
+    </div>
   </p-fieldset>
 
   <div class="flex justify-content-end mt-4 gap-2">

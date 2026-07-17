@@ -577,30 +577,85 @@ export class ChurchFormComponent implements OnInit, OnChanges {
   // Manipulação da imagem
   onImageSelect(event: any): void {
     const file = event.files?.[0];
+    if (file) this.processarArquivoImagem(file);
+  }
+
+  // Ctrl+V com uma imagem na área clipboard (print, imagem copiada do navegador etc.)
+  onPasteImagem(event: ClipboardEvent): void {
+    const item = Array.from(event.clipboardData?.items ?? []).find((i) => i.type.startsWith("image/"));
+    const file = item?.getAsFile();
     if (file) {
-      this.loading = true;
-
-      const reader = new FileReader();
-
-      reader.onload = () => {
-        const base64: string = reader.result as string;
-        const base64WithoutPrefix = base64.split(",")[1];
-
-        this.imagePreview = reader.result as string; // com prefixo, pra mostrar no <img>
-        this.form.get("imagem")?.setValue(base64WithoutPrefix); // sem prefixo, pro backend
-
-        this.loading = false;
-
-        // Força a detecção de mudanças para atualizar o estado do formulário
-        this.cd.markForCheck();
-      };
-
-      reader.onerror = () => {
-        this.loading = false;
-      };
-
-      reader.readAsDataURL(file);
+      event.preventDefault();
+      this.processarArquivoImagem(file);
     }
+  }
+
+  imagemUrlInput: string = "";
+  carregandoImagemUrl = false;
+
+  // Baixa a imagem de uma URL externa e converte para base64, igual ao upload de arquivo.
+  adicionarImagemPorUrl(): void {
+    const url = this.imagemUrlInput?.trim();
+    if (!url) return;
+
+    this.carregandoImagemUrl = true;
+    this.cd.markForCheck();
+
+    fetch(url)
+      .then((r) => (r.ok ? r.blob() : Promise.reject(new Error(`HTTP ${r.status}`))))
+      .then((blob) => {
+        if (!blob.type.startsWith("image/")) {
+          throw new Error("A URL informada não retornou uma imagem.");
+        }
+        this.processarArquivoImagem(blob as unknown as File);
+        this.imagemUrlInput = "";
+      })
+      .catch((err) => {
+        this.logger.logWarning(`Falha ao carregar imagem por URL: ${err}`, "church-form");
+        this.messageService.add({
+          severity: "error",
+          summary: "Erro",
+          detail: "Não foi possível carregar a imagem dessa URL.",
+        });
+      })
+      .finally(() => {
+        this.carregandoImagemUrl = false;
+        this.cd.markForCheck();
+      });
+  }
+
+  removerImagem(): void {
+    this.imagePreview = null;
+    this.imageName = null;
+    this.form.get("imagem")?.setValue("");
+    this.cd.markForCheck();
+  }
+
+  private processarArquivoImagem(file: File | Blob): void {
+    this.loading = true;
+
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      const base64: string = reader.result as string;
+      const base64WithoutPrefix = base64.split(",")[1];
+
+      this.imagePreview = reader.result as string; // com prefixo, pra mostrar no <img>
+      this.imageName = "imagem_carregada";
+      this.form.get("imagem")?.setValue(base64WithoutPrefix); // sem prefixo, pro backend
+
+      this.loading = false;
+
+      // Força a detecção de mudanças para atualizar o estado do formulário
+      this.cd.markForCheck();
+    };
+
+    reader.onerror = () => {
+      this.loading = false;
+      this.cd.markForCheck();
+    };
+
+    reader.readAsDataURL(file);
   }
 
   // Emite o evento de busca de CEP para o componente pai

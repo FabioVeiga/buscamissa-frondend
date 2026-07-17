@@ -21,7 +21,7 @@
     </p>
     <p class="flex items-center gap-1.5 text-sm text-gray-500">
       <i class="pi pi-map-marker text-gray-400 shrink-0"></i>
-      {{ igreja.endereco?.bairro }}, {{ igreja.endereco?.localidade }}/{{ igreja.endereco?.uf }}
+      <span *ngIf="igreja.endereco?.bairro">{{ igreja.endereco?.bairro }}, </span>{{ igreja.endereco?.localidade }}/{{ igreja.endereco?.uf }}
     </p>
     <p *ngIf="igreja.paroco" class="flex items-center gap-1.5 text-sm text-gray-500">
       <i class="pi pi-user text-gray-400 shrink-0"></i>
