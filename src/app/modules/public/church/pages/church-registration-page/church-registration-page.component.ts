@@ -59,6 +59,10 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
     endereco: { uf: string; cidadeSlug?: string };
   }[] = [];
   private enderecoPendente: any = null;
+  // true depois que o usuário clica em "Não é nenhuma destas": vai no payload de
+  // criação para o backend não bloquear a igreja só por já existir outra no CEP
+  // (várias igrejas legitimamente compartilham o mesmo CEP).
+  private cepDuplicataConfirmada = false;
 
   ngAfterViewInit(): void {
     this.redesSociaisService.obterTipos().subscribe((tipos) => (this.tiposRedeSocial = tipos));
@@ -107,6 +111,7 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
     this.isCepLoading = true;
     this.igrejasDuplicadas = [];
     this.enderecoPendente = null;
+    this.cepDuplicataConfirmada = false;
     this.cd.markForCheck();
 
     this.churchService.consultarCep(cep).subscribe({
@@ -138,6 +143,7 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
   // libera o restante do formulário e aplica o endereço que já veio na consulta.
   confirmarNovaIgreja(): void {
     this.igrejasDuplicadas = [];
+    this.cepDuplicataConfirmada = true;
     this.aplicarEnderecoOuErro(this.enderecoPendente);
     this.enderecoPendente = null;
     this.cd.markForCheck();
@@ -206,6 +212,7 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
         emailContato: formData.emailContato,
       },
       redesSociais: this._mapearRedesSociais(formData),
+      confirmouNovaIgreja: this.cepDuplicataConfirmada,
     };
     return payload;
   }
