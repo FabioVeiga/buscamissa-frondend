@@ -60,6 +60,40 @@ export class ChurchesService {
     }>(`v2/Igreja/buscar-por-cep/${cep}`);
   }
 
+  /**
+   * Consulta única para o formulário de cadastro/edição: devolve todas as igrejas já
+   * cadastradas nesse CEP (para o usuário confirmar que a dele não é duplicata) e o
+   * endereço do CEP (para preencher o formulário), evitando uma segunda chamada à ViaCEP
+   * direto do frontend. `ignorarIgrejaId` exclui a própria igreja da lista (uso em edição).
+   */
+  consultarCep(cep: string, ignorarIgrejaId?: number) {
+    let params = new HttpParams();
+    if (ignorarIgrejaId != null) {
+      params = params.append("ignorarIgrejaId", ignorarIgrejaId);
+    }
+    return this.http.get<{
+      data: {
+        igrejas: {
+          id: number;
+          nome: string;
+          nomeUnico?: string;
+          slug?: string;
+          endereco: { uf: string; cidadeSlug?: string };
+        }[];
+        endereco: {
+          cep: string;
+          logradouro: string;
+          bairro?: string;
+          localidade: string;
+          uf: string;
+          estado: string;
+          regiao: string;
+          erro: boolean;
+        } | null;
+      };
+    }>(`v2/Igreja/consultar-cep/${cep}`, { params });
+  }
+
   /** Busca cidades e bairros através da UF, Localidade e Bairro */
   public addressRange(): Observable<any> {
     this.addressRange$ ??= this.http

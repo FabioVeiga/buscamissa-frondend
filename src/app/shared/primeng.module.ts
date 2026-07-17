@@ -37,6 +37,8 @@ import { TableModule } from "primeng/table";
 import { PaginatorModule } from "primeng/paginator";
 import { ProgressSpinnerModule } from "primeng/progressspinner";
 import { TextareaModule } from "primeng/textarea";
+import { MultiSelectModule } from "primeng/multiselect";
+import { ChipModule } from "primeng/chip";
 @NgModule({
   imports: [
     CommonModule,
@@ -74,7 +76,9 @@ import { TextareaModule } from "primeng/textarea";
     TableModule,
     PaginatorModule,
     ProgressSpinnerModule,
-    TextareaModule
+    TextareaModule,
+    MultiSelectModule,
+    ChipModule
   ],
   exports: [
     FieldsetModule,
@@ -111,7 +115,9 @@ import { TextareaModule } from "primeng/textarea";
     TableModule,
     PaginatorModule,
     ProgressSpinnerModule,
-    TextareaModule
+    TextareaModule,
+    MultiSelectModule,
+    ChipModule
   ],
 })
 export class PrimeNgModule {}

@@ -49,6 +49,9 @@ export class ChurchFormComponent implements OnInit, OnChanges {
   @Input() initialData: ChurchFormData | null = null;
   @Input() isSaving: boolean = false;
   @Input() isEditMode: boolean = false; // Para desabilitar CEP na edição
+  // Trava o formulário inteiro (exceto o campo CEP) enquanto o usuário não confirma,
+  // na tela pai, que nenhuma das igrejas já cadastradas nesse CEP é a dele.
+  @Input() bloqueadoPorCep: boolean = false;
   @Output() formSubmit = new EventEmitter<ChurchFormData>();
   @Output() formCancel = new EventEmitter<void>(); // Opcional: Para botão Cancelar
   @Output() cepLookup = new EventEmitter<string>(); // Emitir evento para busca de CEP
@@ -135,6 +138,11 @@ export class ChurchFormComponent implements OnInit, OnChanges {
       if (this.initialData) {
         this.populateForm(this.initialData);
       }
+      // Controles de rede social são adicionados de forma assíncrona (depois do
+      // disable-all abaixo); re-sincroniza para não deixá-los "escapar" do bloqueio.
+      if (this.bloqueadoPorCep) {
+        this.aplicarBloqueioPorCep();
+      }
     });
 
     if (this.initialData) {
@@ -144,6 +152,12 @@ export class ChurchFormComponent implements OnInit, OnChanges {
     if (this.isEditMode) {
       this.disableFields(); // Desabilita campos se necessário
       this.form.get("cep")?.disable(); // Desabilita CEP na edição
+    }
+
+    // Cobre o caso do componente já nascer bloqueado (o form ainda não existia
+    // quando o primeiro ngOnChanges rodou com bloqueadoPorCep=true).
+    if (this.bloqueadoPorCep) {
+      this.aplicarBloqueioPorCep();
     }
 
     if (this.isEditMode && this.form.value.imagem) {
@@ -178,6 +192,32 @@ export class ChurchFormComponent implements OnInit, OnChanges {
         this.form.get("cep")?.enable();
       }
     }
+    // Sem !firstChange aqui de propósito: a tela de cadastro esconde o
+    // <app-church-form> com *ngIf durante o loading do CEP, o que destrói e
+    // recria o componente a cada busca — então um bloqueio ativo pode chegar
+    // já na criação (firstChange: true), não só numa mudança posterior.
+    if (changes["bloqueadoPorCep"] && this.form) {
+      this.aplicarBloqueioPorCep();
+    }
+  }
+
+  // Trava/destrava o formulário inteiro (menos o CEP) quando a tela pai encontra
+  // igreja(s) já cadastradas no CEP informado. Ao destravar, reaplica as regras de
+  // edição (CEP sempre desabilitado); as regras de endereço (cidade/uf/etc.) voltam
+  // a ser aplicadas pela própria applyCepAddress logo em seguida, no fluxo do pai.
+  private aplicarBloqueioPorCep(): void {
+    if (this.bloqueadoPorCep) {
+      Object.keys(this.form.controls).forEach((key) => {
+        if (key !== "cep") this.form.get(key)?.disable({ emitEvent: false });
+      });
+    } else {
+      this.form.enable({ emitEvent: false });
+      if (this.isEditMode) {
+        this.disableFields();
+        this.form.get("cep")?.disable({ emitEvent: false });
+      }
+    }
+    this.cd.markForCheck();
   }
 
   constructor(private cd: ChangeDetectorRef) {}
@@ -210,6 +250,7 @@ export class ChurchFormComponent implements OnInit, OnChanges {
     // Limpar e popular FormArray de Missas
     this.horarios.clear();
     data.missas?.forEach((missa) => this.addMissaControl(missa));
+    this.ordenarHorarios();
 
     // Resetar nome da imagem se não houver imagem nos dados iniciais
     this.imageName = data.imagem ? "imagem_carregada" : null; // Ou extrair nome se possível
@@ -323,6 +364,106 @@ export class ChurchFormComponent implements OnInit, OnChanges {
     return this.form.get("missas") as FormArray;
   }
 
+  // Estado do formulário de adição em lote (dias x horários)
+  diasSemanaLote: number[] = [];
+  horariosLote: Date[] = [];
+  novoHorarioLote: Date | null = null;
+
+  // Ajusta o horário digitado no seletor de lote para o passo de 15 min, igual à tabela principal
+  setDefaultTimeIfNullLote(): void {
+    const current = this.novoHorarioLote;
+    const d = current ? new Date(current) : new Date();
+    const snapped = Math.round(d.getMinutes() / 15) * 15;
+    d.setMinutes(snapped % 60, 0, 0);
+    if (snapped === 60) d.setHours(d.getHours() + 1);
+    this.novoHorarioLote = d;
+  }
+
+  private mesmoHorario(a: Date, b: Date): boolean {
+    return a.getHours() === b.getHours() && a.getMinutes() === b.getMinutes();
+  }
+
+  adicionarHorarioNaLista(): void {
+    if (!this.novoHorarioLote) return;
+    const jaExiste = this.horariosLote.some((h) => this.mesmoHorario(h, this.novoHorarioLote!));
+    if (!jaExiste) {
+      this.horariosLote.push(this.novoHorarioLote);
+      this.horariosLote.sort((a, b) => a.getTime() - b.getTime());
+    }
+    this.novoHorarioLote = null;
+  }
+
+  removerHorarioDaLista(index: number): void {
+    this.horariosLote.splice(index, 1);
+  }
+
+  // Gera o produto (dias selecionados x horários selecionados) e adiciona à tabela de horários,
+  // reaproveitando o mesmo FormArray/validações usados na edição linha a linha.
+  aplicarHorariosEmLote(): void {
+    if (!this.diasSemanaLote.length || !this.horariosLote.length) {
+      this.messageService.add({
+        severity: "warn",
+        summary: "Selecione os dados",
+        detail: "Escolha ao menos um dia da semana e um horário para adicionar.",
+      });
+      return;
+    }
+
+    let adicionados = 0;
+    this.diasSemanaLote.forEach((dia) => {
+      this.horariosLote.forEach((horario) => {
+        const jaExisteNoForm = this.horarios.controls.some((ctrl) => {
+          const v = ctrl.value;
+          return v.diaSemana === dia && v.horario instanceof Date && this.mesmoHorario(v.horario, horario);
+        });
+        if (!jaExisteNoForm) {
+          this.horarios.push(
+            this.fb.group({
+              id: [null],
+              diaSemana: [dia, Validators.required],
+              horario: [new Date(horario), [Validators.required, this.minutosValidos()]],
+              observacao: ["", Validators.maxLength(20)],
+            })
+          );
+          adicionados++;
+        }
+      });
+    });
+
+    if (adicionados > 0) {
+      this.messageService.add({
+        severity: "success",
+        summary: "Horários adicionados",
+        detail: `${adicionados} horário(s) adicionado(s) à tabela abaixo.`,
+      });
+    }
+
+    this.diasSemanaLote = [];
+    this.horariosLote = [];
+    this.novoHorarioLote = null;
+    this.ordenarHorarios();
+    this.cd.markForCheck();
+  }
+
+  // Reordena as linhas da tabela por dia da semana e depois por horário, sem recriar os
+  // FormGroups (setControl preserva estado/valor de cada linha, só muda a posição no array).
+  ordenarHorarios(): void {
+    const controlsOrdenados = [...this.horarios.controls].sort((a, b) => {
+      const va = a.value;
+      const vb = b.value;
+      const diaA = va.diaSemana ?? Number.MAX_SAFE_INTEGER;
+      const diaB = vb.diaSemana ?? Number.MAX_SAFE_INTEGER;
+      if (diaA !== diaB) return diaA - diaB;
+
+      const horaA = va.horario instanceof Date ? va.horario.getTime() : Number.MAX_SAFE_INTEGER;
+      const horaB = vb.horario instanceof Date ? vb.horario.getTime() : Number.MAX_SAFE_INTEGER;
+      return horaA - horaB;
+    });
+
+    controlsOrdenados.forEach((ctrl, index) => this.horarios.setControl(index, ctrl));
+    this.cd.markForCheck();
+  }
+
   // Adiciona um controle de grupo para uma missa ao FormArray
   private addMissaControl(missa?: Mass): void {
     this.horarios.push(
@@ -333,15 +474,53 @@ export class ChurchFormComponent implements OnInit, OnChanges {
           missa?.horario ? this.stringParaDate(missa.horario as string) : null,
           [Validators.required, this.minutosValidos()],
         ],
-        observacao: [missa?.observacao ?? "", Validators.maxLength(200)],
+        observacao: [missa?.observacao ?? "", Validators.maxLength(20)],
       })
     );
   }
   
 
-  // Adiciona um novo grupo de missa vazio
-  adicionarHorario(): void {
-    this.addMissaControl();
+  // Estado do formulário fixo de adição individual (dia + horário + observação).
+  // Fica fora do FormArray/tabela de propósito: assim o usuário preenche os campos
+  // com calma, sem a linha pular de posição a cada seleção, e só entra (já ordenada)
+  // na tabela quando ele clicar em "Adicionar".
+  diaUnico: number | null = null;
+  horarioUnico: Date | null = null;
+  observacaoUnica: string = "";
+
+  setDefaultTimeIfNullUnico(): void {
+    const current = this.horarioUnico;
+    const d = current ? new Date(current) : new Date();
+    const snapped = Math.round(d.getMinutes() / 15) * 15;
+    d.setMinutes(snapped % 60, 0, 0);
+    if (snapped === 60) d.setHours(d.getHours() + 1);
+    this.horarioUnico = d;
+  }
+
+  adicionarHorarioUnico(): void {
+    if (this.diaUnico === null || !this.horarioUnico) {
+      this.messageService.add({
+        severity: "warn",
+        summary: "Selecione os dados",
+        detail: "Escolha o dia da semana e o horário antes de adicionar.",
+      });
+      return;
+    }
+
+    this.horarios.push(
+      this.fb.group({
+        id: [null],
+        diaSemana: [this.diaUnico, Validators.required],
+        horario: [new Date(this.horarioUnico), [Validators.required, this.minutosValidos()]],
+        observacao: [this.observacaoUnica ?? "", Validators.maxLength(20)],
+      })
+    );
+    this.ordenarHorarios();
+
+    this.diaUnico = null;
+    this.horarioUnico = null;
+    this.observacaoUnica = "";
+    this.cd.markForCheck();
   }
 
   removerHorario(index: number): void {
