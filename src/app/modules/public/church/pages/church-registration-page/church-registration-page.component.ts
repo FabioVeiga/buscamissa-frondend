@@ -83,7 +83,7 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
         this.messageService.add({
           severity: "success",
           summary: "Sucesso",
-          detail: "Cadastro iniciado! Verifique seu e-mail para validação.",
+          detail: "Cadastrada, vamos validar!",
         });
         if (controleId) {
           // Navega para a página de validação

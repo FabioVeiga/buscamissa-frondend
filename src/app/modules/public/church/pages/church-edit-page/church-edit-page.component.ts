@@ -116,7 +116,7 @@ export class ChurchEditPageComponent implements OnInit {
         this.messageService.add({
           severity: "success",
           summary: "Sucesso",
-          detail: "Alteração de igreja em andamento! Verifique seu e-mail para validação.",
+          detail: "Alterada, vamos validar!",
         });
         if (controleId) {
           this.router.navigate(["/enviar-codigo", controleId]);
