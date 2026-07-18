@@ -17,6 +17,8 @@ export class DetailsHeaderComponent {
   @Input({ required: true }) igreja: any;
   @Input() proximaMissa: Mass | null = null;
   @Input() isFavorita = false;
+  /** Selo "Responsável Verificado" (status público vindo do ResponsavelService). */
+  @Input() verificada = false;
 
   @Output() compartilharClick = new EventEmitter<void>();
   @Output() favoritarClick = new EventEmitter<void>();

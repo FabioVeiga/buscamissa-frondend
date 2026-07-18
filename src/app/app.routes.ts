@@ -207,6 +207,18 @@ export const routes: Routes = [
           ),
       },
       {
+        path: "meu-painel",
+        data: {
+          title: 'Minhas Igrejas | BuscaMissa',
+          description: 'Painel do responsável verificado: gerencie as igrejas sob sua responsabilidade no BuscaMissa.',
+          noindex: true,
+        },
+        loadComponent: () =>
+          import("./modules/public/meu-painel/meu-painel.component").then(
+            (m) => m.MeuPainelComponent
+          ),
+      },
+      {
         path: "solicitar",
         data: {
           title: 'Fale Conosco | BuscaMissa',

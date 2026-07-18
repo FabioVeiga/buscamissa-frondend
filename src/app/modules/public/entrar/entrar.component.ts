@@ -57,7 +57,7 @@ export class EntrarComponent implements OnInit {
     });
 
     if (this._auth.estaLogado) {
-      this._router.navigate(["/home"]);
+      this._router.navigate(["/meu-painel"]);
     }
   }
 
@@ -79,7 +79,7 @@ export class EntrarComponent implements OnInit {
           summary: "Bem-vindo",
           detail: `Olá, ${sessao.nome}!`,
         });
-        this._router.navigate(["/home"]);
+        this._router.navigate(["/meu-painel"]);
       },
       error: (error) => {
         this.isLoading = false;

@@ -14,6 +14,10 @@
   <div class="church-info flex flex-col justify-center gap-2 p-4 sm:p-5 flex-1 min-w-0">
     <h1 class="text-base sm:text-lg font-extrabold text-gray-900 leading-snug">
       {{ igreja.nome }}
+      <span *ngIf="verificada" class="selo-verificado"
+            title="As informações desta igreja são mantidas por um responsável verificado (pároco ou secretaria).">
+        <i class="pi pi-verified"></i> Responsável Verificado
+      </span>
     </h1>
     <p *ngIf="igreja.endereco?.logradouro" class="flex items-center gap-1.5 text-sm text-gray-500">
       <i class="pi pi-home text-gray-400 shrink-0"></i>

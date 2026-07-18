@@ -81,31 +81,30 @@ Branch: `feature/responsavel-verificado-fase4-responsavel`
 - [x] E-mail de aprovação (enviado via SendGrid no teste — template novo)
 - [x] E-mail de revogação e rejeição (com motivo)
 - [x] Teste local completo — 17 cenários: solicitar (409 duplicado, 401 sem token), aprovar (409 repetido), pode-editar antes/depois, herança nas 2 filhas, **local vence** (user2 na capela bloqueia herança do user1 só naquela capela), revogação restaura herança e rebaixa perfil
-- [ ] PR para `dev` e merge — abertos: [api-admin #14](https://github.com/buscamissa/buscamissa-api-admin/pull/14) (mesclar PRIMEIRO — pipe aplica a migration, sem passo manual) e [api-public #7](https://github.com/buscamissa/buscamissa-api-public/pull/7)
+- [x] PR para `dev` e merge — [api-admin #14](https://github.com/buscamissa/buscamissa-api-admin/pull/14) ✅ e [api-public #7](https://github.com/buscamissa/buscamissa-api-public/pull/7) ✅ (18/07); migration aplicada **via pipeline** (confirmado por leitura), endpoints 401 em dev como esperado
 
 ## Fase 5 — Frontend: solicitar e exercer responsabilidade
-Branch: `feature/responsavel-verificado-fase5-solicitar`
+Branch: `feature/responsavel-verificado-fase5-6-site` (fases 5 e 6 juntas) + `fase5-badge` (api-public)
 
-- [ ] Botão "Sou o responsável" na página da igreja
-- [ ] Fluxo de verificação por token de e-mail institucional
-- [ ] Fluxo de verificação manual (upload de comprovante)
-- [ ] Badge "Responsável Verificado ✓" na página pública
-- [ ] Teste local completo (front local + api local)
-- [ ] PR para `dev` e merge
+- [x] Botão "Sou o responsável" na página da igreja (só em não verificadas; anônimo → /entrar, logado → modal cargo/observação)
+- [x] Verificação manual (cargo + "como confirmar" no modal → fila do admin) — upload de comprovante e token de e-mail institucional ficam para evolução
+- [x] Badge "Responsável Verificado" na página pública (endpoint público anônimo com cache; herança incluída)
+- [x] Teste local completo (badge direto/herança/ausente, redirect anônimo, solicitação persistida)
+- [ ] PR para `dev` e merge — abertos: [api-public #9](https://github.com/buscamissa/buscamissa-api-public/pull/9) (PRIMEIRO) e [front #93](https://github.com/FabioVeiga/buscamissa-frondend/pull/93)
 
 ## Fase 6 — Painel do responsável
-Branch: `feature/responsavel-verificado-fase6-painel`
+Branch: `feature/responsavel-verificado-fase5-6-site` (junto com a fase 5)
 
-- [ ] Rota `modules/public/meu-painel/`
-- [ ] Edição direta: endereço, redes sociais, contato, horários, imagem
-- [ ] Lista de capelas vinculadas (editáveis vs. bloqueadas por responsável próprio)
-- [ ] Teste local completo
-- [ ] PR para `dev` e merge
+- [x] Rota `modules/public/meu-painel/` (chips por status, motivo de rejeição/revogação, logout; login redireciona para o painel)
+- [ ] Edição direta: endereço, redes sociais, contato, horários, imagem — **próxima entrega** (autorizar IgrejaWriteService pelo vínculo aprovado; painel já avisa "em breve")
+- [x] Lista de capelas vinculadas (herdadas com chip "Gestão pela paróquia"; com responsável próprio não aparecem — local vence)
+- [x] Teste local completo (painel com 3 vínculos e chips corretos)
+- [ ] PR para `dev` e merge — mesmo PR da Fase 5 ([front #93](https://github.com/FabioVeiga/buscamissa-frondend/pull/93))
 
 ## Fase 7 — Moderação
 Branch: `feature/responsavel-verificado-fase7-moderacao`
 
-- [ ] Fila de aprovação manual no `AdminController`
-- [ ] Fluxo de disputa (dois responsáveis alegando a mesma igreja)
-- [ ] Teste local completo
-- [ ] PR para `dev` e merge
+- [x] Fila de aprovação manual — endpoints na Fase 4; tela `/responsaveis` no frontend-admin (abas Fila/Histórico, ações contextuais, motivo obrigatório em rejeitar/revogar, badge de pendentes no menu)
+- [ ] Fluxo de disputa (dois responsáveis alegando a mesma igreja) — hoje ambos ficam na fila e o admin decide manualmente; regra automática de trava fica para evolução
+- [x] Teste local completo — fila, histórico com 3 status, aprovação via dialog (e-mail real via SendGrid), console limpo
+- [ ] PR para `dev` e merge — aberto: [frontend-admin #103](https://github.com/FabioVeiga/buscamissa-frondend-admin/pull/103)

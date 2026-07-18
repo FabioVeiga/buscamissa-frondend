@@ -44,3 +44,24 @@
     }
   }
 }
+
+// Selo "Responsável Verificado" ao lado do nome (Fase 5)
+.selo-verificado {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-left: 0.5rem;
+  padding: 0.15rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  vertical-align: middle;
+  color: #1d4ed8;
+  background: #eff6ff;
+  border: 1px solid #bfdbfe;
+  white-space: nowrap;
+
+  .pi {
+    font-size: 0.8rem;
+  }
+}
