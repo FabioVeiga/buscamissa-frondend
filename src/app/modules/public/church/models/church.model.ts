@@ -59,6 +59,10 @@ export interface ChurchApiData {
   // Usuário confirmou, na tela de cadastro, que sua igreja não é nenhuma das que
   // já existem no mesmo CEP (fluxo "Não é nenhuma destas - Informar uma Nova").
   confirmouNovaIgreja?: boolean;
+  /** Tipo da unidade (TipoIgreja em core/interfaces). Ausente = Paróquia. */
+  tipoIgreja?: number;
+  /** Paróquia-sede quando capela/comunidade; null para paróquias. */
+  igrejaPaiId?: number | null;
 }
 
 // Modelo da Igreja para o Formulário (pode ter tipos diferentes, ex: Date para horário)
