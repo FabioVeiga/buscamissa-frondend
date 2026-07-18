@@ -1,4 +1,5 @@
-import { ApplicationConfig, ErrorHandler, provideZoneChangeDetection } from "@angular/core";
+import { ApplicationConfig, ErrorHandler, inject, provideAppInitializer, provideZoneChangeDetection } from "@angular/core";
+import { AuthService } from "./core/services/auth.service";
 import { GlobalErrorHandler } from "./core/error/global-error-handler";
 import { provideRouter } from "@angular/router";
 import { routes } from "./app.routes";
@@ -21,6 +22,8 @@ export const appConfig: ApplicationConfig = {
     provideAnimationsAsync(),
     provideHttpClient(withInterceptorsFromDi()),
     provideEnvironmentNgxMask(),
+    // Restaura/renova a sessão do Responsável Verificado ao abrir o app
+    provideAppInitializer(() => inject(AuthService).restaurarSessao()),
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
     {

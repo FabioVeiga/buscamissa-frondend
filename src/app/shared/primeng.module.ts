@@ -39,6 +39,7 @@ import { ProgressSpinnerModule } from "primeng/progressspinner";
 import { TextareaModule } from "primeng/textarea";
 import { MultiSelectModule } from "primeng/multiselect";
 import { ChipModule } from "primeng/chip";
+import { PasswordModule } from "primeng/password";
 @NgModule({
   imports: [
     CommonModule,
@@ -78,7 +79,8 @@ import { ChipModule } from "primeng/chip";
     ProgressSpinnerModule,
     TextareaModule,
     MultiSelectModule,
-    ChipModule
+    ChipModule,
+    PasswordModule
   ],
   exports: [
     FieldsetModule,
@@ -117,7 +119,8 @@ import { ChipModule } from "primeng/chip";
     ProgressSpinnerModule,
     TextareaModule,
     MultiSelectModule,
-    ChipModule
+    ChipModule,
+    PasswordModule
   ],
 })
 export class PrimeNgModule {}
