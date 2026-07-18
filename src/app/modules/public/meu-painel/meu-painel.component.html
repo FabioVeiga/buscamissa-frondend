@@ -1,0 +1,65 @@
+<p-toast></p-toast>
+
+<div class="painel-wrapper">
+  <div class="painel-header">
+    <div>
+      <h1>Minhas igrejas</h1>
+      <p *ngIf="nomeUsuario">Olá, {{ nomeUsuario }}! Aqui estão as igrejas sob sua gestão e suas solicitações.</p>
+    </div>
+    <button pButton type="button" icon="pi pi-sign-out" label="Sair"
+            class="p-button-text p-button-sm" (click)="sair()"></button>
+  </div>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="flex flex-col gap-3">
+    <p-skeleton height="5rem" borderRadius="12px"></p-skeleton>
+    <p-skeleton height="5rem" borderRadius="12px"></p-skeleton>
+  </div>
+
+  <!-- Erro -->
+  <div *ngIf="!isLoading && erroCarregar" class="estado-vazio">
+    <i class="pi pi-wifi"></i>
+    <p>Não foi possível carregar suas igrejas.</p>
+    <button pButton type="button" label="Tentar novamente" icon="pi pi-refresh"
+            class="p-button-sm p-button-outlined" (click)="carregar()"></button>
+  </div>
+
+  <!-- Vazio -->
+  <div *ngIf="!isLoading && !erroCarregar && igrejas.length === 0" class="estado-vazio">
+    <i class="pi pi-verified"></i>
+    <p>Você ainda não gerencia nenhuma igreja.</p>
+    <p class="dica">
+      Encontre a página da sua paróquia e clique em
+      <strong>"Sou o responsável"</strong> para solicitar a gestão.
+    </p>
+    <a routerLink="/home">
+      <button pButton type="button" label="Buscar minha igreja" icon="pi pi-search" class="p-button-sm"></button>
+    </a>
+  </div>
+
+  <!-- Lista -->
+  <div *ngIf="!isLoading && !erroCarregar && igrejas.length > 0" class="lista">
+    <div *ngFor="let igreja of igrejas" class="card-igreja">
+      <div class="card-info">
+        <span class="nome">{{ igreja.igrejaNome }}</span>
+        <span [class]="statusChip(igreja).classe">{{ statusChip(igreja).label }}</span>
+        <span *ngIf="igreja.motivoRevisao" class="motivo">
+          Motivo: {{ igreja.motivoRevisao }}
+        </span>
+      </div>
+      <div class="card-acoes">
+        <a *ngIf="linkIgreja(igreja)" [routerLink]="linkIgreja(igreja)">
+          <button pButton type="button" icon="pi pi-external-link" label="Ver página"
+                  class="p-button-sm p-button-outlined"></button>
+        </a>
+      </div>
+    </div>
+
+    <p class="rodape-dica">
+      <i class="pi pi-info-circle"></i>
+      A edição direta dos dados (endereço, horários, contato) pela página da
+      igreja está chegando em breve para responsáveis verificados. Por enquanto,
+      use o fluxo de alteração normal — suas mudanças têm prioridade na análise.
+    </p>
+  </div>
+</div>
