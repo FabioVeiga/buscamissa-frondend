@@ -1,0 +1,163 @@
+<p-toast></p-toast>
+
+<div class="entrar-wrapper">
+  <p-panel [header]="modo === 'login' ? 'Entrar' : 'Criar ou recuperar senha'" class="container">
+    <!-- LOGIN -->
+    <ng-container *ngIf="modo === 'login'">
+      <p>
+        Área do responsável pela paróquia. Entre com seu e-mail e senha para
+        gerenciar as informações da sua igreja.
+      </p>
+      <form [formGroup]="formLogin" (ngSubmit)="entrar()">
+        <div class="p-fluid">
+          <div class="field">
+            <p-iftalabel>
+              <input pInputText id="email" type="email" formControlName="email" autocomplete="email" />
+              <label htmlFor="email">E-mail</label>
+            </p-iftalabel>
+            <small
+              class="p-error block"
+              *ngIf="formLogin.controls['email'].invalid && formLogin.controls['email'].touched"
+              >Informe um e-mail válido.</small
+            >
+          </div>
+          <div class="field">
+            <p-iftalabel>
+              <p-password
+                id="senha"
+                formControlName="senha"
+                [feedback]="false"
+                [toggleMask]="true"
+                autocomplete="current-password"
+              ></p-password>
+              <label htmlFor="senha">Senha</label>
+            </p-iftalabel>
+            <small
+              class="p-error block"
+              *ngIf="formLogin.controls['senha'].invalid && formLogin.controls['senha'].touched"
+              >Informe sua senha.</small
+            >
+          </div>
+          <p-button
+            type="submit"
+            label="Entrar"
+            [loading]="isLoading"
+            styleClass="w-full"
+          ></p-button>
+        </div>
+      </form>
+      <div class="links">
+        <a (click)="trocarModo('solicitar-codigo')"
+          >Primeiro acesso ou esqueceu a senha?</a
+        >
+      </div>
+    </ng-container>
+
+    <!-- SOLICITAR CÓDIGO -->
+    <ng-container *ngIf="modo === 'solicitar-codigo'">
+      <p>
+        Informe seu e-mail e enviaremos um código de 6 dígitos para você criar
+        (ou redefinir) sua senha.
+      </p>
+      <form [formGroup]="formSolicitar" (ngSubmit)="solicitarCodigo()">
+        <div class="p-fluid">
+          <div class="field">
+            <p-iftalabel>
+              <input pInputText id="emailSolicitar" type="email" formControlName="email" autocomplete="email" />
+              <label htmlFor="emailSolicitar">E-mail</label>
+            </p-iftalabel>
+            <small
+              class="p-error block"
+              *ngIf="formSolicitar.controls['email'].invalid && formSolicitar.controls['email'].touched"
+              >Informe um e-mail válido.</small
+            >
+          </div>
+          <div class="field">
+            <p-iftalabel>
+              <input pInputText id="nome" type="text" formControlName="nome" autocomplete="name" />
+              <label htmlFor="nome">Nome (opcional)</label>
+            </p-iftalabel>
+          </div>
+          <p-button
+            type="submit"
+            label="Enviar código"
+            [loading]="isLoading"
+            styleClass="w-full"
+          ></p-button>
+        </div>
+      </form>
+      <div class="links">
+        <a (click)="trocarModo('login')">Voltar para o login</a>
+        <a (click)="trocarModo('definir-senha')">Já tenho um código</a>
+      </div>
+    </ng-container>
+
+    <!-- DEFINIR SENHA -->
+    <ng-container *ngIf="modo === 'definir-senha'">
+      <p>
+        Digite o código de 6 dígitos que enviamos para
+        <strong>{{ formSolicitar.value.email || "seu e-mail" }}</strong> e
+        escolha sua nova senha.
+      </p>
+      <form [formGroup]="formDefinir" (ngSubmit)="definirSenha()">
+        <div class="p-fluid">
+          <div class="field" *ngIf="!formSolicitar.value.email">
+            <p-iftalabel>
+              <input
+                pInputText
+                id="emailDefinir"
+                type="email"
+                [formControl]="$any(formSolicitar.controls['email'])"
+                autocomplete="email"
+              />
+              <label htmlFor="emailDefinir">E-mail</label>
+            </p-iftalabel>
+          </div>
+          <div class="field">
+            <p-iftalabel>
+              <input
+                pInputText
+                id="codigo"
+                type="number"
+                formControlName="codigo"
+                inputmode="numeric"
+              />
+              <label htmlFor="codigo">Código (6 dígitos)</label>
+            </p-iftalabel>
+            <small
+              class="p-error block"
+              *ngIf="formDefinir.controls['codigo'].invalid && formDefinir.controls['codigo'].touched"
+              >Informe o código de 6 dígitos recebido por e-mail.</small
+            >
+          </div>
+          <div class="field">
+            <p-iftalabel>
+              <p-password
+                id="novaSenha"
+                formControlName="novaSenha"
+                [toggleMask]="true"
+                autocomplete="new-password"
+              ></p-password>
+              <label htmlFor="novaSenha">Nova senha (mínimo 8 caracteres)</label>
+            </p-iftalabel>
+            <small
+              class="p-error block"
+              *ngIf="formDefinir.controls['novaSenha'].invalid && formDefinir.controls['novaSenha'].touched"
+              >A senha precisa ter pelo menos 8 caracteres.</small
+            >
+          </div>
+          <p-button
+            type="submit"
+            label="Definir senha"
+            [loading]="isLoading"
+            styleClass="w-full"
+          ></p-button>
+        </div>
+      </form>
+      <div class="links">
+        <a (click)="trocarModo('solicitar-codigo')">Reenviar código</a>
+        <a (click)="trocarModo('login')">Voltar para o login</a>
+      </div>
+    </ng-container>
+  </p-panel>
+</div>

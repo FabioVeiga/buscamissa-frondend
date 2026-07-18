@@ -195,6 +195,18 @@ export const routes: Routes = [
           ),
       },
       {
+        path: "entrar",
+        data: {
+          title: 'Entrar | BuscaMissa',
+          description: 'Área do responsável pela paróquia: entre para gerenciar as informações da sua igreja no BuscaMissa.',
+          canonical: 'https://buscamissa.com.br/entrar',
+        },
+        loadComponent: () =>
+          import("./modules/public/entrar/entrar.component").then(
+            (m) => m.EntrarComponent
+          ),
+      },
+      {
         path: "solicitar",
         data: {
           title: 'Fale Conosco | BuscaMissa',
