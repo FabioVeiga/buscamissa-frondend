@@ -90,13 +90,13 @@ Branch: `feature/responsavel-verificado-fase5-6-site` (fases 5 e 6 juntas) + `fa
 - [x] Verificação manual (cargo + "como confirmar" no modal → fila do admin) — upload de comprovante e token de e-mail institucional ficam para evolução
 - [x] Badge "Responsável Verificado" na página pública (endpoint público anônimo com cache; herança incluída)
 - [x] Teste local completo (badge direto/herança/ausente, redirect anônimo, solicitação persistida)
-- [ ] PR para `dev` e merge — abertos: [api-public #9](https://github.com/buscamissa/buscamissa-api-public/pull/9) (PRIMEIRO) e [front #93](https://github.com/FabioVeiga/buscamissa-frondend/pull/93)
+- [x] PR para `dev` e merge — [api-public #9](https://github.com/buscamissa/buscamissa-api-public/pull/9) ✅ e [front #93](https://github.com/FabioVeiga/buscamissa-frondend/pull/93) ✅ mesclados
 
 ## Fase 6 — Painel do responsável
 Branch: `feature/responsavel-verificado-fase5-6-site` (junto com a fase 5)
 
 - [x] Rota `modules/public/meu-painel/` (chips por status, motivo de rejeição/revogação, logout; login redireciona para o painel)
-- [ ] Edição direta: endereço, redes sociais, contato, horários, imagem — **próxima entrega** (autorizar IgrejaWriteService pelo vínculo aprovado; painel já avisa "em breve")
+- [x] Edição direta: endereço, redes sociais, contato, horários, imagem — entregue nas Fases 8 e 9
 - [x] Lista de capelas vinculadas (herdadas com chip "Gestão pela paróquia"; com responsável próprio não aparecem — local vence)
 - [x] Teste local completo (painel com 3 vínculos e chips corretos)
 - [ ] PR para `dev` e merge — mesmo PR da Fase 5 ([front #93](https://github.com/FabioVeiga/buscamissa-frondend/pull/93))
@@ -107,4 +107,37 @@ Branch: `feature/responsavel-verificado-fase7-moderacao`
 - [x] Fila de aprovação manual — endpoints na Fase 4; tela `/responsaveis` no frontend-admin (abas Fila/Histórico, ações contextuais, motivo obrigatório em rejeitar/revogar, badge de pendentes no menu)
 - [ ] Fluxo de disputa (dois responsáveis alegando a mesma igreja) — hoje ambos ficam na fila e o admin decide manualmente; regra automática de trava fica para evolução
 - [x] Teste local completo — fila, histórico com 3 status, aprovação via dialog (e-mail real via SendGrid), console limpo
-- [ ] PR para `dev` e merge — aberto: [frontend-admin #103](https://github.com/FabioVeiga/buscamissa-frondend-admin/pull/103)
+- [x] PR para `dev` e merge — [frontend-admin #103](https://github.com/FabioVeiga/buscamissa-frondend-admin/pull/103) ✅ mesclado (item "Responsáveis Verificados" no submenu Igrejas)
+
+## Fase 8 — Edição direta pelo responsável
+Branch: `feature/responsavel-verificado-fase8-edicao(-direta)`
+
+Recorte desta fatia: **contato + redes sociais + horários**. Endereço e imagem ficam para a próxima (mais sensíveis: geolocalização, slug de cidade, storage).
+
+- [x] Backend api-public: `GET /responsavel/igreja/{id}/dados` + `PUT /responsavel/igreja/{id}/dados` (aplica direto na igreja real, transação)
+- [x] Reaplica "responsável local vence" antes de gravar; listas substituem integralmente; contato nulo não altera
+- [x] Horários editados → `FontePrincipal=SecretariaParoquial` + validados; redes → `Verificado=true`
+- [x] Front: rota `/meu-painel/editar/:igrejaId` + `EditarIgrejaComponent` (FormArray redes/horários); botão "Editar" só nas editáveis (aprovada/herdada)
+- [x] Teste local completo — 7 cenários backend (permissão/herança/replace/preservação) + edição via UI persistida no banco
+- [x] PR para `dev` e merge — [api-public #10](https://github.com/buscamissa/buscamissa-api-public/pull/10) ✅ e [front #94](https://github.com/FabioVeiga/buscamissa-frondend/pull/94) ✅ mesclados
+
+## Fase 9 — Edição de endereço + imagem
+Branch: `feature/responsavel-verificado-fase9-endereco-imagem`
+
+Última fatia da edição direta — fecha o pedido original completo.
+
+- [x] `EnderecoEdicao`/`ImagemEdicao` em `EditarDadosIgrejaRequest`/`DadosEdicaoResponse`
+- [x] **Decisão de arquitetura:** `NomeUnico`/`Slug` (identidade da URL) ficam **congelados** — nunca regenerados, protege SEO e links compartilhados; `CidadeSlug` (chave de agrupamento sitemap/listagem) é recalculado; `Estado`/`Regiao` derivados da UF (`ViaCepService.GetEstado/GetRegiao`)
+- [x] Imagem reusa `ImagemService.UploadAzure` (mesmo container do fluxo colaborativo)
+- [x] Front: seções Foto + Endereço no `EditarIgrejaComponent`; aviso visível quando cidade/UF muda avisando que a URL não muda
+- [x] **Bug encontrado e corrigido:** URL da imagem montada sem o prefixo `igreja/` da pasta no blob (padrão usado em todo o resto do sistema) — corrigido e validado com upload real
+- [x] Teste local completo — troca de UF/cidade (slug congelado confirmado no banco), upload de imagem real persistido no Blob Storage de dev, 403 sem permissão, isolamento de campos preservado
+- [x] PR para `dev` e merge — [api-public #11](https://github.com/buscamissa/buscamissa-api-public/pull/11) ✅ e [front #95](https://github.com/FabioVeiga/buscamissa-frondend/pull/95) ✅ mesclados (19/07); endpoint confirmado respondendo em dev
+
+---
+
+## Encerramento
+
+- [ ] `/auditoria-pre-prod` no conjunto das Fases 1–9 antes de ir para staging/produção
+- [ ] Destruir o banco de teste `u466508834_bmrespteste` (Hostinger) após validação final
+- [ ] Fora de escopo desta entrega (evoluções futuras): verificação automática por token de e-mail institucional; fluxo formal de disputa entre dois responsáveis da mesma igreja

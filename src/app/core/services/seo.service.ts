@@ -8,6 +8,8 @@ export interface SeoData {
   canonical?: string;
   /** Imagem de compartilhamento específica da rota (og:image / twitter:image). */
   image?: string;
+  /** true = página privada/transacional (login, painel...): não deve ser indexada. */
+  noindex?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -18,6 +20,10 @@ export class SeoService {
 
   update(data: SeoData): void {
     this._title.setTitle(data.title);
+
+    // Páginas privadas/transacionais (login, painel do responsável) nunca
+    // devem ser indexadas nem seguidas pelo Google.
+    this._meta.updateTag({ name: 'robots', content: data.noindex ? 'noindex, nofollow' : 'index, follow' });
 
     if (data.description) {
       this._meta.updateTag({ name: 'description', content: data.description });

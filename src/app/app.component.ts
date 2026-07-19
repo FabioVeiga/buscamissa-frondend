@@ -47,6 +47,7 @@ export class AppComponent implements OnInit {
           title: data['title'],
           description: data['description'],
           canonical: data['canonical'],
+          noindex: data['noindex'],
         });
       }
       // A11y: move o foco para o <main> a cada navegação SPA, para que leitores
