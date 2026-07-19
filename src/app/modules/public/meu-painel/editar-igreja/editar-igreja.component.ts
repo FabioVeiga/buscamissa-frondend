@@ -15,6 +15,7 @@ import { PrimeNgModule } from "../../../../shared/primeng.module";
 import { AuthService } from "../../../../core/services/auth.service";
 import { ResponsavelService } from "../../../../core/services/responsavel.service";
 import { LoggerService } from "../../../../core/services/logger.service";
+import { STATES } from "../../../../core/constants/states";
 
 const REDES = [
   { tipo: 1, nome: "Facebook" },
@@ -35,8 +36,11 @@ const DIAS = [
 ];
 
 /**
- * Edição direta (Fase 8) de contato + redes sociais + horários pelo
- * responsável verificado. Grava direto na igreja real (sem código).
+ * Edição direta (Fases 8 e 9) de contato + redes sociais + horários +
+ * endereço + imagem pelo responsável verificado. Grava direto na igreja
+ * real (sem código). Trocar cidade/UF NÃO muda a URL da página (o
+ * identificador é congelado de propósito — protege SEO e links já
+ * compartilhados); o formulário avisa isso ao lado dos campos de endereço.
  */
 @Component({
   selector: "app-editar-igreja",
@@ -56,6 +60,7 @@ export class EditarIgrejaComponent implements OnInit {
 
   readonly redes = REDES;
   readonly dias = DIAS;
+  readonly estados = STATES;
 
   igrejaId!: number;
   igrejaNome = "";
@@ -63,6 +68,18 @@ export class EditarIgrejaComponent implements OnInit {
   erroCarregar = false;
   salvando = false;
   form!: FormGroup;
+
+  /** Imagem nova selecionada (base64 sem prefixo) — null = mantém a atual. */
+  imagemBase64: string | null = null;
+  /** Preview: nova imagem (com prefixo) ou a URL atual da igreja. */
+  imagemPreview: string | null = null;
+
+  /** Cidade/UF originais — usado para exibir o aviso só quando o usuário muda. */
+  private _localidadeOriginal = "";
+  private _ufOriginal = "";
+  /** Preservados sem UI própria (não pedimos geolocalização manual). */
+  private _latitude: number | null = null;
+  private _longitude: number | null = null;
 
   get redesSociais(): FormArray {
     return this.form.get("redesSociais") as FormArray;
@@ -88,6 +105,15 @@ export class EditarIgrejaComponent implements OnInit {
       }),
       redesSociais: this._fb.array([]),
       missas: this._fb.array([]),
+      endereco: this._fb.group({
+        cep: ["", Validators.required],
+        logradouro: ["", Validators.required],
+        complemento: [""],
+        bairro: [""],
+        localidade: ["", Validators.required],
+        uf: ["", Validators.required],
+        numero: [0],
+      }),
     });
     this.carregar();
   }
@@ -108,6 +134,22 @@ export class EditarIgrejaComponent implements OnInit {
         });
         dados.redesSociais.forEach((r) => this.adicionarRede(r.tipoRedeSocial, r.nomeDoPerfil));
         dados.missas.forEach((m) => this.adicionarMissa(m.diaSemana, m.horario, m.observacao ?? ""));
+
+        this.form.get("endereco")!.patchValue({
+          cep: dados.endereco.cep ?? "",
+          logradouro: dados.endereco.logradouro ?? "",
+          complemento: dados.endereco.complemento ?? "",
+          bairro: dados.endereco.bairro ?? "",
+          localidade: dados.endereco.localidade ?? "",
+          uf: dados.endereco.uf ?? "",
+          numero: dados.endereco.numero ?? 0,
+        });
+        this._localidadeOriginal = dados.endereco.localidade ?? "";
+        this._ufOriginal = dados.endereco.uf ?? "";
+        this._latitude = dados.endereco.latitude ?? null;
+        this._longitude = dados.endereco.longitude ?? null;
+        this.imagemPreview = dados.imagemUrl ?? null;
+
         this.isLoading = false;
       },
       error: (error) => {
@@ -155,6 +197,38 @@ export class EditarIgrejaComponent implements OnInit {
     this.missas.removeAt(i);
   }
 
+  /** True quando cidade/UF mudou em relação ao carregado — dispara o aviso de URL. */
+  get cidadeOuUfMudou(): boolean {
+    const e = this.form.get("endereco")!.value;
+    return (
+      !!this._localidadeOriginal &&
+      (e.localidade?.trim() !== this._localidadeOriginal || e.uf !== this._ufOriginal)
+    );
+  }
+
+  selecionarImagem(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      this._message.add({ severity: "warn", summary: "Arquivo inválido", detail: "Selecione uma imagem." });
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      this._message.add({ severity: "warn", summary: "Arquivo muito grande", detail: "Máximo de 5MB." });
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64 = reader.result as string;
+      this.imagemBase64 = base64.split(",")[1];
+      this.imagemPreview = base64;
+    };
+    reader.readAsDataURL(file);
+  }
+
   salvar(): void {
     if (this.form.invalid) {
       this.form.markAllAsTouched();
@@ -179,6 +253,18 @@ export class EditarIgrejaComponent implements OnInit {
         },
         redesSociais: v.redesSociais,
         missas: v.missas,
+        endereco: {
+          cep: v.endereco.cep,
+          logradouro: v.endereco.logradouro,
+          complemento: v.endereco.complemento || null,
+          bairro: v.endereco.bairro || null,
+          localidade: v.endereco.localidade,
+          uf: v.endereco.uf,
+          numero: v.endereco.numero || 0,
+          latitude: this._latitude,
+          longitude: this._longitude,
+        },
+        imagem: this.imagemBase64 ? { base64: this.imagemBase64 } : null,
       })
       .subscribe({
         next: (mensagem) => {

@@ -24,6 +24,65 @@
     <h1>{{ igrejaNome }}</h1>
     <p class="subtitulo">Suas alterações são aplicadas imediatamente na página da igreja.</p>
 
+    <!-- IMAGEM -->
+    <section class="bloco">
+      <h2><i class="pi pi-image"></i> Foto da igreja</h2>
+      <div class="imagem-area">
+        <div class="imagem-preview">
+          <img *ngIf="imagemPreview" [src]="imagemPreview" alt="Foto da igreja" />
+          <i *ngIf="!imagemPreview" class="pi pi-building"></i>
+        </div>
+        <div>
+          <input #inputImagem type="file" accept="image/*" hidden (change)="selecionarImagem($event)" />
+          <button pButton type="button" icon="pi pi-upload" label="Trocar foto"
+                  class="p-button-sm p-button-outlined" (click)="inputImagem.click()"></button>
+          <p class="dica-hora">JPG ou PNG, até 5MB.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ENDEREÇO -->
+    <section class="bloco" formGroupName="endereco">
+      <h2><i class="pi pi-map-marker"></i> Endereço</h2>
+      <div class="grid-endereco">
+        <div class="campo">
+          <label>CEP</label>
+          <input pInputText formControlName="cep" maxlength="9" />
+        </div>
+        <div class="campo campo--full">
+          <label>Logradouro</label>
+          <input pInputText formControlName="logradouro" maxlength="150" />
+        </div>
+        <div class="campo campo--numero">
+          <label>Número</label>
+          <input pInputText type="number" formControlName="numero" />
+        </div>
+        <div class="campo">
+          <label>Complemento</label>
+          <input pInputText formControlName="complemento" maxlength="100" />
+        </div>
+        <div class="campo">
+          <label>Bairro</label>
+          <input pInputText formControlName="bairro" maxlength="100" />
+        </div>
+        <div class="campo campo--full">
+          <label>Cidade</label>
+          <input pInputText formControlName="localidade" maxlength="100" />
+        </div>
+        <div class="campo campo--uf">
+          <label>UF</label>
+          <p-select formControlName="uf" [options]="estados" optionLabel="sigla" optionValue="sigla"
+                    styleClass="w-full" appendTo="body"></p-select>
+        </div>
+      </div>
+      <p class="aviso-url" *ngIf="cidadeOuUfMudou">
+        <i class="pi pi-info-circle"></i>
+        O endereço será atualizado, mas o link da página desta igreja
+        <strong>não muda</strong> — é assim por padrão do site, para não quebrar
+        acessos e resultados de busca já existentes.
+      </p>
+    </section>
+
     <!-- CONTATO -->
     <section class="bloco" formGroupName="contato">
       <h2><i class="pi pi-phone"></i> Contato</h2>
