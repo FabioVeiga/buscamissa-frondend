@@ -48,16 +48,40 @@ export interface MissaEdicao {
   observacao?: string | null;
 }
 
+// ---- Fase 9: endereço + imagem ----
+
+export interface EnderecoEdicao {
+  cep: string;
+  logradouro: string;
+  complemento?: string | null;
+  bairro?: string | null;
+  localidade: string;
+  uf: string;
+  /** 0 = sem número. */
+  numero: number;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
+export interface ImagemEdicao {
+  /** Base64 sem prefixo "data:image/...". */
+  base64: string;
+}
+
 export interface DadosEdicao {
   igrejaId: number;
   igrejaNome: string;
   contato: ContatoEdicao;
   redesSociais: RedeSocialEdicao[];
   missas: MissaEdicao[];
+  endereco: EnderecoEdicao;
+  imagemUrl?: string | null;
 }
 
 export interface EditarDadosRequest {
   contato?: ContatoEdicao | null;
   redesSociais?: RedeSocialEdicao[] | null;
   missas?: MissaEdicao[] | null;
+  endereco?: EnderecoEdicao | null;
+  imagem?: ImagemEdicao | null;
 }
