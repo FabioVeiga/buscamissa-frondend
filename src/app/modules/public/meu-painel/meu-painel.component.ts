@@ -96,8 +96,12 @@ export class MeuPainelComponent implements OnInit {
   }
 
   linkIgreja(igreja: MinhaResponsabilidade): string[] | null {
-    // Slug canônico não carrega uf/cidade aqui; usa rota legada por segurança
-    return igreja.igrejaSlug ? ["/igrejas", igreja.igrejaSlug] : null;
+    // URL canônica /paroquia/{uf}/{cidadeSlug}/{slug} — a rota legada
+    // /igrejas/:nomeUnico espera NomeUnico, não o Slug local (bug corrigido).
+    if (igreja.igrejaSlug && igreja.igrejaUf && igreja.igrejaCidadeSlug) {
+      return ["/paroquia", igreja.igrejaUf.toLowerCase(), igreja.igrejaCidadeSlug, igreja.igrejaSlug];
+    }
+    return null;
   }
 
   statusChip(igreja: MinhaResponsabilidade): { label: string; classe: string } {

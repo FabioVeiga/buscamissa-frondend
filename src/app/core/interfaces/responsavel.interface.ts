@@ -24,6 +24,9 @@ export interface MinhaResponsabilidade {
   motivoRevisao?: string | null;
   /** True quando o acesso veio por herança da paróquia-pai (não é vínculo direto). */
   porHeranca: boolean;
+  /** UF e CidadeSlug — para montar a URL canônica /paroquia/{uf}/{cidade}/{slug}. */
+  igrejaUf?: string | null;
+  igrejaCidadeSlug?: string | null;
 }
 
 // ---- Edição direta (Fase 8): contato + redes + horários ----
