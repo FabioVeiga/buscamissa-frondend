@@ -57,7 +57,7 @@ Por que `NotificacaoDestino` separado: uma notificação pode ir para N igrejas 
 ### Fases sugeridas
 | Fase | Conteúdo |
 |---|---|
-| N1 | Schema `Notificacao`/`NotificacaoDestino` (api-admin) + endpoint de criação com resolução de filtro (igrejas manuais / UF / Diocese) |
+| N1 ✅ | Schema `Notificacao`/`NotificacaoDestino` (api-admin) + endpoint de criação com resolução de filtro (igrejas manuais / UF) — PR aberto |
 | N2 | Tela admin de envio (`/notificacoes`, seleção de destinatários, preview de quantas igrejas serão atingidas antes de confirmar) |
 | N3 | Endpoint de leitura (api-public) + badge/lista no `/meu-painel` |
 
