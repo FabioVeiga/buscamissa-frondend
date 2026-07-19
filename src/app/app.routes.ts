@@ -219,6 +219,18 @@ export const routes: Routes = [
           ),
       },
       {
+        path: "meu-painel/editar/:igrejaId",
+        data: {
+          title: 'Editar igreja | BuscaMissa',
+          description: 'Edite as informações da sua igreja no BuscaMissa.',
+          noindex: true,
+        },
+        loadComponent: () =>
+          import("./modules/public/meu-painel/editar-igreja/editar-igreja.component").then(
+            (m) => m.EditarIgrejaComponent
+          ),
+      },
+      {
         path: "solicitar",
         data: {
           title: 'Fale Conosco | BuscaMissa',
