@@ -23,6 +23,7 @@
       <a routerLink="/nova" routerLinkActive="bm-header__link--ativo" class="bm-header__link">Cadastrar igreja</a>
       <a *ngIf="estaLogado" routerLink="/meu-painel" routerLinkActive="bm-header__link--ativo" class="bm-header__link">
         <i class="pi pi-verified"></i> Meu painel
+        <span class="bm-header__contador" *ngIf="notificacoesNaoLidas > 0">{{ notificacoesNaoLidas }}</span>
       </a>
     </nav>
 
@@ -47,6 +48,7 @@
     <a routerLink="/nova" class="bm-header__mobile-link bm-header__mobile-link--cta">Cadastrar igreja</a>
     <a *ngIf="estaLogado" routerLink="/meu-painel" class="bm-header__mobile-link">
       <i class="pi pi-verified"></i> Meu painel
+      <span class="bm-header__contador" *ngIf="notificacoesNaoLidas > 0">{{ notificacoesNaoLidas }}</span>
     </a>
   </nav>
 </header>

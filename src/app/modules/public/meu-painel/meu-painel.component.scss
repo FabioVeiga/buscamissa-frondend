@@ -120,3 +120,68 @@
     margin-top: 0.1rem;
   }
 }
+
+.bloco-notificacoes {
+  margin-bottom: 1.5rem;
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0 0 0.75rem;
+    color: #374151;
+  }
+}
+
+.notificacao {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #fde68a;
+  background: #fffbeb;
+  border-radius: 10px;
+  margin-bottom: 0.5rem;
+
+  &--lida {
+    border-color: #e5e7eb;
+    background: #fff;
+    opacity: 0.75;
+  }
+}
+
+.notificacao-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.notificacao-titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.notificacao-ponto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f59e0b;
+  flex-shrink: 0;
+}
+
+.notificacao-mensagem {
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+.notificacao-meta {
+  font-size: 0.72rem;
+  color: #9ca3af;
+}
