@@ -2,6 +2,8 @@ import { HttpClient } from "@angular/common/http";
 import { inject, Injectable } from "@angular/core";
 import { map, Observable } from "rxjs";
 import {
+  DadosEdicao,
+  EditarDadosRequest,
   MinhaResponsabilidade,
   SolicitarResponsabilidadeRequest,
 } from "../interfaces/responsavel.interface";
@@ -37,5 +39,19 @@ export class ResponsavelService {
     return this.http
       .get<{ data: { podeEditar: boolean } }>(`v1/responsavel/igreja/${igrejaId}/pode-editar`)
       .pipe(map((r) => r.data.podeEditar));
+  }
+
+  /** Dados atuais editáveis (contato/redes/horários) para o formulário. */
+  obterDados(igrejaId: number): Observable<DadosEdicao> {
+    return this.http
+      .get<{ data: DadosEdicao }>(`v1/responsavel/igreja/${igrejaId}/dados`)
+      .pipe(map((r) => r.data));
+  }
+
+  /** Aplica a edição direta na igreja real. */
+  editarDados(igrejaId: number, request: EditarDadosRequest): Observable<string> {
+    return this.http
+      .put<{ data: { mensagemTela: string } }>(`v1/responsavel/igreja/${igrejaId}/dados`, request)
+      .pipe(map((r) => r.data.mensagemTela));
   }
 }

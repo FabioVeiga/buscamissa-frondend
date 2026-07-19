@@ -48,6 +48,10 @@
         </span>
       </div>
       <div class="card-acoes">
+        <a *ngIf="podeEditar(igreja)" [routerLink]="['/meu-painel/editar', igreja.igrejaId]">
+          <button pButton type="button" icon="pi pi-pencil" label="Editar informações"
+                  class="p-button-sm"></button>
+        </a>
         <a *ngIf="linkIgreja(igreja)" [routerLink]="linkIgreja(igreja)">
           <button pButton type="button" icon="pi pi-external-link" label="Ver página"
                   class="p-button-sm p-button-outlined"></button>
@@ -57,9 +61,8 @@
 
     <p class="rodape-dica">
       <i class="pi pi-info-circle"></i>
-      A edição direta dos dados (endereço, horários, contato) pela página da
-      igreja está chegando em breve para responsáveis verificados. Por enquanto,
-      use o fluxo de alteração normal — suas mudanças têm prioridade na análise.
+      Você edita contato, redes sociais e horários direto por aqui. A edição de
+      endereço e imagem chega em breve para responsáveis verificados.
     </p>
   </div>
 </div>

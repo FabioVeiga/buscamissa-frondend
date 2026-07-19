@@ -1,0 +1,103 @@
+<p-toast></p-toast>
+
+<div class="editar-wrapper">
+  <a routerLink="/meu-painel" class="voltar">
+    <i class="pi pi-arrow-left"></i> Voltar para minhas igrejas
+  </a>
+
+  <!-- Loading -->
+  <div *ngIf="isLoading" class="flex flex-col gap-3 mt-3">
+    <p-skeleton height="3rem" borderRadius="10px"></p-skeleton>
+    <p-skeleton height="10rem" borderRadius="12px"></p-skeleton>
+    <p-skeleton height="8rem" borderRadius="12px"></p-skeleton>
+  </div>
+
+  <!-- Erro -->
+  <div *ngIf="!isLoading && erroCarregar" class="estado-vazio">
+    <i class="pi pi-wifi"></i>
+    <p>Não foi possível carregar os dados desta igreja.</p>
+    <button pButton type="button" label="Tentar novamente" icon="pi pi-refresh"
+            class="p-button-sm p-button-outlined" (click)="carregar()"></button>
+  </div>
+
+  <form *ngIf="!isLoading && !erroCarregar" [formGroup]="form" (ngSubmit)="salvar()">
+    <h1>{{ igrejaNome }}</h1>
+    <p class="subtitulo">Suas alterações são aplicadas imediatamente na página da igreja.</p>
+
+    <!-- CONTATO -->
+    <section class="bloco" formGroupName="contato">
+      <h2><i class="pi pi-phone"></i> Contato</h2>
+      <div class="grid-contato">
+        <div class="campo campo--ddd">
+          <label>DDD</label>
+          <input pInputText formControlName="ddd" maxlength="3" inputmode="numeric" />
+        </div>
+        <div class="campo">
+          <label>Telefone</label>
+          <input pInputText formControlName="telefone" maxlength="20" inputmode="numeric" />
+        </div>
+        <div class="campo campo--ddd">
+          <label>DDD WhatsApp</label>
+          <input pInputText formControlName="dddWhatsApp" maxlength="3" inputmode="numeric" />
+        </div>
+        <div class="campo">
+          <label>WhatsApp</label>
+          <input pInputText formControlName="telefoneWhatsApp" maxlength="20" inputmode="numeric" />
+        </div>
+        <div class="campo campo--full">
+          <label>Site</label>
+          <input pInputText formControlName="website" placeholder="https://..." maxlength="255" />
+        </div>
+        <div class="campo campo--full">
+          <label>E-mail de contato</label>
+          <input pInputText formControlName="emailContato" type="email" maxlength="100" />
+          <small class="erro" *ngIf="form.get('contato.emailContato')?.invalid && form.get('contato.emailContato')?.touched">
+            E-mail inválido.
+          </small>
+        </div>
+      </div>
+    </section>
+
+    <!-- REDES SOCIAIS -->
+    <section class="bloco">
+      <h2><i class="pi pi-share-alt"></i> Redes sociais</h2>
+      <div formArrayName="redesSociais">
+        <div *ngFor="let rede of redesSociais.controls; let i = index" [formGroupName]="i" class="linha-dinamica">
+          <p-select formControlName="tipoRedeSocial" [options]="redes" optionLabel="nome" optionValue="tipo"
+                    styleClass="w-full" appendTo="body"></p-select>
+          <input pInputText formControlName="nomeDoPerfil" placeholder="@perfil ou nome" maxlength="150" />
+          <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm"
+                  (click)="removerRede(i)" aria-label="Remover rede"></button>
+        </div>
+      </div>
+      <button pButton type="button" icon="pi pi-plus" label="Adicionar rede social"
+              class="p-button-text p-button-sm mt-1" (click)="adicionarRede()"></button>
+    </section>
+
+    <!-- HORÁRIOS -->
+    <section class="bloco">
+      <h2><i class="pi pi-clock"></i> Horários de missa</h2>
+      <div formArrayName="missas">
+        <div *ngFor="let missa of missas.controls; let i = index" [formGroupName]="i" class="linha-missa">
+          <p-select formControlName="diaSemana" [options]="dias" optionLabel="nome" optionValue="valor"
+                    styleClass="w-full" appendTo="body"></p-select>
+          <input pInputText formControlName="horario" placeholder="HH:mm" maxlength="5" class="input-hora"
+                 [class.ng-invalid-visual]="missas.at(i).get('horario')?.invalid && missas.at(i).get('horario')?.touched" />
+          <input pInputText formControlName="observacao" placeholder="Observação (opcional)" maxlength="255" />
+          <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm"
+                  (click)="removerMissa(i)" aria-label="Remover horário"></button>
+        </div>
+      </div>
+      <button pButton type="button" icon="pi pi-plus" label="Adicionar horário"
+              class="p-button-text p-button-sm mt-1" (click)="adicionarMissa()"></button>
+      <p class="dica-hora">Use o formato 24h, ex.: 07:30, 19:00.</p>
+    </section>
+
+    <div class="acoes">
+      <a routerLink="/meu-painel">
+        <button pButton type="button" label="Cancelar" class="p-button-text" [disabled]="salvando"></button>
+      </a>
+      <button pButton type="submit" label="Salvar alterações" icon="pi pi-check" [loading]="salvando"></button>
+    </div>
+  </form>
+</div>

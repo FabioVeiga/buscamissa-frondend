@@ -63,6 +63,11 @@ export class MeuPainelComponent implements OnInit {
     this._router.navigate(["/home"]);
   }
 
+  /** Editável: aprovada direta ou herdada da paróquia (não pendente/rejeitada/revogada). */
+  podeEditar(igreja: MinhaResponsabilidade): boolean {
+    return igreja.porHeranca || igreja.status === "Aprovado";
+  }
+
   linkIgreja(igreja: MinhaResponsabilidade): string[] | null {
     // Slug canônico não carrega uf/cidade aqui; usa rota legada por segurança
     return igreja.igrejaSlug ? ["/igrejas", igreja.igrejaSlug] : null;
