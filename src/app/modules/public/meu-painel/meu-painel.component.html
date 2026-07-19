@@ -10,6 +10,27 @@
             class="p-button-text p-button-sm" (click)="sair()"></button>
   </div>
 
+  <!-- NOTIFICAÇÕES -->
+  <div *ngIf="notificacoes.length > 0" class="bloco-notificacoes">
+    <h2><i class="pi pi-bell"></i> Notificações</h2>
+    <div *ngFor="let n of notificacoes" class="notificacao" [class.notificacao--lida]="n.lida">
+      <div class="notificacao-info">
+        <span class="notificacao-titulo">
+          {{ n.titulo }}
+          <span *ngIf="!n.lida" class="notificacao-ponto"></span>
+        </span>
+        <span class="notificacao-mensagem">{{ n.mensagem }}</span>
+        <span class="notificacao-meta">
+          {{ n.igrejaNome }} · {{ n.criadaEm | date: "dd/MM/yyyy" }}
+        </span>
+      </div>
+      <button *ngIf="!n.lida" pButton type="button" label="Marcar como lida"
+              class="p-button-text p-button-sm"
+              [loading]="marcandoLida === n.destinoId"
+              (click)="marcarNotificacaoLida(n.destinoId)"></button>
+    </div>
+  </div>
+
   <!-- Loading -->
   <div *ngIf="isLoading" class="flex flex-col gap-3">
     <p-skeleton height="5rem" borderRadius="12px"></p-skeleton>
