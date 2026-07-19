@@ -9,9 +9,17 @@ export class AuthInterceptor implements HttpInterceptor {
   private authService = inject(AuthService);
 
   intercept(req: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
-    // Sessão de usuário logado (Responsável Verificado) tem prioridade;
-    // chamadas anônimas seguem com o token estático de app, como sempre.
-    const token = this.authService.accessToken ?? environment.config.token;
+    // O JWT do usuário logado só tem papel Regular/Dono — só serve nas rotas
+    // do Responsável Verificado (api/v1/responsavel). Todo o resto do backend
+    // (busca de igreja, cadastro colaborativo etc.) exige role App/Admin, que
+    // só o token estático de config carrega. Usar o token de sessão fora de
+    // v1/responsavel derruba essas chamadas com 403 mesmo estando logado.
+    // req.url ainda é relativo aqui (AuthInterceptor roda antes do
+    // ApiBaseUrlInterceptor, que só então prefixa a apiURL) — sem barra inicial.
+    const ehRotaDoResponsavel = req.url.includes('v1/responsavel/') || req.url.includes('v1/auth/');
+    const token = ehRotaDoResponsavel
+      ? (this.authService.accessToken ?? environment.config.token)
+      : environment.config.token;
     if (token) {
       const clonedReq = req.clone({
         setHeaders: {
