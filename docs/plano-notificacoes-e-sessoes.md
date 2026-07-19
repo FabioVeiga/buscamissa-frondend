@@ -4,7 +4,7 @@ Duas features novas, independentes entre si, ambas construídas sobre a base do 
 
 ## Progresso
 - [x] Elaboração do plano e decisões de arquitetura (19/07/2026)
-- [ ] Feature A — Notificações (fases N1–N3)
+- [x] Feature A — Notificações (fases N1–N3) — PRs abertos, aguardando merge
 - [ ] Feature B — Sessões de Atendimento/Confissão (fases S1–S4)
 
 ## Decisões fixadas
@@ -59,7 +59,7 @@ Por que `NotificacaoDestino` separado: uma notificação pode ir para N igrejas 
 |---|---|
 | N1 ✅ | Schema `Notificacao`/`NotificacaoDestino` (api-admin) + endpoint de criação com resolução de filtro (igrejas manuais / UF) — PR aberto |
 | N2 ✅ | Tela admin de envio (`/notificacoes`, envio por UF com preview obrigatório) — PR aberto. Seleção manual de igrejas fica de fast-follow |
-| N3 | Endpoint de leitura (api-public) + badge/lista no `/meu-painel` |
+| N3 ✅ | Endpoint de leitura (api-public) + badge/lista no `/meu-painel` — PRs abertos. **Feature A completa.** |
 
 ---
 
