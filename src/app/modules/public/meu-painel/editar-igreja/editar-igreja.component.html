@@ -24,6 +24,36 @@
     <h1>{{ igrejaNome }}</h1>
     <p class="subtitulo">Suas alterações são aplicadas imediatamente na página da igreja.</p>
 
+    <!-- MÉTRICAS (últimos 30 dias) -->
+    <section *ngIf="metricas" class="bloco bloco--metricas">
+      <h2>
+        <i class="pi pi-chart-line"></i> Últimos 30 dias
+        <span class="periodo">{{ metricas.periodoInicio | date: "dd/MM" }} – {{ metricas.periodoFim | date: "dd/MM/yyyy" }}</span>
+      </h2>
+      <div class="grid-metricas">
+        <div class="card-metrica">
+          <i class="pi pi-eye"></i>
+          <span class="valor">{{ metricas.visualizacoes }}</span>
+          <span class="rotulo">Visualizações</span>
+        </div>
+        <div class="card-metrica">
+          <i class="pi pi-heart"></i>
+          <span class="valor">{{ metricas.favoritos }}</span>
+          <span class="rotulo">Favoritos</span>
+        </div>
+        <div class="card-metrica">
+          <i class="pi pi-instagram"></i>
+          <span class="valor">{{ metricas.cliquesInstagram }}</span>
+          <span class="rotulo">Instagram</span>
+        </div>
+        <div class="card-metrica">
+          <i class="pi pi-share-alt"></i>
+          <span class="valor">{{ metricas.compartilhamentos }}</span>
+          <span class="rotulo">Compartilhamentos</span>
+        </div>
+      </div>
+    </section>
+
     <!-- IMAGEM -->
     <section class="bloco">
       <h2><i class="pi pi-image"></i> Foto da igreja</h2>
@@ -46,8 +76,8 @@
       <h2><i class="pi pi-map-marker"></i> Endereço</h2>
       <div class="grid-endereco">
         <div class="campo">
-          <label>CEP</label>
-          <input pInputText formControlName="cep" maxlength="9" />
+          <label>CEP <i *ngIf="buscandoCep" class="pi pi-spin pi-spinner"></i></label>
+          <input pInputText formControlName="cep" maxlength="9" inputmode="numeric" (blur)="buscarCep()" />
         </div>
         <div class="campo campo--full">
           <label>Logradouro</label>
@@ -66,11 +96,11 @@
           <input pInputText formControlName="bairro" maxlength="100" />
         </div>
         <div class="campo campo--full">
-          <label>Cidade</label>
+          <label>Cidade <span class="auto" *ngIf="!cepSemCidade">preenchida pelo CEP</span></label>
           <input pInputText formControlName="localidade" maxlength="100" />
         </div>
         <div class="campo campo--uf">
-          <label>UF</label>
+          <label>UF <span class="auto" *ngIf="!cepSemCidade">automática</span></label>
           <p-select formControlName="uf" [options]="estados" optionLabel="sigla" optionValue="sigla"
                     styleClass="w-full" appendTo="body"></p-select>
         </div>

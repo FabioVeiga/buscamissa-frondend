@@ -48,6 +48,17 @@ export class ResponsavelService {
       .pipe(map((r) => r.data));
   }
 
+  /** Métricas dos últimos 30 dias — cards do painel do responsável. */
+  obterMetricas(igrejaId: number) {
+    return this.http
+      .get<{ data: {
+        periodoInicio: string; periodoFim: string;
+        visualizacoes: number; favoritos: number;
+        cliquesInstagram: number; compartilhamentos: number;
+      } }>(`v1/responsavel/igreja/${igrejaId}/metricas`)
+      .pipe(map((r) => r.data));
+  }
+
   /** Aplica a edição direta na igreja real. */
   editarDados(igrejaId: number, request: EditarDadosRequest): Observable<string> {
     return this.http
