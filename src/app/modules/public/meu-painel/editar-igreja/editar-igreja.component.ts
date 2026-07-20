@@ -14,6 +14,7 @@ import { SkeletonModule } from "primeng/skeleton";
 import { PrimeNgModule } from "../../../../shared/primeng.module";
 import { AuthService } from "../../../../core/services/auth.service";
 import { ResponsavelService } from "../../../../core/services/responsavel.service";
+import { ChurchesService } from "../../../../core/services/churches.service";
 import { LoggerService } from "../../../../core/services/logger.service";
 import { STATES } from "../../../../core/constants/states";
 
@@ -60,6 +61,7 @@ export class EditarIgrejaComponent implements OnInit {
   private _router = inject(Router);
   private _auth = inject(AuthService);
   private _responsavel = inject(ResponsavelService);
+  private _churches = inject(ChurchesService);
   private _message = inject(MessageService);
   private _logger = inject(LoggerService);
 
@@ -79,6 +81,17 @@ export class EditarIgrejaComponent implements OnInit {
   imagemBase64: string | null = null;
   /** Preview: nova imagem (com prefixo) ou a URL atual da igreja. */
   imagemPreview: string | null = null;
+
+  /** CEP → back preenche cidade/UF (igual /nova). Liberados só se o CEP não retornar cidade. */
+  buscandoCep = false;
+  cepSemCidade = false;
+
+  /** Cards de métricas (últimos 30 dias). */
+  metricas: {
+    periodoInicio: string; periodoFim: string;
+    visualizacoes: number; favoritos: number;
+    cliquesInstagram: number; compartilhamentos: number;
+  } | null = null;
 
   /** Cidade/UF originais — usado para exibir o aviso só quando o usuário muda. */
   private _localidadeOriginal = "";
@@ -120,12 +133,17 @@ export class EditarIgrejaComponent implements OnInit {
         logradouro: ["", Validators.required],
         complemento: [""],
         bairro: [""],
-        localidade: ["", Validators.required],
-        uf: ["", Validators.required],
+        // Preenchidos pelo back via CEP (igual /nova); liberados só sem retorno de cidade
+        localidade: [{ value: "", disabled: true }, Validators.required],
+        uf: [{ value: "", disabled: true }, Validators.required],
         numero: [0],
       }),
     });
     this.carregar();
+    this._responsavel.obterMetricas(this.igrejaId).subscribe({
+      next: (m) => (this.metricas = m),
+      error: () => {}, // cards são informativos — falha não bloqueia a edição
+    });
   }
 
   carregar(): void {
@@ -226,6 +244,39 @@ export class EditarIgrejaComponent implements OnInit {
     this.sessoes.removeAt(i);
   }
 
+  /** Consulta o CEP no back (igual /nova): preenche logradouro/bairro e trava cidade/UF. */
+  buscarCep(): void {
+    const cep: string = (this.form.get("endereco.cep")?.value ?? "").replace(/\D/g, "");
+    if (cep.length !== 8) return;
+    this.buscandoCep = true;
+    this._churches.consultarCep(cep, this.igrejaId).subscribe({
+      next: (res) => {
+        this.buscandoCep = false;
+        const e = res?.data?.endereco;
+        if (!e || (e as any).erro || !e.localidade) {
+          // Sem cidade do back: libera digitação manual (caso raro)
+          this.cepSemCidade = true;
+          this.form.get("endereco.localidade")?.enable();
+          this.form.get("endereco.uf")?.enable();
+          return;
+        }
+        this.cepSemCidade = false;
+        this.form.get("endereco.localidade")?.disable();
+        this.form.get("endereco.uf")?.disable();
+        this.form.get("endereco")!.patchValue({
+          localidade: e.localidade,
+          uf: e.uf,
+          logradouro: e.logradouro || this.form.get("endereco.logradouro")?.value,
+          bairro: e.bairro || this.form.get("endereco.bairro")?.value,
+        });
+      },
+      error: () => {
+        this.buscandoCep = false;
+        this._logger.logError(new Error("consultar-cep falhou"), "editar-igreja:cep");
+      },
+    });
+  }
+
   /** True quando cidade/UF mudou em relação ao carregado — dispara o aviso de URL. */
   get cidadeOuUfMudou(): boolean {
     const e = this.form.get("endereco")!.value;
@@ -269,7 +320,7 @@ export class EditarIgrejaComponent implements OnInit {
       return;
     }
     this.salvando = true;
-    const v = this.form.value;
+    const v = this.form.getRawValue();
     this._responsavel
       .editarDados(this.igrejaId, {
         contato: {
