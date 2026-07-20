@@ -61,7 +61,7 @@
           <label>Complemento</label>
           <input pInputText formControlName="complemento" maxlength="100" />
         </div>
-        <div class="campo">
+        <div class="campo campo--full">
           <label>Bairro</label>
           <input pInputText formControlName="bairro" maxlength="100" />
         </div>
@@ -169,9 +169,10 @@
           <span class="ate">às</span>
           <input pInputText formControlName="horarioFim" placeholder="17:00" maxlength="5" class="input-hora"
                  [class.ng-invalid-visual]="sessoes.at(i).get('horarioFim')?.invalid && sessoes.at(i).get('horarioFim')?.touched" />
-          <input pInputText formControlName="observacao" placeholder="Observação (opcional)" maxlength="255" />
           <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm"
                   (click)="removerSessao(i)" aria-label="Remover sessão"></button>
+          <input pInputText formControlName="observacao" placeholder="Observação (opcional, até 50 caracteres)"
+                 maxlength="50" class="obs-sessao" />
         </div>
       </div>
       <button pButton type="button" icon="pi pi-plus" label="Adicionar horário de atendimento"

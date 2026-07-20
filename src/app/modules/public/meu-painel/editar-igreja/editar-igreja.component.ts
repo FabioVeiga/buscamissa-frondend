@@ -217,7 +217,7 @@ export class EditarIgrejaComponent implements OnInit {
         diaSemana: [dia, Validators.required],
         horarioInicio: [horarioInicio, [Validators.required, horaValida]],
         horarioFim: [horarioFim, [Validators.required, horaValida]],
-        observacao: [observacao, Validators.maxLength(255)],
+        observacao: [observacao, Validators.maxLength(50)],
       })
     );
   }

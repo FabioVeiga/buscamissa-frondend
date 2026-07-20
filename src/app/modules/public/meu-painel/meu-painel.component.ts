@@ -35,6 +35,7 @@ export class MeuPainelComponent implements OnInit {
 
   notificacoes: NotificacaoParaResponsavel[] = [];
   marcandoLida: number | null = null;
+  notificacoesVisiveis = false;
 
   get nomeUsuario(): string {
     return this._auth.sessao?.nome ?? "";
@@ -47,7 +48,7 @@ export class MeuPainelComponent implements OnInit {
     }
     this.carregar();
     this._notificacoes.listar().subscribe({
-      next: (lista) => (this.notificacoes = lista),
+      next: (lista) => (this.notificacoes = lista.filter((n) => !n.lida)),
       error: (error) => this._logger.logError(error, "meu-painel:carregar-notificacoes"),
     });
   }
@@ -57,9 +58,9 @@ export class MeuPainelComponent implements OnInit {
     this.marcandoLida = destinoId;
     this._notificacoes.marcarComoLida(destinoId).subscribe({
       next: () => {
-        this.notificacoes = this.notificacoes.map((n) =>
-          n.destinoId === destinoId ? { ...n, lida: true } : n
-        );
+        // Lida some da lista (pedido de UX: não atrapalhar as igrejas)
+        this.notificacoes = this.notificacoes.filter((n) => n.destinoId !== destinoId);
+        if (this.notificacoes.length === 0) this.notificacoesVisiveis = false;
         this.marcandoLida = null;
       },
       error: (error) => {
