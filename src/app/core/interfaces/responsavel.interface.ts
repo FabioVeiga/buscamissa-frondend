@@ -71,6 +71,14 @@ export interface ImagemEdicao {
   base64: string;
 }
 
+export interface SessaoEdicao {
+  tipo: number; // 1=Secretaria, 2=Confissao
+  diaSemana: number; // 0=Domingo ... 6=Sábado
+  horarioInicio: string; // "HH:mm"
+  horarioFim: string; // "HH:mm"
+  observacao?: string | null;
+}
+
 export interface DadosEdicao {
   igrejaId: number;
   igrejaNome: string;
@@ -79,6 +87,7 @@ export interface DadosEdicao {
   missas: MissaEdicao[];
   endereco: EnderecoEdicao;
   imagemUrl?: string | null;
+  sessoes: SessaoEdicao[];
 }
 
 export interface EditarDadosRequest {
@@ -87,4 +96,5 @@ export interface EditarDadosRequest {
   missas?: MissaEdicao[] | null;
   endereco?: EnderecoEdicao | null;
   imagem?: ImagemEdicao | null;
+  sessoes?: SessaoEdicao[] | null;
 }

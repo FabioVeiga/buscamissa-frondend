@@ -217,3 +217,26 @@ h1 {
     grid-template-columns: 1fr 100px;
   }
 }
+
+.linha-sessao {
+  display: grid;
+  grid-template-columns: 130px 150px 70px auto 70px 1fr auto;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+
+  .ate {
+    font-size: 0.78rem;
+    color: #9ca3af;
+  }
+
+  .input-hora {
+    text-align: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .linha-sessao {
+    grid-template-columns: 1fr 1fr;
+  }
+}
