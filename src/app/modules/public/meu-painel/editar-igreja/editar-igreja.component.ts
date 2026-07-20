@@ -25,6 +25,11 @@ const REDES = [
   { tipo: 5, nome: "Twitter/X" },
 ];
 
+const TIPOS_SESSAO = [
+  { valor: 1, nome: "Secretaria" },
+  { valor: 2, nome: "Confissão" },
+];
+
 const DIAS = [
   { valor: 0, nome: "Domingo" },
   { valor: 1, nome: "Segunda-feira" },
@@ -61,6 +66,7 @@ export class EditarIgrejaComponent implements OnInit {
   readonly redes = REDES;
   readonly dias = DIAS;
   readonly estados = STATES;
+  readonly tiposSessao = TIPOS_SESSAO;
 
   igrejaId!: number;
   igrejaNome = "";
@@ -87,6 +93,9 @@ export class EditarIgrejaComponent implements OnInit {
   get missas(): FormArray {
     return this.form.get("missas") as FormArray;
   }
+  get sessoes(): FormArray {
+    return this.form.get("sessoes") as FormArray;
+  }
 
   ngOnInit(): void {
     if (!this._auth.estaLogado) {
@@ -105,6 +114,7 @@ export class EditarIgrejaComponent implements OnInit {
       }),
       redesSociais: this._fb.array([]),
       missas: this._fb.array([]),
+      sessoes: this._fb.array([]),
       endereco: this._fb.group({
         cep: ["", Validators.required],
         logradouro: ["", Validators.required],
@@ -134,6 +144,8 @@ export class EditarIgrejaComponent implements OnInit {
         });
         dados.redesSociais.forEach((r) => this.adicionarRede(r.tipoRedeSocial, r.nomeDoPerfil));
         dados.missas.forEach((m) => this.adicionarMissa(m.diaSemana, m.horario, m.observacao ?? ""));
+        dados.sessoes.forEach((se) =>
+          this.adicionarSessao(se.tipo, se.diaSemana, se.horarioInicio, se.horarioFim, se.observacao ?? ""));
 
         this.form.get("endereco")!.patchValue({
           cep: dados.endereco.cep ?? "",
@@ -195,6 +207,23 @@ export class EditarIgrejaComponent implements OnInit {
 
   removerMissa(i: number): void {
     this.missas.removeAt(i);
+  }
+
+  adicionarSessao(tipo = 1, dia = 1, horarioInicio = "", horarioFim = "", observacao = ""): void {
+    const horaValida = Validators.pattern(/^([01]\d|2[0-3]):[0-5]\d$/);
+    this.sessoes.push(
+      this._fb.group({
+        tipo: [tipo, Validators.required],
+        diaSemana: [dia, Validators.required],
+        horarioInicio: [horarioInicio, [Validators.required, horaValida]],
+        horarioFim: [horarioFim, [Validators.required, horaValida]],
+        observacao: [observacao, Validators.maxLength(255)],
+      })
+    );
+  }
+
+  removerSessao(i: number): void {
+    this.sessoes.removeAt(i);
   }
 
   /** True quando cidade/UF mudou em relação ao carregado — dispara o aviso de URL. */
@@ -265,6 +294,7 @@ export class EditarIgrejaComponent implements OnInit {
           longitude: this._longitude,
         },
         imagem: this.imagemBase64 ? { base64: this.imagemBase64 } : null,
+        sessoes: v.sessoes,
       })
       .subscribe({
         next: (mensagem) => {

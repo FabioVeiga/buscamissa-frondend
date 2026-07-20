@@ -152,6 +152,32 @@
       <p class="dica-hora">Use o formato 24h, ex.: 07:30, 19:00.</p>
     </section>
 
+    <!-- ATENDIMENTO E CONFISSÃO (Feature B) -->
+    <section class="bloco">
+      <h2><i class="pi pi-calendar"></i> Atendimento e confissão</h2>
+      <p class="dica-hora" style="margin-top:0">
+        Horários da secretaria e de confissão — aparecem na página da igreja.
+      </p>
+      <div formArrayName="sessoes">
+        <div *ngFor="let sessao of sessoes.controls; let i = index" [formGroupName]="i" class="linha-sessao">
+          <p-select formControlName="tipo" [options]="tiposSessao" optionLabel="nome" optionValue="valor"
+                    styleClass="w-full" appendTo="body"></p-select>
+          <p-select formControlName="diaSemana" [options]="dias" optionLabel="nome" optionValue="valor"
+                    styleClass="w-full" appendTo="body"></p-select>
+          <input pInputText formControlName="horarioInicio" placeholder="09:00" maxlength="5" class="input-hora"
+                 [class.ng-invalid-visual]="sessoes.at(i).get('horarioInicio')?.invalid && sessoes.at(i).get('horarioInicio')?.touched" />
+          <span class="ate">às</span>
+          <input pInputText formControlName="horarioFim" placeholder="17:00" maxlength="5" class="input-hora"
+                 [class.ng-invalid-visual]="sessoes.at(i).get('horarioFim')?.invalid && sessoes.at(i).get('horarioFim')?.touched" />
+          <input pInputText formControlName="observacao" placeholder="Observação (opcional)" maxlength="255" />
+          <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm"
+                  (click)="removerSessao(i)" aria-label="Remover sessão"></button>
+        </div>
+      </div>
+      <button pButton type="button" icon="pi pi-plus" label="Adicionar horário de atendimento"
+              class="p-button-text p-button-sm mt-1" (click)="adicionarSessao()"></button>
+    </section>
+
     <div class="acoes">
       <a routerLink="/meu-painel">
         <button pButton type="button" label="Cancelar" class="p-button-text" [disabled]="salvando"></button>
