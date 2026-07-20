@@ -5,7 +5,7 @@ Duas features novas, independentes entre si, ambas construídas sobre a base do 
 ## Progresso
 - [x] Elaboração do plano e decisões de arquitetura (19/07/2026)
 - [x] Feature A — Notificações (fases N1–N3) — PRs abertos, aguardando merge
-- [ ] Feature B — Sessões de Atendimento/Confissão (fases S1–S4)
+- [x] Feature B — Sessões de Atendimento/Confissão (fases S1–S4) — PRs: api-admin #16, api-public #13, front (branch fase S3-4)
 
 ## Decisões fixadas
 - **Notificações**: canal in-app apenas (painel `/meu-painel`), sem e-mail nesta primeira entrega.
@@ -94,10 +94,10 @@ Por que não reaproveitar `Missa`: `Missa` tem campos específicos de missa (`Fo
 ### Fases sugeridas
 | Fase | Conteúdo |
 |---|---|
-| S1 | Schema `IgrejaSessao` (api-admin) + réplica leitura no api-public |
-| S2 | Backend: incluir `IgrejaSessao` no `GET/PUT /responsavel/igreja/{id}/dados` (mesmo padrão de replace integral da lista, igual `Missas`) |
-| S3 | Frontend painel: seção nova no `EditarIgrejaComponent` (FormArray, mesmo padrão de horários) |
-| S4 | Frontend público: seção "Atendimento e Confissão" na página da igreja (só renderiza se houver dados) |
+| S1 ✅ | Schema `IgrejaSessao` (api-admin, PR #16) + réplica no api-public (PR #13) |
+| S2 ✅ | Backend: sessões no `GET/PUT /responsavel/igreja/{id}/dados` + na resposta pública dos detalhes da igreja (PR #13, empilhado no #12) |
+| S3 ✅ | Frontend painel: seção "Atendimento e confissão" no `EditarIgrejaComponent` (FormArray tipo+dia+início/fim+observação) |
+| S4 ✅ | Frontend público: seção "Atendimento e Confissão" nos detalhes da igreja (só renderiza se houver dados; agrupada por tipo) |
 
 ---
 

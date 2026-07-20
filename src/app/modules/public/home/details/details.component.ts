@@ -84,6 +84,19 @@ export class DetailsComponent implements OnInit {
   // Reportar problema
   modalReportarProblemaVisible = false;
 
+  // Sessões de atendimento/confissão (Feature B)
+  private static readonly DIAS_CURTOS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+  get sessoesSecretaria(): any[] {
+    return (this.churchInfo?.sessoes ?? []).filter((s: any) => s.tipo === 1);
+  }
+  get sessoesConfissao(): any[] {
+    return (this.churchInfo?.sessoes ?? []).filter((s: any) => s.tipo === 2);
+  }
+  diaCurto(dia: number): string {
+    return DetailsComponent.DIAS_CURTOS[dia] ?? "";
+  }
+
   // Responsável Verificado (Fase 5)
   igrejaVerificada = false;
   modalResponsavelVisible = false;
