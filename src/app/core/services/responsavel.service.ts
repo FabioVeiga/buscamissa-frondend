@@ -52,7 +52,7 @@ export class ResponsavelService {
   obterMetricas(igrejaId: number) {
     return this.http
       .get<{ data: {
-        periodoInicio: string; periodoFim: string;
+        periodoInicio: Date; periodoFim: Date;
         visualizacoes: number; favoritos: number;
         cliquesInstagram: number; compartilhamentos: number;
       } }>(`v1/responsavel/igreja/${igrejaId}/metricas`)

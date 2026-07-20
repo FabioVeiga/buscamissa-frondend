@@ -88,7 +88,7 @@ export class EditarIgrejaComponent implements OnInit {
 
   /** Cards de métricas (últimos 30 dias). */
   metricas: {
-    periodoInicio: string; periodoFim: string;
+    periodoInicio: Date; periodoFim: Date;
     visualizacoes: number; favoritos: number;
     cliquesInstagram: number; compartilhamentos: number;
   } | null = null;
