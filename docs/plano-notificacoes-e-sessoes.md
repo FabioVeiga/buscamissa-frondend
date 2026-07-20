@@ -103,5 +103,5 @@ Por que não reaproveitar `Missa`: `Missa` tem campos específicos de missa (`Fo
 
 ## Perguntas em aberto para quando formos implementar
 - Notificações: precisa de expiração/arquivamento (ex: sumir da lista depois de X dias) ou fica permanente até marcar como lida?
-- Sessões: o texto do `Observacao` deveria ter algum limite/validação além de tamanho (ex: proibir palavrão, igual `NoProfanityAttribute` já usado em outros campos)?
-- Sessões: confissão às vezes é "antes de cada missa" em vez de horário fixo — vale um terceiro campo tipo boolean `VinculadaAMissa` ou isso fica de fora por ora (assumindo sempre horário fixo)?
+- ~~Validação da `Observacao`?~~ **Decidido (20/07): 50 caracteres + `NoProfanityAttribute`** (portado ao api-public).
+- ~~Sessões: confissão "antes de cada missa"?~~ **Decidido (20/07): confissão é sempre horário fixo** — sem vínculo a missa.

@@ -185,3 +185,13 @@
   font-size: 0.72rem;
   color: #9ca3af;
 }
+
+.painel-acoes {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.botao-sino {
+  position: relative;
+}
