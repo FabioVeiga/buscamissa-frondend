@@ -16,6 +16,7 @@ import { AuthService } from "../../../../core/services/auth.service";
 import { ResponsavelService } from "../../../../core/services/responsavel.service";
 import { ChurchesService } from "../../../../core/services/churches.service";
 import { LoggerService } from "../../../../core/services/logger.service";
+import { MetricasIgreja } from "../../../../core/interfaces/responsavel.interface";
 import { STATES } from "../../../../core/constants/states";
 
 const REDES = [
@@ -87,11 +88,7 @@ export class EditarIgrejaComponent implements OnInit {
   cepSemCidade = false;
 
   /** Cards de métricas (últimos 30 dias). */
-  metricas: {
-    periodoInicio: Date; periodoFim: Date;
-    visualizacoes: number; favoritos: number;
-    cliquesInstagram: number; compartilhamentos: number;
-  } | null = null;
+  metricas: MetricasIgreja | null = null;
 
   /** Cidade/UF originais — usado para exibir o aviso só quando o usuário muda. */
   private _localidadeOriginal = "";

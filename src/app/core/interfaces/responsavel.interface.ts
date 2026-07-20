@@ -98,3 +98,12 @@ export interface EditarDadosRequest {
   imagem?: ImagemEdicao | null;
   sessoes?: SessaoEdicao[] | null;
 }
+
+export interface MetricasIgreja {
+  periodoInicio: Date;
+  periodoFim: Date;
+  visualizacoes: number;
+  favoritos: number;
+  cliquesInstagram: number;
+  compartilhamentos: number;
+}
