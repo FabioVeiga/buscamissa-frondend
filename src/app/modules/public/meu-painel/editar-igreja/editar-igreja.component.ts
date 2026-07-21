@@ -173,6 +173,7 @@ export class EditarIgrejaComponent implements OnInit {
         });
         this._localidadeOriginal = dados.endereco.localidade ?? "";
         this._ufOriginal = dados.endereco.uf ?? "";
+        this.form.get("endereco")?.markAsPristine();
         this._latitude = dados.endereco.latitude ?? null;
         this._longitude = dados.endereco.longitude ?? null;
         this.imagemPreview = dados.imagemUrl ?? null;
@@ -276,11 +277,18 @@ export class EditarIgrejaComponent implements OnInit {
 
   /** True quando cidade/UF mudou em relação ao carregado — dispara o aviso de URL. */
   get cidadeOuUfMudou(): boolean {
+    // Se não tem valores originais, não mostra mensagem
+    if (!this._localidadeOriginal && !this._ufOriginal) return false;
+
     const e = this.form.get("endereco")!.value;
-    return (
-      !!this._localidadeOriginal &&
-      (e.localidade?.trim() !== this._localidadeOriginal || e.uf !== this._ufOriginal)
-    );
+    const localidadeAtual = (e.localidade || "").trim();
+    const ufAtual = (e.uf || "").trim();
+
+    // Comparação segura: só mostra se mudou de fato
+    const localidadeMudou = localidadeAtual !== this._localidadeOriginal.trim();
+    const ufMudou = ufAtual !== this._ufOriginal.trim();
+
+    return localidadeMudou || ufMudou;
   }
 
   selecionarImagem(event: Event): void {
