@@ -24,10 +24,10 @@
     <h1>{{ igrejaNome }}</h1>
     <p class="subtitulo">Suas alterações são aplicadas imediatamente na página da igreja.</p>
 
-    <!-- MÉTRICAS (últimos 30 dias) -->
+    <!-- MÉTRICAS (este mês) -->
     <section *ngIf="metricas" class="bloco bloco--metricas">
       <h2>
-        <i class="pi pi-chart-line"></i> Últimos 30 dias
+        <i class="pi pi-chart-line"></i> Este mês
         <span class="periodo">{{ metricas.periodoInicio | date: "dd/MM" }} – {{ metricas.periodoFim | date: "dd/MM/yyyy" }}</span>
       </h2>
       <div class="grid-metricas">
