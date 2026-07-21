@@ -93,6 +93,9 @@ export class EditarIgrejaComponent implements OnInit {
   /** Cidade/UF originais — usado para exibir o aviso só quando o usuário muda. */
   private _localidadeOriginal = "";
   private _ufOriginal = "";
+  private _cepOriginal = "";
+  /** Flag: CEP foi alterado manualmente pelo usuário. */
+  private _cepFoiAlterado = false;
   /** Preservados sem UI própria (não pedimos geolocalização manual). */
   private _latitude: number | null = null;
   private _longitude: number | null = null;
@@ -173,6 +176,8 @@ export class EditarIgrejaComponent implements OnInit {
         });
         this._localidadeOriginal = dados.endereco.localidade ?? "";
         this._ufOriginal = dados.endereco.uf ?? "";
+        this._cepOriginal = dados.endereco.cep ?? "";
+        this._cepFoiAlterado = false;
         this.form.get("endereco")?.markAsPristine();
         this._latitude = dados.endereco.latitude ?? null;
         this._longitude = dados.endereco.longitude ?? null;
@@ -246,6 +251,13 @@ export class EditarIgrejaComponent implements OnInit {
   buscarCep(): void {
     const cep: string = (this.form.get("endereco.cep")?.value ?? "").replace(/\D/g, "");
     if (cep.length !== 8) return;
+
+    // Detecta se o CEP foi alterado manualmente
+    const cepMudou = cep !== this._cepOriginal;
+    if (cepMudou) {
+      this._cepFoiAlterado = true;
+    }
+
     this.buscandoCep = true;
     this._churches.consultarCep(cep, this.igrejaId).subscribe({
       next: (res) => {
@@ -267,9 +279,8 @@ export class EditarIgrejaComponent implements OnInit {
           logradouro: e.logradouro || this.form.get("endereco.logradouro")?.value,
           bairro: e.bairro || this.form.get("endereco.bairro")?.value,
         });
-        // Atualiza valores originais para refletir o CEP preenchido
-        this._localidadeOriginal = e.localidade || "";
-        this._ufOriginal = e.uf || "";
+        // NÃO atualiza valores originais - só atualiza se o CEP foi alterado
+        // Isso permite que o aviso apareça se a cidade/UF forem diferentes
       },
       error: () => {
         this.buscandoCep = false;
@@ -280,14 +291,14 @@ export class EditarIgrejaComponent implements OnInit {
 
   /** True quando cidade/UF mudou em relação ao carregado — dispara o aviso de URL. */
   get cidadeOuUfMudou(): boolean {
-    // Se não tem valores originais, não mostra mensagem
-    if (!this._localidadeOriginal && !this._ufOriginal) return false;
+    // SÓ mostra se o CEP foi alterado manualmente
+    if (!this._cepFoiAlterado) return false;
 
     const e = this.form.get("endereco")!.value;
     const localidadeAtual = (e.localidade || "").trim();
     const ufAtual = (e.uf || "").trim();
 
-    // Comparação segura: só mostra se mudou de fato
+    // Comparação com valores originais: mostra se mudou
     const localidadeMudou = localidadeAtual !== this._localidadeOriginal.trim();
     const ufMudou = ufAtual !== this._ufOriginal.trim();
 
