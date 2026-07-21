@@ -89,8 +89,13 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
           detail: "Cadastrada, vamos validar!",
         });
         if (controleId) {
-          // Navega para a página de validação
-          this.router.navigate(["/enviar-codigo", controleId]); // Ajuste a rota se necessário
+          // Se usuário está logado, pula validação e vai para home/painel
+          if (this.usuarioLogado) {
+            this.router.navigate(["/meu-painel"]);
+          } else {
+            // Usuário não logado: vai para validação por email
+            this.router.navigate(["/enviar-codigo", controleId]); // Ajuste a rota se necessário
+          }
         } else {
           this.logger.logWarning("Controle ID não recebido, navegando para a home.", "church-registration");
           this.router.navigate(["/"]); // Fallback
