@@ -19,6 +19,7 @@ import { ChurchFormComponent } from "../../components/church-form/church-form.co
 import { PrimeNgModule } from "../../../../../shared/primeng.module";
 import { ChurchesService } from "../../../../../core/services/churches.service";
 import { ClarityService } from "../../../../../core/services/clarity.service";
+import { AuthService } from "../../../../../core/services/auth.service";
 import { RedesSociaisService, TipoRedeSocial } from "../../../../../core/services/redes-sociais.service";
 import { LoggerService } from "../../../../../core/services/logger.service";
 import { linkParoquia } from "../../../../../shared/utils/church-link.utils";
@@ -40,12 +41,14 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
   private datePipe = inject(DatePipe);
   private cd = inject(ChangeDetectorRef);
   private _clarity = inject(ClarityService);
+  private authService = inject(AuthService);
   private redesSociaisService = inject(RedesSociaisService);
   private logger = inject(LoggerService);
 
   private tiposRedeSocial: TipoRedeSocial[] = [];
   isLoading = false;
   isCepLoading = false;
+  usuarioLogado = this.authService.estaLogado;
   readonly linkParoquia = linkParoquia;
 
   // Igrejas já cadastradas no CEP informado — enquanto a lista não estiver vazia,
