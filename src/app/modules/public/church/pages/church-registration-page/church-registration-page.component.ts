@@ -139,19 +139,36 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
       next: (response: any) => {
         // Tipar a resposta da API idealmente
         this.isLoading = false;
-        const controleId = response?.data?.response?.controleId; // Ajuste conforme sua API
-        this.messageService.add({
-          severity: "success",
-          summary: "Sucesso",
-          detail: "Cadastrada, vamos validar!",
-        });
+        const controleId = response?.data?.response?.controleId;
+        const igrejaData = response?.data?.response || response?.data;
+
         if (controleId) {
-          // Se usuário está logado, pula validação e vai para home/painel
+          // Se usuário está logado, pula validação e vai para detalhe da Igreja
           if (this.usuarioLogado) {
-            this.router.navigate(["/meu-painel"]);
+            this.messageService.add({
+              severity: "success",
+              summary: "Igreja cadastrada!",
+              detail: "Sua solicitação de responsabilidade foi criada. Aguarde aprovação.",
+              life: 5000,
+            });
+            // Redireciona para página de detalhe da Igreja criada
+            const nomeUnico = igrejaData?.nomeUnico || igrejaData?.slug;
+            if (nomeUnico) {
+              setTimeout(() => {
+                this.router.navigate(["/igrejas", nomeUnico]);
+              }, 500);
+            } else {
+              this.logger.logWarning("NomeUnico não recebido, navegando para meu-painel.", "church-registration");
+              this.router.navigate(["/meu-painel"]);
+            }
           } else {
             // Usuário não logado: vai para validação por email
-            this.router.navigate(["/enviar-codigo", controleId]); // Ajuste a rota se necessário
+            this.messageService.add({
+              severity: "success",
+              summary: "Igreja cadastrada!",
+              detail: "Vamos confirmar seus dados via email.",
+            });
+            this.router.navigate(["/enviar-codigo", controleId]);
           }
         } else {
           this.logger.logWarning("Controle ID não recebido, navegando para a home.", "church-registration");
