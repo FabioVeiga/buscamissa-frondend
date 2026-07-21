@@ -148,6 +148,13 @@ export class DetailsComponent implements OnInit {
     this.modalResponsavelVisible = true;
   }
 
+  /** Fase 4: Redireciona usuário logado para formulário de cadastro com dados pré-preenchidos */
+  solicitarResponsabilidadeLogado(): void {
+    if (this.nomeUnico) {
+      this._router.navigate(["/nova"], { queryParams: { nomeUnico: this.nomeUnico } });
+    }
+  }
+
   enviarSolicitacaoResponsavel(): void {
     if (!this.churchInfo?.id) return;
     this.solicitacaoEnviando = true;

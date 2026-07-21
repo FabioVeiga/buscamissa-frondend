@@ -6,7 +6,7 @@ import {
   ViewChild,
   AfterViewInit,
 } from "@angular/core";
-import { Router, RouterLink } from "@angular/router";
+import { Router, RouterLink, ActivatedRoute } from "@angular/router";
 import { CommonModule, DatePipe } from "@angular/common";
 import { HttpErrorResponse } from "@angular/common/http";
 import { MessageService } from "primeng/api";
@@ -19,6 +19,7 @@ import { ChurchFormComponent } from "../../components/church-form/church-form.co
 import { PrimeNgModule } from "../../../../../shared/primeng.module";
 import { ChurchesService } from "../../../../../core/services/churches.service";
 import { ClarityService } from "../../../../../core/services/clarity.service";
+import { AuthService } from "../../../../../core/services/auth.service";
 import { RedesSociaisService, TipoRedeSocial } from "../../../../../core/services/redes-sociais.service";
 import { LoggerService } from "../../../../../core/services/logger.service";
 import { linkParoquia } from "../../../../../shared/utils/church-link.utils";
@@ -36,16 +37,20 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
 
   private churchService = inject(ChurchesService);
   private router = inject(Router);
+  private activatedRoute = inject(ActivatedRoute);
   private messageService = inject(MessageService);
   private datePipe = inject(DatePipe);
   private cd = inject(ChangeDetectorRef);
   private _clarity = inject(ClarityService);
+  private authService = inject(AuthService);
   private redesSociaisService = inject(RedesSociaisService);
   private logger = inject(LoggerService);
 
   private tiposRedeSocial: TipoRedeSocial[] = [];
   isLoading = false;
   isCepLoading = false;
+  usuarioLogado = this.authService.estaLogado;
+  igrejaParaPrepopular: any = null;
   readonly linkParoquia = linkParoquia;
 
   // Igrejas já cadastradas no CEP informado — enquanto a lista não estiver vazia,
@@ -66,8 +71,63 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
     this.redesSociaisService.obterTipos().subscribe((tipos) => (this.tiposRedeSocial = tipos));
+
+    // Fase 3: Detectar query param ?nomeUnico=paroquia-nome para pré-popular
+    const nomeUnico = this.activatedRoute.snapshot.queryParamMap.get('nomeUnico');
+    if (nomeUnico) {
+      this.carregarIgrejaParaPrepopular(nomeUnico);
+    }
+
     this.cd.detectChanges();
     this._clarity.track('contrib_form_aberto');
+  }
+
+  private carregarIgrejaParaPrepopular(nomeUnico: string): void {
+    this.isCepLoading = true;
+    this.churchService.getByNomeUnico(nomeUnico).subscribe({
+      next: (response: any) => {
+        this.isCepLoading = false;
+        this.igrejaParaPrepopular = response?.data;
+        if (this.igrejaParaPrepopular && this.churchFormComponent) {
+          setTimeout(() => this.prepopularFormulario(this.igrejaParaPrepopular), 100);
+        }
+        this.cd.markForCheck();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isCepLoading = false;
+        this.logger.logError(error, 'church-registration:prepopular');
+        this.cd.markForCheck();
+      },
+    });
+  }
+
+  private prepopularFormulario(igreja: any): void {
+    if (!this.churchFormComponent?.form) return;
+
+    const endereco = igreja.endereco || {};
+    const form = this.churchFormComponent.form;
+
+    // Pré-preenche os campos
+    form.patchValue({
+      nomeIgreja: igreja.nome?.replace(/^(Paróquia|Capela|Igreja)\s+/i, ''),
+      cep: endereco.cep,
+      endereco: endereco.logradouro,
+      numero: endereco.numero,
+      complemento: endereco.complemento,
+      bairro: endereco.bairro,
+      cidade: endereco.localidade,
+      uf: endereco.uf,
+      nomeParoco: igreja.paroco,
+      emailContato: igreja.contato?.emailContato,
+    });
+
+    // Desabilita campos que não devem ser alterados
+    form.get('cep')?.disable();
+    form.get('endereco')?.disable();
+    form.get('numero')?.disable();
+    form.get('bairro')?.disable();
+    form.get('cidade')?.disable();
+    form.get('uf')?.disable();
   }
 
   // Lida com a submissão vinda do form filho
@@ -79,15 +139,37 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
       next: (response: any) => {
         // Tipar a resposta da API idealmente
         this.isLoading = false;
-        const controleId = response?.data?.response?.controleId; // Ajuste conforme sua API
-        this.messageService.add({
-          severity: "success",
-          summary: "Sucesso",
-          detail: "Cadastrada, vamos validar!",
-        });
+        const controleId = response?.data?.response?.controleId;
+        const igrejaData = response?.data?.response || response?.data;
+
         if (controleId) {
-          // Navega para a página de validação
-          this.router.navigate(["/enviar-codigo", controleId]); // Ajuste a rota se necessário
+          // Se usuário está logado, pula validação e vai para detalhe da Igreja
+          if (this.usuarioLogado) {
+            this.messageService.add({
+              severity: "success",
+              summary: "Igreja cadastrada!",
+              detail: "Sua solicitação de responsabilidade foi criada. Aguarde aprovação.",
+              life: 5000,
+            });
+            // Redireciona para página de detalhe da Igreja criada
+            const nomeUnico = igrejaData?.nomeUnico || igrejaData?.slug;
+            if (nomeUnico) {
+              setTimeout(() => {
+                this.router.navigate(["/igrejas", nomeUnico]);
+              }, 500);
+            } else {
+              this.logger.logWarning("NomeUnico não recebido, navegando para meu-painel.", "church-registration");
+              this.router.navigate(["/meu-painel"]);
+            }
+          } else {
+            // Usuário não logado: vai para validação por email
+            this.messageService.add({
+              severity: "success",
+              summary: "Igreja cadastrada!",
+              detail: "Vamos confirmar seus dados via email.",
+            });
+            this.router.navigate(["/enviar-codigo", controleId]);
+          }
         } else {
           this.logger.logWarning("Controle ID não recebido, navegando para a home.", "church-registration");
           this.router.navigate(["/"]); // Fallback
