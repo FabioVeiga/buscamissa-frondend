@@ -102,6 +102,18 @@ $bg-light: #f9fafb;
     margin: 0;
   }
 
+  &__image {
+    border-radius: 1.25rem;
+    overflow: hidden;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+
+    img {
+      width: 100%;
+      height: auto;
+      display: block;
+    }
+  }
+
 }
 
 // ── Botões ───────────────────────────────────────────────────────────────────
