@@ -116,12 +116,13 @@ Redireciona para → /nova?igrejaId={id}
 - [x] Pré-preencher formulário
 - [x] Desabilitar campos de localização (CEP, endereço, cidade, UF, etc)
 
-### Fase 4: Link na Página de Detalhe
+### Fase 4: Link na Página de Detalhe ✅
 **Branch**: `feature/cadastro-fase-4-link-detalhe`
-- [ ] Localizar seção "Você é o responsável por esta igreja?"
-- [ ] Adicionar botão/link → `/nova` ou `/solicitar-responsabilidade`
-- [ ] Passar `igrejaId` como query param
-- [ ] Estilizar conforme design do projeto
+**Status**: Concluído
+- [x] Localizar seção "Você é o responsável por esta igreja?"
+- [x] Adicionar botão "Solicitar Responsabilidade" → `/nova?nomeUnico=...`
+- [x] Passar `nomeUnico` como query param
+- [x] Botão estilizado com classe p-button-success
 
 ### Fase 5: Testes
 **Branch**: `feature/cadastro-fase-5-testes`
