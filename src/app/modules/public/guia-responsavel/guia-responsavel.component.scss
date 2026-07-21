@@ -1,0 +1,411 @@
+// ── Tokens ──────────────────────────────────────────────────────────────────
+$primary: #bc5d10;
+$primary-light: #fff4ed;
+$text: #111827;
+$muted: #6b7280;
+$border: #e5e7eb;
+$bg-light: #f9fafb;
+
+// ── Utilitários ──────────────────────────────────────────────────────────────
+.gr-container {
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+.gr-center {
+  text-align: center;
+}
+
+.mt-6 {
+  margin-top: 1.5rem;
+}
+
+// ── Seções ───────────────────────────────────────────────────────────────────
+.gr-section {
+  padding: 4rem 0;
+
+  &--light {
+    background: $bg-light;
+  }
+
+  &__title {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: $text;
+    text-align: center;
+    margin-bottom: 0.5rem;
+  }
+
+  &__sub {
+    text-align: center;
+    color: $muted;
+    margin-bottom: 2.5rem;
+    font-size: 1rem;
+  }
+}
+
+// ── Tag ──────────────────────────────────────────────────────────────────────
+.gr-tag {
+  display: inline-block;
+  background: $primary-light;
+  color: $primary;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  margin-bottom: 1rem;
+}
+
+// ── Hero ─────────────────────────────────────────────────────────────────────
+.gr-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  align-items: center;
+  max-width: 68rem;
+  margin: 0 auto;
+  padding: 3.5rem 1.25rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  &__title {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    font-weight: 900;
+    color: $text;
+    line-height: 1.15;
+    margin: 0;
+  }
+
+  &__sub {
+    color: $muted;
+    font-size: 1.05rem;
+    max-width: 36ch;
+  }
+
+  &__mission {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: $muted;
+    font-size: 0.875rem;
+    margin: 0;
+  }
+
+}
+
+// ── Botões ───────────────────────────────────────────────────────────────────
+.gr-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: $primary;
+  color: white;
+  text-decoration: none;
+  padding: 0.75rem 1.75rem;
+  border-radius: 0.5rem;
+  font-weight: 600;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+
+  &:hover {
+    background: #a34d09;
+    transform: translateY(-2px);
+  }
+
+  &--white {
+    background: white;
+    color: $primary;
+  }
+}
+
+.gr-icon {
+  font-size: 1.25rem;
+}
+
+.gr-icon-sm {
+  font-size: 1rem;
+}
+
+// ── Steps ────────────────────────────────────────────────────────────────────
+.gr-steps {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr auto 1fr;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 2rem;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+}
+
+.gr-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+
+  &__icon {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+  }
+
+  &__title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: $text;
+    margin: 0 0 0.5rem;
+  }
+
+  &__text {
+    color: $muted;
+    font-size: 0.95rem;
+    margin: 0;
+    line-height: 1.5;
+  }
+}
+
+.gr-step__arrow {
+  font-size: 1.5rem;
+  color: $primary;
+  font-weight: 300;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+}
+
+// ── Benefícios ───────────────────────────────────────────────────────────────
+.gr-benefits {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 2rem;
+}
+
+.gr-benefit {
+  text-align: center;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  background: white;
+  border: 1px solid $border;
+
+  &__icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    display: block;
+  }
+
+  h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: $text;
+    margin: 0 0 0.5rem;
+  }
+
+  p {
+    color: $muted;
+    font-size: 0.9rem;
+    margin: 0;
+    line-height: 1.5;
+  }
+}
+
+// ── Requisitos ───────────────────────────────────────────────────────────────
+.gr-requirements {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 36rem;
+  margin: 0 auto;
+}
+
+.gr-req {
+  display: flex;
+  gap: 1.5rem;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  background: white;
+  border: 1px solid $border;
+  align-items: flex-start;
+
+  &__icon {
+    flex-shrink: 0;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    background: $primary-light;
+    color: $primary;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1rem;
+  }
+
+  h4 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: $text;
+    margin: 0 0 0.25rem;
+  }
+
+  p {
+    color: $muted;
+    font-size: 0.9rem;
+    margin: 0;
+    line-height: 1.5;
+  }
+}
+
+// ── FAQ ──────────────────────────────────────────────────────────────────────
+.gr-faq-wrap {
+  max-width: 36rem;
+  margin: 0 auto;
+}
+
+.gr-faq {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.gr-faq__item {
+  border: 1px solid $border;
+  border-radius: 0.5rem;
+  background: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    border-color: $primary;
+  }
+}
+
+.gr-faq__q {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem;
+  font-weight: 600;
+  color: $text;
+  user-select: none;
+  gap: 1rem;
+}
+
+.gr-faq__chevron {
+  font-size: 1.5rem;
+  color: $primary;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+
+  &--open {
+    transform: rotate(90deg);
+  }
+}
+
+.gr-faq__a {
+  padding: 0 1.25rem 1.25rem;
+  color: $muted;
+  font-weight: 400;
+  line-height: 1.6;
+  border-top: 1px solid $border;
+}
+
+// ── CTA ──────────────────────────────────────────────────────────────────────
+.gr-cta {
+  background: $primary;
+  color: white;
+  padding: 3rem 1.25rem;
+}
+
+.gr-cta__inner {
+  max-width: 68rem;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 2rem;
+  justify-content: space-between;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+.gr-cta__icon {
+  font-size: 3rem;
+  flex-shrink: 0;
+}
+
+.gr-cta__inner h2 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  margin: 0 0 0.5rem;
+}
+
+.gr-cta__inner p {
+  color: rgba(white, 0.9);
+  margin: 0;
+  font-size: 1rem;
+}
+
+// ── Responsivo ───────────────────────────────────────────────────────────────
+@media (max-width: 640px) {
+  .gr-hero {
+    padding: 2rem 1.25rem;
+
+    &__title {
+      font-size: 1.5rem;
+    }
+
+    &__sub {
+      font-size: 1rem;
+    }
+
+    &__image {
+      min-height: 12rem;
+    }
+
+    &__emoji {
+      font-size: 5rem;
+    }
+  }
+
+  .gr-section {
+    padding: 2.5rem 0;
+
+    &__title {
+      font-size: 1.5rem;
+    }
+  }
+
+  .gr-steps {
+    gap: 1.5rem;
+  }
+
+  .gr-step__icon {
+    font-size: 2rem;
+  }
+
+  .gr-cta__inner {
+    gap: 1rem;
+  }
+
+  .gr-cta__icon {
+    font-size: 2rem;
+  }
+}

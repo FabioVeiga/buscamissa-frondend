@@ -100,6 +100,18 @@ export const routes: Routes = [
             (m) => m.ComoFuncionaComponent
           ),
       },
+      {
+        path: 'guia-responsavel',
+        data: {
+          title: 'Guia do Responsável Verificado | BuscaMissa',
+          description: 'Conheça o processo passo a passo para se tornar um Responsável Verificado e gerenciar sua igreja no BuscaMissa.',
+          canonical: 'https://buscamissa.com.br/guia-responsavel',
+        },
+        loadComponent: () =>
+          import('./modules/public/guia-responsavel/guia-responsavel.component').then(
+            (m) => m.GuiaResponsavelComponent
+          ),
+      },
       // Missa Agora — geoloc em tempo real
       {
         path: 'missa-agora',

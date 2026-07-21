@@ -1,0 +1,138 @@
+<!-- ══ HERO ══ -->
+<section class="gr-hero">
+  <div class="gr-hero__content">
+    <span class="gr-tag">Para responsáveis</span>
+    <h1 class="gr-hero__title">Seja um Responsável Verificado</h1>
+    <p class="gr-hero__sub">
+      Seja um Responsável Verificado e mantenha as informações da sua paróquia sempre confiáveis e atualizadas.
+    </p>
+    <a routerLink="/entrar" class="gr-btn-primary">
+      <i class="gr-icon">✓</i> Começar agora
+    </a>
+    <p class="gr-hero__mission">
+      <i class="gr-icon-sm">🤍</i>
+      Responsáveis verificados ajudam milhares de fiéis a encontrarem suas comunidades.
+    </p>
+  </div>
+</section>
+
+<!-- ══ PROCESSO SIMPLIFICADO ══ -->
+<section class="gr-section gr-section--light">
+  <div class="gr-container">
+    <h2 class="gr-section__title">Como funciona</h2>
+    <div class="gr-steps">
+      <div class="gr-step">
+        <div class="gr-step__icon">📝</div>
+        <h3 class="gr-step__title">Cadastre-se</h3>
+        <p class="gr-step__text">Crie sua conta e valide seu email com um código de verificação.</p>
+      </div>
+
+      <div class="gr-step__arrow">›</div>
+
+      <div class="gr-step">
+        <div class="gr-step__icon">⛪</div>
+        <h3 class="gr-step__title">Solicite Responsabilidade</h3>
+        <p class="gr-step__text">Indique qual paróquia você gerencia. Nossa equipe verificará seus dados.</p>
+      </div>
+
+      <div class="gr-step__arrow">›</div>
+
+      <div class="gr-step">
+        <div class="gr-step__icon">✓</div>
+        <h3 class="gr-step__title">Gerencie</h3>
+        <p class="gr-step__text">Após aprovação, mantenha os dados sempre atualizados com o selo de confiabilidade.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ BENEFÍCIOS ══ -->
+<section class="gr-section">
+  <div class="gr-container">
+    <h2 class="gr-section__title">Vantagens do Selo Verificado</h2>
+    <div class="gr-benefits">
+      <div class="gr-benefit">
+        <div class="gr-benefit__icon">✓</div>
+        <h4>Confiabilidade</h4>
+        <p>Seus dados aparecem com o selo de paróquia verificada.</p>
+      </div>
+      <div class="gr-benefit">
+        <div class="gr-benefit__icon">📊</div>
+        <h4>Visibilidade</h4>
+        <p>Aumente a chance de fiéis encontrarem sua comunidade.</p>
+      </div>
+      <div class="gr-benefit">
+        <div class="gr-benefit__icon">🔧</div>
+        <h4>Controle Total</h4>
+        <p>Edite horários, endereço, telefone e fotos quando quiser.</p>
+      </div>
+      <div class="gr-benefit">
+        <div class="gr-benefit__icon">📈</div>
+        <h4>Métricas</h4>
+        <p>Acompanhe quantas pessoas encontram sua paróquia.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ REQUISITOS ══ -->
+<section class="gr-section gr-section--light">
+  <div class="gr-container">
+    <h2 class="gr-section__title">O que você precisa</h2>
+    <p class="gr-section__sub">Requisitos básicos para se tornar um Responsável Verificado</p>
+
+    <div class="gr-requirements">
+      <div class="gr-req">
+        <div class="gr-req__icon">✓</div>
+        <div>
+          <h4>Email verificado</h4>
+          <p>Você receberá um código de validação para confirmar seu email.</p>
+        </div>
+      </div>
+      <div class="gr-req">
+        <div class="gr-req__icon">✓</div>
+        <div>
+          <h4>Ser responsável pela paróquia</h4>
+          <p>Pároco, diretor, secretário ou outro membro da gestão.</p>
+        </div>
+      </div>
+      <div class="gr-req">
+        <div class="gr-req__icon">✓</div>
+        <div>
+          <h4>Identificação da paróquia</h4>
+          <p>Encontre sua paróquia no BuscaMissa ou cadastre uma nova.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ FAQ ══ -->
+<section class="gr-section">
+  <div class="gr-container gr-faq-wrap">
+    <h2 class="gr-section__title">Perguntas frequentes</h2>
+    <div class="gr-faq">
+      <div *ngFor="let f of faqs" class="gr-faq__item" (click)="toggle(f)">
+        <div class="gr-faq__q">
+          <span>{{ f.pergunta }}</span>
+          <i class="gr-faq__chevron" [class.gr-faq__chevron--open]="f.aberto">›</i>
+        </div>
+        <div *ngIf="f.aberto" class="gr-faq__a">{{ f.resposta }}</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══ CTA FINAL ══ -->
+<section class="gr-cta">
+  <div class="gr-cta__inner">
+    <div class="gr-cta__icon">✓</div>
+    <div>
+      <h2>Pronto para começar?</h2>
+      <p>Cadastre-se agora e se torne um Responsável Verificado</p>
+    </div>
+    <a routerLink="/entrar" class="gr-btn-primary gr-btn-primary--white">
+      Criar conta agora
+    </a>
+  </div>
+</section>

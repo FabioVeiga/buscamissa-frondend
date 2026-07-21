@@ -40,6 +40,8 @@ import { TextareaModule } from "primeng/textarea";
 import { MultiSelectModule } from "primeng/multiselect";
 import { ChipModule } from "primeng/chip";
 import { PasswordModule } from "primeng/password";
+import { AccordionModule } from "primeng/accordion";
+
 @NgModule({
   imports: [
     CommonModule,
@@ -80,7 +82,8 @@ import { PasswordModule } from "primeng/password";
     TextareaModule,
     MultiSelectModule,
     ChipModule,
-    PasswordModule
+    PasswordModule,
+    AccordionModule
   ],
   exports: [
     FieldsetModule,
@@ -120,7 +123,8 @@ import { PasswordModule } from "primeng/password";
     TextareaModule,
     MultiSelectModule,
     ChipModule,
-    PasswordModule
+    PasswordModule,
+    AccordionModule
   ],
 })
 export class PrimeNgModule {}
