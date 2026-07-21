@@ -108,12 +108,13 @@ Redireciona para → /nova?igrejaId={id}
 - [x] Se não logado → manter fluxo atual (/enviar-codigo)
 - [x] Condicionar redirecionamento com if/else no handleFormSubmit
 
-### Fase 3: Pré-popular Igreja (Opcional - Fase 2)
+### Fase 3: Pré-popular Igreja ✅
 **Branch**: `feature/cadastro-fase-3-prepopular`
-- [ ] Detectar query param `?igrejaId=123`
-- [ ] Se existe → buscar dados da igreja
-- [ ] Pré-preencher formulário
-- [ ] Desabilitar alguns campos (CEP, cidade, etc)
+**Status**: Concluído
+- [x] Detectar query param `?nomeUnico=paroquia-nome`
+- [x] Buscar dados via getByNomeUnico
+- [x] Pré-preencher formulário
+- [x] Desabilitar campos de localização (CEP, endereço, cidade, UF, etc)
 
 ### Fase 4: Link na Página de Detalhe
 **Branch**: `feature/cadastro-fase-4-link-detalhe`
