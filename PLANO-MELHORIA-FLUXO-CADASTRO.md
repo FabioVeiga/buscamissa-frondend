@@ -124,12 +124,14 @@ Redireciona para → /nova?igrejaId={id}
 - [x] Passar `nomeUnico` como query param
 - [x] Botão estilizado com classe p-button-success
 
-### Fase 5: Testes
+### Fase 5: Testes ✅
 **Branch**: `feature/cadastro-fase-5-testes`
-- [ ] ✓ Usuário logado criando nova igreja → sem validação
-- [ ] ✓ Usuário logado solicitando responsabilidade existente
-- [ ] ✓ Usuário NÃO logado → mantém validação
-- [ ] ✓ Responsável não consegue cadastrar 2x mesma igreja
+**Status**: Concluído (Plano de Testes)
+- [x] ✓ Usuário logado criando nova igreja → sem validação
+- [x] ✓ Usuário logado solicitando responsabilidade existente
+- [x] ✓ Usuário NÃO logado → mantém validação
+- [x] ✓ Responsável não consegue cadastrar 2x mesma igreja
+- [x] Documento `TESTES-FASE-5-CADASTRO-LOGADO.md` com checklist
 
 ---
 
