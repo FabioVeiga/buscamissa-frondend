@@ -101,11 +101,12 @@ Redireciona para → /nova?igrejaId={id}
 - [x] Verificar `this._auth.estaLogado`
 - [x] Se logado: definir flag `usuarioLogado = true`
 
-### Fase 2: Condicionar Validação Email
+### Fase 2: Condicionar Validação Email ✅
 **Branch**: `feature/cadastro-fase-2-validacao-email`
-- [ ] Se `usuarioLogado` → pular componente de validação
-- [ ] Se não logado → manter fluxo atual
-- [ ] Usar `*ngIf` para condicionar exibição
+**Status**: Concluído
+- [x] Se `usuarioLogado` → pular validação email e ir para /meu-painel
+- [x] Se não logado → manter fluxo atual (/enviar-codigo)
+- [x] Condicionar redirecionamento com if/else no handleFormSubmit
 
 ### Fase 3: Pré-popular Igreja (Opcional - Fase 2)
 **Branch**: `feature/cadastro-fase-3-prepopular`
