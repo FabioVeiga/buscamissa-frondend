@@ -277,10 +277,16 @@ export class EditarIgrejaComponent implements OnInit {
   /** True quando cidade/UF mudou em relação ao carregado — dispara o aviso de URL. */
   get cidadeOuUfMudou(): boolean {
     const e = this.form.get("endereco")!.value;
-    return (
-      !!this._localidadeOriginal &&
-      (e.localidade?.trim() !== this._localidadeOriginal || e.uf !== this._ufOriginal)
-    );
+    const localidadeAtual = e.localidade?.trim() || "";
+    const ufAtual = e.uf || "";
+
+    // Só mostra mensagem se:
+    // 1. Havia localidade/UF original
+    // 2. E mudou em relação ao original
+    const localidadeMudou = localidadeAtual !== this._localidadeOriginal;
+    const ufMudou = ufAtual !== this._ufOriginal;
+
+    return !!this._localidadeOriginal && (localidadeMudou || ufMudou);
   }
 
   selecionarImagem(event: Event): void {
