@@ -6,7 +6,7 @@ import {
   ViewChild,
   AfterViewInit,
 } from "@angular/core";
-import { Router, RouterLink } from "@angular/router";
+import { Router, RouterLink, ActivatedRoute } from "@angular/router";
 import { CommonModule, DatePipe } from "@angular/common";
 import { HttpErrorResponse } from "@angular/common/http";
 import { MessageService } from "primeng/api";
@@ -37,6 +37,7 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
 
   private churchService = inject(ChurchesService);
   private router = inject(Router);
+  private activatedRoute = inject(ActivatedRoute);
   private messageService = inject(MessageService);
   private datePipe = inject(DatePipe);
   private cd = inject(ChangeDetectorRef);
@@ -49,6 +50,7 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
   isLoading = false;
   isCepLoading = false;
   usuarioLogado = this.authService.estaLogado;
+  igrejaParaPrepopular: any = null;
   readonly linkParoquia = linkParoquia;
 
   // Igrejas já cadastradas no CEP informado — enquanto a lista não estiver vazia,
@@ -69,8 +71,63 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
 
   ngAfterViewInit(): void {
     this.redesSociaisService.obterTipos().subscribe((tipos) => (this.tiposRedeSocial = tipos));
+
+    // Fase 3: Detectar query param ?nomeUnico=paroquia-nome para pré-popular
+    const nomeUnico = this.activatedRoute.snapshot.queryParamMap.get('nomeUnico');
+    if (nomeUnico) {
+      this.carregarIgrejaParaPrepopular(nomeUnico);
+    }
+
     this.cd.detectChanges();
     this._clarity.track('contrib_form_aberto');
+  }
+
+  private carregarIgrejaParaPrepopular(nomeUnico: string): void {
+    this.isCepLoading = true;
+    this.churchService.getByNomeUnico(nomeUnico).subscribe({
+      next: (response: any) => {
+        this.isCepLoading = false;
+        this.igrejaParaPrepopular = response?.data;
+        if (this.igrejaParaPrepopular && this.churchFormComponent) {
+          setTimeout(() => this.prepopularFormulario(this.igrejaParaPrepopular), 100);
+        }
+        this.cd.markForCheck();
+      },
+      error: (error: HttpErrorResponse) => {
+        this.isCepLoading = false;
+        this.logger.logError(error, 'church-registration:prepopular');
+        this.cd.markForCheck();
+      },
+    });
+  }
+
+  private prepopularFormulario(igreja: any): void {
+    if (!this.churchFormComponent?.form) return;
+
+    const endereco = igreja.endereco || {};
+    const form = this.churchFormComponent.form;
+
+    // Pré-preenche os campos
+    form.patchValue({
+      nomeIgreja: igreja.nome?.replace(/^(Paróquia|Capela|Igreja)\s+/i, ''),
+      cep: endereco.cep,
+      endereco: endereco.logradouro,
+      numero: endereco.numero,
+      complemento: endereco.complemento,
+      bairro: endereco.bairro,
+      cidade: endereco.localidade,
+      uf: endereco.uf,
+      nomeParoco: igreja.paroco,
+      emailContato: igreja.contato?.emailContato,
+    });
+
+    // Desabilita campos que não devem ser alterados
+    form.get('cep')?.disable();
+    form.get('endereco')?.disable();
+    form.get('numero')?.disable();
+    form.get('bairro')?.disable();
+    form.get('cidade')?.disable();
+    form.get('uf')?.disable();
   }
 
   // Lida com a submissão vinda do form filho
