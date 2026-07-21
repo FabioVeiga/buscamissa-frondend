@@ -109,7 +109,7 @@
       </aside>
     </div>
 
-    <!-- ══ SOU O RESPONSÁVEL (Fase 5) ══ -->
+    <!-- ══ SOU O RESPONSÁVEL (Fase 4 + 5) ══ -->
     <section *ngIf="!igrejaVerificada"
              class="mt-6 rounded-xl bg-blue-50 border border-blue-100 px-4 py-3
                     flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
@@ -126,9 +126,11 @@
         </div>
       </div>
       <div class="shrink-0">
-        <button pButton type="button" icon="pi pi-verified" label="Sou o responsável"
-          class="p-button-sm"
-          (click)="abrirSolicitacaoResponsavel()">
+        <!-- Fase 4: Se logado → vai para /nova com nomeUnico pré-preenchido -->
+        <button pButton type="button"
+          icon="pi pi-plus" label="Solicitar Responsabilidade"
+          class="p-button-sm p-button-success"
+          (click)="solicitarResponsabilidadeLogado()">
         </button>
       </div>
     </section>
