@@ -35,6 +35,7 @@
     <!-- ══ HEADER CLEAN (largura total) ══ -->
     <app-details-header
       [igreja]="churchInfo"
+      [verificada]="igrejaVerificada"
       [proximaMissa]="proximaMissa"
       [isFavorita]="isFavorita"
       (compartilharClick)="compartilhar()"
@@ -53,6 +54,29 @@
       [missas]="churchInfo.missas ?? []"
       (adicionarHorarios)="reportarErro()"
     />
+
+    <!-- ATENDIMENTO E CONFISSÃO (Feature B) — só aparece se o responsável cadastrou -->
+    <section *ngIf="churchInfo.sessoes?.length" class="mt-6 rounded-xl border border-surface-100 bg-white px-4 py-4">
+      <h2 class="text-sm font-bold text-gray-700 flex items-center gap-2 mt-0 mb-3">
+        <i class="pi pi-calendar text-gray-400"></i> Atendimento e Confissão
+      </h2>
+      <div class="grid gap-4 sm:grid-cols-2">
+        <div *ngIf="sessoesSecretaria.length">
+          <p class="text-xs font-semibold text-gray-500 uppercase mb-1.5">Secretaria</p>
+          <p *ngFor="let s of sessoesSecretaria" class="text-sm text-gray-600 my-0.5">
+            {{ diaCurto(s.diaSemana) }} — {{ s.horarioInicio }} às {{ s.horarioFim }}
+            <span *ngIf="s.observacao" class="text-xs text-gray-400">({{ s.observacao }})</span>
+          </p>
+        </div>
+        <div *ngIf="sessoesConfissao.length">
+          <p class="text-xs font-semibold text-gray-500 uppercase mb-1.5">Confissão</p>
+          <p *ngFor="let s of sessoesConfissao" class="text-sm text-gray-600 my-0.5">
+            {{ diaCurto(s.diaSemana) }} — {{ s.horarioInicio }} às {{ s.horarioFim }}
+            <span *ngIf="s.observacao" class="text-xs text-gray-400">({{ s.observacao }})</span>
+          </p>
+        </div>
+      </div>
+    </section>
 
     <!-- CONFIRMAR (largura total) -->
     <app-details-confirmar
@@ -84,6 +108,51 @@
         />
       </aside>
     </div>
+
+    <!-- ══ SOU O RESPONSÁVEL (Fase 5) ══ -->
+    <section *ngIf="!igrejaVerificada"
+             class="mt-6 rounded-xl bg-blue-50 border border-blue-100 px-4 py-3
+                    flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div class="flex items-start gap-2">
+        <i class="pi pi-verified text-blue-400 mt-0.5"></i>
+        <div>
+          <p class="text-sm font-medium text-gray-700">Você é o responsável por esta igreja?</p>
+          <p class="text-xs text-gray-400">Párocos e secretarias podem assumir a gestão da página e manter as informações sempre atualizadas.</p>
+        </div>
+      </div>
+      <div class="shrink-0">
+        <button pButton type="button" icon="pi pi-verified" label="Sou o responsável"
+          class="p-button-sm"
+          (click)="abrirSolicitacaoResponsavel()">
+        </button>
+      </div>
+    </section>
+
+    <!-- ══ MODAL SOLICITAR RESPONSABILIDADE ══ -->
+    <p-dialog header="Solicitar gestão da página" [(visible)]="modalResponsavelVisible"
+              [modal]="true" [style]="{ width: '30rem', maxWidth: '95vw' }" [draggable]="false">
+      <p class="text-sm text-gray-600 mt-0">
+        Nossa equipe vai analisar sua solicitação para
+        <strong>{{ churchInfo.nome }}</strong> e você receberá a resposta por e-mail.
+        Quanto mais contexto você der, mais rápida a análise.
+      </p>
+      <div class="flex flex-col gap-3 mt-3">
+        <p-iftalabel>
+          <input pInputText id="cargoResp" [(ngModel)]="solicitacaoCargo" maxlength="100" class="w-full" />
+          <label htmlFor="cargoResp">Seu cargo/relação (ex: Pároco, Secretária)</label>
+        </p-iftalabel>
+        <p-iftalabel>
+          <textarea pTextarea id="obsResp" [(ngModel)]="solicitacaoObservacao" rows="3" maxlength="500" class="w-full"></textarea>
+          <label htmlFor="obsResp">Como podemos confirmar? (telefone da secretaria, site, e-mail institucional...)</label>
+        </p-iftalabel>
+      </div>
+      <ng-template pTemplate="footer">
+        <button pButton type="button" label="Cancelar" class="p-button-text"
+                [disabled]="solicitacaoEnviando" (click)="modalResponsavelVisible = false"></button>
+        <button pButton type="button" label="Enviar solicitação" icon="pi pi-send"
+                [loading]="solicitacaoEnviando" (click)="enviarSolicitacaoResponsavel()"></button>
+      </ng-template>
+    </p-dialog>
 
     <!-- ══ REPORTAR (largura total) ══ -->
     <section class="mt-6 rounded-xl bg-surface-50 border border-surface-100 px-4 py-3

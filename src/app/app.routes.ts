@@ -100,6 +100,18 @@ export const routes: Routes = [
             (m) => m.ComoFuncionaComponent
           ),
       },
+      {
+        path: 'guia-responsavel',
+        data: {
+          title: 'Guia do Responsável Verificado | BuscaMissa',
+          description: 'Conheça o processo passo a passo para se tornar um Responsável Verificado e gerenciar sua igreja no BuscaMissa.',
+          canonical: 'https://buscamissa.com.br/guia-responsavel',
+        },
+        loadComponent: () =>
+          import('./modules/public/guia-responsavel/guia-responsavel.component').then(
+            (m) => m.GuiaResponsavelComponent
+          ),
+      },
       // Missa Agora — geoloc em tempo real
       {
         path: 'missa-agora',
@@ -192,6 +204,43 @@ export const routes: Routes = [
         loadComponent: () =>
           import("./modules/public/contribute/contribute.component").then(
             (m) => m.ContributeComponent
+          ),
+      },
+      {
+        path: "entrar",
+        data: {
+          title: 'Entrar | BuscaMissa',
+          description: 'Área do responsável pela paróquia: entre para gerenciar as informações da sua igreja no BuscaMissa.',
+          canonical: 'https://buscamissa.com.br/entrar',
+          noindex: true,
+        },
+        loadComponent: () =>
+          import("./modules/public/entrar/entrar.component").then(
+            (m) => m.EntrarComponent
+          ),
+      },
+      {
+        path: "meu-painel",
+        data: {
+          title: 'Minhas Igrejas | BuscaMissa',
+          description: 'Painel do responsável verificado: gerencie as igrejas sob sua responsabilidade no BuscaMissa.',
+          noindex: true,
+        },
+        loadComponent: () =>
+          import("./modules/public/meu-painel/meu-painel.component").then(
+            (m) => m.MeuPainelComponent
+          ),
+      },
+      {
+        path: "meu-painel/editar/:igrejaId",
+        data: {
+          title: 'Editar igreja | BuscaMissa',
+          description: 'Edite as informações da sua igreja no BuscaMissa.',
+          noindex: true,
+        },
+        loadComponent: () =>
+          import("./modules/public/meu-painel/editar-igreja/editar-igreja.component").then(
+            (m) => m.EditarIgrejaComponent
           ),
       },
       {

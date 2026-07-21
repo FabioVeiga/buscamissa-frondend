@@ -7,6 +7,7 @@ import { SkeletonModule } from "primeng/skeleton";
 import { MessageService } from "primeng/api";
 import { PrimeNgModule } from "../../../../shared/primeng.module";
 import { CommonModule } from "@angular/common";
+import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { Mass } from "../../church/models/church.model";
 import { getNextOccurrenceMinutes } from "../../../../shared/utils/mass-time.utils";
@@ -23,6 +24,9 @@ import { DetailsConfirmarComponent } from "./sections/details-confirmar/details-
 import { DetailsComoChegarComponent } from "./sections/details-como-chegar/details-como-chegar.component";
 import { DetailsContatoComponent } from "./sections/details-contato/details-contato.component";
 import { DetailsReportarModalComponent } from "./sections/details-reportar-modal/details-reportar-modal.component";
+import { ResponsavelService } from "../../../../core/services/responsavel.service";
+import { AuthService } from "../../../../core/services/auth.service";
+import { LoggerService } from "../../../../core/services/logger.service";
 
 /**
  * Página da paróquia — orquestra o carregamento, SEO/Schema.org e tracking.
@@ -33,6 +37,7 @@ import { DetailsReportarModalComponent } from "./sections/details-reportar-modal
   imports: [
     PrimeNgModule,
     CommonModule,
+    FormsModule,
     SkeletonModule,
     RouterLink,
     DetailsHeaderComponent,
@@ -60,6 +65,9 @@ export class DetailsComponent implements OnInit {
   private _clarity = inject(ClarityService);
   private _redesSociais = inject(RedesSociaisService);
   private _metricas = inject(MetricasService);
+  private _responsavel = inject(ResponsavelService);
+  private _auth = inject(AuthService);
+  private _logger = inject(LoggerService);
 
   tiposRedeSocial: TipoRedeSocial[] = [];
   isLoading = false;
@@ -75,6 +83,26 @@ export class DetailsComponent implements OnInit {
 
   // Reportar problema
   modalReportarProblemaVisible = false;
+
+  // Sessões de atendimento/confissão (Feature B)
+  private static readonly DIAS_CURTOS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+
+  get sessoesSecretaria(): any[] {
+    return (this.churchInfo?.sessoes ?? []).filter((s: any) => s.tipo === 1);
+  }
+  get sessoesConfissao(): any[] {
+    return (this.churchInfo?.sessoes ?? []).filter((s: any) => s.tipo === 2);
+  }
+  diaCurto(dia: number): string {
+    return DetailsComponent.DIAS_CURTOS[dia] ?? "";
+  }
+
+  // Responsável Verificado (Fase 5)
+  igrejaVerificada = false;
+  modalResponsavelVisible = false;
+  solicitacaoEnviando = false;
+  solicitacaoCargo = "";
+  solicitacaoObservacao = "";
 
   ngOnInit(): void {
     this._redesSociais.obterTipos().subscribe((tipos) => (this.tiposRedeSocial = tipos));
@@ -93,6 +121,57 @@ export class DetailsComponent implements OnInit {
         this.carregar(this._church.getByNomeUnico(this.nomeUnico));
       }
     });
+  }
+
+  private _carregarSeloVerificado(igrejaId: number | undefined): void {
+    this.igrejaVerificada = false;
+    if (!igrejaId) return;
+    this._responsavel.igrejaVerificada(igrejaId).subscribe({
+      next: (verificada) => (this.igrejaVerificada = verificada),
+      error: () => {}, // selo é informativo — falha não pode quebrar a página
+    });
+  }
+
+  /** Botão "Sou o responsável": exige login; logado abre o modal de solicitação. */
+  abrirSolicitacaoResponsavel(): void {
+    if (!this._auth.estaLogado) {
+      this._toast.add({
+        severity: "info",
+        summary: "Faça login",
+        detail: "Entre (ou crie sua senha) para solicitar a gestão desta igreja.",
+      });
+      this._router.navigate(["/entrar"]);
+      return;
+    }
+    this.solicitacaoCargo = "";
+    this.solicitacaoObservacao = "";
+    this.modalResponsavelVisible = true;
+  }
+
+  enviarSolicitacaoResponsavel(): void {
+    if (!this.churchInfo?.id) return;
+    this.solicitacaoEnviando = true;
+    this._responsavel
+      .solicitar(this.churchInfo.id, {
+        cargoInformado: this.solicitacaoCargo?.trim() || undefined,
+        observacao: this.solicitacaoObservacao?.trim() || undefined,
+      })
+      .subscribe({
+        next: (mensagem) => {
+          this.modalResponsavelVisible = false;
+          this._toast.add({ severity: "success", summary: "Solicitação enviada", detail: mensagem });
+        },
+        error: (error) => {
+          this.solicitacaoEnviando = false;
+          this._toast.add({
+            severity: "error",
+            summary: "Não foi possível enviar",
+            detail: error?.error?.data?.mensagemTela ?? "Tente novamente.",
+          });
+          this._logger.logError(error, "details:solicitar-responsavel");
+        },
+        complete: () => (this.solicitacaoEnviando = false),
+      });
   }
 
   /** Refaz a última requisição após um erro de carregamento. */
@@ -119,6 +198,7 @@ export class DetailsComponent implements OnInit {
         }
 
         this._loadFavoritaState();
+        this._carregarSeloVerificado(igreja.id);
         this._analytics.churchView(igreja.nome, igreja.endereco?.localidade ?? '', igreja.endereco?.uf ?? '');
         if (igreja.id) this._metricas.registrarVisualizacaoIgreja(igreja.id);
         this._aplicarClarityTags(igreja);

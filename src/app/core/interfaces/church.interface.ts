@@ -14,6 +14,15 @@ export interface FilterSearchChurch {
 
 export type StatusConfianca = 'Alta' | 'Media' | 'Baixa' | 'Desconhecida';
 
+// Espelha Enums/TipoIgrejaEnum.cs do backend (int cru no banco — não renumerar).
+export enum TipoIgreja {
+  Paroquia = 1,
+  Capela = 2,
+  Comunidade = 3,
+  Santuario = 4,
+  Outro = 99,
+}
+
 export interface Church {
   id?: number;
   nomeUnico?: string;
@@ -23,6 +32,10 @@ export interface Church {
   missas: Mass[];
   endereco: Address;
   statusConfianca?: StatusConfianca;
+  /** Tipo da unidade (Paróquia, Capela...). Ausente em respostas antigas = Paróquia. */
+  tipoIgreja?: TipoIgreja;
+  /** Paróquia-sede quando esta unidade é capela/comunidade; null para paróquias. */
+  igrejaPaiId?: number | null;
 }
 
 export interface UpdateChurch {

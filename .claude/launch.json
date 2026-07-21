@@ -35,6 +35,13 @@
       "runtimeArgs": ["--prefix", "../buscamissa-frondend-admin", "run", "dev:localdev", "--", "--port", "5173"],
       "port": 5173,
       "autoPort": false
+    },
+    {
+      "name": "admin-apiadmin-local",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["--prefix", "../buscamissa-frondend-admin", "run", "dev", "--", "--mode", "apiadmin", "--port", "5173"],
+      "port": 5173,
+      "autoPort": false
     }
   ]
 }

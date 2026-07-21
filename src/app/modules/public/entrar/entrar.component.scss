@@ -1,0 +1,33 @@
+.entrar-wrapper {
+  max-width: 480px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.field {
+  margin-bottom: 1rem;
+}
+
+.field input,
+.field .p-password {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.links {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+
+  a {
+    color: var(--p-primary-color, #2563eb);
+    cursor: pointer;
+    font-size: 0.9rem;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}

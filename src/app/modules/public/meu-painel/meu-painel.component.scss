@@ -1,0 +1,197 @@
+.painel-wrapper {
+  max-width: 720px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+.painel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+
+  h1 {
+    font-size: 1.35rem;
+    font-weight: 800;
+    margin: 0 0 0.25rem;
+  }
+
+  p {
+    margin: 0;
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+}
+
+.estado-vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 3rem 1rem;
+  text-align: center;
+  color: #6b7280;
+
+  .pi {
+    font-size: 2.25rem;
+    color: #d1d5db;
+  }
+
+  .dica {
+    font-size: 0.85rem;
+    color: #9ca3af;
+  }
+}
+
+.lista {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.card-igreja {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem 1.25rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  background: #fff;
+
+  .card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    min-width: 0;
+  }
+
+  .nome {
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .motivo {
+    font-size: 0.75rem;
+    color: #b91c1c;
+  }
+}
+
+.chip {
+  align-self: flex-start;
+  padding: 0.15rem 0.6rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  background: #f3f4f6;
+  color: #4b5563;
+
+  &--aprovado {
+    background: #ecfdf5;
+    color: #047857;
+  }
+
+  &--pendente {
+    background: #fffbeb;
+    color: #b45309;
+  }
+
+  &--negado {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+
+  &--heranca {
+    background: #eff6ff;
+    color: #1d4ed8;
+  }
+}
+
+.rodape-dica {
+  display: flex;
+  gap: 0.5rem;
+  align-items: flex-start;
+  margin-top: 1rem;
+  font-size: 0.8rem;
+  color: #9ca3af;
+
+  .pi {
+    margin-top: 0.1rem;
+  }
+}
+
+.bloco-notificacoes {
+  margin-bottom: 1.5rem;
+
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.95rem;
+    font-weight: 700;
+    margin: 0 0 0.75rem;
+    color: #374151;
+  }
+}
+
+.notificacao {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid #fde68a;
+  background: #fffbeb;
+  border-radius: 10px;
+  margin-bottom: 0.5rem;
+
+  &--lida {
+    border-color: #e5e7eb;
+    background: #fff;
+    opacity: 0.75;
+  }
+}
+
+.notificacao-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.notificacao-titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.notificacao-ponto {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #f59e0b;
+  flex-shrink: 0;
+}
+
+.notificacao-mensagem {
+  font-size: 0.85rem;
+  color: #4b5563;
+}
+
+.notificacao-meta {
+  font-size: 0.72rem;
+  color: #9ca3af;
+}
+
+.painel-acoes {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.botao-sino {
+  position: relative;
+}
