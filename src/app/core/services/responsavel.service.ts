@@ -6,6 +6,7 @@ import {
   EditarDadosRequest,
   MinhaResponsabilidade,
   SolicitarResponsabilidadeRequest,
+  MetricasIgreja,
 } from "../interfaces/responsavel.interface";
 
 /**
@@ -49,14 +50,23 @@ export class ResponsavelService {
   }
 
   /** Métricas dos últimos 30 dias — cards do painel do responsável. */
-  obterMetricas(igrejaId: number) {
+  obterMetricas(igrejaId: number): Observable<MetricasIgreja> {
     return this.http
       .get<{ data: {
         periodoInicio: string; periodoFim: string;
         visualizacoes: number; favoritos: number;
         cliquesInstagram: number; compartilhamentos: number;
       } }>(`v1/responsavel/igreja/${igrejaId}/metricas`)
-      .pipe(map((r) => r.data));
+      .pipe(
+        map((r) => ({
+          periodoInicio: new Date(r.data.periodoInicio),
+          periodoFim: new Date(r.data.periodoFim),
+          visualizacoes: r.data.visualizacoes,
+          favoritos: r.data.favoritos,
+          cliquesInstagram: r.data.cliquesInstagram,
+          compartilhamentos: r.data.compartilhamentos
+        }))
+      );
   }
 
   /** Aplica a edição direta na igreja real. */
