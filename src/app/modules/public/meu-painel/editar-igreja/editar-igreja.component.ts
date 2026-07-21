@@ -267,6 +267,9 @@ export class EditarIgrejaComponent implements OnInit {
           logradouro: e.logradouro || this.form.get("endereco.logradouro")?.value,
           bairro: e.bairro || this.form.get("endereco.bairro")?.value,
         });
+        // Atualiza valores originais para refletir o CEP preenchido
+        this._localidadeOriginal = e.localidade || "";
+        this._ufOriginal = e.uf || "";
       },
       error: () => {
         this.buscandoCep = false;
