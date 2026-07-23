@@ -7,8 +7,10 @@ import { provideAnimationsAsync } from "@angular/platform-browser/animations/asy
 import {
   HTTP_INTERCEPTORS,
   provideHttpClient,
+  withFetch,
   withInterceptorsFromDi,
 } from "@angular/common/http";
+import { provideClientHydration, withEventReplay } from "@angular/platform-browser";
 import { AuthInterceptor } from "./core/middleware/auth.interceptor";
 import { ApiBaseUrlInterceptor } from "./core/middleware/api-base.interceptor";
 import { provideEnvironmentNgxMask } from "ngx-mask";
@@ -20,7 +22,10 @@ export const appConfig: ApplicationConfig = {
     provideZoneChangeDetection({ eventCoalescing: true }),
     provideRouter(routes),
     provideAnimationsAsync(),
-    provideHttpClient(withInterceptorsFromDi()),
+    // Hidratação das páginas pré-renderizadas (SSG) + replay de eventos disparados
+    // antes do JS carregar. withFetch evita a dependência de xhr2 no servidor.
+    provideClientHydration(withEventReplay()),
+    provideHttpClient(withFetch(), withInterceptorsFromDi()),
     provideEnvironmentNgxMask(),
     // Restaura/renova a sessão do Responsável Verificado ao abrir o app
     provideAppInitializer(() => inject(AuthService).restaurarSessao()),
