@@ -1,4 +1,5 @@
-import { Component, inject, OnInit } from "@angular/core";
+import { Component, inject, OnInit, PLATFORM_ID } from "@angular/core";
+import { isPlatformBrowser } from "@angular/common";
 import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from "@angular/router";
 import { filter, map, pairwise, startWith } from "rxjs/operators";
 import { SeoService } from "./core/services/seo.service";
@@ -18,23 +19,13 @@ export class AppComponent implements OnInit {
   private _analytics = inject(AnalyticsService);
   private _clarity = inject(ClarityService);
   private _navHistory = inject(NavigationHistoryService);
+  private _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   ngOnInit(): void {
-    this._analytics.initPageTracking();
-    this._initClarityGlobalTags();
-
     const navEnd$ = this._router.events.pipe(filter(e => e instanceof NavigationEnd));
 
-    // Rastreia rota anterior para uso no ClarityService
-    navEnd$.pipe(
-      map(e => (e as NavigationEnd).urlAfterRedirects),
-      startWith(''),
-      pairwise()
-    ).subscribe(([prev]) => {
-      this._clarity.setPrevRoute(prev);
-      this._navHistory.track(prev);
-    });
-
+    // SEO deve rodar TAMBÉM no servidor (prerender) — é o que injeta title/meta/
+    // canonical no HTML estático. Por isso fica fora da guarda de browser.
     navEnd$.pipe(
       map(() => {
         let route = this._activatedRoute;
@@ -50,9 +41,27 @@ export class AppComponent implements OnInit {
           noindex: data['noindex'],
         });
       }
-      // A11y: move o foco para o <main> a cada navegação SPA, para que leitores
-      // de tela anunciem a nova página. preventScroll não interfere no scroll.
-      document.getElementById('conteudo')?.focus({ preventScroll: true });
+      // A11y: move o foco para o <main> a cada navegação SPA. Só no browser
+      // (o DOM do servidor não tem foco).
+      if (this._isBrowser) {
+        document.getElementById('conteudo')?.focus({ preventScroll: true });
+      }
+    });
+
+    // Analytics/Clarity/histórico são exclusivamente de browser.
+    if (!this._isBrowser) return;
+
+    this._analytics.initPageTracking();
+    this._initClarityGlobalTags();
+
+    // Rastreia rota anterior para uso no ClarityService
+    navEnd$.pipe(
+      map(e => (e as NavigationEnd).urlAfterRedirects),
+      startWith(''),
+      pairwise()
+    ).subscribe(([prev]) => {
+      this._clarity.setPrevRoute(prev);
+      this._navHistory.track(prev);
     });
   }
 

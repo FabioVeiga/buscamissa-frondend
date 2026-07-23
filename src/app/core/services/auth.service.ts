@@ -1,5 +1,6 @@
 import { HttpClient } from "@angular/common/http";
-import { inject, Injectable } from "@angular/core";
+import { inject, Injectable, PLATFORM_ID } from "@angular/core";
+import { isPlatformBrowser } from "@angular/common";
 import { BehaviorSubject, Observable, map, tap } from "rxjs";
 import {
   AuthResponse,
@@ -18,6 +19,7 @@ const STORAGE_KEY = "bm_sessao";
 @Injectable({ providedIn: "root" })
 export class AuthService {
   private http = inject(HttpClient);
+  private _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   private sessaoSubject = new BehaviorSubject<AuthResponse | null>(this.carregarSessao());
   /** Sessão atual (null = anônimo). */
@@ -74,7 +76,7 @@ export class AuthService {
   }
 
   logout(): void {
-    localStorage.removeItem(STORAGE_KEY);
+    if (this._isBrowser) localStorage.removeItem(STORAGE_KEY);
     this.sessaoSubject.next(null);
   }
 
@@ -97,11 +99,13 @@ export class AuthService {
   }
 
   private salvarSessao(sessao: AuthResponse): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(sessao));
+    if (this._isBrowser) localStorage.setItem(STORAGE_KEY, JSON.stringify(sessao));
     this.sessaoSubject.next(sessao);
   }
 
   private carregarSessao(): AuthResponse | null {
+    // No servidor (prerender/SSR) não há localStorage nem sessão — anônimo.
+    if (!this._isBrowser) return null;
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       return raw ? (JSON.parse(raw) as AuthResponse) : null;
