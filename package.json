@@ -9,9 +9,12 @@
     "start:prod": "ng serve --configuration=production",
     "build": "ng build",
     "build:dev": "ng build --configuration=development",
+    "postbuild:dev": "node scripts/copiar-index-csr.mjs",
     "build:staging": "ng build --configuration=staging",
+    "postbuild:staging": "node scripts/copiar-index-csr.mjs",
     "build:prod": "ng build --configuration=production",
     "prebuild:prod": "node scripts/gerar-sitemap.mjs prod",
+    "postbuild:prod": "node scripts/copiar-index-csr.mjs",
     "watch": "ng build --watch --configuration=development",
     "test": "ng test"
   },
