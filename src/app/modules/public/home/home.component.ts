@@ -37,6 +37,7 @@ import { HomeCidadesComponent } from "./sections/home-cidades/home-cidades.compo
 import { HomeMissasMapaComponent } from "./sections/home-missas-mapa/home-missas-mapa.component";
 import { linkParoquia } from "../../../shared/utils/church-link.utils";
 import { SeoService } from "../../../core/services/seo.service";
+import { MetricasService } from "../../../core/services/metricas.service";
 
 interface AddressData {
   [uf: string]: {
@@ -76,6 +77,7 @@ export class HomeComponent {
   private _redesSociais = inject(RedesSociaisService);
   private _geo = inject(GeolocationService);
   private _seo = inject(SeoService);
+  private _metricas = inject(MetricasService);
   tiposRedeSocial: TipoRedeSocial[] = [];
 
   /** Status da geolocalização */
@@ -396,8 +398,16 @@ export class HomeComponent {
 
   ngOnInit(): void {
     this._setSeo();
-    this._redesSociais.obterTipos().subscribe((tipos) => (this.tiposRedeSocial = tipos));
+    this._redesSociais.obterTipos().subscribe({
+      next: (tipos) => (this.tiposRedeSocial = tipos),
+      error: () => { /* silencioso — mantém a lista padrão se a API falhar */ },
+    });
     this.resultsMode = !!this._route.snapshot.data['resultsMode'];
+    // Só conta como visita à Home a rota /home — /buscar é a mesma tela em
+    // modo de resultados e não deve inflar a métrica.
+    if (!this.resultsMode) {
+      this._metricas.registrarVisualizacaoHome();
+    }
 
     this.form = this._fb.group({
       Uf: [null, Validators.required],

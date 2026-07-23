@@ -30,6 +30,23 @@ export class MetricasService {
     localStorage.setItem(chave, String(agora));
   }
 
+  // Home não tem EntidadeId — mesma janela de dedupe das demais métricas,
+  // para não contar o mesmo visitante várias vezes em navegações rápidas (F5).
+  registrarVisualizacaoHome(): void {
+    const chave = 'home_ultima_visualizacao';
+    const agora = Date.now();
+    const ultimaVisualizacao = Number(localStorage.getItem(chave) ?? 0);
+
+    if (agora - ultimaVisualizacao < JANELA_VISUALIZACAO_MS) return;
+
+    this.http
+      .post('v2/metricas/visualizacao-home', {})
+      .subscribe({
+        error: (err) => this.logger.logError(err, 'metrica:visualizacao-home'),
+      });
+    localStorage.setItem(chave, String(agora));
+  }
+
   registrarCliqueRota(igrejaId: number): void {
     this.enviar('clique-rota', igrejaId);
   }

@@ -20,6 +20,13 @@
             "outputPath": "dist/busca-missa",
             "index": "src/index.html",
             "browser": "src/main.ts",
+            "server": "src/main.server.ts",
+            "outputMode": "static",
+            "security": {
+              "allowedHosts": [
+                "ng-localhost"
+              ]
+            },
             "polyfills": [
               "zone.js",
               "@angular/localize/init"

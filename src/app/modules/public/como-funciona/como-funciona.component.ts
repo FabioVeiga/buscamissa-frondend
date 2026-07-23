@@ -1,6 +1,6 @@
-import { Component, inject, OnInit, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, inject, OnInit, AfterViewInit, OnDestroy, PLATFORM_ID } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ChurchesService } from '../../../core/services/churches.service';
 import { ClarityService } from '../../../core/services/clarity.service';
 
@@ -15,6 +15,7 @@ export class ComoFuncionaComponent implements OnInit, AfterViewInit, OnDestroy {
   private _church = inject(ChurchesService);
   private _clarity = inject(ClarityService);
   private _scrollObserver: IntersectionObserver | null = null;
+  private _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   stats = {
     cidades: 213,
@@ -57,6 +58,9 @@ export class ComoFuncionaComponent implements OnInit, AfterViewInit, OnDestroy {
   ];
 
   ngOnInit(): void {
+    // Só no browser: mantém o prerender hermético (sem I/O de rede no build).
+    // Os números carregam na hidratação; o HTML estático usa os defaults.
+    if (!this._isBrowser) return;
     this._church.getInfo().subscribe({
       next: (res: any) => {
         const d = res?.data;
@@ -68,7 +72,8 @@ export class ComoFuncionaComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngAfterViewInit(): void {
-    this._initScrollTracking();
+    // IntersectionObserver/document não existem no servidor.
+    if (this._isBrowser) this._initScrollTracking();
   }
 
   ngOnDestroy(): void {
