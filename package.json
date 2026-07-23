@@ -10,6 +10,7 @@
     "build": "ng build",
     "build:dev": "ng build --configuration=development",
     "postbuild:dev": "node scripts/copiar-index-csr.mjs",
+    "prebuild:staging": "node scripts/gerar-sitemap.mjs staging",
     "build:staging": "ng build --configuration=staging",
     "postbuild:staging": "node scripts/copiar-index-csr.mjs",
     "build:prod": "ng build --configuration=production",

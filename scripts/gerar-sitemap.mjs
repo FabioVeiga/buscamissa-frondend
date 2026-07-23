@@ -43,14 +43,15 @@ const STATIC_PAGES = [
 async function main() {
   console.log(`Buscando rotas SEO em ${API_URL}/v2/seo/routes ...`);
 
-  let data;
+  // Degrada com elegância: se a API estiver fora durante o build, gera um
+  // sitemap só com as páginas estáticas em vez de derrubar o deploy inteiro.
+  let data = { cities: [], parishes: [] };
   try {
     const res = await fetch(`${API_URL}/v2/seo/routes`);
     if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
     data = await res.json();
   } catch (err) {
-    console.error(`Erro ao buscar /v2/seo/routes: ${err.message}`);
-    process.exit(1);
+    console.warn(`⚠ Não foi possível buscar /v2/seo/routes (${err.message}). Gerando sitemap apenas com páginas estáticas.`);
   }
 
   const { cities = [], parishes = [] } = data;
