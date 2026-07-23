@@ -396,7 +396,10 @@ export class HomeComponent {
 
   ngOnInit(): void {
     this._setSeo();
-    this._redesSociais.obterTipos().subscribe((tipos) => (this.tiposRedeSocial = tipos));
+    this._redesSociais.obterTipos().subscribe({
+      next: (tipos) => (this.tiposRedeSocial = tipos),
+      error: () => { /* silencioso — mantém a lista padrão se a API falhar */ },
+    });
     this.resultsMode = !!this._route.snapshot.data['resultsMode'];
 
     this.form = this._fb.group({
