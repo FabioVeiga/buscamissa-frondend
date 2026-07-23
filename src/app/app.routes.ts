@@ -292,7 +292,19 @@ export const routes: Routes = [
           ),
       },
       { path: "", redirectTo: "home", pathMatch: "full" },
+      // 404 real (noindex) em vez de redirecionar à home — elimina soft-404.
+      {
+        path: "**",
+        data: {
+          title: 'Página não encontrada | BuscaMissa',
+          description: 'A página que você procura não existe ou foi movida.',
+          noindex: true,
+        },
+        loadComponent: () =>
+          import("./modules/public/not-found/not-found.component").then(
+            (m) => m.NotFoundComponent
+          ),
+      },
     ],
   },
-  { path: "**", redirectTo: "home", pathMatch: "full" },
 ];
