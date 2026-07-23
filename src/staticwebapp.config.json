@@ -9,7 +9,9 @@
       "/*.png",
       "/*.webmanifest",
       "/*.html",
-      "/*.map"
+      "/*.map",
+      "/*.xml",
+      "/*.txt"
     ]
   },
   "globalHeaders": {
