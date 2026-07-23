@@ -1,9 +1,11 @@
 User-agent: *
 Allow: /
 
-# Não indexar páginas de fluxo interno
+# Não indexar páginas de fluxo interno / área logada
 Disallow: /editar/
 Disallow: /enviar-codigo/
 Disallow: /validar
+Disallow: /entrar
+Disallow: /meu-painel
 
 Sitemap: https://buscamissa.com.br/sitemap.xml
