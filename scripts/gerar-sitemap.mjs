@@ -1,6 +1,7 @@
 import { writeFileSync, readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { buscarRotasSeo, normalizarBaseUrl } from './lib/seo-routes.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -9,7 +10,7 @@ const ROOT = join(__dirname, '..');
 const ENV = process.argv[2] ?? 'prod';
 
 function lerApiUrl() {
-  if (process.env.API_URL) return process.env.API_URL.replace(/\/$/, '');
+  if (process.env.API_URL) return normalizarBaseUrl(process.env.API_URL);
 
   const envFile = ENV === 'staging'
     ? join(ROOT, 'src/environments/environment.staging.ts')
@@ -20,7 +21,7 @@ function lerApiUrl() {
   if (!match) throw new Error(`apiURL não encontrado em ${envFile}`);
 
   // Remove /api/ do caminho — o endpoint /v2/seo/routes é rota absoluta
-  return match[1].replace(/\/api\/?$/, '').replace(/\/$/, '');
+  return normalizarBaseUrl(match[1]);
 }
 
 const API_URL = lerApiUrl();
@@ -41,20 +42,10 @@ const STATIC_PAGES = [
 ];
 
 async function main() {
-  console.log(`Buscando rotas SEO em ${API_URL}/v2/seo/routes ...`);
-
-  // Degrada com elegância: se a API estiver fora durante o build, gera um
-  // sitemap só com as páginas estáticas em vez de derrubar o deploy inteiro.
-  let data = { cities: [], parishes: [] };
-  try {
-    const res = await fetch(`${API_URL}/v2/seo/routes`);
-    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
-    data = await res.json();
-  } catch (err) {
-    console.warn(`⚠ Não foi possível buscar /v2/seo/routes (${err.message}). Gerando sitemap apenas com páginas estáticas.`);
-  }
-
-  const { cities = [], parishes = [] } = data;
+  // Fonte única (scripts/lib/seo-routes.mjs): já trata timeout, validação de
+  // shape, dedupe, ordenação e degradação (retorna listas vazias se a API estiver
+  // fora, gerando um sitemap só com as páginas estáticas em vez de derrubar o build).
+  const { cities, parishes } = await buscarRotasSeo(API_URL);
 
   const urlEntries = [];
 
