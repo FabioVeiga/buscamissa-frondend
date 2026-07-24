@@ -108,7 +108,16 @@ export class DetailsComponent implements OnInit {
   solicitacaoObservacao = "";
 
   ngOnInit(): void {
-    this._redesSociais.obterTipos().subscribe((tipos) => (this.tiposRedeSocial = tipos));
+    // Browser-only: no prerender o injector é recriado por rota, então este GET a
+    // v1/RedeSocial/tipos dispararia 1x POR paróquia (~4.4k chamadas → 429). Os tipos
+    // só alimentam os links de rede social (interativos), que hidratam no cliente.
+    // O error handler garante que uma falha aqui nunca quebre a página.
+    if (this._isBrowser) {
+      this._redesSociais.obterTipos().subscribe({
+        next: (tipos) => (this.tiposRedeSocial = tipos),
+        error: () => {},
+      });
+    }
 
     this._route.params.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((params) => {
       const uf = params["uf"];
