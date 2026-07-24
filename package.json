@@ -12,10 +12,10 @@
     "postbuild:dev": "node scripts/copiar-index-csr.mjs",
     "prebuild:staging": "node scripts/gerar-sitemap.mjs staging",
     "build:staging": "ng build --configuration=staging",
-    "postbuild:staging": "node scripts/copiar-index-csr.mjs",
+    "postbuild:staging": "node scripts/copiar-index-csr.mjs && node scripts/verificar-prerender.mjs",
     "build:prod": "ng build --configuration=production",
     "prebuild:prod": "node scripts/gerar-sitemap.mjs prod",
-    "postbuild:prod": "node scripts/copiar-index-csr.mjs",
+    "postbuild:prod": "node scripts/copiar-index-csr.mjs && node scripts/verificar-prerender.mjs",
     "watch": "ng build --watch --configuration=development",
     "test": "ng test"
   },
