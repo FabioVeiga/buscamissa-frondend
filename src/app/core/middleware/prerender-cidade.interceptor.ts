@@ -7,6 +7,8 @@ import {
   HttpResponse,
 } from '@angular/common/http';
 import { Observable, from, of, switchMap } from 'rxjs';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { environment } from '../../../environments/environment';
 
 /**
@@ -44,12 +46,27 @@ function baseUrl(): string {
 /** Cache da Promise do mapa (1 fetch por build, mesmo com 880 cidades). */
 let cacheMapa: Promise<Map<string, CidadePayload>> | null = null;
 
+/**
+ * Lê o bulk do disco (gravado por scripts/baixar-bulk-prerender.mjs no prebuild).
+ * Preferimos disco a `fetch` porque a rede DURANTE o render, contra uma API lenta,
+ * estoura o timeout de rota do Angular e derruba o build inteiro. Retorna null se
+ * o arquivo não existe (ex.: build:dev) → cai no fetch ao vivo.
+ */
+function lerDoDisco(): CidadePayload[] | null {
+  const arquivo = join(process.cwd(), '.prerender-cache', 'cidades.json');
+  if (!existsSync(arquivo)) return null;
+  return JSON.parse(readFileSync(arquivo, 'utf-8')) as CidadePayload[];
+}
+
 async function carregarMapa(): Promise<Map<string, CidadePayload>> {
-  const url = `${baseUrl()}/v2/seo/cidades`;
   const inicio = Date.now();
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
-  const lista = (await res.json()) as CidadePayload[];
+  let lista = lerDoDisco();
+  const origem = lista ? 'disco (.prerender-cache)' : 'bulk /v2/seo/cidades';
+  if (!lista) {
+    const res = await fetch(`${baseUrl()}/v2/seo/cidades`);
+    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+    lista = (await res.json()) as CidadePayload[];
+  }
 
   const mapa = new Map<string, CidadePayload>();
   for (const c of Array.isArray(lista) ? lista : []) {
@@ -57,7 +74,7 @@ async function carregarMapa(): Promise<Map<string, CidadePayload>> {
     mapa.set(`${c.uf}/${c.cidadeSlug}`.toLowerCase(), c);
   }
   console.log(
-    `[prerender] ${mapa.size} cidades carregadas do bulk /v2/seo/cidades em ${Date.now() - inicio}ms.`,
+    `[prerender] ${mapa.size} cidades carregadas de ${origem} em ${Date.now() - inicio}ms.`,
   );
   return mapa;
 }

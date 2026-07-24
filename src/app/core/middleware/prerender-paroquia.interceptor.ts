@@ -7,6 +7,8 @@ import {
   HttpResponse,
 } from '@angular/common/http';
 import { Observable, from, of, switchMap } from 'rxjs';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { environment } from '../../../environments/environment';
 
 /**
@@ -45,12 +47,27 @@ function baseUrl(): string {
 /** Cache da Promise do mapa (1 fetch por build, mesmo com ~4.4k paróquias). */
 let cacheMapa: Promise<Map<string, ParoquiaPayload>> | null = null;
 
+/**
+ * Lê o bulk do disco (gravado por scripts/baixar-bulk-prerender.mjs no prebuild).
+ * Preferimos disco a `fetch` porque a rede DURANTE o render, contra uma API lenta,
+ * estoura o timeout de rota do Angular e derruba o build inteiro. Retorna null se
+ * o arquivo não existe (ex.: build:dev) → cai no fetch ao vivo.
+ */
+function lerDoDisco(): ParoquiaPayload[] | null {
+  const arquivo = join(process.cwd(), '.prerender-cache', 'paroquias.json');
+  if (!existsSync(arquivo)) return null;
+  return JSON.parse(readFileSync(arquivo, 'utf-8')) as ParoquiaPayload[];
+}
+
 async function carregarMapa(): Promise<Map<string, ParoquiaPayload>> {
-  const url = `${baseUrl()}/v2/seo/paroquias`;
   const inicio = Date.now();
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
-  const lista = (await res.json()) as ParoquiaPayload[];
+  let lista = lerDoDisco();
+  const origem = lista ? 'disco (.prerender-cache)' : 'bulk /v2/seo/paroquias';
+  if (!lista) {
+    const res = await fetch(`${baseUrl()}/v2/seo/paroquias`);
+    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+    lista = (await res.json()) as ParoquiaPayload[];
+  }
 
   const mapa = new Map<string, ParoquiaPayload>();
   for (const p of Array.isArray(lista) ? lista : []) {
@@ -58,7 +75,7 @@ async function carregarMapa(): Promise<Map<string, ParoquiaPayload>> {
     mapa.set(`${p.uf}/${p.cidadeSlug}/${p.slug}`.toLowerCase(), p);
   }
   console.log(
-    `[prerender] ${mapa.size} paróquias carregadas do bulk /v2/seo/paroquias em ${Date.now() - inicio}ms.`,
+    `[prerender] ${mapa.size} paróquias carregadas de ${origem} em ${Date.now() - inicio}ms.`,
   );
   return mapa;
 }
