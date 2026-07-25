@@ -59,6 +59,10 @@ function main() {
   const nomeArquivo = `prerender-shared-${hash}.css`;
   writeFileSync(join(BROWSER_DIR, nomeArquivo), cssCombinado);
   const linkTag = `<link rel="stylesheet" href="/${nomeArquivo}">`;
+  // Preload cedo no <head>: o CSS compartilhado é render-blocking, então sinalizamos
+  // prioridade máxima e antecipamos a descoberta (mitiga o custo de LCP de tê-lo
+  // externo em vez de inline). Ver [[swa-limite-tamanho-dedupe-css]].
+  const preloadTag = `<link rel="preload" as="style" href="/${nomeArquivo}">`;
 
   // 2ª passada: remover <style> inline e linkar o arquivo compartilhado.
   let paginas = 0, bytesAntes = 0, bytesDepois = 0;
@@ -66,8 +70,12 @@ function main() {
     const orig = readFileSync(f, 'utf-8');
     if (!STYLE_RE.test(orig)) continue;
     bytesAntes += Buffer.byteLength(orig);
-    // Remove todos os <style> e injeta 1 <link> antes de </head>.
+    // Remove todos os <style>; injeta o preload cedo (logo após <head>) e o
+    // stylesheet antes de </head>.
     let novo = orig.replace(STYLE_RE, '');
+    novo = /<head[^>]*>/.test(novo)
+      ? novo.replace(/<head[^>]*>/, (h) => `${h}${preloadTag}`)
+      : preloadTag + novo;
     novo = novo.includes('</head>')
       ? novo.replace('</head>', `${linkTag}</head>`)
       : linkTag + novo;
