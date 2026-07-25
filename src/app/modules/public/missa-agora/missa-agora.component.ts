@@ -100,26 +100,29 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
   }
 
   private _pedirGeolocalizacao(): void {
-    if (!navigator.geolocation) {
-      this.geoStatus = 'denied';
-      return;
-    }
     this.geoStatus = 'loading';
-    navigator.geolocation.getCurrentPosition(
-      pos => {
+    this._geo.obterPosicaoAtual()
+      .then(({ lat, lng }) => {
         this.permissaoNegadaPeloBrowser = false;
         this.geoStatus = 'found';
-        this._buscarMissas(pos.coords.latitude, pos.coords.longitude);
-        this._reverseGeocode(pos.coords.latitude, pos.coords.longitude);
-        this._loadCidadesProximas(pos.coords.latitude, pos.coords.longitude);
-      },
-      err => {
+        this._buscarMissas(lat, lng);
+        this._reverseGeocode(lat, lng);
+        this._loadCidadesProximas(lat, lng);
+      })
+      .catch((err: GeolocationPositionError | Error) => {
         this.geoStatus = 'denied';
-        if (err.code === 1) {
-          this.permissaoNegadaPeloBrowser = true;
+        const code = (err as GeolocationPositionError)?.code;
+        this.permissaoNegadaPeloBrowser = code === 1;
+        // Posição indisponível (2) ou timeout (3): não foi o usuário que negou —
+        // avisa e direciona para o fallback de cidade/CEP, sem culpar a permissão.
+        if (code === 2 || code === 3) {
+          this._toast.add({
+            severity: 'info',
+            summary: 'Não conseguimos te localizar',
+            detail: 'Sua localização não está disponível agora. Busque por cidade ou CEP abaixo.',
+          });
         }
-      }
-    );
+      });
   }
 
   private _buscarMissas(lat: number, lng: number): void {

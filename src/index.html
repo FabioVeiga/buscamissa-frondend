@@ -5,13 +5,10 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Preload da imagem do hero (LCP) -->
-    <link
-      rel="preload"
-      as="image"
-      href="/assets/banner/hero-igreja.webp"
-      fetchpriority="high"
-    />
+    <!-- NOTA: o hero-igreja.webp é usado SÓ na home. O <img> da home já tem
+         fetchpriority="high" + width/height, então NÃO preloadamos aqui — um preload
+         global carregaria 91 KB inúteis (com prioridade alta) em todas as ~2,4k páginas
+         de paróquia/cidade, competindo com o LCP real delas. -->
 
     <!-- Preconnect / dns-prefetch antes dos scripts externos -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -34,7 +31,31 @@
       gtag('js', new Date());
       gtag('config', 'G-CGY94P6KSN');
     </script>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-CGY94P6KSN"></script>
+    <!-- Perf: o gtag.js (~163 KB) sai do caminho crítico — carrega no
+         requestIdleCallback (ou no 1º gesto do usuário). Os comandos gtag() acima
+         ficam na fila no dataLayer e são processados quando o script chega, então
+         o pageview só atrasa alguns segundos. Consent Mode segue "denied" por padrão. -->
+    <script>
+      (function () {
+        var carregado = false;
+        function carregarGtag() {
+          if (carregado) return;
+          carregado = true;
+          var s = document.createElement('script');
+          s.async = true;
+          s.src = 'https://www.googletagmanager.com/gtag/js?id=G-CGY94P6KSN';
+          document.head.appendChild(s);
+        }
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(carregarGtag, { timeout: 3500 });
+        } else {
+          setTimeout(carregarGtag, 2500);
+        }
+        ['pointerdown', 'keydown', 'touchstart', 'scroll'].forEach(function (ev) {
+          window.addEventListener(ev, carregarGtag, { once: true, passive: true });
+        });
+      })();
+    </script>
 
     <!-- Microsoft Clarity — só carrega após decisão de consentimento no AdOpt
          (callback documentado window.adoptCB). Sem consentimento, não carrega. -->
@@ -64,11 +85,29 @@
       name="adopt-website-id"
       content="0b3ece11-386e-4ab4-85f6-75334c157dc5"
     />
-    <script
-      src="//tag.goadopt.io/injector.js?website_code=0b3ece11-386e-4ab4-85f6-75334c157dc5"
-      class="adopt-injector"
-      defer
-    ></script>
+    <!-- Perf: o injector do AdOpt (~944 KB) é o maior recurso da página e domina o TBT
+         na main thread. Carrega SÓ no 1º gesto do usuário (mousemove/scroll/tap/tecla),
+         ficando totalmente fora do carregamento inicial. No desktop o mousemove dispara
+         quase de imediato; no mobile, no 1º scroll/tap. Compliance mantida — o GA está em
+         Consent Mode "denied" por padrão e o Clarity só carrega no adoptCB, então NADA
+         rastreia antes do consentimento (que só é possível após o banner, que aparece no
+         gesto). Trade-off aceito: quem não interage não vê o banner (e não é rastreado). -->
+    <script>
+      (function () {
+        var carregado = false;
+        function carregarAdopt() {
+          if (carregado) return;
+          carregado = true;
+          var s = document.createElement('script');
+          s.src = '//tag.goadopt.io/injector.js?website_code=0b3ece11-386e-4ab4-85f6-75334c157dc5';
+          s.className = 'adopt-injector';
+          document.head.appendChild(s);
+        }
+        ['mousemove', 'pointerdown', 'keydown', 'touchstart', 'scroll'].forEach(function (ev) {
+          window.addEventListener(ev, carregarAdopt, { once: true, passive: true });
+        });
+      })();
+    </script>
     <!-- SEO Básico -->
     <title>BuscaMissa | Encontre ou cadastre missas</title>
     <meta

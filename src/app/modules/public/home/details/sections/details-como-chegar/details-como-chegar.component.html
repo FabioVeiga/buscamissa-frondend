@@ -4,9 +4,16 @@
   </h2>
 
   <div class="como-chegar-grid">
-    <!-- Mapa -->
+    <!-- Mapa (facade: iframe só carrega ao clicar — evita ~230 KB de scripts do
+         Google Maps no carregamento inicial; layout estável, sem CLS) -->
     <div class="rounded-xl overflow-hidden border border-surface-200 shadow-sm">
-      <iframe *ngIf="mapEmbedUrl"
+      <button *ngIf="!mostrarMapa && mapEmbedUrl" type="button" (click)="verMapa()"
+        class="w-full h-44 flex flex-col items-center justify-center gap-2 bg-surface-100 text-gray-500 hover:bg-surface-200 transition-colors cursor-pointer border-0"
+        [attr.aria-label]="'Ver mapa de ' + igreja.nome">
+        <i class="pi pi-map text-3xl"></i>
+        <span class="text-sm font-medium">Ver mapa</span>
+      </button>
+      <iframe *ngIf="mostrarMapa && mapEmbedUrl"
         [src]="mapEmbedUrl"
         class="w-full h-44 block border-0"
         loading="lazy"

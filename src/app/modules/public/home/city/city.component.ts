@@ -1,6 +1,6 @@
-import { Component, DestroyRef, inject, OnDestroy, OnInit } from "@angular/core";
+import { Component, DestroyRef, inject, OnDestroy, OnInit, PLATFORM_ID } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { CommonModule } from "@angular/common";
+import { CommonModule, isPlatformBrowser } from "@angular/common";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { finalize } from "rxjs/operators";
 import { SkeletonModule } from "primeng/skeleton";
@@ -48,6 +48,9 @@ export class CityComponent implements OnInit, OnDestroy {
   private _analytics = inject(AnalyticsService);
   private _favorites = inject(FavoritesService);
   private _clarity = inject(ClarityService);
+
+  /** Falso durante o prerender (Node). Guarda browser-APIs (geoloc, localStorage). */
+  private readonly _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   isLoading = false;
   uf = "";
@@ -140,7 +143,7 @@ export class CityComponent implements OnInit, OnDestroy {
         this._clarity.tag('qtd_resultados', String(this.igrejas.length));
 
         // Marca o momento da busca para medir tempo até encontrar uma missa
-        localStorage.setItem('bm_ts_busca', String(Date.now()));
+        if (this._isBrowser) localStorage.setItem('bm_ts_busca', String(Date.now()));
 
         if (this.igrejas.length === 0) {
           this.naoEncontrado = true;
@@ -341,7 +344,7 @@ export class CityComponent implements OnInit, OnDestroy {
   }
 
   private pedirGeolocalizacao(): void {
-    if (!navigator.geolocation) return;
+    if (!this._isBrowser || !navigator.geolocation) return;
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         this.userLat = pos.coords.latitude;
@@ -355,6 +358,7 @@ export class CityComponent implements OnInit, OnDestroy {
   // ── Ações ─────────────────────────────────────────────────────────────────
 
   comoChegar(igreja: any): void {
+    if (!this._isBrowser) return;
     const lat = igreja.endereco?.latitude;
     const lng = igreja.endereco?.longitude;
     const url = lat && lng
@@ -402,6 +406,7 @@ export class CityComponent implements OnInit, OnDestroy {
   // ── Compartilhar ──────────────────────────────────────────────────────────
 
   compartilhar(): void {
+    if (!this._isBrowser) return;
     const title = `Missas em ${this.cidadeNome}/${this.uf.toUpperCase()} | BuscaMissa`;
     if (navigator.share) {
       navigator.share({ title, url: window.location.href }).catch(() => {});

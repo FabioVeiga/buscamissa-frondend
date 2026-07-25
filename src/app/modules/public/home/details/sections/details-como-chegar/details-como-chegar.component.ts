@@ -18,6 +18,15 @@ export class DetailsComoChegarComponent {
 
   @Output() direcoesClick = new EventEmitter<void>();
 
+  /**
+   * Facade do mapa: o iframe do Google Maps embed puxa ~230 KB de scripts de
+   * terceiros (places/embed/util) que pesam no TBT/LCP. Só carregamos o iframe
+   * quando o usuário clica em "Ver mapa" — os botões Google Maps/Waze já cobrem
+   * o caso comum de navegação. Fica false no prerender (o placeholder é o SSR).
+   */
+  mostrarMapa = false;
+  verMapa(): void { this.mostrarMapa = true; }
+
   // Cache por referência da igreja — evita recriar a SafeResourceUrl (e recarregar
   // o iframe) a cada ciclo de change detection.
   private _mapUrlCache: SafeResourceUrl | null = null;

@@ -1,4 +1,5 @@
-import { Component, DestroyRef, inject, OnInit } from "@angular/core";
+import { Component, DestroyRef, inject, OnInit, PLATFORM_ID } from "@angular/core";
+import { isPlatformBrowser } from "@angular/common";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { finalize } from "rxjs/operators";
 import { ChurchesService } from "../../../../core/services/churches.service";
@@ -68,6 +69,8 @@ export class DetailsComponent implements OnInit {
   private _responsavel = inject(ResponsavelService);
   private _auth = inject(AuthService);
   private _logger = inject(LoggerService);
+  /** No prerender (server) roda sem browser-APIs — ver ngOnInit/carregar. */
+  private _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   tiposRedeSocial: TipoRedeSocial[] = [];
   isLoading = false;
@@ -105,7 +108,16 @@ export class DetailsComponent implements OnInit {
   solicitacaoObservacao = "";
 
   ngOnInit(): void {
-    this._redesSociais.obterTipos().subscribe((tipos) => (this.tiposRedeSocial = tipos));
+    // Browser-only: no prerender o injector é recriado por rota, então este GET a
+    // v1/RedeSocial/tipos dispararia 1x POR paróquia (~4.4k chamadas → 429). Os tipos
+    // só alimentam os links de rede social (interativos), que hidratam no cliente.
+    // O error handler garante que uma falha aqui nunca quebre a página.
+    if (this._isBrowser) {
+      this._redesSociais.obterTipos().subscribe({
+        next: (tipos) => (this.tiposRedeSocial = tipos),
+        error: () => {},
+      });
+    }
 
     this._route.params.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((params) => {
       const uf = params["uf"];
@@ -205,10 +217,16 @@ export class DetailsComponent implements OnInit {
         }
 
         this._loadFavoritaState();
-        this._carregarSeloVerificado(igreja.id);
         this._analytics.churchView(igreja.nome, igreja.endereco?.localidade ?? '', igreja.endereco?.uf ?? '');
         if (igreja.id) this._metricas.registrarVisualizacaoIgreja(igreja.id);
-        this._aplicarClarityTags(igreja);
+
+        // Browser-only: no prerender (server) o selo dispararia ~4.4k GETs a
+        // v1/responsavel/... (risco de 429) e _aplicarClarityTags lê localStorage
+        // (quebra no server). Ambos são informativos e hidratam no cliente.
+        if (this._isBrowser) {
+          this._carregarSeloVerificado(igreja.id);
+          this._aplicarClarityTags(igreja);
+        }
 
         const cidadeUf = igreja.endereco?.localidade
           ? `${igreja.endereco.localidade}${igreja.endereco?.uf ? '/' + igreja.endereco.uf : ''}`

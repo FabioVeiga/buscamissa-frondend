@@ -1,10 +1,14 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 
 /** Assinatura do global `clarity` injetado pelo script do Microsoft Clarity. */
 type ClarityFn = (command: string, ...args: unknown[]) => void;
 
 @Injectable({ providedIn: 'root' })
 export class ClarityService {
+  /** Falso no prerender (Node) — sem `window`/`document`. Analytics é só do browser. */
+  private readonly _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
   /** Rota anterior — atualizada pelo AppComponent a cada NavigationEnd */
   private _prevRoute = '';
 
@@ -12,6 +16,7 @@ export class ClarityService {
   setPrevRoute(route: string): void { this._prevRoute = route; }
 
   private get c(): ClarityFn | undefined {
+    if (!this._isBrowser) return undefined;
     return (window as unknown as { clarity?: ClarityFn }).clarity;
   }
 
@@ -27,6 +32,7 @@ export class ClarityService {
 
   /** Detecta origem da sessão pelo document.referrer (só é preciso na primeira carga). */
   detectSessionOrigin(): string {
+    if (!this._isBrowser) return 'direto';
     const ref = document.referrer;
     if (!ref) return 'direto';
     if (/google\.|bing\.|yahoo\./i.test(ref)) return 'buscador';

@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges, SimpleChanges, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges, PLATFORM_ID, SimpleChanges, inject } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { MessageService } from 'primeng/api';
 import { ChurchesService } from '../../../../../../core/services/churches.service';
@@ -22,6 +22,8 @@ export class DetailsConfirmarComponent implements OnChanges {
   private _toast = inject(MessageService);
   private _analytics = inject(AnalyticsService);
   private _cdr = inject(ChangeDetectorRef);
+  /** No prerender (server) não há localStorage nem prova social — ver jaConfirmou/_carregarResumo. */
+  private _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   @Input({ required: true }) igrejaId!: number;
   @Input() igrejaNome = '';
@@ -42,7 +44,9 @@ export class DetailsConfirmarComponent implements OnChanges {
   }
 
   jaConfirmou(): boolean {
-    if (!this.igrejaId) return false;
+    // Chamado pelo template → roda no prerender (server), onde localStorage não
+    // existe. No server retorna false; o estado real hidrata no cliente.
+    if (!this._isBrowser || !this.igrejaId) return false;
     return !!localStorage.getItem(this._localKey);
   }
 
@@ -59,6 +63,9 @@ export class DetailsConfirmarComponent implements OnChanges {
 
   private _carregarResumo(): void {
     this.ultimaConfirmacao = null;
+    // Prova social é browser-only: no prerender evita ~4.4k GETs a getResumoConfirmacoes
+    // (risco de 429). Hidrata no cliente.
+    if (!this._isBrowser) return;
     this._church.getResumoConfirmacoes(this.igrejaId).subscribe({
       next: (res: any) => {
         this.ultimaConfirmacao = res?.data?.ultimaConfirmacao ?? null;

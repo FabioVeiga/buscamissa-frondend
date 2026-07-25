@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { BehaviorSubject } from 'rxjs';
 
 /**
@@ -26,6 +27,11 @@ export interface IgrejaFavorita {
 @Injectable({ providedIn: 'root' })
 export class FavoritesService {
   private static readonly KEY = 'buscamissa_favoritas';
+
+  // Favoritas vivem só no localStorage (estado por-usuário do browser). No prerender
+  // (Node) não há storage: a leitura devolve [] e a escrita é no-op — o browser
+  // hidrata com o estado real. Declarado ANTES de `_favoritas$`, que chama ler().
+  private readonly _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   private readonly _favoritas$ = new BehaviorSubject<IgrejaFavorita[]>(this.ler());
   /** Emite a lista atual sempre que houver alteração. */
@@ -65,6 +71,7 @@ export class FavoritesService {
   }
 
   private ler(): IgrejaFavorita[] {
+    if (!this._isBrowser) return [];
     try {
       const bruto = JSON.parse(localStorage.getItem(FavoritesService.KEY) || '[]');
       return Array.isArray(bruto) ? bruto : [];
@@ -74,7 +81,7 @@ export class FavoritesService {
   }
 
   private persistir(favoritas: IgrejaFavorita[]): void {
-    localStorage.setItem(FavoritesService.KEY, JSON.stringify(favoritas));
+    if (this._isBrowser) localStorage.setItem(FavoritesService.KEY, JSON.stringify(favoritas));
     this._favoritas$.next(favoritas);
   }
 }

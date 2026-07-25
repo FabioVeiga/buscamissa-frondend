@@ -47,3 +47,6 @@ ajuda/*
 
 # Claude Code — tooling e skills locais (não versionar, não vai para prod)
 .claude/
+
+# Cache de bulks de SEO baixados no prebuild (Fase 2.5) — não versionar.
+.prerender-cache/

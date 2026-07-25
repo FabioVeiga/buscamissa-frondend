@@ -32,16 +32,29 @@ export class GeolocationService {
   private static readonly NOMINATIM = 'https://nominatim.openstreetmap.org';
   private static readonly VIACEP = 'https://viacep.com.br/ws';
 
+  // Opções do getCurrentPosition:
+  //  - enableHighAccuracy:false → usa rede/WiFi (mais rápido e confiável que GPS
+  //    no desktop, onde a alta precisão costuma falhar com kCLErrorLocationUnknown);
+  //  - timeout:10s → evita ficar preso em "carregando" para sempre;
+  //  - maximumAge:5min → aceita uma posição recente em cache, que frequentemente
+  //    resolve casos em que uma leitura nova falharia.
+  private static readonly GEO_OPTIONS: PositionOptions = {
+    enableHighAccuracy: false,
+    timeout: 10_000,
+    maximumAge: 300_000,
+  };
+
   /** Posição atual do usuário (Promise em torno do navigator.geolocation). */
   obterPosicaoAtual(): Promise<Coordenadas> {
     return new Promise((resolve, reject) => {
-      if (!navigator.geolocation) {
+      if (typeof navigator === 'undefined' || !navigator.geolocation) {
         reject(new Error('geolocation-indisponivel'));
         return;
       }
       navigator.geolocation.getCurrentPosition(
         (pos) => resolve({ lat: pos.coords.latitude, lng: pos.coords.longitude }),
-        (err) => reject(err)
+        (err) => reject(err),
+        GeolocationService.GEO_OPTIONS
       );
     });
   }

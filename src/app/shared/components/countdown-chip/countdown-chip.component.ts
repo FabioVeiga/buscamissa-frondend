@@ -1,4 +1,5 @@
-import { Component, Input, OnChanges, OnDestroy, OnInit } from '@angular/core';
+import { Component, Input, OnChanges, OnDestroy, OnInit, PLATFORM_ID, inject } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { getCountdownLabel } from '../../utils/mass-time.utils';
 
 @Component({
@@ -14,10 +15,17 @@ export class CountdownChipComponent implements OnInit, OnChanges, OnDestroy {
 
   label = '';
   private intervalId?: ReturnType<typeof setInterval>;
+  private _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   ngOnInit(): void {
     this.updateLabel();
-    this.intervalId = setInterval(() => this.updateLabel(), 60_000);
+    // No prerender (server) NÃO agendamos o setInterval: um timer pendente impede
+    // o Angular de estabilizar e o render da rota estoura o timeout (derrubando o
+    // build). O label estático já foi calculado; a contagem regressiva viva só faz
+    // sentido no browser e hidrata lá.
+    if (this._isBrowser) {
+      this.intervalId = setInterval(() => this.updateLabel(), 60_000);
+    }
   }
 
   ngOnChanges(): void {
