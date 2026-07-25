@@ -34,7 +34,31 @@
       gtag('js', new Date());
       gtag('config', 'G-CGY94P6KSN');
     </script>
-    <script async src="https://www.googletagmanager.com/gtag/js?id=G-CGY94P6KSN"></script>
+    <!-- Perf: o gtag.js (~163 KB) sai do caminho crítico — carrega no
+         requestIdleCallback (ou no 1º gesto do usuário). Os comandos gtag() acima
+         ficam na fila no dataLayer e são processados quando o script chega, então
+         o pageview só atrasa alguns segundos. Consent Mode segue "denied" por padrão. -->
+    <script>
+      (function () {
+        var carregado = false;
+        function carregarGtag() {
+          if (carregado) return;
+          carregado = true;
+          var s = document.createElement('script');
+          s.async = true;
+          s.src = 'https://www.googletagmanager.com/gtag/js?id=G-CGY94P6KSN';
+          document.head.appendChild(s);
+        }
+        if ('requestIdleCallback' in window) {
+          requestIdleCallback(carregarGtag, { timeout: 3500 });
+        } else {
+          setTimeout(carregarGtag, 2500);
+        }
+        ['pointerdown', 'keydown', 'touchstart', 'scroll'].forEach(function (ev) {
+          window.addEventListener(ev, carregarGtag, { once: true, passive: true });
+        });
+      })();
+    </script>
 
     <!-- Microsoft Clarity — só carrega após decisão de consentimento no AdOpt
          (callback documentado window.adoptCB). Sem consentimento, não carrega. -->
