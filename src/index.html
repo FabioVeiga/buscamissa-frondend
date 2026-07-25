@@ -5,13 +5,10 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
-    <!-- Preload da imagem do hero (LCP) -->
-    <link
-      rel="preload"
-      as="image"
-      href="/assets/banner/hero-igreja.webp"
-      fetchpriority="high"
-    />
+    <!-- NOTA: o hero-igreja.webp é usado SÓ na home. O <img> da home já tem
+         fetchpriority="high" + width/height, então NÃO preloadamos aqui — um preload
+         global carregaria 91 KB inúteis (com prioridade alta) em todas as ~2,4k páginas
+         de paróquia/cidade, competindo com o LCP real delas. -->
 
     <!-- Preconnect / dns-prefetch antes dos scripts externos -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -88,12 +85,13 @@
       name="adopt-website-id"
       content="0b3ece11-386e-4ab4-85f6-75334c157dc5"
     />
-    <!-- Perf: o injector do AdOpt (~944 KB) é o maior recurso da página e, mesmo com
-         `defer`, competia no carregamento inicial (pesava LCP/TBT no mobile). Aqui ele
-         sai do caminho crítico: carrega no requestIdleCallback (ou no 1º gesto do
-         usuário, o que vier antes). Compliance mantida — o GA está em Consent Mode
-         "denied" por padrão e o Clarity só carrega no adoptCB, então NADA rastreia
-         antes do consentimento, independentemente de quando o banner aparece. -->
+    <!-- Perf: o injector do AdOpt (~944 KB) é o maior recurso da página e domina o TBT
+         na main thread. Carrega SÓ no 1º gesto do usuário (mousemove/scroll/tap/tecla),
+         ficando totalmente fora do carregamento inicial. No desktop o mousemove dispara
+         quase de imediato; no mobile, no 1º scroll/tap. Compliance mantida — o GA está em
+         Consent Mode "denied" por padrão e o Clarity só carrega no adoptCB, então NADA
+         rastreia antes do consentimento (que só é possível após o banner, que aparece no
+         gesto). Trade-off aceito: quem não interage não vê o banner (e não é rastreado). -->
     <script>
       (function () {
         var carregado = false;
@@ -105,12 +103,7 @@
           s.className = 'adopt-injector';
           document.head.appendChild(s);
         }
-        if ('requestIdleCallback' in window) {
-          requestIdleCallback(carregarAdopt, { timeout: 3500 });
-        } else {
-          setTimeout(carregarAdopt, 2500);
-        }
-        ['pointerdown', 'keydown', 'touchstart', 'scroll'].forEach(function (ev) {
+        ['mousemove', 'pointerdown', 'keydown', 'touchstart', 'scroll'].forEach(function (ev) {
           window.addEventListener(ev, carregarAdopt, { once: true, passive: true });
         });
       })();
