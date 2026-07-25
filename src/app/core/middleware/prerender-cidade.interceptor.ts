@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, TransferState, inject } from '@angular/core';
 import {
   HttpEvent,
   HttpHandler,
@@ -10,6 +10,7 @@ import { Observable, from, of, switchMap } from 'rxjs';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { environment } from '../../../environments/environment';
+import { chaveCidade, stateKeyCidade } from './prerender-state-keys';
 
 /**
  * Interceptor SÓ-SERVER (registrado apenas em app.config.server.ts) — resolve o
@@ -94,12 +95,14 @@ function obterMapa(): Promise<Map<string, CidadePayload>> {
 
 @Injectable()
 export class PrerenderCidadeInterceptor implements HttpInterceptor {
+  private _transferState = inject(TransferState);
+
   intercept(req: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     // Casa tanto a URL relativa (antes do ApiBaseUrlInterceptor) quanto a absoluta.
-    const m = req.url.match(/v2\/Igreja\/cidade\/([^/]+)\/([^/?]+)/i);
-    if (req.method !== 'GET' || !m) return next.handle(req);
+    if (req.method !== 'GET') return next.handle(req);
+    const chave = chaveCidade(req.url);
+    if (!chave) return next.handle(req);
 
-    const chave = `${decodeURIComponent(m[1])}/${decodeURIComponent(m[2])}`.toLowerCase();
     return from(obterMapa()).pipe(
       switchMap((mapa) => {
         const c = mapa.get(chave);
@@ -107,6 +110,8 @@ export class PrerenderCidadeInterceptor implements HttpInterceptor {
         const body = {
           data: { cidade: c.cidade, uf: c.uf.toUpperCase(), igrejas: c.igrejas, seo: c.seo },
         };
+        // Transfere pro cliente (evita re-fetch/CLS na hidratação).
+        this._transferState.set(stateKeyCidade(chave), body);
         return of(new HttpResponse({ status: 200, url: req.url, body }));
       }),
     );

@@ -1,4 +1,5 @@
-import { Injectable } from '@angular/core';
+import { Injectable, TransferState, inject } from '@angular/core';
+import { chaveParoquia, stateKeyParoquia } from './prerender-state-keys';
 import {
   HttpEvent,
   HttpHandler,
@@ -95,18 +96,22 @@ function obterMapa(): Promise<Map<string, ParoquiaPayload>> {
 
 @Injectable()
 export class PrerenderParoquiaInterceptor implements HttpInterceptor {
+  private _transferState = inject(TransferState);
+
   intercept(req: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     // Casa tanto a URL relativa (antes do ApiBaseUrlInterceptor) quanto a absoluta.
-    const m = req.url.match(/v2\/Igreja\/paroquia\/([^/]+)\/([^/]+)\/([^/?]+)/i);
-    if (req.method !== 'GET' || !m) return next.handle(req);
+    if (req.method !== 'GET') return next.handle(req);
+    const chave = chaveParoquia(req.url);
+    if (!chave) return next.handle(req);
 
-    const chave =
-      `${decodeURIComponent(m[1])}/${decodeURIComponent(m[2])}/${decodeURIComponent(m[3])}`.toLowerCase();
     return from(obterMapa()).pipe(
       switchMap((mapa) => {
         const p = mapa.get(chave);
         if (!p) return next.handle(req); // bulk fora ou paróquia ausente → chamada normal
         const body = { data: { igreja: p.igreja, seo: p.seo } };
+        // Transfere pro cliente: evita o re-fetch (e o flash de skeleton/CLS) na
+        // hidratação — ver prerender-transfer-state.interceptor.ts.
+        this._transferState.set(stateKeyParoquia(chave), body);
         return of(new HttpResponse({ status: 200, url: req.url, body }));
       }),
     );
