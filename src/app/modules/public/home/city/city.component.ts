@@ -125,6 +125,10 @@ export class CityComponent implements OnInit, OnDestroy {
     this.isLoading = true;
     this.naoEncontrado = false;
     this.erroCarregar = false;
+    // SWR: com o interceptor de TransferState, `next` roda 2x (cache prerenderizado,
+    // depois a revalidação viva). Dados/estado/SEO reatribuem nas duas (idempotente);
+    // os efeitos ÚNICOS (analytics/marca de busca/evento de "sem resultado") só na 1ª.
+    let primeira = true;
     this._church.getByCidade(this.uf, this.cidade).pipe(
       finalize(() => { this.isLoading = false; })
     ).subscribe({
@@ -135,22 +139,26 @@ export class CityComponent implements OnInit, OnDestroy {
         const seo = data?.seo;
 
         this.aplicarFiltros();
-        this._analytics.searchPerformed(this.cidadeNome, this.uf);
 
-        // Tags Clarity de contexto
+        // Tags Clarity de contexto (idempotente — só sobrescreve valores)
         this._clarity.tag('cidade', this.cidadeNome);
         this._clarity.tag('estado', this.uf?.toUpperCase());
         this._clarity.tag('qtd_resultados', String(this.igrejas.length));
 
-        // Marca o momento da busca para medir tempo até encontrar uma missa
-        if (this._isBrowser) localStorage.setItem('bm_ts_busca', String(Date.now()));
+        // Estado da view — reflete o dado atual (idempotente nas duas emissões)
+        this.naoEncontrado = this.igrejas.length === 0;
 
-        if (this.igrejas.length === 0) {
-          this.naoEncontrado = true;
-          this._clarity.track('nenhum_resultado', {
-            cidade: this.cidadeNome,
-            estado: this.uf?.toUpperCase(),
-          });
+        if (primeira) {
+          this._analytics.searchPerformed(this.cidadeNome, this.uf);
+          // Marca o momento da busca para medir tempo até encontrar uma missa
+          if (this._isBrowser) localStorage.setItem('bm_ts_busca', String(Date.now()));
+          if (this.igrejas.length === 0) {
+            this._clarity.track('nenhum_resultado', {
+              cidade: this.cidadeNome,
+              estado: this.uf?.toUpperCase(),
+            });
+          }
+          primeira = false;
         }
 
         const ufUpper = this.uf?.toUpperCase();
