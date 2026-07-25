@@ -13,6 +13,7 @@ import {
 import { provideClientHydration, withEventReplay } from "@angular/platform-browser";
 import { AuthInterceptor } from "./core/middleware/auth.interceptor";
 import { ApiBaseUrlInterceptor } from "./core/middleware/api-base.interceptor";
+import { PrerenderTransferStateInterceptor } from "./core/middleware/prerender-transfer-state.interceptor";
 import { provideEnvironmentNgxMask } from "ngx-mask";
 import { providePrimeNG } from "primeng/config";
 import BuscaMissa from './themes/mytheme';
@@ -30,6 +31,9 @@ export const appConfig: ApplicationConfig = {
     // Restaura/renova a sessão do Responsável Verificado ao abrir o app
     provideAppInitializer(() => inject(AuthService).restaurarSessao()),
     { provide: ErrorHandler, useClass: GlobalErrorHandler },
+    // 1º na cadeia: serve paróquia/cidade do TransferState na hidratação (evita
+    // re-fetch/flash de skeleton/CLS). No-op no server e em navegações posteriores.
+    { provide: HTTP_INTERCEPTORS, useClass: PrerenderTransferStateInterceptor, multi: true },
     { provide: HTTP_INTERCEPTORS, useClass: AuthInterceptor, multi: true },
     {
       provide: HTTP_INTERCEPTORS,
