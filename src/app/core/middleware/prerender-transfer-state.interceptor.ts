@@ -7,7 +7,8 @@ import {
   HttpRequest,
   HttpResponse,
 } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, of, concat, EMPTY } from 'rxjs';
+import { catchError, finalize } from 'rxjs/operators';
 import {
   chaveParoquia,
   chaveCidade,
@@ -20,13 +21,22 @@ import {
  * interceptors de prerender (server), que ESCREVEM o dado de paróquia/cidade no
  * TransferState durante o prerender.
  *
- * Na hidratação, serve o GET de paróquia/cidade a partir do TransferState de forma
- * SÍNCRONA (`of`), então o details resolve o getByCidadeESlug na hora → `isLoading`
- * fica true por ~0ms → NÃO mostra o skeleton por cima do conteúdo prerenderizado
- * (elimina o flash + o CLS) e evita o request duplicado à API.
+ * SWR (stale-while-revalidate): na hidratação, emite o corpo do TransferState de
+ * forma SÍNCRONA (paint instantâneo do conteúdo prerenderizado — sem skeleton, sem
+ * CLS) E em seguida revalida ao vivo na API, reconciliando o que mudou. Assim o
+ * visitante vê o dado editado no admin SEM esperar um novo deploy (frescor ≤ ~30s do
+ * ResponseCache dos endpoints), preservando o SEO/CWV do prerender.
  *
- * Consome a chave uma única vez (remove do state): navegações posteriores fazem a
- * chamada normal à API (dado fresco). Registrado só no config do browser.
+ * - `catchError(() => EMPTY)` na 2ª perna: uma revalidação que falha (offline/500)
+ *   NUNCA vira erro da página já renderizada — o conteúdo do prerender permanece.
+ *   NÃO remover: sem isto a tela cairia no "Tentar novamente" mesmo já mostrando dados.
+ * - `remove(key)` no `finalize` da 2ª perna: consome a chave uma vez, mas só ao FIM
+ *   da revalidação (se a subscription for cancelada antes — troca rápida de rota —
+ *   o TransferState não é descartado prematuramente).
+ * - Navegações client posteriores não têm chave → chamada normal à API (dado fresco).
+ *
+ * Registrado só no config do browser. Os componentes (details/city) reatribuem o
+ * dado nas duas emissões e protegem só os efeitos únicos (analytics/métricas).
  */
 @Injectable()
 export class PrerenderTransferStateInterceptor implements HttpInterceptor {
@@ -45,8 +55,21 @@ export class PrerenderTransferStateInterceptor implements HttpInterceptor {
 
     if (!this._transferState.hasKey(key)) return next.handle(req);
     const body = this._transferState.get(key, null);
-    this._transferState.remove(key); // usa uma vez; próximas navegações buscam fresco
-    if (body == null) return next.handle(req);
-    return of(new HttpResponse({ status: 200, url: req.url, body }));
+    if (body == null) {
+      this._transferState.remove(key);
+      return next.handle(req);
+    }
+
+    const cached = new HttpResponse({ status: 200, url: req.url, body });
+    return concat(
+      of(cached), // paint instantâneo (0ms, sem skeleton) — nunca falha
+      next.handle(req).pipe(
+        // 2ª perna: revalidação viva (a única que pode falhar). Falha NÃO derruba o
+        // conteúdo já renderizado — ver comentário do cabeçalho.
+        catchError(() => EMPTY),
+        // Consome a chave só ao fim da revalidação (robusto a cancelamento).
+        finalize(() => this._transferState.remove(key)),
+      ),
+    );
   }
 }

@@ -202,31 +202,45 @@ export class DetailsComponent implements OnInit {
     this._reqAtual = req;
     this.isLoading = true;
     this.erroCarregar = false;
+    // SWR: com o interceptor de TransferState, `next` roda 2x (cache prerenderizado,
+    // depois a revalidação viva). Reatribuir o dado é idempotente; os efeitos ÚNICOS
+    // (analytics/métricas/selo) só podem rodar na 1ª emissão.
+    let primeira = true;
     req.pipe(
       finalize(() => { this.isLoading = false; })
     ).subscribe({
       next: (response: any) => {
         const igreja = response?.data?.igreja ?? response?.data;
         const seo = response?.data?.seo;
-        this.churchInfo = igreja;
 
         if (!igreja) {
+          this.churchInfo = igreja;
           this._toast.add({ severity: "error", summary: "Erro", detail: "Dados da igreja não encontrados." });
           this._router.navigate(['/home']);
           return;
         }
 
-        this._loadFavoritaState();
-        this._analytics.churchView(igreja.nome, igreja.endereco?.localidade ?? '', igreja.endereco?.uf ?? '');
-        if (igreja.id) this._metricas.registrarVisualizacaoIgreja(igreja.id);
+        // Comparação por REFERÊNCIA (não por campo): a resposta da rede é sempre um
+        // objeto novo → normalmente reconcilia; só pula se vier a MESMA instância.
+        const mudou = this.churchInfo !== igreja;
+        if (mudou) this.churchInfo = igreja;
 
-        // Browser-only: no prerender (server) o selo dispararia ~4.4k GETs a
-        // v1/responsavel/... (risco de 429) e _aplicarClarityTags lê localStorage
-        // (quebra no server). Ambos são informativos e hidratam no cliente.
-        if (this._isBrowser) {
-          this._carregarSeloVerificado(igreja.id);
-          this._aplicarClarityTags(igreja);
+        if (primeira) {
+          this._loadFavoritaState();
+          this._analytics.churchView(igreja.nome, igreja.endereco?.localidade ?? '', igreja.endereco?.uf ?? '');
+          if (igreja.id) this._metricas.registrarVisualizacaoIgreja(igreja.id);
+
+          // Browser-only: no prerender (server) o selo dispararia ~4.4k GETs a
+          // v1/responsavel/... (risco de 429) e _aplicarClarityTags lê localStorage
+          // (quebra no server). Ambos são informativos e hidratam no cliente.
+          if (this._isBrowser) {
+            this._carregarSeloVerificado(igreja.id);
+            this._aplicarClarityTags(igreja);
+          }
+          primeira = false;
         }
+
+        if (!mudou) return; // SEO/schema idênticos — nada a reaplicar
 
         const cidadeUf = igreja.endereco?.localidade
           ? `${igreja.endereco.localidade}${igreja.endereco?.uf ? '/' + igreja.endereco.uf : ''}`
