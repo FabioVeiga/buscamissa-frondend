@@ -37,7 +37,16 @@ function lerApiUrl() {
   return normalizarBaseUrl(match[1]);
 }
 
-async function baixar(base, rota, arquivo) {
+// Dias explícitos da árvore de intenção (Fase 3). "hoje" NÃO entra: o dia atual
+// depende do fuso do usuário e é resolvido no cliente (Brasil tem 4 fusos).
+const DIAS = ['domingo', 'segunda-feira', 'terca-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sabado'];
+
+/**
+ * Baixa `rota` para `arquivo`. `tipo`:
+ *  - 'array'  → valida Array (bulks de cidades/paróquias/estados);
+ *  - 'objeto' → valida objeto não-array (árvore de intenção /v2/seo/missa-dia/{dia}).
+ */
+async function baixar(base, rota, arquivo, tipo = 'array') {
   const url = `${base}${rota}`;
   const inicio = Date.now();
   const controller = new AbortController();
@@ -45,13 +54,17 @@ async function baixar(base, rota, arquivo) {
   try {
     const res = await fetch(url, { signal: controller.signal });
     if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
-    const lista = await res.json();
-    if (!Array.isArray(lista)) throw new Error('resposta não é um array');
+    const dados = await res.json();
+    if (tipo === 'array' && !Array.isArray(dados)) throw new Error('resposta não é um array');
+    if (tipo === 'objeto' && (dados === null || typeof dados !== 'object' || Array.isArray(dados)))
+      throw new Error('resposta não é um objeto');
     mkdirSync(CACHE_DIR, { recursive: true });
-    writeFileSync(join(CACHE_DIR, arquivo), JSON.stringify(lista));
+    const json = JSON.stringify(dados);
+    writeFileSync(join(CACHE_DIR, arquivo), json);
     const ms = Date.now() - inicio;
-    const mb = (JSON.stringify(lista).length / 1_048_576).toFixed(1);
-    console.log(`[prerender-cache] ${lista.length} itens de ${rota} → ${arquivo} (${mb} MB, ${ms}ms).`);
+    const mb = (json.length / 1_048_576).toFixed(1);
+    const qtd = Array.isArray(dados) ? `${dados.length} itens` : 'árvore';
+    console.log(`[prerender-cache] ${qtd} de ${rota} → ${arquivo} (${mb} MB, ${ms}ms).`);
     return true;
   } catch (err) {
     console.warn(`[prerender-cache] falha ao baixar ${rota} (${err?.message ?? err}) — interceptor fará fetch ao vivo.`);
@@ -67,6 +80,9 @@ async function main() {
   await Promise.all([
     baixar(base, '/v2/seo/cidades', 'cidades.json'),
     baixar(base, '/v2/seo/paroquias', 'paroquias.json'),
+    // Fase 3 — Estado (array de UFs) + árvore de intenção por dia (objeto).
+    baixar(base, '/v2/seo/estados', 'estados.json'),
+    ...DIAS.map((d) => baixar(base, `/v2/seo/missa-dia/${d}`, `missa-${d}.json`, 'objeto')),
   ]);
 }
 

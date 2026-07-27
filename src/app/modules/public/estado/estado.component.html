@@ -1,0 +1,54 @@
+<section class="estado">
+  @if (isLoading) {
+    <p-skeleton width="60%" height="2rem" styleClass="mb-3" />
+    <p-skeleton width="40%" height="1rem" styleClass="mb-4" />
+    <div class="grid">
+      @for (i of [1,2,3,4,5,6]; track i) {
+        <p-skeleton height="4.5rem" />
+      }
+    </div>
+  } @else if (naoEncontrado) {
+    <div class="estado__vazio">
+      <h1>Estado não encontrado</h1>
+      <p>Não encontramos paróquias cadastradas para esta UF.</p>
+      <a routerLink="/cidades">Ver todas as cidades</a>
+    </div>
+  } @else if (erroCarregar) {
+    <div class="estado__erro">
+      <p>Não foi possível carregar as missas deste estado.</p>
+      <button type="button" (click)="tentarNovamente()">Tentar novamente</button>
+    </div>
+  } @else {
+    <nav class="breadcrumb" aria-label="Trilha de navegação">
+      <a routerLink="/home">Início</a>
+      <span aria-hidden="true">›</span>
+      <span aria-current="page">Missas em {{ estadoNome }}</span>
+    </nav>
+
+    <header class="estado__head">
+      <h1>Horários de Missa em {{ estadoNome }}</h1>
+      <p class="estado__stats">
+        {{ totalParoquias }} paróquia(s) em {{ totalCidades }} cidade(s). Escolha a cidade e veja os horários de missa.
+      </p>
+    </header>
+
+    <h2>Cidades</h2>
+    <ul class="grid" role="list">
+      @for (c of cidades; track c.cidadeSlug) {
+        <li>
+          <a [routerLink]="['/missas', uf, c.cidadeSlug]">
+            <span class="grid__nome">{{ c.cidade }}</span>
+            <span class="grid__meta">{{ c.totalParoquias }} paróquia(s)</span>
+          </a>
+        </li>
+      }
+    </ul>
+
+    <h2>Missa por dia da semana em {{ estadoNome }}</h2>
+    <ul class="dias" role="list">
+      @for (d of dias; track d.slug) {
+        <li><a [routerLink]="['/missa-' + d.slug, uf]">Missa de {{ d.label }} em {{ estadoNome }}</a></li>
+      }
+    </ul>
+  }
+</section>

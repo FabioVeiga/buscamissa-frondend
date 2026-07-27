@@ -27,7 +27,10 @@ const LIMIAR = 0.02; // 2%
 // Seções prerenderizadas com estado de erro auditável (city, details e home).
 // 'home' cobre dist/<app>/browser/home/index.html (rota `home`). A raiz `''`
 // (browser/index.html) é verificada à parte, por não ficar numa subpasta.
-const SECOES = ['missas', 'paroquia', 'home'];
+// 'missas' cobre também os hubs de Estado (/missas/{uf}, Fase 3). Os `missa-{dia}`
+// são as landings/hubs/folhas da árvore de intenção (Fase 3), uma pasta por dia.
+const DIAS_INTENCAO = ['domingo', 'segunda-feira', 'terca-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sabado'];
+const SECOES = ['missas', 'paroquia', 'home', ...DIAS_INTENCAO.map((d) => `missa-${d}`)];
 
 /** Acha dist/<app>/browser, varrendo os apps sob dist/. */
 function acharBrowserDir(base) {
