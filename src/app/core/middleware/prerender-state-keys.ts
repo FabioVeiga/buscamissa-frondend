@@ -17,6 +17,11 @@ import { makeStateKey, StateKey } from '@angular/core';
 
 const RE_PAROQUIA = /v2\/Igreja\/paroquia\/([^/]+)\/([^/]+)\/([^/?]+)/i;
 const RE_CIDADE = /v2\/Igreja\/cidade\/([^/]+)\/([^/?]+)/i;
+// Endpoints das páginas de SEO (Fase 3): Estado, Intenção-cidade (folha) e a
+// árvore do dia (hubs nacional/UF da intenção).
+const RE_ESTADO = /v2\/seo\/estado\/([^/?]+)/i;
+const RE_INTENCAO = /v2\/seo\/missa-dia\/([^/]+)\/([^/]+)\/([^/?]+)/i;
+const RE_INTENCAO_ARVORE = /v2\/seo\/missa-dia\/([^/?]+)(?:\?|$)/i;
 
 /** Chave lógica uf/cidade/slug (lowercase) a partir da URL, ou null se não casar. */
 export function chaveParoquia(url: string): string | null {
@@ -32,6 +37,27 @@ export function chaveCidade(url: string): string | null {
   return `${decodeURIComponent(m[1])}/${decodeURIComponent(m[2])}`.toLowerCase();
 }
 
+/** Chave lógica uf (lowercase) do endpoint por-item de Estado, ou null. */
+export function chaveEstado(url: string): string | null {
+  const m = url.match(RE_ESTADO);
+  if (!m) return null;
+  return decodeURIComponent(m[1]).toLowerCase();
+}
+
+/** Chave lógica dia/uf/cidade (lowercase) da Intenção-cidade, ou null. */
+export function chaveIntencao(url: string): string | null {
+  const m = url.match(RE_INTENCAO);
+  if (!m) return null;
+  return `${decodeURIComponent(m[1])}/${decodeURIComponent(m[2])}/${decodeURIComponent(m[3])}`.toLowerCase();
+}
+
+/** Chave lógica do dia (lowercase) da árvore de intenção (hub), ou null. */
+export function chaveIntencaoArvore(url: string): string | null {
+  const m = url.match(RE_INTENCAO_ARVORE);
+  if (!m) return null;
+  return decodeURIComponent(m[1]).toLowerCase();
+}
+
 /** StateKey do TransferState para uma resposta de paróquia. */
 export function stateKeyParoquia(chave: string): StateKey<unknown> {
   return makeStateKey<unknown>(`pp:${chave}`);
@@ -40,4 +66,19 @@ export function stateKeyParoquia(chave: string): StateKey<unknown> {
 /** StateKey do TransferState para uma resposta de cidade. */
 export function stateKeyCidade(chave: string): StateKey<unknown> {
   return makeStateKey<unknown>(`pc:${chave}`);
+}
+
+/** StateKey do TransferState para uma resposta de Estado. */
+export function stateKeyEstado(chave: string): StateKey<unknown> {
+  return makeStateKey<unknown>(`pe:${chave}`);
+}
+
+/** StateKey do TransferState para uma resposta de Intenção-cidade. */
+export function stateKeyIntencao(chave: string): StateKey<unknown> {
+  return makeStateKey<unknown>(`pi:${chave}`);
+}
+
+/** StateKey do TransferState para a árvore de um dia (hub de intenção). */
+export function stateKeyIntencaoArvore(chave: string): StateKey<unknown> {
+  return makeStateKey<unknown>(`pia:${chave}`);
 }

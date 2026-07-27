@@ -1,0 +1,83 @@
+<section class="intencao">
+  @if (isLoading) {
+    <p-skeleton width="60%" height="2rem" styleClass="mb-3" />
+    <p-skeleton width="40%" height="1rem" styleClass="mb-4" />
+    <div class="grid">
+      @for (i of [1,2,3,4,5,6]; track i) { <p-skeleton height="4rem" /> }
+    </div>
+  } @else if (naoEncontrado) {
+    <div class="intencao__vazio">
+      <h1>Nenhuma missa de {{ rotulo }} encontrada</h1>
+      <p>Não há paróquias com missa de {{ rotulo }} cadastradas aqui.</p>
+      <a routerLink="/home">Voltar ao início</a>
+    </div>
+  } @else if (erroCarregar) {
+    <div class="intencao__erro">
+      <p>Não foi possível carregar as missas de {{ rotulo }}.</p>
+      <button type="button" (click)="tentarNovamente()">Tentar novamente</button>
+    </div>
+  } @else {
+    <nav class="breadcrumb" aria-label="Trilha de navegação">
+      <a routerLink="/home">Início</a>
+      <span aria-hidden="true">›</span>
+      @if (nivel === 'nacional') {
+        <span aria-current="page">Missa de {{ rotulo }}</span>
+      } @else {
+        <a [routerLink]="['/missa-' + dia]">Missa de {{ rotulo }}</a>
+        <span aria-hidden="true">›</span>
+        @if (nivel === 'uf') {
+          <span aria-current="page">{{ estadoNome || uf.toUpperCase() }}</span>
+        } @else {
+          <a [routerLink]="['/missa-' + dia, uf]">{{ estadoNome || uf.toUpperCase() }}</a>
+          <span aria-hidden="true">›</span>
+          <span aria-current="page">{{ cidadeNome }}</span>
+        }
+      }
+    </nav>
+
+    <!-- NÍVEL NACIONAL -->
+    @if (nivel === 'nacional') {
+      <header class="intencao__head">
+        <h1>Missa de {{ rotulo }}: horários no Brasil</h1>
+        <p>Escolha o estado e veja as paróquias com missa de {{ rotulo }} perto de você.</p>
+      </header>
+      <ul class="grid" role="list">
+        @for (e of estados; track e.uf) {
+          <li><a [routerLink]="['/missa-' + dia, e.uf]">{{ e.estado }}</a></li>
+        }
+      </ul>
+    }
+
+    <!-- NÍVEL UF -->
+    @if (nivel === 'uf') {
+      <header class="intencao__head">
+        <h1>Missa de {{ rotulo }} em {{ estadoNome }}</h1>
+        <p>Escolha a cidade e veja as paróquias com missa de {{ rotulo }}.</p>
+      </header>
+      <ul class="grid" role="list">
+        @for (c of cidades; track c.cidadeSlug) {
+          <li><a [routerLink]="['/missa-' + dia, uf, c.cidadeSlug]">{{ c.cidade }}</a></li>
+        }
+      </ul>
+    }
+
+    <!-- NÍVEL CIDADE (folha) -->
+    @if (nivel === 'cidade') {
+      <header class="intencao__head">
+        <h1>Missa de {{ rotulo }} em {{ cidadeNome }}</h1>
+        <p>{{ paroquias.length }} paróquia(s) com missa de {{ rotulo }}.</p>
+      </header>
+      <ul class="paroquias" role="list">
+        @for (p of paroquias; track p.id) {
+          <li class="paroquia">
+            <a class="paroquia__nome" [routerLink]="urlParoquia(p)">{{ p.nome }}</a>
+            @if (p.endereco) {
+              <p class="paroquia__end">{{ p.endereco.bairro }}{{ p.endereco.bairro ? ', ' : '' }}{{ p.endereco.localidade }}/{{ p.endereco.uf }}</p>
+            }
+            <p class="paroquia__horarios"><strong>Missa de {{ rotulo }}:</strong> {{ horariosDoDia(p) }}</p>
+          </li>
+        }
+      </ul>
+    }
+  }
+</section>

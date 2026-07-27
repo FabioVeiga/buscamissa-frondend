@@ -9,12 +9,34 @@ import {
 } from '@angular/common/http';
 import { Observable, of, concat, EMPTY } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
+import { StateKey } from '@angular/core';
 import {
   chaveParoquia,
   chaveCidade,
+  chaveEstado,
+  chaveIntencao,
+  chaveIntencaoArvore,
   stateKeyParoquia,
   stateKeyCidade,
+  stateKeyEstado,
+  stateKeyIntencao,
+  stateKeyIntencaoArvore,
 } from './prerender-state-keys';
+
+/** Resolve a StateKey da resposta prerenderizada a partir da URL, ou null. */
+function resolverStateKey(url: string): StateKey<unknown> | null {
+  const cp = chaveParoquia(url);
+  if (cp) return stateKeyParoquia(cp);
+  const cc = chaveCidade(url);
+  if (cc) return stateKeyCidade(cc);
+  const ci = chaveIntencao(url); // dia/uf/cidade (folha) — antes da árvore e do estado
+  if (ci) return stateKeyIntencao(ci);
+  const cia = chaveIntencaoArvore(url); // dia (hub) — antes do estado
+  if (cia) return stateKeyIntencaoArvore(cia);
+  const ce = chaveEstado(url);
+  if (ce) return stateKeyEstado(ce);
+  return null;
+}
 
 /**
  * Interceptor de LEITURA do TransferState (roda no browser). Complementa os
@@ -46,11 +68,7 @@ export class PrerenderTransferStateInterceptor implements HttpInterceptor {
   intercept(req: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     if (!this._isBrowser || req.method !== 'GET') return next.handle(req);
 
-    const cp = chaveParoquia(req.url);
-    const key = cp ? stateKeyParoquia(cp) : (() => {
-      const cc = chaveCidade(req.url);
-      return cc ? stateKeyCidade(cc) : null;
-    })();
+    const key = resolverStateKey(req.url);
     if (!key) return next.handle(req);
 
     if (!this._transferState.hasKey(key)) return next.handle(req);
