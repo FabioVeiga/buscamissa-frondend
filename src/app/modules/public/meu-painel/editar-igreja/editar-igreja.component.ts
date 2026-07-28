@@ -108,6 +108,10 @@ export class EditarIgrejaComponent implements OnInit {
     return this.tipoIgreja === "Paroquia";
   }
 
+  /** Paróquia-sede desta capela/comunidade, se já vinculada. Null = ainda órfã (mostra busca/solicitação). */
+  paroquiaSede: { id: number; nome: string } | null = null;
+  desanexandoParoquiaSede = false;
+
   /** Fase 4: anexar/desanexar capelas/comunidades (ou, se for capela, buscar a própria paróquia). */
   buscaCapelaOrfa = "";
   resultadosCapelaOrfa: CapelaOrfa[] = [];
@@ -324,6 +328,27 @@ export class EditarIgrejaComponent implements OnInit {
     });
   }
 
+  /** Quando a igreja editada é a própria capela/comunidade já vinculada — desanexa a si mesma. */
+  desanexarParoquiaSede(): void {
+    this.desanexandoParoquiaSede = true;
+    this._responsavel.desanexarCapela(this.igrejaId).subscribe({
+      next: (mensagem) => {
+        this._message.add({ severity: "success", summary: "Desanexada", detail: mensagem });
+        this.desanexandoParoquiaSede = false;
+        this.paroquiaSede = null;
+      },
+      error: (error) => {
+        this.desanexandoParoquiaSede = false;
+        this._message.add({
+          severity: "error",
+          summary: "Não foi possível desanexar",
+          detail: error?.error?.data?.mensagemTela ?? "Tente novamente.",
+        });
+        this._logger.logError(error, "editar-igreja:desanexarParoquiaSede");
+      },
+    });
+  }
+
   salvarCircunscricao(): void {
     const dioceseId = this.tipoCircunscricao === "diocese" ? this.dioceseSelecionada : null;
     const arquidioceseId = this.tipoCircunscricao === "arquidiocese" ? this.arquidioceseSelecionada : null;
@@ -391,6 +416,7 @@ export class EditarIgrejaComponent implements OnInit {
         this.circunscricao = dados.circunscricao;
         this.capelasComunidades = dados.capelasComunidades ?? [];
         this.tipoIgreja = dados.tipoIgreja ?? "Paroquia";
+        this.paroquiaSede = dados.paroquiaSede ?? null;
 
         if (dados.circunscricao?.dioceseId) {
           this.tipoCircunscricao = "diocese";

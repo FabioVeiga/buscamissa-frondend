@@ -128,7 +128,21 @@
         </ul>
       </ng-container>
 
-      <!-- Anexar/requerer vínculo (passa por aprovação do admin) -->
+      <!-- Capela/comunidade já vinculada a uma paróquia: mostra e permite desanexar, sem busca. -->
+      <ng-container *ngIf="!ehParoquia && paroquiaSede">
+        <h2><i class="pi pi-building"></i> Paróquia vinculada</h2>
+        <ul class="lista-capelas">
+          <li class="item-capela">
+            <span>{{ paroquiaSede.nome }}</span>
+            <button pButton type="button" label="Desanexar" icon="pi pi-times"
+                    class="p-button-sm p-button-text p-button-danger" [loading]="desanexandoParoquiaSede"
+                    (click)="desanexarParoquiaSede()"></button>
+          </li>
+        </ul>
+      </ng-container>
+
+      <!-- Anexar/requerer vínculo (passa por aprovação do admin) — só quando ainda não vinculada. -->
+      <ng-container *ngIf="ehParoquia || !paroquiaSede">
       <h2 [class.mt]="ehParoquia && capelasComunidades.length"><i class="pi pi-search"></i> {{ tituloBuscaVinculo }}</h2>
       <p class="texto-auxiliar">
         <ng-container *ngIf="ehParoquia; else textoCapela">
@@ -161,6 +175,7 @@
                   (click)="solicitarVinculoCapela(c)"></button>
         </li>
       </ul>
+      </ng-container>
     </section>
 
     <p-dialog header="Solicitar cadastro de diocese/arquidiocese" [(visible)]="mostrarSolicitarCircunscricao" [modal]="true" [style]="{width: '28rem', maxWidth: '92vw'}">
