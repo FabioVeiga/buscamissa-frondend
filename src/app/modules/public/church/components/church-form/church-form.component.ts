@@ -29,7 +29,7 @@ import { LoggerService } from "../../../../../core/services/logger.service";
 
 interface TypeChurchOption {
   name: string;
-  value: string;
+  value: number;
 }
 
 @Component({
@@ -63,17 +63,13 @@ export class ChurchFormComponent implements OnInit, OnChanges {
   loading = false;
   imagePreview: string | null = null; // Só para exibir a imagem
 
+  // Espelha Enums/TipoIgrejaEnum.cs do backend — o banco persiste o int cru.
   typeChurchOptions: TypeChurchOption[] = [
-    { name: "Capela", value: "Capela" },
-    { name: "Comunidade", value: "Comunidade" },
-    { name: "Paróquia", value: "Paróquia" },
-    { name: "Santuário", value: "Santuário" },
-    { name: "Catedral", value: "Catedral" },
-    { name: "Basílica Maior", value: "Basílica Maior" },
-    { name: "Basílica Menor", value: "Basílica Menor" },
-    { name: "Arquidiocese", value: "Arquidiocese" },
-    { name: "Diocese", value: "Diocese" },
-    { name: "Outro", value: "" },
+    { name: "Paróquia", value: 1 },
+    { name: "Capela", value: 2 },
+    { name: "Comunidade", value: 3 },
+    { name: "Santuário", value: 4 },
+    { name: "Outro", value: 99 },
   ];
 
   diasSemana = [
