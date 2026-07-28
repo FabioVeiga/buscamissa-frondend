@@ -4,6 +4,7 @@ import { RouterLink } from "@angular/router";
 import { ConfidenceBadgeComponent } from "../confidence-badge/confidence-badge.component";
 import { ChurchPlaceholderComponent } from "../church-placeholder/church-placeholder.component";
 import { FavoritesService } from "../../../core/services/favorites.service";
+import { MetricasService } from "../../../core/services/metricas.service";
 import {
   getNextOccurrenceMinutes,
   formatMassTime,
@@ -51,6 +52,7 @@ export class ChurchResultCardComponent implements OnInit {
   @Output() favoriteToggled = new EventEmitter<any>();
 
   private favorites = inject(FavoritesService);
+  private metricas = inject(MetricasService);
 
   imagemQuebrada = false;
   favorita = false;
@@ -176,6 +178,9 @@ export class ChurchResultCardComponent implements OnInit {
       diaSemana: pm?.diaSemana,
       horario: pm?.horario,
     });
+    if (this.favorita) {
+      this.metricas.registrarFavorito(this.igreja.id);
+    }
     this.favoriteToggled.emit(this.igreja);
   }
 }

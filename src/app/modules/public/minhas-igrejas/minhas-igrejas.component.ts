@@ -10,6 +10,7 @@ import { getMissaAgoraUrgency } from '../../../shared/utils/mass-time.utils';
 import { Subscription } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import { FavoritesService, IgrejaFavorita } from '../../../core/services/favorites.service';
+import { MetricasService, PaginaMetrica } from '../../../core/services/metricas.service';
 import { linkParoquia } from '../../../shared/utils/church-link.utils';
 
 @Component({
@@ -26,11 +27,13 @@ export class MinhasIgrejasComponent implements OnInit, OnDestroy {
   private _toast = inject(MessageService);
   private _clarity = inject(ClarityService);
   private _favorites = inject(FavoritesService);
+  private _metricas = inject(MetricasService);
 
   igrejas: IgrejaFavorita[] = [];
   private _navSub: Subscription | null = null;
 
   ngOnInit(): void {
+    this._metricas.registrarVisualizacaoPagina(PaginaMetrica.MinhasIgrejas);
     this._seo.update({
       title: 'Minhas Igrejas | BuscaMissa',
       description: 'Veja todas as suas igrejas favoritas e horários de missa.',

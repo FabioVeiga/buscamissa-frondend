@@ -693,6 +693,7 @@ export class HomeComponent {
       horario: card.mass.horario,
     };
     this._favorites.adicionar(novaFavorita);
+    this._metricas.registrarFavorito(card.churchId);
     this.paroquiasFavoritas = [...this.paroquiasFavoritas, novaFavorita];
     this._analytics.favoriteParishSaved(card.churchName);
   }

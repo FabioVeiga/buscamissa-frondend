@@ -12,6 +12,7 @@ import { Mass } from "../../../core/interfaces/church.interface";
 import { getMissaAgoraUrgency, getCountdownLabel } from "../../../shared/utils/mass-time.utils";
 import { CIDADES_POPULARES_MISSA_AGORA } from "../../../core/constants/cidades-populares";
 import { GeolocationService } from "../../../core/services/geolocation.service";
+import { MetricasService, PaginaMetrica } from "../../../core/services/metricas.service";
 import { MessageService } from "primeng/api";
 import { PrimeNgModule } from "../../../shared/primeng.module";
 
@@ -33,6 +34,7 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
   private _toast = inject(MessageService);
   private _favorites = inject(FavoritesService);
   private _geo = inject(GeolocationService);
+  private _metricas = inject(MetricasService);
 
   geoStatus: GeoStatus = 'idle';
   permissaoNegadaPeloBrowser = false;
@@ -79,6 +81,7 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this._metricas.registrarVisualizacaoPagina(PaginaMetrica.MissaAgora);
     this._loadFavoritas();
     this._seo.update({
       title: 'Missa Agora | BuscaMissa',
@@ -321,6 +324,7 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
 
       // atualiza o Set reativo para que o ícone mude imediatamente
       if (agoraFavorita) {
+        this._metricas.registrarFavorito(card.churchId);
         this.favoritasIds.add(card.churchId);
       } else {
         this.favoritasIds.delete(card.churchId);

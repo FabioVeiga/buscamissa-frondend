@@ -12,6 +12,7 @@ import { MessageService } from "primeng/api";
 import { PrimeNgModule } from "../../../shared/primeng.module";
 import { AuthService } from "../../../core/services/auth.service";
 import { LoggerService } from "../../../core/services/logger.service";
+import { MetricasService, PaginaMetrica } from "../../../core/services/metricas.service";
 
 type Modo = "login" | "solicitar-codigo" | "definir-senha";
 
@@ -33,6 +34,7 @@ export class EntrarComponent implements OnInit {
   private _fb = inject(FormBuilder);
   private _logger = inject(LoggerService);
   private _router = inject(Router);
+  private _metricas = inject(MetricasService);
 
   public modo: Modo = "login";
   public isLoading = false;
@@ -41,6 +43,7 @@ export class EntrarComponent implements OnInit {
   public formDefinir!: FormGroup;
 
   ngOnInit(): void {
+    this._metricas.registrarVisualizacaoPagina(PaginaMetrica.Entrar);
     // Forms antes do redirect: o template renderiza uma vez mesmo quando
     // vamos navegar embora — sem os forms criados isso estoura NG01052.
     this.formLogin = this._fb.group({
