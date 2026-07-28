@@ -16,7 +16,7 @@ import { AuthService } from "../../../../core/services/auth.service";
 import { ResponsavelService } from "../../../../core/services/responsavel.service";
 import { ChurchesService } from "../../../../core/services/churches.service";
 import { LoggerService } from "../../../../core/services/logger.service";
-import { MetricasIgreja, Circunscricao, CapelaComunidade, CircunscricaoOpcao } from "../../../../core/interfaces/responsavel.interface";
+import { MetricasIgreja, Circunscricao, CapelaComunidade, CircunscricaoOpcao, CapelaOrfa, MinhaSolicitacaoVinculo } from "../../../../core/interfaces/responsavel.interface";
 import { STATES } from "../../../../core/constants/states";
 
 const REDES = [
@@ -102,6 +102,14 @@ export class EditarIgrejaComponent implements OnInit {
   arquidioceseSelecionada: number | null = null;
   salvandoCircunscricao = false;
 
+  /** Fase 4: anexar/desanexar capelas/comunidades órfãs. */
+  buscaCapelaOrfa = "";
+  resultadosCapelaOrfa: CapelaOrfa[] = [];
+  buscandoCapelaOrfa = false;
+  solicitandoCapelaId: number | null = null;
+  minhasSolicitacoesVinculo: MinhaSolicitacaoVinculo[] = [];
+  desanexandoCapelaId: number | null = null;
+
   /** Cidade/UF originais — usado para exibir o aviso só quando o usuário muda. */
   private _localidadeOriginal = "";
   private _ufOriginal = "";
@@ -163,6 +171,76 @@ export class EditarIgrejaComponent implements OnInit {
     this._responsavel.listarArquidioceses().subscribe({
       next: (lista) => (this.arquidioceses = lista),
       error: () => {},
+    });
+    this._carregarMinhasSolicitacoesVinculo();
+  }
+
+  private _carregarMinhasSolicitacoesVinculo(): void {
+    this._responsavel.minhasSolicitacoesVinculo().subscribe({
+      next: (lista) => (this.minhasSolicitacoesVinculo = lista),
+      error: () => {},
+    });
+  }
+
+  /** True quando já existe solicitação pendente para esta capela (evita duplicar). */
+  jaSolicitouCapela(capelaId: number): boolean {
+    return this.minhasSolicitacoesVinculo.some((s) => s.capelaId === capelaId && s.status === "Pendente");
+  }
+
+  buscarCapelaOrfa(): void {
+    if (this.buscaCapelaOrfa.trim().length < 3) {
+      this.resultadosCapelaOrfa = [];
+      return;
+    }
+    this.buscandoCapelaOrfa = true;
+    this._responsavel.buscarCapelasOrfas(this.buscaCapelaOrfa.trim()).subscribe({
+      next: (lista) => {
+        this.resultadosCapelaOrfa = lista;
+        this.buscandoCapelaOrfa = false;
+      },
+      error: () => {
+        this.buscandoCapelaOrfa = false;
+      },
+    });
+  }
+
+  solicitarVinculoCapela(capela: CapelaOrfa): void {
+    this.solicitandoCapelaId = capela.id;
+    this._responsavel.solicitarVinculoCapela(this.igrejaId, { capelaId: capela.id }).subscribe({
+      next: (mensagem) => {
+        this._message.add({ severity: "success", summary: "Solicitação enviada", detail: mensagem });
+        this.solicitandoCapelaId = null;
+        this._carregarMinhasSolicitacoesVinculo();
+      },
+      error: (error) => {
+        this.solicitandoCapelaId = null;
+        this._message.add({
+          severity: "error",
+          summary: "Não foi possível solicitar",
+          detail: error?.error?.data?.mensagemTela ?? "Tente novamente.",
+        });
+        this._logger.logError(error, "editar-igreja:solicitarVinculoCapela");
+      },
+    });
+  }
+
+  desanexarCapela(capela: CapelaComunidade): void {
+    this.desanexandoCapelaId = capela.id;
+    this._responsavel.desanexarCapela(capela.id).subscribe({
+      next: (mensagem) => {
+        this._message.add({ severity: "success", summary: "Desanexada", detail: mensagem });
+        this.desanexandoCapelaId = null;
+        this.capelasComunidades = this.capelasComunidades.filter((c) => c.id !== capela.id);
+      },
+      error: (error) => {
+        this.desanexandoCapelaId = null;
+        this._message.add({
+          severity: "error",
+          summary: "Não foi possível desanexar",
+          detail: error?.error?.data?.mensagemTela ?? "Tente novamente.",
+        });
+        this._logger.logError(error, "editar-igreja:desanexarCapela");
+      },
     });
   }
 

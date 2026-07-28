@@ -92,9 +92,42 @@
       <ng-container *ngIf="capelasComunidades.length">
         <h2 class="mt"><i class="pi pi-building"></i> Capelas / comunidades</h2>
         <ul class="lista-capelas">
-          <li *ngFor="let c of capelasComunidades">{{ c.nome }} <span class="texto-auxiliar">({{ c.tipoIgreja }})</span></li>
+          <li *ngFor="let c of capelasComunidades" class="item-capela">
+            <span>{{ c.nome }} <span class="texto-auxiliar">({{ c.tipoIgreja }})</span></span>
+            <button pButton type="button" label="Desanexar" icon="pi pi-times"
+                    class="p-button-sm p-button-text p-button-danger" [loading]="desanexandoCapelaId === c.id"
+                    (click)="desanexarCapela(c)"></button>
+          </li>
         </ul>
       </ng-container>
+
+      <!-- Fase 4: anexar/requerer capela órfã (passa por aprovação do admin) -->
+      <h2 class="mt"><i class="pi pi-search"></i> Anexar capela/comunidade órfã</h2>
+      <p class="texto-auxiliar">
+        Busque uma capela ou comunidade que ainda não pertence a nenhuma paróquia. O pedido passa por aprovação do admin.
+      </p>
+      <div class="busca-capela-orfa">
+        <input pInputText type="text" placeholder="Nome da capela/comunidade (mín. 3 letras)"
+               [(ngModel)]="buscaCapelaOrfa" [ngModelOptions]="{standalone: true}"
+               (keyup.enter)="buscarCapelaOrfa()" />
+        <button pButton type="button" label="Buscar" icon="pi pi-search" class="p-button-sm"
+                [loading]="buscandoCapelaOrfa" (click)="buscarCapelaOrfa()"></button>
+      </div>
+
+      <ul class="lista-capelas" *ngIf="resultadosCapelaOrfa.length">
+        <li *ngFor="let c of resultadosCapelaOrfa" class="item-capela">
+          <span>
+            {{ c.nome }}
+            <span class="texto-auxiliar">({{ c.tipoIgreja }}{{ c.localidade ? ' — ' + c.localidade + '/' + c.uf : '' }})</span>
+          </span>
+          <button pButton type="button"
+                  [label]="jaSolicitouCapela(c.id) ? 'Solicitação pendente' : 'Solicitar vínculo'"
+                  icon="pi pi-link" class="p-button-sm"
+                  [disabled]="jaSolicitouCapela(c.id)"
+                  [loading]="solicitandoCapelaId === c.id"
+                  (click)="solicitarVinculoCapela(c)"></button>
+        </li>
+      </ul>
     </section>
 
     <!-- IMAGEM -->

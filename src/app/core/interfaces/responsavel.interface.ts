@@ -110,6 +110,32 @@ export interface AtualizarCircunscricaoRequest {
   arquidioceseId?: number | null;
 }
 
+// ---- Fase 4 (capelas/comunidades órfãs) ----
+
+export interface CapelaOrfa {
+  id: number;
+  nome: string;
+  slug?: string | null;
+  uf?: string | null;
+  localidade?: string | null;
+  tipoIgreja: string;
+}
+
+export interface MinhaSolicitacaoVinculo {
+  id: number;
+  capelaId: number;
+  capelaNome: string;
+  /** "Pendente" | "Aprovado" | "Rejeitado" */
+  status: string;
+  dataSolicitacao: string;
+  motivoRevisao?: string | null;
+}
+
+export interface SolicitarVinculoCapelaRequest {
+  capelaId: number;
+  observacao?: string | null;
+}
+
 export interface DadosEdicao {
   igrejaId: number;
   igrejaNome: string;

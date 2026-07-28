@@ -80,6 +80,24 @@ h2.mt {
   margin-top: 1.5rem;
 }
 
+.item-capela {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.busca-capela-orfa {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 480px;
+  margin-bottom: 0.75rem;
+
+  input {
+    flex: 1;
+  }
+}
+
 .grid-contato {
   display: grid;
   grid-template-columns: 90px 1fr 90px 1fr;
