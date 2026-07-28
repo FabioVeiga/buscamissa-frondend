@@ -7,6 +7,7 @@ import { finalize } from 'rxjs/operators';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SeoPaginasService } from '../../../core/services/seo-paginas.service';
 import { SeoService } from '../../../core/services/seo.service';
+import { DIAS_INTENCAO } from '../../../core/constants/dias-intencao';
 
 const SITE = 'https://buscamissa.com.br';
 
@@ -52,6 +53,11 @@ export class IntencaoComponent implements OnInit {
 
   get rotulo(): string {
     return ROTULO[this.dia] ?? this.dia;
+  }
+
+  /** Demais dias (para linkagem "outros dias" na mesma cidade). */
+  get outrosDias() {
+    return DIAS_INTENCAO.filter((d) => d.slug !== this.dia);
   }
 
   // Dados por nível.

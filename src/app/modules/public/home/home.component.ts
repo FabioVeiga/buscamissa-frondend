@@ -34,6 +34,8 @@ import { HomeStatsComponent } from "./sections/home-stats/home-stats.component";
 import { HomeComoFuncionaComponent } from "./sections/home-como-funciona/home-como-funciona.component";
 import { HomeFavoritosComponent } from "./sections/home-favoritos/home-favoritos.component";
 import { HomeCidadesComponent } from "./sections/home-cidades/home-cidades.component";
+import { HomeChipsComponent, ChipLink } from "./sections/home-chips/home-chips.component";
+import { DIAS_INTENCAO } from "../../../core/constants/dias-intencao";
 import { HomeMissasMapaComponent } from "./sections/home-missas-mapa/home-missas-mapa.component";
 import { linkParoquia } from "../../../shared/utils/church-link.utils";
 import { SeoService } from "../../../core/services/seo.service";
@@ -59,6 +61,7 @@ interface AddressData {
     HomeFavoritosComponent,
     HomeCidadesComponent,
     HomeMissasMapaComponent,
+    HomeChipsComponent,
   ],
   providers: [MessageService, DatePipe],
   templateUrl: "./home.component.html",
@@ -91,6 +94,16 @@ export class HomeComponent {
 
   /** Cidades populares — exibidas quando sem geoloc */
   readonly cidadesFallback = CIDADES_POPULARES;
+
+  /** Pontos de entrada (Fase Final): "Missas por dia" e "Missas por estado". */
+  readonly chipsDias: ChipLink[] = DIAS_INTENCAO.map((d) => ({
+    label: d.nome,
+    link: ['/missa-' + d.slug],
+  }));
+  readonly chipsEstados: ChipLink[] = STATES.map((e) => ({
+    label: e.nome,
+    link: ['/missas', e.sigla.toLowerCase()],
+  }));
 
   get cidadesExibidas() {
     return this.geoStatus === 'found' && this.cidadesGrid.length

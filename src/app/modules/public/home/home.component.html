@@ -197,6 +197,23 @@
     }
   }
 
+  <!-- ══ MISSAS POR DIA DA SEMANA / POR ESTADO (pontos de entrada — indexáveis) ══ -->
+  <!-- SEM @defer de propósito: precisam entrar no HTML do prerender p/ descoberta/SEO. -->
+  @if (!resultsMode) {
+    <app-home-chips
+      titulo="Missas por dia da semana"
+      subtitulo="Encontre horários de missa para qualquer dia da semana."
+      icone="pi pi-calendar"
+      [itens]="chipsDias"
+    />
+    <app-home-chips
+      titulo="Missas por estado"
+      subtitulo="Explore as igrejas e horários de missa em cada estado do Brasil."
+      icone="pi pi-map"
+      [itens]="chipsEstados"
+    />
+  }
+
   <!-- ══ RESULTADOS: carregando / vazio ══ -->
   <div *ngIf="resultsMode && isLoading" class="resultados-feedback">
     <i class="pi pi-spin pi-spinner"></i>
