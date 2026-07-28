@@ -54,7 +54,7 @@
       </div>
     </section>
 
-    <!-- DIOCESE/ARQUIDIOCESE (Fase 3: editável) + CAPELAS/COMUNIDADES (só leitura) -->
+    <!-- DIOCESE/ARQUIDIOCESE (editável) + CAPELAS/COMUNIDADES / PARÓQUIA (vínculo) -->
     <section class="bloco">
       <h2><i class="pi pi-sitemap"></i> Circunscrição eclesiástica</h2>
 
@@ -78,19 +78,40 @@
         </div>
 
         <p-select *ngIf="tipoCircunscricao === 'diocese'" [options]="dioceses" [(ngModel)]="dioceseSelecionada"
-                  [ngModelOptions]="{standalone: true}" optionLabel="nome" optionValue="id"
-                  placeholder="Selecione a diocese" styleClass="w-full" appendTo="body"></p-select>
+                  [ngModelOptions]="{standalone: true}" optionValue="id"
+                  [filter]="true" filterBy="nome,uf" placeholder="Digite para buscar a diocese"
+                  styleClass="w-full" appendTo="body">
+          <ng-template let-d pTemplate="item">{{ d.nome }} ({{ d.uf }})</ng-template>
+          <ng-template let-d pTemplate="selectedItem">{{ d.nome }} ({{ d.uf }})</ng-template>
+        </p-select>
         <p-select *ngIf="tipoCircunscricao === 'arquidiocese'" [options]="arquidioceses" [(ngModel)]="arquidioceseSelecionada"
-                  [ngModelOptions]="{standalone: true}" optionLabel="nome" optionValue="id"
-                  placeholder="Selecione a arquidiocese" styleClass="w-full" appendTo="body"></p-select>
+                  [ngModelOptions]="{standalone: true}" optionValue="id"
+                  [filter]="true" filterBy="nome,uf" placeholder="Digite para buscar a arquidiocese"
+                  styleClass="w-full" appendTo="body">
+          <ng-template let-a pTemplate="item">{{ a.nome }} ({{ a.uf }})</ng-template>
+          <ng-template let-a pTemplate="selectedItem">{{ a.nome }} ({{ a.uf }})</ng-template>
+        </p-select>
 
-        <button pButton type="button" label="Salvar circunscrição" icon="pi pi-check"
-                class="p-button-sm" [loading]="salvandoCircunscricao"
-                (click)="salvarCircunscricao()"></button>
+        <div class="circunscricao-acoes">
+          <button pButton type="button" label="Salvar circunscrição" icon="pi pi-check"
+                  class="p-button-sm" [loading]="salvandoCircunscricao"
+                  (click)="salvarCircunscricao()"></button>
+          <button *ngIf="circunscricao?.origem === 'Direta'" pButton type="button" label="Desvincular" icon="pi pi-times"
+                  class="p-button-sm p-button-outlined p-button-danger" [loading]="salvandoCircunscricao"
+                  (click)="desvincularCircunscricao()"></button>
+        </div>
+
+        <p class="texto-auxiliar">
+          Não achou a diocese/arquidiocese?
+          <a href="javascript:void(0)" (click)="abrirSolicitarCircunscricao()">Solicitar cadastro ao admin</a>.
+        </p>
       </div>
+    </section>
 
-      <ng-container *ngIf="capelasComunidades.length">
-        <h2 class="mt"><i class="pi pi-building"></i> Capelas / comunidades</h2>
+    <!-- CAPELAS/COMUNIDADES (só paróquia) ou PARÓQUIA-SEDE (só capela/comunidade) -->
+    <section class="bloco">
+      <ng-container *ngIf="ehParoquia && capelasComunidades.length">
+        <h2><i class="pi pi-building"></i> Capelas / comunidades</h2>
         <ul class="lista-capelas">
           <li *ngFor="let c of capelasComunidades" class="item-capela">
             <span>{{ c.nome }} <span class="texto-auxiliar">({{ c.tipoIgreja }})</span></span>
@@ -101,13 +122,19 @@
         </ul>
       </ng-container>
 
-      <!-- Fase 4: anexar/requerer capela órfã (passa por aprovação do admin) -->
-      <h2 class="mt"><i class="pi pi-search"></i> Anexar capela/comunidade órfã</h2>
+      <!-- Anexar/requerer vínculo (passa por aprovação do admin) -->
+      <h2 [class.mt]="ehParoquia && capelasComunidades.length"><i class="pi pi-search"></i> {{ tituloBuscaVinculo }}</h2>
       <p class="texto-auxiliar">
-        Busque uma capela ou comunidade que ainda não pertence a nenhuma paróquia. O pedido passa por aprovação do admin.
+        <ng-container *ngIf="ehParoquia; else textoCapela">
+          Busque uma capela ou comunidade que ainda não pertence a nenhuma paróquia. O pedido passa por aprovação do admin.
+        </ng-container>
+        <ng-template #textoCapela>
+          Busque a paróquia à qual esta capela/comunidade pertence. O pedido passa por aprovação do admin.
+        </ng-template>
       </p>
       <div class="busca-capela-orfa">
-        <input pInputText type="text" placeholder="Nome da capela/comunidade (mín. 3 letras)"
+        <input pInputText type="text"
+               [placeholder]="ehParoquia ? 'Nome da capela/comunidade (mín. 3 letras)' : 'Nome da paróquia (mín. 3 letras)'"
                [(ngModel)]="buscaCapelaOrfa" [ngModelOptions]="{standalone: true}"
                (keyup.enter)="buscarCapelaOrfa()" />
         <button pButton type="button" label="Buscar" icon="pi pi-search" class="p-button-sm"
@@ -129,6 +156,17 @@
         </li>
       </ul>
     </section>
+
+    <p-dialog header="Solicitar cadastro de diocese/arquidiocese" [(visible)]="mostrarSolicitarCircunscricao" [modal]="true" [style]="{width: '28rem', maxWidth: '92vw'}">
+      <p class="texto-auxiliar">Descreva o nome e a UF da diocese/arquidiocese que não está na lista. Nossa equipe vai analisar e cadastrar.</p>
+      <textarea pTextarea rows="4" style="width: 100%" [(ngModel)]="mensagemSolicitarCircunscricao"
+                [ngModelOptions]="{standalone: true}" placeholder="Ex.: Diocese de Exemplo, SP"></textarea>
+      <ng-template pTemplate="footer">
+        <button pButton type="button" label="Cancelar" class="p-button-text" (click)="mostrarSolicitarCircunscricao = false"></button>
+        <button pButton type="button" label="Enviar" icon="pi pi-send" [loading]="enviandoSolicitarCircunscricao"
+                [disabled]="!mensagemSolicitarCircunscricao.trim()" (click)="enviarSolicitarCircunscricao()"></button>
+      </ng-template>
+    </p-dialog>
 
     <!-- IMAGEM -->
     <section class="bloco">
