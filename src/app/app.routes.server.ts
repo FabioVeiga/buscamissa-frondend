@@ -18,24 +18,38 @@ import { buscarRotasSeo, normalizarBaseUrl } from '../../scripts/lib/seo-routes.
  *   sitemap).
  * - Fase 2.5 (aqui): prerender das páginas de PARÓQUIA (`/paroquia/:uf/:cidade/:slug`).
  *   O bulk `/v2/seo/paroquias` (interceptor só-server) evita as chamadas individuais.
- *   Prerenderiza SÓ paróquias COM missa (ver paroquiasComMissaDoDisco): corta as
- *   páginas thin (sem horário), dá folga no limite de 250 MB do SWA em prod (~4.5k
- *   paróquias) e melhora o SEO. As sem missa seguem CSR (e continuam no sitemap).
+ *   Prerenderiza SÓ paróquias com confiança Média/Alta (ver paroquiasComMissaDoDisco):
+ *   corta as páginas thin (sem horário) e as com horário nunca validado/desatualizado
+ *   (StatusConfianca Desconhecida/Baixa) — em prod (~4.5k paróquias) o dist estourava
+ *   200 MB mesmo só com o filtro "tem missa" (3.471 páginas). Cortar por confiança leva
+ *   a ~2.743, priorizando as páginas com dado mais confiável/visitado. As demais seguem
+ *   CSR (e continuam no sitemap).
  */
 
+/** Espelha Enums/StatusConfiancaEnum.cs do backend (api-public). */
+const enum StatusConfianca {
+  Media = 2,
+  Alta = 3,
+}
+
 /**
- * Lê o bulk baixado pelo prebuild (.prerender-cache/paroquias.json, que tem `missas`)
- * e retorna as rotas SÓ das paróquias com horário. Retorna null se o arquivo não
- * existe (ex.: build:dev sem prebuild) → o caller cai no fallback (todas via routes).
+ * Lê o bulk baixado pelo prebuild (.prerender-cache/paroquias.json, que tem `missas`
+ * e `statusConfianca`) e retorna as rotas só das paróquias com confiança Média/Alta.
+ * Retorna null se o arquivo não existe (ex.: build:dev sem prebuild) → o caller cai
+ * no fallback (todas via routes).
  */
 function paroquiasComMissaDoDisco(): Array<{ uf: string; cidade: string; slug: string }> | null {
   const arquivo = join(process.cwd(), '.prerender-cache', 'paroquias.json');
   if (!existsSync(arquivo)) return null;
   const lista = JSON.parse(readFileSync(arquivo, 'utf-8')) as Array<{
-    uf: string; cidadeSlug: string; slug: string; igreja?: { missas?: unknown[] };
+    uf: string; cidadeSlug: string; slug: string;
+    igreja?: { missas?: unknown[]; statusConfianca?: number };
   }>;
   return lista
-    .filter((p) => (p?.igreja?.missas?.length ?? 0) > 0 && p.uf && p.cidadeSlug && p.slug)
+    .filter((p) =>
+      (p?.igreja?.missas?.length ?? 0) > 0 &&
+      (p?.igreja?.statusConfianca === StatusConfianca.Media || p?.igreja?.statusConfianca === StatusConfianca.Alta) &&
+      p.uf && p.cidadeSlug && p.slug)
     .map((p) => ({ uf: p.uf, cidade: p.cidadeSlug, slug: p.slug }));
 }
 

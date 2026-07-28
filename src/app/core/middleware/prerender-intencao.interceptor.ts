@@ -132,14 +132,35 @@ export class PrerenderIntencaoInterceptor implements HttpInterceptor {
       );
     }
 
-    // Hub: /v2/seo/missa-dia/{dia} → devolve a árvore inteira do dia.
+    // Hub: /v2/seo/missa-dia/{dia}[?uf=xx] → devolve a árvore do dia, FATIADA
+    // conforme o nível da página sendo prerenderizada (ver comentário de
+    // SeoPaginasService.getArvoreDia): sem isso, cada página de UF embutia a
+    // árvore nacional inteira (~5 MB) no HTML.
     const chaveArvore = chaveIntencaoArvore(req.url);
     if (chaveArvore) {
       return from(obterArvore(chaveArvore)).pipe(
         switchMap((arvore) => {
           if (!arvore?.estados?.length) return next.handle(req); // árvore fora → chamada normal
-          this._transferState.set(stateKeyIntencaoArvore(chaveArvore), arvore);
-          return of(new HttpResponse({ status: 200, url: req.url, body: arvore }));
+          const uf = new URL(req.url, 'http://localhost').searchParams.get('uf')?.toLowerCase();
+          const fatiada = uf
+            // Página de UF: só o estado pedido — cidades sem `paroquias` (o
+            // template só usa cidadeSlug/cidade; a folha busca as paróquias à parte).
+            ? {
+                ...arvore,
+                estados: (arvore.estados ?? [])
+                  .filter((e: any) => e.uf?.toLowerCase() === uf)
+                  .map((e: any) => ({
+                    ...e,
+                    cidades: (e.cidades ?? []).map((c: any) => ({ cidadeSlug: c.cidadeSlug, cidade: c.cidade })),
+                  })),
+              }
+            // Página nacional: só a lista de estados (uf/nome) — cidades não são usadas aqui.
+            : {
+                ...arvore,
+                estados: (arvore.estados ?? []).map((e: any) => ({ uf: e.uf, estado: e.estado })),
+              };
+          this._transferState.set(stateKeyIntencaoArvore(chaveArvore), fatiada);
+          return of(new HttpResponse({ status: 200, url: req.url, body: fatiada }));
         }),
       );
     }
