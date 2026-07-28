@@ -3,8 +3,8 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
 /**
- * Guard-rail do prerender (Auditoria2 / Fases 2 e 2.5). Roda no postbuild, depois
- * do prerender das cidades (/missas) e das paróquias (/paroquia).
+ * Guard-rail do prerender (Auditoria2 / Fases 2, 2.5 e 3). Roda no postbuild, depois
+ * do prerender das cidades (/missas), das paróquias (/paroquia) e da HOME (raiz + /home).
  *
  * Se a API estiver com problema durante o build, o componente assa o SEU estado de
  * erro ("Não foi possível / Tentar novamente") no HTML estático — e o `ng build`
@@ -24,17 +24,30 @@ const MARCADOR_ERRO = 'Tentar novamente';
 // Limiar tolerado de páginas de erro (falhas transientes pontuais acontecem).
 const LIMIAR = 0.02; // 2%
 
-// Seções prerenderizadas com estado de erro auditável (city e details).
-const SECOES = ['missas', 'paroquia'];
+// Seções prerenderizadas com estado de erro auditável (city, details e home).
+// 'home' cobre dist/<app>/browser/home/index.html (rota `home`). A raiz `''`
+// (browser/index.html) é verificada à parte, por não ficar numa subpasta.
+// 'missas' cobre também os hubs de Estado (/missas/{uf}, Fase 3). Os `missa-{dia}`
+// são as landings/hubs/folhas da árvore de intenção (Fase 3), uma pasta por dia.
+const DIAS_INTENCAO = ['domingo', 'segunda-feira', 'terca-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sabado'];
+const SECOES = ['missas', 'paroquia', 'home', ...DIAS_INTENCAO.map((d) => `missa-${d}`)];
 
-/** Acha dist/<app>/browser/<secao>, varrendo os apps sob dist/. */
-function acharPastaSecao(base, secao) {
+/** Acha dist/<app>/browser, varrendo os apps sob dist/. */
+function acharBrowserDir(base) {
   if (!existsSync(base)) return null;
   for (const app of readdirSync(base)) {
-    const p = join(base, app, 'browser', secao);
+    const p = join(base, app, 'browser');
     if (existsSync(p) && statSync(p).isDirectory()) return p;
   }
   return null;
+}
+
+/** Acha dist/<app>/browser/<secao>, varrendo os apps sob dist/. */
+function acharPastaSecao(base, secao) {
+  const browser = acharBrowserDir(base);
+  if (!browser) return null;
+  const p = join(browser, secao);
+  return existsSync(p) && statSync(p).isDirectory() ? p : null;
 }
 
 function listarIndexHtml(dir) {
@@ -81,6 +94,22 @@ for (const secao of SECOES) {
     console.error(`   Causa provável: rate limit (429) da API durante o prerender. Verifique o endpoint bulk (/v2/seo/cidades ou /v2/seo/paroquias) e o interceptor de prerender.`);
     console.error('   Exemplos:');
     for (const e of exemplos) console.error(`     - ${e}`);
+  }
+}
+
+// Raiz `''` (browser/index.html): pode ser o shell CSR (pré-Fase 3) ou a home
+// prerenderizada. Em qualquer caso, não pode conter o marcador de erro.
+const browserDir = acharBrowserDir(distBase);
+if (browserDir) {
+  const raiz = join(browserDir, 'index.html');
+  if (existsSync(raiz)) {
+    algoVerificado = true;
+    if (readFileSync(raiz, 'utf-8').includes(MARCADOR_ERRO)) {
+      algumFalhou = true;
+      console.error(`\n❌ [guard-rail] a raiz (index.html) foi assada em ESTADO DE ERRO.`);
+    } else {
+      console.log('[guard-rail] raiz (index.html): OK.');
+    }
   }
 }
 

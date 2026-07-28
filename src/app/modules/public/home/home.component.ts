@@ -1,7 +1,7 @@
-import { Component, DestroyRef, inject } from "@angular/core";
+import { Component, DestroyRef, inject, PLATFORM_ID } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { finalize } from "rxjs/operators";
-import { CommonModule, DatePipe } from "@angular/common";
+import { CommonModule, DatePipe, isPlatformBrowser } from "@angular/common";
 import {
   FormGroup,
   Validators,
@@ -299,6 +299,14 @@ export class HomeComponent {
   /** Estatísticas (números reais via getInfo, com fallback) */
   stats = { igrejas: 2000, horarios: 9100, cidades: 213, estados: 26 };
 
+  /**
+   * True só no browser. No prerender/SSG (Fase 3) a home é assada no server, onde
+   * navigator/document/timers não existem — qualquer acesso trava o render e aborta
+   * o build inteiro. Guardamos o caminho de geolocalização/scroll com este flag.
+   * Ver city.component.ts / countdown-chip.component.ts (mesmo padrão).
+   */
+  private _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
   setSearchTab(tab: 'cidade' | 'local'): void {
     if (this.searchTab === tab) return;
     this.searchTab = tab;
@@ -392,6 +400,7 @@ export class HomeComponent {
   }
 
   private _scrollToProximas(): void {
+    if (!this._isBrowser) return;
     document.getElementById('proximas-section')
       ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -505,7 +514,10 @@ export class HomeComponent {
       finalize(() => {
         this.isLoadingAddress = false;
         this._restoreFromQueryParams();
-        if (!this.resultsMode) {
+        // Geolocalização e próximas missas são UPGRADE do cliente: no prerender o
+        // server assa o estado default estável (sem geo), o browser preenche ao
+        // hidratar. Guardar evita crash no SSR e hydration swap.
+        if (!this.resultsMode && this._isBrowser) {
           this._loadProximasMissas();
           this._requestGeolocation();
         }
@@ -532,7 +544,7 @@ export class HomeComponent {
   }
 
   private _requestGeolocation(): void {
-    if (!navigator.geolocation) return;
+    if (!this._isBrowser || !navigator.geolocation) return;
     this.geoStatus = 'loading';
     navigator.geolocation.getCurrentPosition(
       pos => {
@@ -681,6 +693,7 @@ export class HomeComponent {
       horario: card.mass.horario,
     };
     this._favorites.adicionar(novaFavorita);
+    this._metricas.registrarFavorito(card.churchId);
     this.paroquiasFavoritas = [...this.paroquiasFavoritas, novaFavorita];
     this._analytics.favoriteParishSaved(card.churchName);
   }

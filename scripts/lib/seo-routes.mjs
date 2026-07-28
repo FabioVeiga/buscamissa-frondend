@@ -2,9 +2,13 @@
  * Fonte única de verdade para as rotas de SEO derivadas de `/v2/seo/routes`.
  *
  * Consumido por dois runtimes distintos:
- *   1. `scripts/gerar-sitemap.mjs` — script Node standalone (prebuild).
+ *   1. `scripts/baixar-bulk-prerender.mjs` — script Node standalone (prebuild),
+ *      via `normalizarBaseUrl`.
  *   2. `src/app/app.routes.server.ts` — `getPrerenderParams` no bundle server do
  *      Angular, durante o prerender (Fase 2 do SSR: cidades; Fase 2.5: paróquias).
+ *
+ * (O sitemap agora é dinâmico, servido pelo proxy; o antigo `gerar-sitemap.mjs`
+ *  estático foi removido — mas o helper segue como fonte única das rotas de SEO.)
  *
  * Por isso NÃO depende de `fs` nem de nada específico de um dos ambientes: recebe
  * a base da API pronta e usa só `fetch`/`AbortController` (globais no Node 18+ e

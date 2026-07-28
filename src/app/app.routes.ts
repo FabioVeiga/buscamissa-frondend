@@ -1,6 +1,40 @@
 import { Routes } from "@angular/router";
 import { LayoutHomeComponent } from "./core/layout/home/layout/layout.component";
 
+// Fase 3 SEO — árvore de INTENÇÃO por dia. O slug do dia é literal na rota (não é
+// :param), então geramos 3 níveis por dia e passamos o dia em `data.dia` para o
+// IntencaoComponent. Os 7 dias explícitos; "hoje" é redirect client-side à parte.
+const DIAS_INTENCAO: { slug: string; label: string }[] = [
+  { slug: 'domingo', label: 'domingo' },
+  { slug: 'segunda-feira', label: 'segunda-feira' },
+  { slug: 'terca-feira', label: 'terça-feira' },
+  { slug: 'quarta-feira', label: 'quarta-feira' },
+  { slug: 'quinta-feira', label: 'quinta-feira' },
+  { slug: 'sexta-feira', label: 'sexta-feira' },
+  { slug: 'sabado', label: 'sábado' },
+];
+
+const carregarIntencao = () =>
+  import("./modules/public/intencao/intencao.component").then((m) => m.IntencaoComponent);
+
+const rotasIntencao: Routes = DIAS_INTENCAO.flatMap((d) => [
+  {
+    path: `missa-${d.slug}`,
+    data: { dia: d.slug, title: `Missa de ${d.label} no Brasil | BuscaMissa` },
+    loadComponent: carregarIntencao,
+  },
+  {
+    path: `missa-${d.slug}/:uf`,
+    data: { dia: d.slug, title: `Missa de ${d.label} | BuscaMissa` },
+    loadComponent: carregarIntencao,
+  },
+  {
+    path: `missa-${d.slug}/:uf/:cidade`,
+    data: { dia: d.slug, title: `Missa de ${d.label} | BuscaMissa` },
+    loadComponent: carregarIntencao,
+  },
+]);
+
 export const routes: Routes = [
   {
     path: "",
@@ -63,6 +97,25 @@ export const routes: Routes = [
           import("./modules/public/home/details/details.component").then(
             (m) => m.DetailsComponent
           ),
+      },
+      // Hub de Estado (SEO): /missas/sp — antes de missas/:uf/:cidade (menos segmentos).
+      {
+        path: "missas/:uf",
+        data: {
+          title: 'Horários de Missa por Estado | BuscaMissa',
+          description: 'Horários de missa neste estado. Escolha a cidade e veja as paróquias.',
+        },
+        loadComponent: () =>
+          import("./modules/public/estado/estado.component").then((m) => m.EstadoComponent),
+      },
+      // Árvore de intenção por dia (SEO): /missa-domingo[/:uf[/:cidade]] — 7 dias.
+      ...rotasIntencao,
+      // /missa-hoje: redirect client-side pro dia local (Brasil tem 4 fusos).
+      {
+        path: "missa-hoje",
+        data: { title: 'Missa de hoje perto de você | BuscaMissa' },
+        loadComponent: () =>
+          import("./modules/public/missa-hoje/missa-hoje.component").then((m) => m.MissaHojeComponent),
       },
       // Página de cidade (SEO): /missas/sp/sao-jose-dos-campos
       {

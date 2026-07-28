@@ -6,6 +6,8 @@ import { appConfig } from './app.config';
 import { serverRoutes } from './app.routes.server';
 import { PrerenderCidadeInterceptor } from './core/middleware/prerender-cidade.interceptor';
 import { PrerenderParoquiaInterceptor } from './core/middleware/prerender-paroquia.interceptor';
+import { PrerenderEstadoInterceptor } from './core/middleware/prerender-estado.interceptor';
+import { PrerenderIntencaoInterceptor } from './core/middleware/prerender-intencao.interceptor';
 
 const serverConfig: ApplicationConfig = {
   providers: [
@@ -17,6 +19,10 @@ const serverConfig: ApplicationConfig = {
     { provide: HTTP_INTERCEPTORS, useClass: PrerenderCidadeInterceptor, multi: true },
     // Idem para as ~4.4k paróquias (Fase 2.5), via bulk /v2/seo/paroquias.
     { provide: HTTP_INTERCEPTORS, useClass: PrerenderParoquiaInterceptor, multi: true },
+    // Fase 3 — Estado (/v2/seo/estado/{uf}) e Intenção-cidade
+    // (/v2/seo/missa-dia/{dia}/{uf}/{cidade}), servidos dos bulks em disco.
+    { provide: HTTP_INTERCEPTORS, useClass: PrerenderEstadoInterceptor, multi: true },
+    { provide: HTTP_INTERCEPTORS, useClass: PrerenderIntencaoInterceptor, multi: true },
   ],
 };
 

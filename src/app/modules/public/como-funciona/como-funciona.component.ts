@@ -3,6 +3,7 @@ import { RouterModule } from '@angular/router';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ChurchesService } from '../../../core/services/churches.service';
 import { ClarityService } from '../../../core/services/clarity.service';
+import { MetricasService, PaginaMetrica } from '../../../core/services/metricas.service';
 
 @Component({
   selector: 'app-como-funciona',
@@ -14,6 +15,7 @@ import { ClarityService } from '../../../core/services/clarity.service';
 export class ComoFuncionaComponent implements OnInit, AfterViewInit, OnDestroy {
   private _church = inject(ChurchesService);
   private _clarity = inject(ClarityService);
+  private _metricas = inject(MetricasService);
   private _scrollObserver: IntersectionObserver | null = null;
   private _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
@@ -58,6 +60,7 @@ export class ComoFuncionaComponent implements OnInit, AfterViewInit, OnDestroy {
   ];
 
   ngOnInit(): void {
+    this._metricas.registrarVisualizacaoPagina(PaginaMetrica.ComoFunciona);
     // Só no browser: mantém o prerender hermético (sem I/O de rede no build).
     // Os números carregam na hidratação; o HTML estático usa os defaults.
     if (!this._isBrowser) return;

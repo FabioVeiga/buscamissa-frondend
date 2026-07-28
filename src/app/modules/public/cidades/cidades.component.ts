@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ChurchesService } from '../../../core/services/churches.service';
+import { MetricasService, PaginaMetrica } from '../../../core/services/metricas.service';
 import { STATES } from '../../../core/constants/states';
 
 interface CidadeItem { nome: string; slug: string; }
@@ -17,6 +18,7 @@ interface EstadoItem { sigla: string; nome: string; cidades: CidadeItem[]; expan
 })
 export class CidadesComponent implements OnInit {
   private _church = inject(ChurchesService);
+  private _metricas = inject(MetricasService);
 
   isLoading = true;
   busca = '';
@@ -46,6 +48,7 @@ export class CidadesComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this._metricas.registrarVisualizacaoPagina(PaginaMetrica.Cidades);
     this._church.addressRange().subscribe({
       next: ({ data }: any) => {
         this.estados = Object.entries(data)
