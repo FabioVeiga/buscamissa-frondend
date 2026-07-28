@@ -68,7 +68,7 @@ export interface ChurchApiData {
 // Modelo da Igreja para o Formulário (pode ter tipos diferentes, ex: Date para horário)
 export interface ChurchFormData {
   id?: number;
-  typeChurchValue?: string | null; // Campo separado para o tipo no form
+  typeChurchValue?: number | null; // Campo separado para o tipo no form (TipoIgrejaEnum)
   nomeIgreja: string; // Apenas o nome, sem o tipo
   nomeParoco: string;
   cep: string;

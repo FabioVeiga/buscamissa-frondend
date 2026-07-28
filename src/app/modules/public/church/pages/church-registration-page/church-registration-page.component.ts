@@ -264,7 +264,8 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
     const whatsappLimpo = formData.whatsapp?.replace(/\D/g, "") ?? "";
 
     const payload: Omit<ChurchApiData, "id"> = {
-      nome: `${formData.typeChurchValue} ${formData.nomeIgreja}`,
+      nome: formData.nomeIgreja,
+      tipoIgreja: formData.typeChurchValue ?? undefined,
       paroco: formData.nomeParoco,
       imagem: formData.imagem,
       missas: formData.missas?.map((missa: any) => ({
