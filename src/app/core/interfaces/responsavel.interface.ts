@@ -79,6 +79,25 @@ export interface SessaoEdicao {
   observacao?: string | null;
 }
 
+// ---- Fase 2 (diocese/arquidiocese + capelas/comunidades) — só leitura por enquanto ----
+
+export interface Circunscricao {
+  dioceseId?: number | null;
+  dioceseNome?: string | null;
+  arquidioceseId?: number | null;
+  arquidioceseNome?: string | null;
+  /** "Nenhuma" | "Direta" | "Herdada" */
+  origem: string;
+}
+
+export interface CapelaComunidade {
+  id: number;
+  nome: string;
+  slug?: string | null;
+  /** "Paroquia" | "Capela" | "Comunidade" | "Santuario" | "Outro" */
+  tipoIgreja: string;
+}
+
 export interface DadosEdicao {
   igrejaId: number;
   igrejaNome: string;
@@ -88,6 +107,8 @@ export interface DadosEdicao {
   endereco: EnderecoEdicao;
   imagemUrl?: string | null;
   sessoes: SessaoEdicao[];
+  circunscricao: Circunscricao;
+  capelasComunidades: CapelaComunidade[];
 }
 
 export interface EditarDadosRequest {

@@ -16,7 +16,7 @@ import { AuthService } from "../../../../core/services/auth.service";
 import { ResponsavelService } from "../../../../core/services/responsavel.service";
 import { ChurchesService } from "../../../../core/services/churches.service";
 import { LoggerService } from "../../../../core/services/logger.service";
-import { MetricasIgreja } from "../../../../core/interfaces/responsavel.interface";
+import { MetricasIgreja, Circunscricao, CapelaComunidade } from "../../../../core/interfaces/responsavel.interface";
 import { STATES } from "../../../../core/constants/states";
 
 const REDES = [
@@ -89,6 +89,10 @@ export class EditarIgrejaComponent implements OnInit {
 
   /** Cards de métricas (últimos 30 dias). */
   metricas: MetricasIgreja | null = null;
+
+  /** Fase 2 (só leitura): diocese/arquidiocese efetiva + capelas/comunidades da paróquia. */
+  circunscricao: Circunscricao | null = null;
+  capelasComunidades: CapelaComunidade[] = [];
 
   /** Cidade/UF originais — usado para exibir o aviso só quando o usuário muda. */
   private _localidadeOriginal = "";
@@ -182,6 +186,8 @@ export class EditarIgrejaComponent implements OnInit {
         this._latitude = dados.endereco.latitude ?? null;
         this._longitude = dados.endereco.longitude ?? null;
         this.imagemPreview = dados.imagemUrl ?? null;
+        this.circunscricao = dados.circunscricao;
+        this.capelasComunidades = dados.capelasComunidades ?? [];
 
         this.isLoading = false;
       },
