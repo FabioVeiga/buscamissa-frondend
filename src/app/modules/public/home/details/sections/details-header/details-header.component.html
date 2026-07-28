@@ -34,10 +34,7 @@
     <p *ngIf="igreja.circunscricao?.dioceseNome || igreja.circunscricao?.arquidioceseNome"
        class="flex items-center gap-1.5 text-sm text-gray-500">
       <i class="pi pi-sitemap text-gray-400 shrink-0"></i>
-      <ng-container *ngIf="igreja.circunscricao?.dioceseNome; else soArquidiocese">
-        Diocese de {{ igreja.circunscricao?.dioceseNome }}
-      </ng-container>
-      <ng-template #soArquidiocese>Arquidiocese de {{ igreja.circunscricao?.arquidioceseNome }}</ng-template>
+      {{ igreja.circunscricao?.dioceseNome || igreja.circunscricao?.arquidioceseNome }}
     </p>
     <div *ngIf="proximaMissa">
       <app-confidence-badge [mass]="proximaMissa" />
