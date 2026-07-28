@@ -45,6 +45,70 @@ h1 {
   }
 }
 
+.texto-auxiliar {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.texto-atual {
+  margin: 0 0 0.5rem;
+}
+
+.lista-capelas {
+  margin: 0;
+  padding-left: 1.25rem;
+
+  li {
+    margin-bottom: 0.25rem;
+  }
+}
+
+.circunscricao-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 420px;
+  margin-top: 0.5rem;
+
+  .p-selectbutton-wrapper {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .circunscricao-acoes {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.25rem;
+  }
+
+  a {
+    color: var(--p-primary-color, #2563eb);
+    cursor: pointer;
+  }
+}
+
+h2.mt {
+  margin-top: 1.5rem;
+}
+
+.item-capela {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.busca-capela-orfa {
+  display: flex;
+  gap: 0.5rem;
+  max-width: 480px;
+  margin-bottom: 0.75rem;
+
+  input {
+    flex: 1;
+  }
+}
+
 .grid-contato {
   display: grid;
   grid-template-columns: 90px 1fr 90px 1fr;

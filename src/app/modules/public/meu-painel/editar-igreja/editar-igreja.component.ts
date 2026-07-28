@@ -16,7 +16,7 @@ import { AuthService } from "../../../../core/services/auth.service";
 import { ResponsavelService } from "../../../../core/services/responsavel.service";
 import { ChurchesService } from "../../../../core/services/churches.service";
 import { LoggerService } from "../../../../core/services/logger.service";
-import { MetricasIgreja } from "../../../../core/interfaces/responsavel.interface";
+import { MetricasIgreja, Circunscricao, CapelaComunidade, CircunscricaoOpcao, CapelaOrfa, MinhaSolicitacaoVinculo } from "../../../../core/interfaces/responsavel.interface";
 import { STATES } from "../../../../core/constants/states";
 
 const REDES = [
@@ -90,6 +90,41 @@ export class EditarIgrejaComponent implements OnInit {
   /** Cards de métricas (últimos 30 dias). */
   metricas: MetricasIgreja | null = null;
 
+  /** Diocese/arquidiocese efetiva + capelas/comunidades da paróquia. */
+  circunscricao: Circunscricao | null = null;
+  capelasComunidades: CapelaComunidade[] = [];
+
+  /** Fase 3: seleção editável de diocese/arquidiocese. */
+  dioceses: CircunscricaoOpcao[] = [];
+  arquidioceses: CircunscricaoOpcao[] = [];
+  tipoCircunscricao: "diocese" | "arquidiocese" = "diocese";
+  dioceseSelecionada: number | null = null;
+  arquidioceseSelecionada: number | null = null;
+  salvandoCircunscricao = false;
+
+  /** "Paroquia" | "Capela" | "Comunidade" | "Santuario" | "Outro" — decide a direção do vínculo. */
+  tipoIgreja = "Paroquia";
+  get ehParoquia(): boolean {
+    return this.tipoIgreja === "Paroquia";
+  }
+
+  /** Paróquia-sede desta capela/comunidade, se já vinculada. Null = ainda órfã (mostra busca/solicitação). */
+  paroquiaSede: { id: number; nome: string } | null = null;
+  desanexandoParoquiaSede = false;
+
+  /** Fase 4: anexar/desanexar capelas/comunidades (ou, se for capela, buscar a própria paróquia). */
+  buscaCapelaOrfa = "";
+  resultadosCapelaOrfa: CapelaOrfa[] = [];
+  buscandoCapelaOrfa = false;
+  solicitandoCapelaId: number | null = null;
+  minhasSolicitacoesVinculo: MinhaSolicitacaoVinculo[] = [];
+  desanexandoCapelaId: number | null = null;
+
+  /** Solicitação de cadastro de diocese/arquidiocese que não está na lista. */
+  mostrarSolicitarCircunscricao = false;
+  mensagemSolicitarCircunscricao = "";
+  enviandoSolicitarCircunscricao = false;
+
   /** Cidade/UF originais — usado para exibir o aviso só quando o usuário muda. */
   private _localidadeOriginal = "";
   private _ufOriginal = "";
@@ -144,6 +179,202 @@ export class EditarIgrejaComponent implements OnInit {
       next: (m) => (this.metricas = m),
       error: () => {}, // cards são informativos — falha não bloqueia a edição
     });
+    this._responsavel.listarDioceses().subscribe({
+      next: (lista) => (this.dioceses = lista),
+      error: () => {},
+    });
+    this._responsavel.listarArquidioceses().subscribe({
+      next: (lista) => (this.arquidioceses = lista),
+      error: () => {},
+    });
+    this._carregarMinhasSolicitacoesVinculo();
+  }
+
+  private _carregarMinhasSolicitacoesVinculo(): void {
+    this._responsavel.minhasSolicitacoesVinculo().subscribe({
+      next: (lista) => (this.minhasSolicitacoesVinculo = lista),
+      error: () => {},
+    });
+  }
+
+  /** True quando já existe solicitação pendente para esta capela (evita duplicar). */
+  jaSolicitouCapela(capelaId: number): boolean {
+    return this.minhasSolicitacoesVinculo.some((s) => s.capelaId === capelaId && s.status === "Pendente");
+  }
+
+  /** UF da própria igreja (form já preenchido) — restringe a busca, evita varrer a base nacional. */
+  private get _uf(): string {
+    return (this.form.get("endereco.uf")?.value ?? "").trim();
+  }
+
+  buscarCapelaOrfa(): void {
+    if (this.buscaCapelaOrfa.trim().length < 3) {
+      this.resultadosCapelaOrfa = [];
+      return;
+    }
+    if (!this._uf) {
+      this._message.add({ severity: "warn", summary: "UF não definida", detail: "Preencha o endereço da igreja antes de buscar." });
+      return;
+    }
+    this.buscandoCapelaOrfa = true;
+    const busca$ = this.ehParoquia
+      ? this._responsavel.buscarCapelasOrfas(this._uf, this.buscaCapelaOrfa.trim())
+      : this._responsavel.buscarParoquias(this._uf, this.buscaCapelaOrfa.trim());
+    busca$.subscribe({
+      next: (lista) => {
+        this.resultadosCapelaOrfa = lista;
+        this.buscandoCapelaOrfa = false;
+      },
+      error: () => {
+        this.buscandoCapelaOrfa = false;
+      },
+    });
+  }
+
+  /** Nome da ação de busca, conforme a direção do vínculo. */
+  get tituloBuscaVinculo(): string {
+    return this.ehParoquia ? "Anexar capela/comunidade órfã" : "Anexar à paróquia";
+  }
+
+  solicitarVinculoCapela(alvo: CapelaOrfa): void {
+    this.solicitandoCapelaId = alvo.id;
+    const solicitar$ = this.ehParoquia
+      ? this._responsavel.solicitarVinculoCapela(this.igrejaId, { capelaId: alvo.id })
+      : this._responsavel.solicitarVinculoParoquia(this.igrejaId, { paroquiaId: alvo.id });
+    solicitar$.subscribe({
+      next: (mensagem) => {
+        this._message.add({ severity: "success", summary: "Solicitação enviada", detail: mensagem });
+        this.solicitandoCapelaId = null;
+        this._carregarMinhasSolicitacoesVinculo();
+      },
+      error: (error) => {
+        this.solicitandoCapelaId = null;
+        this._message.add({
+          severity: "error",
+          summary: "Não foi possível solicitar",
+          detail: error?.error?.data?.mensagemTela ?? "Tente novamente.",
+        });
+        this._logger.logError(error, "editar-igreja:solicitarVinculoCapela");
+      },
+    });
+  }
+
+  desvincularCircunscricao(): void {
+    this.salvandoCircunscricao = true;
+    this._responsavel.desvincularCircunscricao(this.igrejaId).subscribe({
+      next: (mensagem) => {
+        this._message.add({ severity: "success", summary: "Desvinculado", detail: mensagem });
+        this.salvandoCircunscricao = false;
+        this.dioceseSelecionada = null;
+        this.arquidioceseSelecionada = null;
+        this.carregar();
+      },
+      error: (error) => {
+        this.salvandoCircunscricao = false;
+        this._message.add({
+          severity: "error",
+          summary: "Não foi possível desvincular",
+          detail: error?.error?.data?.mensagemTela ?? "Tente novamente.",
+        });
+        this._logger.logError(error, "editar-igreja:desvincularCircunscricao");
+      },
+    });
+  }
+
+  abrirSolicitarCircunscricao(): void {
+    this.mostrarSolicitarCircunscricao = true;
+    this.mensagemSolicitarCircunscricao = "";
+  }
+
+  enviarSolicitarCircunscricao(): void {
+    if (!this.mensagemSolicitarCircunscricao.trim()) return;
+
+    this.enviandoSolicitarCircunscricao = true;
+    this._responsavel.solicitarCircunscricao(this.mensagemSolicitarCircunscricao.trim()).subscribe({
+      next: (mensagem) => {
+        this._message.add({ severity: "success", summary: "Solicitação enviada", detail: mensagem });
+        this.enviandoSolicitarCircunscricao = false;
+        this.mostrarSolicitarCircunscricao = false;
+      },
+      error: (error) => {
+        this.enviandoSolicitarCircunscricao = false;
+        this._message.add({
+          severity: "error",
+          summary: "Não foi possível enviar",
+          detail: error?.error?.data?.mensagemTela ?? "Tente novamente.",
+        });
+        this._logger.logError(error, "editar-igreja:enviarSolicitarCircunscricao");
+      },
+    });
+  }
+
+  desanexarCapela(capela: CapelaComunidade): void {
+    this.desanexandoCapelaId = capela.id;
+    this._responsavel.desanexarCapela(capela.id).subscribe({
+      next: (mensagem) => {
+        this._message.add({ severity: "success", summary: "Desanexada", detail: mensagem });
+        this.desanexandoCapelaId = null;
+        this.capelasComunidades = this.capelasComunidades.filter((c) => c.id !== capela.id);
+      },
+      error: (error) => {
+        this.desanexandoCapelaId = null;
+        this._message.add({
+          severity: "error",
+          summary: "Não foi possível desanexar",
+          detail: error?.error?.data?.mensagemTela ?? "Tente novamente.",
+        });
+        this._logger.logError(error, "editar-igreja:desanexarCapela");
+      },
+    });
+  }
+
+  /** Quando a igreja editada é a própria capela/comunidade já vinculada — desanexa a si mesma. */
+  desanexarParoquiaSede(): void {
+    this.desanexandoParoquiaSede = true;
+    this._responsavel.desanexarCapela(this.igrejaId).subscribe({
+      next: (mensagem) => {
+        this._message.add({ severity: "success", summary: "Desanexada", detail: mensagem });
+        this.desanexandoParoquiaSede = false;
+        this.paroquiaSede = null;
+      },
+      error: (error) => {
+        this.desanexandoParoquiaSede = false;
+        this._message.add({
+          severity: "error",
+          summary: "Não foi possível desanexar",
+          detail: error?.error?.data?.mensagemTela ?? "Tente novamente.",
+        });
+        this._logger.logError(error, "editar-igreja:desanexarParoquiaSede");
+      },
+    });
+  }
+
+  salvarCircunscricao(): void {
+    const dioceseId = this.tipoCircunscricao === "diocese" ? this.dioceseSelecionada : null;
+    const arquidioceseId = this.tipoCircunscricao === "arquidiocese" ? this.arquidioceseSelecionada : null;
+
+    if (!dioceseId && !arquidioceseId) {
+      this._message.add({ severity: "warn", summary: "Selecione uma opção", detail: "Escolha uma diocese ou arquidiocese." });
+      return;
+    }
+
+    this.salvandoCircunscricao = true;
+    this._responsavel.atualizarCircunscricao(this.igrejaId, { dioceseId, arquidioceseId }).subscribe({
+      next: (mensagem) => {
+        this._message.add({ severity: "success", summary: "Salvo", detail: mensagem });
+        this.salvandoCircunscricao = false;
+        this.carregar();
+      },
+      error: (error) => {
+        this.salvandoCircunscricao = false;
+        this._message.add({
+          severity: "error",
+          summary: "Não foi possível salvar",
+          detail: error?.error?.data?.mensagemTela ?? "Tente novamente.",
+        });
+        this._logger.logError(error, "editar-igreja:salvarCircunscricao");
+      },
+    });
   }
 
   carregar(): void {
@@ -182,6 +413,18 @@ export class EditarIgrejaComponent implements OnInit {
         this._latitude = dados.endereco.latitude ?? null;
         this._longitude = dados.endereco.longitude ?? null;
         this.imagemPreview = dados.imagemUrl ?? null;
+        this.circunscricao = dados.circunscricao;
+        this.capelasComunidades = dados.capelasComunidades ?? [];
+        this.tipoIgreja = dados.tipoIgreja ?? "Paroquia";
+        this.paroquiaSede = dados.paroquiaSede ?? null;
+
+        if (dados.circunscricao?.dioceseId) {
+          this.tipoCircunscricao = "diocese";
+          this.dioceseSelecionada = dados.circunscricao.dioceseId;
+        } else if (dados.circunscricao?.arquidioceseId) {
+          this.tipoCircunscricao = "arquidiocese";
+          this.arquidioceseSelecionada = dados.circunscricao.arquidioceseId;
+        }
 
         this.isLoading = false;
       },

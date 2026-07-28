@@ -31,6 +31,11 @@
       <i class="pi pi-user text-gray-400 shrink-0"></i>
       {{ igreja.paroco }}
     </p>
+    <p *ngIf="igreja.circunscricao?.dioceseNome || igreja.circunscricao?.arquidioceseNome"
+       class="flex items-center gap-1.5 text-sm text-gray-500">
+      <i class="pi pi-sitemap text-gray-400 shrink-0"></i>
+      {{ igreja.circunscricao?.dioceseNome || igreja.circunscricao?.arquidioceseNome }}
+    </p>
     <div *ngIf="proximaMissa">
       <app-confidence-badge [mass]="proximaMissa" />
     </div>

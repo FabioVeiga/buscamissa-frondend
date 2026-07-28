@@ -79,6 +79,69 @@ export interface SessaoEdicao {
   observacao?: string | null;
 }
 
+// ---- Fase 2 (diocese/arquidiocese + capelas/comunidades) — só leitura por enquanto ----
+
+export interface Circunscricao {
+  dioceseId?: number | null;
+  dioceseNome?: string | null;
+  arquidioceseId?: number | null;
+  arquidioceseNome?: string | null;
+  /** "Nenhuma" | "Direta" | "Herdada" */
+  origem: string;
+}
+
+export interface CapelaComunidade {
+  id: number;
+  nome: string;
+  slug?: string | null;
+  /** "Paroquia" | "Capela" | "Comunidade" | "Santuario" | "Outro" */
+  tipoIgreja: string;
+}
+
+export interface CircunscricaoOpcao {
+  id: number;
+  nome: string;
+  uf: string;
+}
+
+/** Exatamente um dos dois preenchido. */
+export interface AtualizarCircunscricaoRequest {
+  dioceseId?: number | null;
+  arquidioceseId?: number | null;
+}
+
+// ---- Fase 4 (capelas/comunidades órfãs) ----
+
+export interface CapelaOrfa {
+  id: number;
+  nome: string;
+  slug?: string | null;
+  uf?: string | null;
+  localidade?: string | null;
+  tipoIgreja: string;
+}
+
+export interface MinhaSolicitacaoVinculo {
+  id: number;
+  capelaId: number;
+  capelaNome: string;
+  /** "Pendente" | "Aprovado" | "Rejeitado" */
+  status: string;
+  dataSolicitacao: string;
+  motivoRevisao?: string | null;
+}
+
+export interface SolicitarVinculoCapelaRequest {
+  capelaId: number;
+  observacao?: string | null;
+}
+
+/** Variante reversa: a própria capela solicita vínculo com uma paróquia. */
+export interface SolicitarVinculoParoquiaRequest {
+  paroquiaId: number;
+  observacao?: string | null;
+}
+
 export interface DadosEdicao {
   igrejaId: number;
   igrejaNome: string;
@@ -88,6 +151,12 @@ export interface DadosEdicao {
   endereco: EnderecoEdicao;
   imagemUrl?: string | null;
   sessoes: SessaoEdicao[];
+  circunscricao: Circunscricao;
+  capelasComunidades: CapelaComunidade[];
+  /** "Paroquia" | "Capela" | "Comunidade" | "Santuario" | "Outro" — decide a direção do vínculo. */
+  tipoIgreja: string;
+  /** Paróquia-sede desta capela/comunidade, se já vinculada. Null = ainda órfã. */
+  paroquiaSede?: { id: number; nome: string } | null;
 }
 
 export interface EditarDadosRequest {
