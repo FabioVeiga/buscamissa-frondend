@@ -98,18 +98,12 @@ const rotasIntencao: ServerRoute[] = DIAS_INTENCAO.flatMap((dia) => [
         .map((e) => ({ uf: e.uf.toLowerCase() }));
     },
   },
-  {
-    path: `missa-${dia}/:uf/:cidade`,
-    renderMode: RenderMode.Prerender,
-    getPrerenderParams: async () => {
-      const arvore = await arvoreDoDia(dia);
-      return (arvore.estados ?? []).flatMap((e) =>
-        (e.cidades ?? [])
-          .filter((c) => c?.cidadeSlug && e.uf)
-          .map((c) => ({ uf: e.uf.toLowerCase(), cidade: c.cidadeSlug.toLowerCase() })),
-      );
-    },
-  },
+  // Folha cidade (`/missa-{dia}/:uf/:cidade`): CSR, não prerender. Long-tail de
+  // baixíssimo volume de busca por combinação — os hubs nacional/UF acima já
+  // cobrem o SEO principal. Prerenderizar as ~2.937 combinações estourava o
+  // limite de tamanho do Azure SWA (~300 MB só desta categoria). O componente
+  // busca os dados via SeoPaginasService normalmente, então funciona em CSR puro.
+  { path: `missa-${dia}/:uf/:cidade`, renderMode: RenderMode.Client },
 ]);
 
 export const serverRoutes: ServerRoute[] = [
