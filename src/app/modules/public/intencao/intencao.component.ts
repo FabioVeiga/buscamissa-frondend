@@ -104,7 +104,7 @@ export class IntencaoComponent implements OnInit {
 
   private carregarHub(): void {
     this._api
-      .getArvoreDia(this.dia)
+      .getArvoreDia(this.dia, this.nivel === 'uf' ? this.uf : undefined)
       .pipe(takeUntilDestroyed(this._destroyRef), finalize(() => (this.isLoading = false)))
       .subscribe({
         next: (arvore: any) => {
