@@ -224,10 +224,12 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
   }
 
   // Igreja "em processo" (Controle pendente) selecionada na lista do CEP: em vez
-  // de deixar o usuário criar uma duplicata, manda ele retomar a validação já
-  // existente daquela igreja (mesma tela usada logo após o cadastro).
-  retomarValidacao(controleId: number): void {
-    this.router.navigate(["/enviar-codigo", controleId]);
+  // de deixar o usuário criar uma duplicata, manda ele revisar/ajustar os dados
+  // já enviados (tela de edição) antes de seguir pra validação — o PUT de
+  // atualização reaproveita o mesmo Controle da criação e devolve o mesmo
+  // controleId, então a validação pendente não é perdida.
+  revisarCadastroPendente(igrejaId: number): void {
+    this.router.navigate(["/editar", igrejaId]);
   }
 
   // Usuário confirmou, na lista de igrejas do CEP, que nenhuma delas é a sua —

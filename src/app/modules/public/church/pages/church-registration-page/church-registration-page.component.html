@@ -34,12 +34,12 @@
                 <span class="text-xs font-medium text-amber-700 bg-amber-100 rounded-full px-2 py-0.5">Cadastro em andamento</span>
               </span>
               <p-button
-                label="Retomar validação"
-                icon="pi pi-refresh"
+                label="Revisar e continuar cadastro"
+                icon="pi pi-pencil"
                 size="small"
                 severity="warn"
                 [text]="true"
-                (click)="retomarValidacao(igreja.controleId!)"
+                (click)="revisarCadastroPendente(igreja.id)"
               ></p-button>
             </div>
             <ng-template #igrejaAtiva>
