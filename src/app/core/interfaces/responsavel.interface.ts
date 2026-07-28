@@ -155,6 +155,8 @@ export interface DadosEdicao {
   capelasComunidades: CapelaComunidade[];
   /** "Paroquia" | "Capela" | "Comunidade" | "Santuario" | "Outro" — decide a direção do vínculo. */
   tipoIgreja: string;
+  /** Paróquia-sede desta capela/comunidade, se já vinculada. Null = ainda órfã. */
+  paroquiaSede?: { id: number; nome: string } | null;
 }
 
 export interface EditarDadosRequest {
