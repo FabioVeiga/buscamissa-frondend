@@ -27,9 +27,17 @@ export class SeoPaginasService {
     return this.http.get(`${this.base}/v2/seo/estado/${uf}`);
   }
 
-  /** Árvore de um dia (hubs nacional/UF da intenção). */
-  getArvoreDia(dia: string): Observable<unknown> {
-    return this.http.get(`${this.base}/v2/seo/missa-dia/${dia}`);
+  /**
+   * Árvore de um dia (hubs nacional/UF da intenção). O endpoint real sempre devolve
+   * a árvore inteira (ignora `uf`) — o filtro por UF é feito no componente. O `uf`
+   * aqui só marca a requisição para o interceptor SÓ-SERVER de prerender (ver
+   * PrerenderIntencaoInterceptor), que fatia a árvore ANTES de gravar no
+   * TransferState: sem isso, cada uma das ~26 páginas de UF por dia embutia a
+   * árvore nacional inteira (~5 MB) no HTML — estourava o limite de tamanho do SWA.
+   */
+  getArvoreDia(dia: string, uf?: string): Observable<unknown> {
+    const query = uf ? `?uf=${encodeURIComponent(uf)}` : '';
+    return this.http.get(`${this.base}/v2/seo/missa-dia/${dia}${query}`);
   }
 
   /** Folha da intenção: uma cidade num dia (`/missa-{dia}/{uf}/{cidade}`). */
