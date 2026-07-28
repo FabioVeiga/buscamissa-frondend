@@ -79,6 +79,10 @@ export class ChurchesService {
           nomeUnico?: string;
           slug?: string;
           endereco: { uf: string; cidadeSlug?: string };
+          /** "Ativa" (já validada) ou "EmProcesso" (aguardando código validador). */
+          status: "Ativa" | "EmProcesso";
+          /** Presente só quando status = "EmProcesso" — reenvio de validação. */
+          controleId?: number;
         }[];
         endereco: {
           cep: string;
