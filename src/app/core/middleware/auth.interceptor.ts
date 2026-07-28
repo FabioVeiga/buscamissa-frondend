@@ -10,13 +10,18 @@ export class AuthInterceptor implements HttpInterceptor {
 
   intercept(req: HttpRequest<unknown>, next: HttpHandler): Observable<HttpEvent<unknown>> {
     // O JWT do usuário logado só tem papel Regular/Dono — só serve nas rotas
-    // do Responsável Verificado (api/v1/responsavel). Todo o resto do backend
-    // (busca de igreja, cadastro colaborativo etc.) exige role App/Admin, que
-    // só o token estático de config carrega. Usar o token de sessão fora de
-    // v1/responsavel derruba essas chamadas com 403 mesmo estando logado.
+    // do Responsável Verificado (api/v1/responsavel) e no cadastro de igreja
+    // (api/v1/Igreja, POST), que precisa saber se quem está criando é um
+    // Responsável logado (pula o fluxo de Controle/código validador — ver
+    // IgrejaEscritaController.CriarIgreja). Todo o resto do backend (busca de
+    // igreja, cadastro colaborativo etc.) exige role App/Admin, que só o token
+    // estático de config carrega. Usar o token de sessão fora dessas rotas
+    // derruba as chamadas com 403 mesmo estando logado.
     // req.url ainda é relativo aqui (AuthInterceptor roda antes do
     // ApiBaseUrlInterceptor, que só então prefixa a apiURL) — sem barra inicial.
-    const ehRotaDoResponsavel = req.url.includes('v1/responsavel/') || req.url.includes('v1/auth/');
+    const ehCriacaoDeIgreja = req.method === 'POST' && /^v1\/igreja\/?(\?.*)?$/i.test(req.url);
+    const ehRotaDoResponsavel =
+      req.url.includes('v1/responsavel/') || req.url.includes('v1/auth/') || ehCriacaoDeIgreja;
     const token = ehRotaDoResponsavel
       ? (this.authService.accessToken ?? environment.config.token)
       : environment.config.token;

@@ -62,6 +62,8 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
     nomeUnico?: string;
     slug?: string;
     endereco: { uf: string; cidadeSlug?: string };
+    status: "Ativa" | "EmProcesso";
+    controleId?: number;
   }[] = [];
   private enderecoPendente: any = null;
   // true depois que o usuário clica em "Não é nenhuma destas": vai no payload de
@@ -219,6 +221,13 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
         this.cd.markForCheck();
       },
     });
+  }
+
+  // Igreja "em processo" (Controle pendente) selecionada na lista do CEP: em vez
+  // de deixar o usuário criar uma duplicata, manda ele retomar a validação já
+  // existente daquela igreja (mesma tela usada logo após o cadastro).
+  retomarValidacao(controleId: number): void {
+    this.router.navigate(["/enviar-codigo", controleId]);
   }
 
   // Usuário confirmou, na lista de igrejas do CEP, que nenhuma delas é a sua —
