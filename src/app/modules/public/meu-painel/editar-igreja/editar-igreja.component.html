@@ -54,6 +54,31 @@
       </div>
     </section>
 
+    <!-- DIOCESE/ARQUIDIOCESE + CAPELAS/COMUNIDADES (Fase 2: só leitura) -->
+    <section class="bloco" *ngIf="circunscricao || capelasComunidades.length">
+      <h2><i class="pi pi-sitemap"></i> Circunscrição eclesiástica</h2>
+      <p *ngIf="circunscricao?.origem === 'Nenhuma'" class="texto-auxiliar">
+        Nenhuma diocese/arquidiocese vinculada ainda.
+      </p>
+      <p *ngIf="circunscricao?.dioceseNome">
+        Diocese: <strong>{{ circunscricao?.dioceseNome }}</strong>
+        <span *ngIf="circunscricao?.arquidioceseNome"> (Arquidiocese: {{ circunscricao?.arquidioceseNome }})</span>
+      </p>
+      <p *ngIf="!circunscricao?.dioceseNome && circunscricao?.arquidioceseNome">
+        Arquidiocese: <strong>{{ circunscricao?.arquidioceseNome }}</strong>
+      </p>
+      <p *ngIf="circunscricao?.origem === 'Herdada'" class="texto-auxiliar">
+        Herdada da paróquia-sede.
+      </p>
+
+      <ng-container *ngIf="capelasComunidades.length">
+        <h2><i class="pi pi-building"></i> Capelas / comunidades</h2>
+        <ul class="lista-capelas">
+          <li *ngFor="let c of capelasComunidades">{{ c.nome }} <span class="texto-auxiliar">({{ c.tipoIgreja }})</span></li>
+        </ul>
+      </ng-container>
+    </section>
+
     <!-- IMAGEM -->
     <section class="bloco">
       <h2><i class="pi pi-image"></i> Foto da igreja</h2>

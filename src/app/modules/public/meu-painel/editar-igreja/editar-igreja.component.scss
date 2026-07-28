@@ -45,6 +45,20 @@ h1 {
   }
 }
 
+.texto-auxiliar {
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+.lista-capelas {
+  margin: 0;
+  padding-left: 1.25rem;
+
+  li {
+    margin-bottom: 0.25rem;
+  }
+}
+
 .grid-contato {
   display: grid;
   grid-template-columns: 90px 1fr 90px 1fr;
