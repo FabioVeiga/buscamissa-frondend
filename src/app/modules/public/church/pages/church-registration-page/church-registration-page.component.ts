@@ -62,6 +62,8 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
     nomeUnico?: string;
     slug?: string;
     endereco: { uf: string; cidadeSlug?: string };
+    status: "Ativa" | "EmProcesso";
+    controleId?: number;
   }[] = [];
   private enderecoPendente: any = null;
   // true depois que o usuário clica em "Não é nenhuma destas": vai no payload de
@@ -221,6 +223,15 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
     });
   }
 
+  // Igreja "em processo" (Controle pendente) selecionada na lista do CEP: em vez
+  // de deixar o usuário criar uma duplicata, manda ele revisar/ajustar os dados
+  // já enviados (tela de edição) antes de seguir pra validação — o PUT de
+  // atualização reaproveita o mesmo Controle da criação e devolve o mesmo
+  // controleId, então a validação pendente não é perdida.
+  revisarCadastroPendente(igrejaId: number): void {
+    this.router.navigate(["/editar", igrejaId]);
+  }
+
   // Usuário confirmou, na lista de igrejas do CEP, que nenhuma delas é a sua —
   // libera o restante do formulário e aplica o endereço que já veio na consulta.
   confirmarNovaIgreja(): void {
@@ -264,7 +275,8 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
     const whatsappLimpo = formData.whatsapp?.replace(/\D/g, "") ?? "";
 
     const payload: Omit<ChurchApiData, "id"> = {
-      nome: `${formData.typeChurchValue} ${formData.nomeIgreja}`,
+      nome: formData.nomeIgreja,
+      tipoIgreja: formData.typeChurchValue ?? undefined,
       paroco: formData.nomeParoco,
       imagem: formData.imagem,
       missas: formData.missas?.map((missa: any) => ({
