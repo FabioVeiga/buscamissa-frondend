@@ -36,6 +36,14 @@ export interface Church {
   tipoIgreja?: TipoIgreja;
   /** Paróquia-sede quando esta unidade é capela/comunidade; null para paróquias. */
   igrejaPaiId?: number | null;
+  /** Diocese/arquidiocese efetiva (direta ou herdada) — presente só no detalhe. */
+  circunscricao?: {
+    dioceseId?: number | null;
+    dioceseNome?: string | null;
+    arquidioceseId?: number | null;
+    arquidioceseNome?: string | null;
+    origem: string;
+  } | null;
 }
 
 export interface UpdateChurch {

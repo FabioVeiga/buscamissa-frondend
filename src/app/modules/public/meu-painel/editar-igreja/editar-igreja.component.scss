@@ -74,6 +74,17 @@ h1 {
     display: flex;
     gap: 0.5rem;
   }
+
+  .circunscricao-acoes {
+    display: flex;
+    gap: 0.75rem;
+    margin-top: 0.25rem;
+  }
+
+  a {
+    color: var(--p-primary-color, #2563eb);
+    cursor: pointer;
+  }
 }
 
 h2.mt {

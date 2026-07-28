@@ -12,6 +12,7 @@ import {
   CapelaOrfa,
   MinhaSolicitacaoVinculo,
   SolicitarVinculoCapelaRequest,
+  SolicitarVinculoParoquiaRequest,
 } from "../interfaces/responsavel.interface";
 
 /**
@@ -102,11 +103,39 @@ export class ResponsavelService {
       .pipe(map((r) => r.data.mensagemTela));
   }
 
-  /** Fase 4: busca capelas/comunidades sem paróquia-pai (candidatas a vínculo), por nome. */
-  buscarCapelasOrfas(q: string): Observable<CapelaOrfa[]> {
+  /** Remove o vínculo direto de diocese/arquidiocese (self-service). */
+  desvincularCircunscricao(igrejaId: number): Observable<string> {
     return this.http
-      .get<{ data: CapelaOrfa[] }>("v1/responsavel/capelas-orfas", { params: { q } })
+      .delete<{ data: { mensagemTela: string } }>(`v1/responsavel/igreja/${igrejaId}/diocese`)
+      .pipe(map((r) => r.data.mensagemTela));
+  }
+
+  /** Não achou a diocese/arquidiocese na lista — abre solicitação pro admin cadastrar. */
+  solicitarCircunscricao(mensagem: string): Observable<string> {
+    return this.http
+      .post<{ data: { mensagemTela: string } }>("v1/responsavel/solicitar-circunscricao", { mensagem })
+      .pipe(map((r) => r.data.mensagemTela));
+  }
+
+  /** Fase 4: busca capelas/comunidades sem paróquia-pai (candidatas a vínculo), por nome, restrito à UF. */
+  buscarCapelasOrfas(uf: string, q: string): Observable<CapelaOrfa[]> {
+    return this.http
+      .get<{ data: CapelaOrfa[] }>("v1/responsavel/capelas-orfas", { params: { uf, q } })
       .pipe(map((r) => r.data));
+  }
+
+  /** Fase 4 (reversa): busca paróquias por nome, restrito à UF — usado quando quem edita é a capela. */
+  buscarParoquias(uf: string, q: string): Observable<CapelaOrfa[]> {
+    return this.http
+      .get<{ data: CapelaOrfa[] }>("v1/responsavel/paroquias", { params: { uf, q } })
+      .pipe(map((r) => r.data));
+  }
+
+  /** Fase 4 (reversa): a própria capela solicita vínculo com uma paróquia. */
+  solicitarVinculoParoquia(capelaId: number, request: SolicitarVinculoParoquiaRequest): Observable<string> {
+    return this.http
+      .post<{ data: { mensagemTela: string } }>(`v1/responsavel/igreja/${capelaId}/solicitar-paroquia`, request)
+      .pipe(map((r) => r.data.mensagemTela));
   }
 
   /** Fase 4: minhas solicitações de vínculo (qualquer status) — evita pedido duplicado. */

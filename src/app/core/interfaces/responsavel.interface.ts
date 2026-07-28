@@ -136,6 +136,12 @@ export interface SolicitarVinculoCapelaRequest {
   observacao?: string | null;
 }
 
+/** Variante reversa: a própria capela solicita vínculo com uma paróquia. */
+export interface SolicitarVinculoParoquiaRequest {
+  paroquiaId: number;
+  observacao?: string | null;
+}
+
 export interface DadosEdicao {
   igrejaId: number;
   igrejaNome: string;
@@ -147,6 +153,8 @@ export interface DadosEdicao {
   sessoes: SessaoEdicao[];
   circunscricao: Circunscricao;
   capelasComunidades: CapelaComunidade[];
+  /** "Paroquia" | "Capela" | "Comunidade" | "Santuario" | "Outro" — decide a direção do vínculo. */
+  tipoIgreja: string;
 }
 
 export interface EditarDadosRequest {
