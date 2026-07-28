@@ -3,6 +3,7 @@ import { CommonModule } from "@angular/common";
 import { RouterLink } from "@angular/router";
 import { PrimeNgModule } from "../../../shared/primeng.module";
 import { SeoService } from "../../../core/services/seo.service";
+import { MetricasService, PaginaMetrica } from "../../../core/services/metricas.service";
 
 interface FAQ {
   pergunta: string;
@@ -19,6 +20,7 @@ interface FAQ {
 })
 export class GuiaResponsavelComponent implements OnInit {
   private _seo = inject(SeoService);
+  private _metricas = inject(MetricasService);
 
   faqs: FAQ[] = [
     {
@@ -48,6 +50,7 @@ export class GuiaResponsavelComponent implements OnInit {
   ];
 
   ngOnInit() {
+    this._metricas.registrarVisualizacaoPagina(PaginaMetrica.GuiaResponsavel);
     this._seo.update({
       title: "Guia do Responsável Verificado | BuscaMissa",
       description:

@@ -12,6 +12,7 @@ import { getNextOccurrenceMinutes } from "../../../../shared/utils/mass-time.uti
 import { AnalyticsService } from "../../../../core/services/analytics.service";
 import { FavoritesService } from "../../../../core/services/favorites.service";
 import { ClarityService } from "../../../../core/services/clarity.service";
+import { MetricasService } from "../../../../core/services/metricas.service";
 import { CityMapComponent, MapChurch } from "../../../../shared/components/city-map/city-map.component";
 import { DIAS, PERIODOS } from "./city.constants";
 import { CityFiltrosComponent, Ordenacao, QuickFilter } from "./sections/city-filtros/city-filtros.component";
@@ -48,6 +49,7 @@ export class CityComponent implements OnInit, OnDestroy {
   private _analytics = inject(AnalyticsService);
   private _favorites = inject(FavoritesService);
   private _clarity = inject(ClarityService);
+  private _metricas = inject(MetricasService);
 
   /** Falso durante o prerender (Node). Guarda browser-APIs (geoloc, localStorage). */
   private readonly _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
@@ -404,6 +406,7 @@ export class CityComponent implements OnInit, OnDestroy {
     });
 
     if (agoraFavorita) {
+      this._metricas.registrarFavorito(ig.id);
       this.favoritasIds = [...this.favoritasIds, ig.id];
       this._analytics.favoriteParishSaved(ig.nome);
     } else {

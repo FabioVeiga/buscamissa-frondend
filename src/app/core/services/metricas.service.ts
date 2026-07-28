@@ -5,6 +5,19 @@ import { LoggerService } from './logger.service';
 
 const JANELA_VISUALIZACAO_MS = 30 * 60 * 1000; // 30 minutos
 
+/**
+ * Espelha Enums/TipoPaginaEnum.cs do backend (api-public). Valores numéricos —
+ * o backend não usa JsonStringEnumConverter, então o enum é serializado como int.
+ */
+export enum PaginaMetrica {
+  Cidades = 1,
+  MissaAgora = 2,
+  ComoFunciona = 3,
+  MinhasIgrejas = 4,
+  GuiaResponsavel = 5,
+  Entrar = 6,
+}
+
 @Injectable({ providedIn: 'root' })
 export class MetricasService {
   private http = inject(HttpClient);
@@ -49,6 +62,23 @@ export class MetricasService {
       .post('v2/metricas/visualizacao-home', {})
       .subscribe({
         error: (err) => this.logger.logError(err, 'metrica:visualizacao-home'),
+      });
+    localStorage.setItem(chave, String(agora));
+  }
+
+  // Mesma janela de dedupe das demais visualizações, uma chave por página.
+  registrarVisualizacaoPagina(pagina: PaginaMetrica): void {
+    if (!this._isBrowser) return;
+    const chave = `pagina_${PaginaMetrica[pagina]}_ultima_visualizacao`;
+    const agora = Date.now();
+    const ultimaVisualizacao = Number(localStorage.getItem(chave) ?? 0);
+
+    if (agora - ultimaVisualizacao < JANELA_VISUALIZACAO_MS) return;
+
+    this.http
+      .post('v2/metricas/visualizacao-pagina', { pagina })
+      .subscribe({
+        error: (err) => this.logger.logError(err, 'metrica:visualizacao-pagina'),
       });
     localStorage.setItem(chave, String(agora));
   }
