@@ -54,25 +54,43 @@
       </div>
     </section>
 
-    <!-- DIOCESE/ARQUIDIOCESE + CAPELAS/COMUNIDADES (Fase 2: só leitura) -->
-    <section class="bloco" *ngIf="circunscricao || capelasComunidades.length">
+    <!-- DIOCESE/ARQUIDIOCESE (Fase 3: editável) + CAPELAS/COMUNIDADES (só leitura) -->
+    <section class="bloco">
       <h2><i class="pi pi-sitemap"></i> Circunscrição eclesiástica</h2>
-      <p *ngIf="circunscricao?.origem === 'Nenhuma'" class="texto-auxiliar">
-        Nenhuma diocese/arquidiocese vinculada ainda.
-      </p>
-      <p *ngIf="circunscricao?.dioceseNome">
+
+      <p *ngIf="circunscricao?.dioceseNome" class="texto-atual">
         Diocese: <strong>{{ circunscricao?.dioceseNome }}</strong>
         <span *ngIf="circunscricao?.arquidioceseNome"> (Arquidiocese: {{ circunscricao?.arquidioceseNome }})</span>
       </p>
-      <p *ngIf="!circunscricao?.dioceseNome && circunscricao?.arquidioceseNome">
+      <p *ngIf="!circunscricao?.dioceseNome && circunscricao?.arquidioceseNome" class="texto-atual">
         Arquidiocese: <strong>{{ circunscricao?.arquidioceseNome }}</strong>
       </p>
       <p *ngIf="circunscricao?.origem === 'Herdada'" class="texto-auxiliar">
-        Herdada da paróquia-sede.
+        Herdada da paróquia-sede — salvar aqui cria um vínculo direto só para esta unidade.
       </p>
 
+      <div class="circunscricao-form">
+        <div class="p-selectbutton-wrapper">
+          <button pButton type="button" label="Diocese" (click)="tipoCircunscricao = 'diocese'"
+                  class="p-button-sm" [ngClass]="{'p-button-outlined': tipoCircunscricao !== 'diocese'}"></button>
+          <button pButton type="button" label="Direto na Arquidiocese" (click)="tipoCircunscricao = 'arquidiocese'"
+                  class="p-button-sm" [ngClass]="{'p-button-outlined': tipoCircunscricao !== 'arquidiocese'}"></button>
+        </div>
+
+        <p-select *ngIf="tipoCircunscricao === 'diocese'" [options]="dioceses" [(ngModel)]="dioceseSelecionada"
+                  [ngModelOptions]="{standalone: true}" optionLabel="nome" optionValue="id"
+                  placeholder="Selecione a diocese" styleClass="w-full" appendTo="body"></p-select>
+        <p-select *ngIf="tipoCircunscricao === 'arquidiocese'" [options]="arquidioceses" [(ngModel)]="arquidioceseSelecionada"
+                  [ngModelOptions]="{standalone: true}" optionLabel="nome" optionValue="id"
+                  placeholder="Selecione a arquidiocese" styleClass="w-full" appendTo="body"></p-select>
+
+        <button pButton type="button" label="Salvar circunscrição" icon="pi pi-check"
+                class="p-button-sm" [loading]="salvandoCircunscricao"
+                (click)="salvarCircunscricao()"></button>
+      </div>
+
       <ng-container *ngIf="capelasComunidades.length">
-        <h2><i class="pi pi-building"></i> Capelas / comunidades</h2>
+        <h2 class="mt"><i class="pi pi-building"></i> Capelas / comunidades</h2>
         <ul class="lista-capelas">
           <li *ngFor="let c of capelasComunidades">{{ c.nome }} <span class="texto-auxiliar">({{ c.tipoIgreja }})</span></li>
         </ul>

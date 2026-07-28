@@ -98,6 +98,18 @@ export interface CapelaComunidade {
   tipoIgreja: string;
 }
 
+export interface CircunscricaoOpcao {
+  id: number;
+  nome: string;
+  uf: string;
+}
+
+/** Exatamente um dos dois preenchido. */
+export interface AtualizarCircunscricaoRequest {
+  dioceseId?: number | null;
+  arquidioceseId?: number | null;
+}
+
 export interface DadosEdicao {
   igrejaId: number;
   igrejaNome: string;

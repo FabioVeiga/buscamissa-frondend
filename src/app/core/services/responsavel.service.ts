@@ -7,6 +7,8 @@ import {
   MinhaResponsabilidade,
   SolicitarResponsabilidadeRequest,
   MetricasIgreja,
+  CircunscricaoOpcao,
+  AtualizarCircunscricaoRequest,
 } from "../interfaces/responsavel.interface";
 
 /**
@@ -73,6 +75,27 @@ export class ResponsavelService {
   editarDados(igrejaId: number, request: EditarDadosRequest): Observable<string> {
     return this.http
       .put<{ data: { mensagemTela: string } }>(`v1/responsavel/igreja/${igrejaId}/dados`, request)
+      .pipe(map((r) => r.data.mensagemTela));
+  }
+
+  /** Fase 3: opções ativas para o seletor de Diocese. */
+  listarDioceses(): Observable<CircunscricaoOpcao[]> {
+    return this.http
+      .get<{ data: CircunscricaoOpcao[] }>("v1/responsavel/dioceses")
+      .pipe(map((r) => r.data));
+  }
+
+  /** Fase 3: opções ativas para o seletor de Arquidiocese. */
+  listarArquidioceses(): Observable<CircunscricaoOpcao[]> {
+    return this.http
+      .get<{ data: CircunscricaoOpcao[] }>("v1/responsavel/arquidioceses")
+      .pipe(map((r) => r.data));
+  }
+
+  /** Fase 3: responsável escolhe a diocese OU arquidiocese direta da própria paróquia. */
+  atualizarCircunscricao(igrejaId: number, request: AtualizarCircunscricaoRequest): Observable<string> {
+    return this.http
+      .put<{ data: { mensagemTela: string } }>(`v1/responsavel/igreja/${igrejaId}/diocese`, request)
       .pipe(map((r) => r.data.mensagemTela));
   }
 }
