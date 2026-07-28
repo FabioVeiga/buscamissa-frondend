@@ -16,7 +16,7 @@ import { AuthService } from "../../../../core/services/auth.service";
 import { ResponsavelService } from "../../../../core/services/responsavel.service";
 import { ChurchesService } from "../../../../core/services/churches.service";
 import { LoggerService } from "../../../../core/services/logger.service";
-import { MetricasIgreja, Circunscricao, CapelaComunidade } from "../../../../core/interfaces/responsavel.interface";
+import { MetricasIgreja, Circunscricao, CapelaComunidade, CircunscricaoOpcao } from "../../../../core/interfaces/responsavel.interface";
 import { STATES } from "../../../../core/constants/states";
 
 const REDES = [
@@ -90,9 +90,17 @@ export class EditarIgrejaComponent implements OnInit {
   /** Cards de métricas (últimos 30 dias). */
   metricas: MetricasIgreja | null = null;
 
-  /** Fase 2 (só leitura): diocese/arquidiocese efetiva + capelas/comunidades da paróquia. */
+  /** Diocese/arquidiocese efetiva + capelas/comunidades da paróquia. */
   circunscricao: Circunscricao | null = null;
   capelasComunidades: CapelaComunidade[] = [];
+
+  /** Fase 3: seleção editável de diocese/arquidiocese. */
+  dioceses: CircunscricaoOpcao[] = [];
+  arquidioceses: CircunscricaoOpcao[] = [];
+  tipoCircunscricao: "diocese" | "arquidiocese" = "diocese";
+  dioceseSelecionada: number | null = null;
+  arquidioceseSelecionada: number | null = null;
+  salvandoCircunscricao = false;
 
   /** Cidade/UF originais — usado para exibir o aviso só quando o usuário muda. */
   private _localidadeOriginal = "";
@@ -148,6 +156,42 @@ export class EditarIgrejaComponent implements OnInit {
       next: (m) => (this.metricas = m),
       error: () => {}, // cards são informativos — falha não bloqueia a edição
     });
+    this._responsavel.listarDioceses().subscribe({
+      next: (lista) => (this.dioceses = lista),
+      error: () => {},
+    });
+    this._responsavel.listarArquidioceses().subscribe({
+      next: (lista) => (this.arquidioceses = lista),
+      error: () => {},
+    });
+  }
+
+  salvarCircunscricao(): void {
+    const dioceseId = this.tipoCircunscricao === "diocese" ? this.dioceseSelecionada : null;
+    const arquidioceseId = this.tipoCircunscricao === "arquidiocese" ? this.arquidioceseSelecionada : null;
+
+    if (!dioceseId && !arquidioceseId) {
+      this._message.add({ severity: "warn", summary: "Selecione uma opção", detail: "Escolha uma diocese ou arquidiocese." });
+      return;
+    }
+
+    this.salvandoCircunscricao = true;
+    this._responsavel.atualizarCircunscricao(this.igrejaId, { dioceseId, arquidioceseId }).subscribe({
+      next: (mensagem) => {
+        this._message.add({ severity: "success", summary: "Salvo", detail: mensagem });
+        this.salvandoCircunscricao = false;
+        this.carregar();
+      },
+      error: (error) => {
+        this.salvandoCircunscricao = false;
+        this._message.add({
+          severity: "error",
+          summary: "Não foi possível salvar",
+          detail: error?.error?.data?.mensagemTela ?? "Tente novamente.",
+        });
+        this._logger.logError(error, "editar-igreja:salvarCircunscricao");
+      },
+    });
   }
 
   carregar(): void {
@@ -188,6 +232,14 @@ export class EditarIgrejaComponent implements OnInit {
         this.imagemPreview = dados.imagemUrl ?? null;
         this.circunscricao = dados.circunscricao;
         this.capelasComunidades = dados.capelasComunidades ?? [];
+
+        if (dados.circunscricao?.dioceseId) {
+          this.tipoCircunscricao = "diocese";
+          this.dioceseSelecionada = dados.circunscricao.dioceseId;
+        } else if (dados.circunscricao?.arquidioceseId) {
+          this.tipoCircunscricao = "arquidiocese";
+          this.arquidioceseSelecionada = dados.circunscricao.arquidioceseId;
+        }
 
         this.isLoading = false;
       },

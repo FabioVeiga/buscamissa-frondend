@@ -50,6 +50,10 @@ h1 {
   color: #6b7280;
 }
 
+.texto-atual {
+  margin: 0 0 0.5rem;
+}
+
 .lista-capelas {
   margin: 0;
   padding-left: 1.25rem;
@@ -57,6 +61,23 @@ h1 {
   li {
     margin-bottom: 0.25rem;
   }
+}
+
+.circunscricao-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 420px;
+  margin-top: 0.5rem;
+
+  .p-selectbutton-wrapper {
+    display: flex;
+    gap: 0.5rem;
+  }
+}
+
+h2.mt {
+  margin-top: 1.5rem;
 }
 
 .grid-contato {
