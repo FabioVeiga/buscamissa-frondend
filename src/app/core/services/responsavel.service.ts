@@ -9,6 +9,9 @@ import {
   MetricasIgreja,
   CircunscricaoOpcao,
   AtualizarCircunscricaoRequest,
+  CapelaOrfa,
+  MinhaSolicitacaoVinculo,
+  SolicitarVinculoCapelaRequest,
 } from "../interfaces/responsavel.interface";
 
 /**
@@ -96,6 +99,34 @@ export class ResponsavelService {
   atualizarCircunscricao(igrejaId: number, request: AtualizarCircunscricaoRequest): Observable<string> {
     return this.http
       .put<{ data: { mensagemTela: string } }>(`v1/responsavel/igreja/${igrejaId}/diocese`, request)
+      .pipe(map((r) => r.data.mensagemTela));
+  }
+
+  /** Fase 4: busca capelas/comunidades sem paróquia-pai (candidatas a vínculo), por nome. */
+  buscarCapelasOrfas(q: string): Observable<CapelaOrfa[]> {
+    return this.http
+      .get<{ data: CapelaOrfa[] }>("v1/responsavel/capelas-orfas", { params: { q } })
+      .pipe(map((r) => r.data));
+  }
+
+  /** Fase 4: minhas solicitações de vínculo (qualquer status) — evita pedido duplicado. */
+  minhasSolicitacoesVinculo(): Observable<MinhaSolicitacaoVinculo[]> {
+    return this.http
+      .get<{ data: MinhaSolicitacaoVinculo[] }>("v1/responsavel/minhas-solicitacoes-vinculo")
+      .pipe(map((r) => r.data));
+  }
+
+  /** Fase 4: solicita vínculo de uma capela órfã à paróquia (passa por aprovação do admin). */
+  solicitarVinculoCapela(paroquiaId: number, request: SolicitarVinculoCapelaRequest): Observable<string> {
+    return this.http
+      .post<{ data: { mensagemTela: string } }>(`v1/responsavel/igreja/${paroquiaId}/solicitar-capela`, request)
+      .pipe(map((r) => r.data.mensagemTela));
+  }
+
+  /** Fase 4: desanexa uma capela já vinculada à própria paróquia (self-service). */
+  desanexarCapela(capelaId: number): Observable<string> {
+    return this.http
+      .delete<{ data: { mensagemTela: string } }>(`v1/responsavel/igreja/${capelaId}/vinculo-paroquia`)
       .pipe(map((r) => r.data.mensagemTela));
   }
 }
