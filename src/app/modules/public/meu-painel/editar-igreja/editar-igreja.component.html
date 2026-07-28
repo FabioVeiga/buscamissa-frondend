@@ -59,17 +59,23 @@
       <h2><i class="pi pi-sitemap"></i> Circunscrição eclesiástica</h2>
 
       <p *ngIf="circunscricao?.dioceseNome" class="texto-atual">
-        Diocese: <strong>{{ circunscricao?.dioceseNome }}</strong>
+        {{ circunscricao?.dioceseNome }}
         <span *ngIf="circunscricao?.arquidioceseNome"> (Arquidiocese: {{ circunscricao?.arquidioceseNome }})</span>
       </p>
       <p *ngIf="!circunscricao?.dioceseNome && circunscricao?.arquidioceseNome" class="texto-atual">
-        Arquidiocese: <strong>{{ circunscricao?.arquidioceseNome }}</strong>
+        {{ circunscricao?.arquidioceseNome }}
       </p>
-      <p *ngIf="circunscricao?.origem === 'Herdada'" class="texto-auxiliar">
-        Herdada da paróquia-sede — salvar aqui cria um vínculo direto só para esta unidade.
+      <p *ngIf="!circunscricao?.dioceseNome && !circunscricao?.arquidioceseNome" class="texto-auxiliar">
+        Nenhuma diocese/arquidiocese vinculada ainda.
       </p>
 
-      <div class="circunscricao-form">
+      <!-- Capela/comunidade: só herda da paróquia-sede, não edita aqui. -->
+      <p *ngIf="!ehParoquia" class="texto-auxiliar">
+        {{ circunscricao?.origem === 'Herdada' ? 'Herdada da paróquia-sede.' : 'Capelas/comunidades herdam a circunscrição da paróquia-sede.' }}
+      </p>
+
+      <!-- Paróquia: pode editar diretamente. -->
+      <div class="circunscricao-form" *ngIf="ehParoquia">
         <div class="p-selectbutton-wrapper">
           <button pButton type="button" label="Diocese" (click)="tipoCircunscricao = 'diocese'"
                   class="p-button-sm" [ngClass]="{'p-button-outlined': tipoCircunscricao !== 'diocese'}"></button>
