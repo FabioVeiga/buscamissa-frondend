@@ -1,0 +1,18 @@
+<section class="cidades-chips">
+  <div class="sec-header">
+    <div class="flex items-center gap-2">
+      <i [class]="icone" style="color: #bc5d10;"></i>
+      <h2 class="sec-header__titulo">{{ titulo }}</h2>
+    </div>
+  </div>
+
+  @if (subtitulo) {
+    <p class="sec-header__sub">{{ subtitulo }}</p>
+  }
+
+  <div class="cidades-chips__lista">
+    @for (it of itens; track it.link.join('/')) {
+      <a [routerLink]="it.link" class="cidade-chip">{{ it.label }}</a>
+    }
+  </div>
+</section>

@@ -78,6 +78,16 @@
           </li>
         }
       </ul>
+
+      <!-- Linkagem interna: missa em outros dias na mesma cidade (links HTML puros). -->
+      <nav class="outros-dias" aria-label="Missa em outros dias">
+        <h2>Missa em {{ cidadeNome }} em outros dias</h2>
+        <ul role="list">
+          @for (d of outrosDias; track d.slug) {
+            <li><a [routerLink]="['/missa-' + d.slug, uf, cidadeSlug]">Missa de {{ d.nome }} em {{ cidadeNome }}</a></li>
+          }
+        </ul>
+      </nav>
     }
   }
 </section>
