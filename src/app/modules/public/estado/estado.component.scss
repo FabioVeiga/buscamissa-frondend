@@ -1,95 +1,126 @@
-.estado {
+$laranja: #bc5d10;
+$laranja-wash: #fff4ed;
+$borda: #e5e7eb;
+$texto: #1f2937;
+$muted: #6b7280;
+
+.estado { display: block; }
+
+.estado__wrap {
   max-width: 1080px;
   margin: 0 auto;
-  padding: 1.5rem 1rem 3rem;
-
-  h1 {
-    font-size: clamp(1.5rem, 4vw, 2.1rem);
-    line-height: 1.15;
-    margin: 0 0 0.5rem;
-  }
-
-  h2 {
-    font-size: 1.15rem;
-    margin: 2rem 0 0.75rem;
-  }
+  padding: 0 1rem;
 }
+.estado__wrap + .estado__wrap { margin-top: 2rem; }
 
 .breadcrumb {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.85rem;
-  color: #6b7280;
-  margin-bottom: 1rem;
-
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem;
+  font-size: 0.85rem; color: $muted; padding-top: 1.25rem; margin-bottom: 1rem;
   a { color: #2563eb; text-decoration: none; }
   a:hover { text-decoration: underline; }
   span[aria-current] { color: #374151; font-weight: 600; }
 }
 
-.estado__stats { color: #4b5563; margin: 0; }
-
-.grid {
-  list-style: none;
-  padding: 0;
-  margin: 0;
+/* HERO */
+.hero {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: 1fr auto;
+  gap: 1.5rem;
+  align-items: center;
+}
+.hero__texto h1 {
+  font-size: 1.375rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0 0 0.5rem;
+  color: #111827;
+  @media (min-width: 640px) { font-size: 1.625rem; }
+}
+.hero__sub { color: #4b5563; margin: 0 0 1.25rem; max-width: 52ch; font-size: 0.9375rem; }
+.hero__img img {
+  width: clamp(170px, 24vw, 240px);
+  max-height: 340px;
+  height: auto;
+  border-radius: 14px;
+  object-fit: cover;
+  display: block;
+}
+@media (max-width: 720px) { .hero { grid-template-columns: 1fr; } .hero__img { display: none; } }
 
-  a {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    padding: 0.9rem 1rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.6rem;
-    text-decoration: none;
-    color: inherit;
-    background: #fff;
-    transition: border-color 0.15s, box-shadow 0.15s;
+/* STAT TILES */
+.tiles { display: flex; flex-wrap: wrap; gap: 1.5rem 2.5rem; }
+.tile { display: flex; align-items: center; gap: 0.6rem; }
+.tile__ico { color: $laranja; font-size: 1.4rem; }
+.tile__num { display: block; font-size: 1.375rem; font-weight: 800; color: #111827; line-height: 1; font-variant-numeric: tabular-nums; }
+.tile__lbl { display: block; font-size: 0.8125rem; color: $muted; margin-top: 0.15rem; }
+
+/* BUSCA */
+.busca {
+  margin-top: 1.5rem; display: flex; align-items: center; gap: 0.6rem;
+  background: #fff; border: 1px solid $borda; border-radius: 12px; padding: 0 1rem;
+  box-shadow: 0 1px 4px rgba(0,0,0,.04);
+  i { color: $muted; font-size: 1.05rem; }
+  input {
+    flex: 1; border: 0; outline: none; background: transparent;
+    padding: 0.95rem 0; font-size: 1rem; color: $texto;
   }
-  a:hover { border-color: #93c5fd; box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06); }
+  input::placeholder { color: #9ca3af; }
+  &:focus-within { border-color: #f3b989; box-shadow: 0 0 0 3px rgba(188,93,16,.12); }
+}
+.busca__hint { color: $muted; font-size: 0.85rem; margin: 0.5rem 0 0; }
 
-  &__nome { font-weight: 600; }
-  &__meta { font-size: 0.82rem; color: #6b7280; }
+/* SEÇÕES (fonte alinhada às outras páginas) */
+.sec-titulo { font-size: 1.25rem; font-weight: 800; color: #111827; margin: 0 0 0.35rem; line-height: 1.2; }
+.sec-sub { color: $muted; margin: 0 0 1rem; font-size: 0.8125rem; }
+
+.dias-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem; }
+
+.ver-todas { display: flex; justify-content: center; margin-top: 1rem; }
+.ver-todas button {
+  background: #fff; border: 1px solid $borda; color: #2563eb; font-weight: 600;
+  padding: 0.7rem 1.3rem; border-radius: 10px; cursor: pointer; font-size: 0.92rem;
+}
+.ver-todas button:hover { background: $laranja-wash; border-color: #f3b989; color: $laranja; }
+.vazio-busca { color: $muted; padding: 1.5rem 0; text-align: center; }
+
+/* POR DIA */
+.dias-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 0.6rem; }
+.dia-card {
+  display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
+  padding: 1rem 0.5rem; background: #fff; border: 1px solid $borda; border-radius: 12px;
+  text-decoration: none; text-align: center; transition: border-color .15s, box-shadow .15s;
+  i { color: $laranja; font-size: 1.1rem; }
+  &:hover { border-color: #f3b989; box-shadow: 0 1px 8px rgba(0,0,0,.05); }
+  &__nome { font-weight: 600; color: $texto; font-size: 0.92rem; }
+  &__cta { color: #2563eb; font-size: 0.82rem; }
 }
 
-.dias {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+/* SOBRE */
+.sobre { display: grid; grid-template-columns: 1fr auto; gap: 1.5rem; align-items: center; }
+.sobre__texto p { color: #4b5563; margin: 0; line-height: 1.6; max-width: 60ch; }
+.sobre__img { width: clamp(160px, 22vw, 220px); height: auto; }
+@media (max-width: 720px) { .sobre { grid-template-columns: 1fr; } .sobre__img { display: none; } }
 
-  a {
-    display: inline-block;
-    padding: 0.5rem 0.9rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 999px;
-    text-decoration: none;
-    color: #2563eb;
-    font-size: 0.9rem;
+/* FAQ */
+.faq { display: grid; gap: 0.6rem; }
+.faq__item {
+  background: #fff; border: 1px solid $borda; border-radius: 10px; padding: 0 1rem;
+  summary {
+    list-style: none; cursor: pointer; display: flex; align-items: center; justify-content: space-between;
+    gap: 1rem; padding: 1rem 0; font-weight: 600; color: $texto;
   }
-  a:hover { background: #eff6ff; border-color: #93c5fd; }
+  summary::-webkit-details-marker { display: none; }
+  summary i { color: $muted; transition: transform .2s; }
+  &[open] summary i { transform: rotate(180deg); }
+  p { margin: 0 0 1rem; color: #4b5563; line-height: 1.6; }
 }
 
-.estado__vazio,
-.estado__erro {
-  text-align: center;
-  padding: 3rem 1rem;
-
-  button {
-    margin-top: 1rem;
-    padding: 0.6rem 1.2rem;
-    border: 0;
-    border-radius: 0.5rem;
-    background: #2563eb;
-    color: #fff;
-    cursor: pointer;
+/* AVISO (404/erro) */
+.estado__aviso {
+  text-align: center; padding: 3rem 1rem; max-width: 1080px; margin: 0 auto;
+  button, a {
+    display: inline-block; margin-top: 1rem; padding: 0.6rem 1.2rem;
+    border: 0; border-radius: 0.5rem; background: #2563eb; color: #fff; cursor: pointer; text-decoration: none;
   }
 }
 

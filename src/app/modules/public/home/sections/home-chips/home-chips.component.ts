@@ -8,6 +8,13 @@ export interface ChipLink {
   link: string[];
 }
 
+export interface ChipDestaque {
+  /** Rótulo pequeno (ex.: "Seu estado"). */
+  rotulo: string;
+  nome: string;
+  link: string[];
+}
+
 /**
  * Seção genérica de "chips" de navegação da Home — reusa EXATAMENTE o visual da
  * seção "Explore por cidade" (mesmas classes .cidades-chips/.sec-header/.cidade-chip,
@@ -28,4 +35,9 @@ export class HomeChipsComponent {
   /** Classe do ícone PrimeIcons (ex.: 'pi pi-calendar'). */
   @Input() icone = 'pi pi-map-marker';
   @Input({ required: true }) itens: ChipLink[] = [];
+  /** Link "Ver todos →" no cabeçalho (ex.: ['/estados']). */
+  @Input() verTodosLink?: string[];
+  @Input() verTodosLabel = 'Ver todos';
+  /** Card de destaque (ex.: "Seu estado" detectado por geo). */
+  @Input() destaque?: ChipDestaque | null;
 }

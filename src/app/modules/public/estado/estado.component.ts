@@ -1,11 +1,13 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { finalize } from 'rxjs/operators';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SeoPaginasService } from '../../../core/services/seo-paginas.service';
 import { SeoService } from '../../../core/services/seo.service';
+import { HubListaComponent, HubBreadcrumb, HubItem } from '../../../shared/components/hub-lista/hub-lista.component';
 
 const SITE = 'https://buscamissa.com.br';
 
@@ -27,7 +29,7 @@ const DIAS: { slug: string; label: string }[] = [
 @Component({
   selector: 'app-estado',
   standalone: true,
-  imports: [CommonModule, RouterLink, SkeletonModule],
+  imports: [CommonModule, FormsModule, RouterLink, SkeletonModule, HubListaComponent],
   templateUrl: './estado.component.html',
   styleUrl: './estado.component.scss',
 })
@@ -43,11 +45,77 @@ export class EstadoComponent implements OnInit {
   erroCarregar = false;
   naoEncontrado = false;
 
+  static readonly LIMITE = 12;
+
   uf = '';
   estadoNome = '';
   totalCidades = 0;
   totalParoquias = 0;
   cidades: { cidadeSlug: string; cidade: string; totalParoquias: number }[] = [];
+
+  /** Busca client-side de cidade (CTA principal) e "ver todas". */
+  busca = '';
+  mostrarTodas = false;
+
+  get faqs(): { pergunta: string; resposta: string }[] {
+    const e = this.estadoNome || 'seu estado';
+    return [
+      {
+        pergunta: `Como encontrar uma missa em uma cidade específica de ${e}?`,
+        resposta: `Use a busca acima ou escolha a cidade na lista. Você verá as paróquias e os horários de missa cadastrados naquela cidade.`,
+      },
+      {
+        pergunta: 'Os horários de missa estão sempre atualizados?',
+        resposta: 'Os horários são atualizados pelas próprias paróquias e pela equipe do BuscaMissa. Cada horário mostra um sinal de confiança indicando o quão recente é a informação.',
+      },
+      {
+        pergunta: 'Como solicitar a inclusão ou atualização de uma paróquia?',
+        resposta: 'Você pode cadastrar uma nova paróquia ou sugerir correções pela opção "Cadastrar igreja" no menu.',
+      },
+    ];
+  }
+
+  get breadcrumb(): HubBreadcrumb[] {
+    return [
+      { label: 'Início', link: ['/home'] },
+      { label: 'Estados', link: ['/estados'] },
+      { label: this.estadoNome },
+    ];
+  }
+
+  private norm(s: string): string {
+    return (s ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  }
+
+  get cidadesFiltradas() {
+    const q = this.norm(this.busca.trim());
+    return q ? this.cidades.filter((c) => this.norm(c.cidade).includes(q)) : this.cidades;
+  }
+
+  readonly limiteCidades = EstadoComponent.LIMITE;
+
+  /** TODAS as cidades filtradas viram itens — o hub-lista só OCULTA (display:none,
+   *  sem tirar do HTML) além do limite, preservando os links internos/SEO. */
+  get itensCidades(): HubItem[] {
+    return this.cidadesFiltradas.map((c) => ({
+      nome: c.cidade,
+      meta: `${c.totalParoquias} paróquia(s)`,
+      link: ['/missas', this.uf, c.cidadeSlug],
+    }));
+  }
+
+  /** Expande o grid quando "ver todas" foi clicado ou há busca ativa. */
+  get expandido(): boolean {
+    return this.mostrarTodas || !!this.busca.trim();
+  }
+
+  get temMaisCidades(): boolean {
+    return !this.expandido && this.cidadesFiltradas.length > EstadoComponent.LIMITE;
+  }
+
+  get subtituloEstado(): string {
+    return `Encontre horários de missa em ${this.totalParoquias} paróquias distribuídas por ${this.totalCidades} cidades.`;
+  }
 
   ngOnInit(): void {
     this._route.paramMap.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((pm) => {
