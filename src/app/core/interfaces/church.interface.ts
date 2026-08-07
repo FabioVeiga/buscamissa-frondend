@@ -20,6 +20,8 @@ export enum TipoIgreja {
   Capela = 2,
   Comunidade = 3,
   Santuario = 4,
+  Basilica = 5,
+  Catedral = 6,
   Outro = 99,
 }
 

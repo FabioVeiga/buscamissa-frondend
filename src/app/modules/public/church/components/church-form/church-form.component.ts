@@ -69,6 +69,8 @@ export class ChurchFormComponent implements OnInit, OnChanges {
     { name: "Capela", value: 2 },
     { name: "Comunidade", value: 3 },
     { name: "Santuário", value: 4 },
+    { name: "Basílica", value: 5 },
+    { name: "Catedral", value: 6 },
     { name: "Outro", value: 99 },
   ];
 
