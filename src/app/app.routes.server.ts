@@ -166,6 +166,9 @@ export const serverRoutes: ServerRoute[] = [
     },
   },
 
+  // Índice de estados (`/estados`) — estático (constante STATES), sem :param.
+  { path: 'estados', renderMode: RenderMode.Prerender },
+
   // Fase 3 — Estado (`/missas/:uf`). getPrerenderParams do cache estados.json
   // (fallback: bulk ao vivo). Vem ANTES de 'missas/:uf/:cidade' (menos segmentos).
   {

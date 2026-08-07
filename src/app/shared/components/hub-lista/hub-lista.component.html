@@ -1,0 +1,36 @@
+<section class="hub">
+  @if (breadcrumb.length) {
+    <nav class="hub__breadcrumb" aria-label="Trilha de navegação">
+      @for (b of breadcrumb; track b.label; let last = $last) {
+        @if (b.link && !last) {
+          <a [routerLink]="b.link">{{ b.label }}</a>
+          <span aria-hidden="true">›</span>
+        } @else {
+          <span aria-current="page">{{ b.label }}</span>
+        }
+      }
+    </nav>
+  }
+
+  @if (titulo) {
+    <header class="hub__head">
+      <h1>{{ titulo }}</h1>
+      @if (subtitulo) { <p class="hub__sub">{{ subtitulo }}</p> }
+    </header>
+  }
+
+  <ul class="hub__grid" role="list">
+    @for (it of itens; track it.link.join('/'); let i = $index) {
+      <li [class.hub__oculto]="oculto(i)">
+        <a [routerLink]="it.link" class="hub__card">
+          <span class="hub__icon" aria-hidden="true"><i [class]="icone"></i></span>
+          <span class="hub__info">
+            <span class="hub__nome">{{ it.nome }}</span>
+            @if (it.meta) { <span class="hub__meta">{{ it.meta }}</span> }
+          </span>
+          <i class="pi pi-angle-right hub__arrow" aria-hidden="true"></i>
+        </a>
+      </li>
+    }
+  </ul>
+</section>

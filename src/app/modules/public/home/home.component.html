@@ -197,20 +197,24 @@
     }
   }
 
-  <!-- ══ MISSAS POR DIA DA SEMANA / POR ESTADO (pontos de entrada — indexáveis) ══ -->
-  <!-- SEM @defer de propósito: precisam entrar no HTML do prerender p/ descoberta/SEO. -->
+  <!-- ══ MISSAS POR ESTADO / POR DIA (pontos de entrada — indexáveis) ══ -->
+  <!-- Ordem: Cidade (acima) → Estado → Dia. SEM @defer: precisam entrar no HTML
+       do prerender p/ descoberta/SEO. -->
   @if (!resultsMode) {
-    <app-home-chips
-      titulo="Missas por dia da semana"
-      subtitulo="Encontre horários de missa para qualquer dia da semana."
-      icone="pi pi-calendar"
-      [itens]="chipsDias"
-    />
     <app-home-chips
       titulo="Missas por estado"
       subtitulo="Explore as igrejas e horários de missa em cada estado do Brasil."
       icone="pi pi-map"
       [itens]="chipsEstados"
+      [destaque]="estadoDetectado"
+      [verTodosLink]="['/estados']"
+      verTodosLabel="Ver todos os estados"
+    />
+    <app-home-chips
+      titulo="Missas por dia da semana"
+      subtitulo="Encontre horários de missa para qualquer dia da semana."
+      icone="pi pi-calendar"
+      [itens]="chipsDias"
     />
   }
 
