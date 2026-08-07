@@ -34,7 +34,7 @@ import { HomeStatsComponent } from "./sections/home-stats/home-stats.component";
 import { HomeComoFuncionaComponent } from "./sections/home-como-funciona/home-como-funciona.component";
 import { HomeFavoritosComponent } from "./sections/home-favoritos/home-favoritos.component";
 import { HomeCidadesComponent } from "./sections/home-cidades/home-cidades.component";
-import { HomeChipsComponent, ChipLink } from "./sections/home-chips/home-chips.component";
+import { HomeChipsComponent, ChipLink, ChipDestaque } from "./sections/home-chips/home-chips.component";
 import { DIAS_INTENCAO } from "../../../core/constants/dias-intencao";
 import { HomeMissasMapaComponent } from "./sections/home-missas-mapa/home-missas-mapa.component";
 import { linkParoquia } from "../../../shared/utils/church-link.utils";
@@ -104,6 +104,15 @@ export class HomeComponent {
     label: e.nome,
     link: ['/missas', e.sigla.toLowerCase()],
   }));
+
+  /** Estado detectado (derivado da mesma geo da cidade) — card "Seu estado". */
+  get estadoDetectado(): ChipDestaque | null {
+    const uf = this.cidadeDetectada?.uf;
+    if (this.geoStatus !== 'found' || !uf) return null;
+    const est = STATES.find((e) => e.sigla.toLowerCase() === uf.toLowerCase());
+    if (!est) return null;
+    return { rotulo: 'Seu estado', nome: est.nome, link: ['/missas', est.sigla.toLowerCase()] };
+  }
 
   get cidadesExibidas() {
     return this.geoStatus === 'found' && this.cidadesGrid.length
