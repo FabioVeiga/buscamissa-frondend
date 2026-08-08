@@ -1,9 +1,9 @@
 <section class="estado">
   @if (isLoading) {
-    <div class="estado__wrap">
+    <div class="wrap">
       <p-skeleton width="55%" height="2.4rem" styleClass="mb-3" />
       <p-skeleton width="40%" height="1rem" styleClass="mb-4" />
-      <div class="dias-grid">
+      <div class="skel-grid">
         @for (i of [1,2,3,4,5,6]; track i) { <p-skeleton height="4.5rem" /> }
       </div>
     </div>
@@ -19,100 +19,200 @@
       <button type="button" (click)="tentarNovamente()">Tentar novamente</button>
     </div>
   } @else {
-    <!-- HERO -->
-    <div class="estado__wrap">
-      <nav class="breadcrumb" aria-label="Trilha de navegação">
-        <a routerLink="/home">Início</a><span aria-hidden="true">›</span>
-        <a routerLink="/estados">Estados</a><span aria-hidden="true">›</span>
-        <span aria-current="page">{{ estadoNome }}</span>
-      </nav>
+    <!-- ================= HERO ================= -->
+    <div class="estado-hero">
+      <div class="estado-hero__conteudo">
+        <nav class="breadcrumb" aria-label="Trilha de navegação">
+          <a routerLink="/home">Início</a><span aria-hidden="true">›</span>
+          <a routerLink="/estados">Estados</a><span aria-hidden="true">›</span>
+          <span aria-current="page">{{ estadoNome }}</span>
+        </nav>
 
-      <div class="hero">
-        <div class="hero__texto">
-          <h1>Horários de Missa em {{ estadoNome }}</h1>
-          <p class="hero__sub">{{ subtituloEstado }}</p>
+        <h1 class="estado-hero__titulo">
+          Horários de Missa no<br />Estado de <span class="estado-hero__uf">{{ estadoNome }}</span>
+        </h1>
 
-          <div class="tiles">
-            <div class="tile">
-              <i class="pi pi-building tile__ico" aria-hidden="true"></i>
-              <div><span class="tile__num">{{ totalParoquias }}</span><span class="tile__lbl">paróquias</span></div>
-            </div>
-            <div class="tile">
-              <i class="pi pi-map-marker tile__ico" aria-hidden="true"></i>
-              <div><span class="tile__num">{{ totalCidades }}</span><span class="tile__lbl">cidades</span></div>
-            </div>
+        <p class="estado-hero__sub">
+          Encontre igrejas, paróquias e horários de missa<br />em todo o estado de {{ estadoNome }}.
+        </p>
+
+        <div class="tiles">
+          <div class="tile">
+            <span class="tile__ico" aria-hidden="true"><i class="pi pi-building"></i></span>
+            <span class="tile__dados">
+              <span class="tile__num">{{ totalParoquias }}</span>
+              <span class="tile__lbl">paróquias</span>
+            </span>
+          </div>
+          <div class="tile">
+            <span class="tile__ico" aria-hidden="true"><i class="pi pi-map-marker"></i></span>
+            <span class="tile__dados">
+              <span class="tile__num">{{ totalCidades }}</span>
+              <span class="tile__lbl">cidades</span>
+            </span>
           </div>
         </div>
-        <div class="hero__img" aria-hidden="true">
-          <img src="assets/images/catedral-estado.png" alt="" loading="eager" width="260" height="330" />
+
+        <!-- Autocomplete: atalho para a cidade, não filtro do índice lá embaixo. -->
+        <div class="busca-hero">
+          <div class="busca">
+            <i class="pi pi-search" aria-hidden="true"></i>
+            <input type="search" [(ngModel)]="buscaHero" (ngModelChange)="aoDigitarNoHero()"
+                   (keydown.enter)="aoConfirmarHero()"
+                   [attr.placeholder]="'Buscar cidade em ' + estadoNome + '...'"
+                   aria-label="Buscar cidade" autocomplete="off" role="combobox"
+                   [attr.aria-expanded]="sugestoes.length > 0" aria-controls="sugestoes-cidade" />
+          </div>
+
+          @if (sugestoes.length) {
+            <ul class="sugestoes" id="sugestoes-cidade" role="listbox">
+              @for (s of sugestoes; track s.cidadeSlug) {
+                <li role="option" [attr.aria-selected]="false">
+                  <a [routerLink]="['/missas', uf, s.cidadeSlug]" (click)="irParaCidade(s)">
+                    <i class="pi pi-map-marker" aria-hidden="true"></i>
+                    <span class="sugestoes__nome">{{ s.cidade }}</span>
+                    <span class="sugestoes__meta">{{ s.totalParoquias }} paróquias</span>
+                  </a>
+                </li>
+              }
+            </ul>
+          }
+        </div>
+        <p class="busca__hint">Digite o nome da cidade para encontrar os horários de missa.</p>
+      </div>
+
+      <!-- Decorativa: em telas estreitas o <source> vazio impede o download. -->
+      <div class="estado-hero__foto" aria-hidden="true">
+        <picture>
+          <source media="(max-width: 899px)" srcset="" />
+          <source type="image/webp" srcset="assets/images/catedral-estado.webp" />
+          <img src="assets/images/catedral-estado.webp" alt="" fetchpriority="high"
+               width="1200" height="1801" decoding="async" />
+        </picture>
+      </div>
+    </div>
+
+    <!-- ============ PRINCIPAIS CIDADES ============ -->
+    @if (principaisCidades.length) {
+      <div class="wrap">
+        <h2 class="sec-titulo">
+          <i class="pi pi-building sec-titulo__ico" aria-hidden="true"></i>
+          Principais cidades de {{ estadoNome }}
+        </h2>
+        <p class="sec-sub">Cidades com mais paróquias cadastradas.</p>
+
+        <div class="destaque-grid">
+          @for (c of principaisCidades; track c.cidadeSlug) {
+            <a class="destaque" [routerLink]="['/missas', uf, c.cidadeSlug]">
+              <i class="pi pi-map-marker destaque__ico" aria-hidden="true"></i>
+              <span class="destaque__nome">{{ c.cidade }}</span>
+              <span class="destaque__meta">{{ c.totalParoquias }} paróquias</span>
+            </a>
+          }
+        </div>
+
+        <div class="centro">
+          <button type="button" class="btn-linha" (click)="verTodasAsCidades()">
+            Ver todas as cidades <i class="pi pi-chevron-right" aria-hidden="true"></i>
+          </button>
         </div>
       </div>
+    }
 
-      <!-- BUSCA (CTA principal) -->
-      <div class="busca">
-        <i class="pi pi-search" aria-hidden="true"></i>
-        <input type="search" [(ngModel)]="busca" [attr.placeholder]="'Buscar cidade em ' + estadoNome + '…'"
-               aria-label="Buscar cidade" />
+    <!-- ============ MISSAS POR DIA DA SEMANA ============
+         Ponte do eixo geográfico para o eixo de intenção: tira as páginas
+         /missa-{dia}/{uf} da orfandade. ANTI-THIN: só os dias que a API declarou
+         existir nesta UF — se o campo não vier, o bloco não é renderizado. -->
+    @if (dias.length) {
+      <div class="wrap">
+        <h2 class="sec-titulo">
+          <i class="pi pi-calendar sec-titulo__ico" aria-hidden="true"></i>
+          Missas por dia da semana em {{ estadoNome }}
+        </h2>
+        <p class="sec-sub">Escolha o dia e veja as missas disponíveis em {{ estadoNome }}.</p>
+
+        <div class="dias-grid">
+          @for (d of dias; track d.slug) {
+            <a class="dia" [routerLink]="['/missa-' + d.slug, uf]">
+              <span class="dia__nome">{{ d.rotulo }}</span>
+              <span class="dia__cta">Ver missas <i class="pi pi-arrow-right" aria-hidden="true"></i></span>
+            </a>
+          }
+        </div>
       </div>
-      <p class="busca__hint">Digite o nome da cidade para encontrar os horários de missa.</p>
-    </div>
+    }
 
-    <!-- CIDADES -->
-    <div class="estado__wrap">
-      <h2 class="sec-titulo">Cidades de {{ estadoNome }}</h2>
-      <p class="sec-sub">Selecione uma cidade para ver os horários de missa.</p>
+    <!-- ============ TODAS AS CIDADES ============ -->
+    <div class="wrap" id="todas-cidades">
+      <h2 class="sec-titulo">
+        <i class="pi pi-th-large sec-titulo__ico" aria-hidden="true"></i>
+        Todas as cidades de {{ estadoNome }}
+      </h2>
+      <p class="sec-sub">Selecione uma cidade para consultar as paróquias e horários de missa disponíveis.</p>
 
-      @if (itensCidades.length) {
-        <app-hub-lista titulo="" icone="pi pi-map-marker" [itens]="itensCidades"
-                       [limite]="limiteCidades" [expandido]="expandido" />
-      } @else {
-        <p class="vazio-busca">Nenhuma cidade encontrada para “{{ busca }}”.</p>
-      }
+      <!-- Atalho A–Z: botões, não links (não são URLs, só reposicionam a página). -->
+      <div class="alfabeto" role="group" aria-label="Ir para cidades por letra">
+        @for (a of alfabeto; track a.letra) {
+          <button type="button" class="alfabeto__letra" [disabled]="!a.ativa"
+                  [attr.aria-label]="a.ativa ? 'Ir para cidades com ' + a.letra : null"
+                  (click)="irParaLetra(a.letra)">{{ a.letra }}</button>
+        }
+      </div>
 
-      @if (temMaisCidades) {
-        <div class="ver-todas">
-          <button type="button" (click)="mostrarTodas = true">Ver todas as {{ totalCidades }} cidades →</button>
+      <div class="painel">
+        <div class="painel__busca">
+          <i class="pi pi-search" aria-hidden="true"></i>
+          <input type="search" [(ngModel)]="busca" (ngModelChange)="aoFiltrar()"
+                 placeholder="Buscar cidade..." aria-label="Filtrar cidades" />
+        </div>
+
+        @if (grupos.length) {
+          <div class="painel__corpo">
+            @for (g of grupos; track g.letra; let i = $index) {
+              <div class="grupo" [id]="'grupo-' + g.letra" [class.grupo--oculto]="grupoOculto(i)">
+                <span class="grupo__letra" aria-hidden="true">{{ g.letra }}</span>
+                <ul class="grupo__lista">
+                  @for (c of g.cidades; track c.cidadeSlug) {
+                    <li><a [routerLink]="['/missas', uf, c.cidadeSlug]">{{ c.cidade }}</a></li>
+                  }
+                </ul>
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="vazio-busca">Nenhuma cidade encontrada para “{{ busca }}”.</p>
+        }
+      </div>
+
+      @if (temMaisGrupos) {
+        <div class="centro">
+          <button type="button" class="btn-linha" (click)="mostrarTodas = true">
+            Ver mais cidades <i class="pi pi-chevron-down" aria-hidden="true"></i>
+          </button>
         </div>
       }
     </div>
 
-    <!-- POR DIA DA SEMANA -->
-    <div class="estado__wrap">
-      <h2 class="sec-titulo">Missas por dia da semana em {{ estadoNome }}</h2>
-      <p class="sec-sub">Escolha o dia da semana e encontre os horários de missa.</p>
-      <div class="dias-cards">
-        @for (d of dias; track d.slug) {
-          <a class="dia-card" [routerLink]="['/missa-' + d.slug, uf]">
-            <i class="pi pi-calendar" aria-hidden="true"></i>
-            <span class="dia-card__nome">{{ d.label }}</span>
-            <span class="dia-card__cta">Ver missas →</span>
-          </a>
-        }
+    <!-- ============ CTA ============ -->
+    <div class="wrap">
+      <div class="cta">
+        <svg class="cta__ico" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+          <path d="M32 3v11M27.5 8.5h9" />
+          <path d="M32 15 21 25v29h22V25L32 15Z" />
+          <path d="M21 32 9 40v14h12M43 32l12 8v14H43" />
+          <path d="M28.5 54v-9a3.5 3.5 0 0 1 7 0v9" />
+          <circle cx="32" cy="30" r="2.5" />
+        </svg>
+        <strong class="cta__titulo">Encontre uma missa<br />perto de você</strong>
+        <p class="cta__texto">O Busca Missa conecta você às paróquias da sua comunidade. Participe!</p>
+        <a class="cta__btn" routerLink="/missa-agora">
+          Buscar missa agora <i class="pi pi-chevron-right" aria-hidden="true"></i>
+        </a>
       </div>
-    </div>
 
-    <!-- TEXTO SOBRE -->
-    <div class="estado__wrap sobre">
-      <div class="sobre__texto">
-        <h2 class="sec-titulo">Sobre os horários de missa em {{ estadoNome }}</h2>
-        <p>O BuscaMissa reúne horários de missa de paróquias, capelas e comunidades em {{ estadoNome }}.
-          Nossa missão é conectar você com a igreja mais próxima. Os horários são atualizados pelas próprias
-          paróquias e pela nossa equipe.</p>
-      </div>
-      <img class="sobre__img" src="assets/images/church-new.png" alt="" aria-hidden="true" loading="lazy" width="220" height="150" />
-    </div>
-
-    <!-- FAQ -->
-    <div class="estado__wrap">
-      <h2 class="sec-titulo">Perguntas frequentes</h2>
-      <div class="faq">
-        @for (f of faqs; track f.pergunta) {
-          <details class="faq__item">
-            <summary>{{ f.pergunta }}<i class="pi pi-chevron-down" aria-hidden="true"></i></summary>
-            <p>{{ f.resposta }}</p>
-          </details>
-        }
-      </div>
+      <p class="assinatura"><i class="pi pi-heart-fill" aria-hidden="true"></i>
+        Feito com amor para aproximar você de Deus e da sua comunidade.</p>
     </div>
   }
 </section>

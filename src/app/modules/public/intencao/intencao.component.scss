@@ -108,5 +108,28 @@
   a:hover { background: #eff6ff; border-color: #93c5fd; }
 }
 
+/* Volta ao eixo geográfico (Cidade+Dia → Cidade → Estado). */
+.volta-geo {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1.75rem;
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.6rem 1.1rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    background: #fff;
+    text-decoration: none;
+    color: #374151;
+    font-size: 0.9rem;
+    font-weight: 600;
+    i { color: #e2761b; font-size: 0.9rem; }
+  }
+  a:hover { background: #fdf6f0; border-color: #f3b989; color: #bc5d10; }
+}
+
 .mb-3 { margin-bottom: 0.75rem; }
 .mb-4 { margin-bottom: 1.25rem; }
