@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { STATES } from '../../../core/constants/states';
 import { SeoService } from '../../../core/services/seo.service';
@@ -23,7 +23,7 @@ const SITE = 'https://buscamissa.com.br';
     [itens]="itens"
   />`,
 })
-export class EstadosComponent implements OnInit {
+export class EstadosComponent implements OnInit, OnDestroy {
   private _seo = inject(SeoService);
 
   readonly breadcrumb: HubBreadcrumb[] = [
@@ -62,5 +62,14 @@ export class EstadosComponent implements OnInit {
         item: `${SITE}/missas/${e.sigla.toLowerCase()}`,
       })),
     });
+  }
+
+  /**
+   * Os ids do JSON-LD são um namespace global do documento — sem remover na saída,
+   * o ItemList dos 27 estados sobrevive na próxima rota que não o sobrescreva.
+   */
+  ngOnDestroy(): void {
+    this._seo.removeJsonLd('breadcrumb');
+    this._seo.removeJsonLd('itemlist');
   }
 }
