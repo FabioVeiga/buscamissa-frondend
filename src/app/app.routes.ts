@@ -98,6 +98,17 @@ export const routes: Routes = [
             (m) => m.DetailsComponent
           ),
       },
+      // Índice de estados (SEO): /estados — paridade com /cidades.
+      {
+        path: "estados",
+        data: {
+          title: 'Missas por estado | BuscaMissa',
+          description: 'Encontre horários de missa por estado. Escolha a UF e veja as cidades e paróquias.',
+          canonical: 'https://buscamissa.com.br/estados',
+        },
+        loadComponent: () =>
+          import("./modules/public/estados/estados.component").then((m) => m.EstadosComponent),
+      },
       // Hub de Estado (SEO): /missas/sp — antes de missas/:uf/:cidade (menos segmentos).
       {
         path: "missas/:uf",

@@ -4,10 +4,26 @@
       <i [class]="icone" style="color: #bc5d10;"></i>
       <h2 class="sec-header__titulo">{{ titulo }}</h2>
     </div>
+    @if (verTodosLink) {
+      <a [routerLink]="verTodosLink" class="sec-header__link">{{ verTodosLabel }} →</a>
+    }
   </div>
 
   @if (subtitulo) {
     <p class="sec-header__sub">{{ subtitulo }}</p>
+  }
+
+  @if (destaque) {
+    <div class="cidades-chips__geo-wrap">
+      <a [routerLink]="destaque.link" class="cidade-destaque">
+        <div class="cidade-destaque__icon" aria-hidden="true"><i [class]="icone"></i></div>
+        <div class="cidade-destaque__info">
+          <span class="cidade-destaque__label">{{ destaque.rotulo }}</span>
+          <span class="cidade-destaque__nome">{{ destaque.nome }}</span>
+        </div>
+        <i class="pi pi-arrow-right cidade-destaque__arrow"></i>
+      </a>
+    </div>
   }
 
   <div class="cidades-chips__lista">

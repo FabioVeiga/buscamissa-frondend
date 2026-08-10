@@ -1,95 +1,309 @@
-.estado {
-  max-width: 1080px;
+$laranja: #bc5d10;
+$laranja-vivo: #e2761b;
+$creme: #fdf6f0;
+$creme-forte: #fdeee2;
+$borda: #e5e7eb;
+$titulo: #1f2937;
+$texto: #374151;
+$muted: #6b7280;
+
+.estado { display: block; }
+
+.wrap {
+  max-width: 72rem;
   margin: 0 auto;
-  padding: 1.5rem 1rem 3rem;
+  padding: 0 1.5rem;
+}
+.wrap + .wrap { margin-top: 2.75rem; }
 
-  h1 {
-    font-size: clamp(1.5rem, 4vw, 2.1rem);
-    line-height: 1.15;
-    margin: 0 0 0.5rem;
-  }
+.centro { display: flex; justify-content: center; margin-top: 1.25rem; }
 
-  h2 {
-    font-size: 1.15rem;
-    margin: 2rem 0 0.75rem;
+/* ================= HERO ================= */
+/* Faixa creme full-bleed; a foto ocupa a direita e "sangra" até a borda da
+   viewport, com o lado esquerdo curvo (elíptico) sobre o creme. */
+.estado-hero {
+  position: relative;
+  background: $creme;
+  overflow: hidden;
+  padding: 1.5rem 0 2.5rem;
+  margin-bottom: 2.75rem;
+  /* Sangra de borda a borda porque o .card desta página não limita a largura
+     (ver styles.scss). Sem 100vw de propósito: ele inclui a barra de rolagem. */
+  width: 100%;
+  /* .hero global (styles.scss) centraliza texto; aqui o alinhamento é à esquerda. */
+  text-align: left;
+}
+@media (min-width: 900px) {
+  /* altura maior deixa a fachada da catedral respirar (object-fit: cover recorta) */
+  .estado-hero { min-height: 30rem; display: flex; align-items: center; }
+}
+.estado-hero__conteudo {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+@media (min-width: 900px) {
+  /* reserva a faixa da foto para o texto nunca correr por baixo da imagem */
+  .estado-hero__conteudo { padding-right: calc(42% + 1.5rem); }
+}
+
+.estado-hero__foto { display: none; }
+@media (min-width: 900px) {
+  .estado-hero__foto {
+    display: block;
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: 44%;
+    z-index: 1;
+    img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      object-position: center 35%;
+      display: block;
+      /* curva elíptica suave no lado esquerdo, avançando sobre o creme */
+      border-top-left-radius: 38% 62%;
+      border-bottom-left-radius: 14% 24%;
+    }
   }
 }
 
 .breadcrumb {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.85rem;
-  color: #6b7280;
-  margin-bottom: 1rem;
-
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem;
+  font-size: 0.85rem; color: $muted; margin-bottom: 1.25rem;
   a { color: #2563eb; text-decoration: none; }
   a:hover { text-decoration: underline; }
   span[aria-current] { color: #374151; font-weight: 600; }
 }
 
-.estado__stats { color: #4b5563; margin: 0; }
+.estado-hero__titulo {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.18;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.9rem;
+  color: $titulo;
+  @media (min-width: 640px) { font-size: 2.25rem; }
+  @media (min-width: 1024px) { font-size: 2.5rem; }
+}
+.estado-hero__uf { color: $laranja-vivo; }
 
-.grid {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-  gap: 0.75rem;
+.estado-hero__sub {
+  color: $texto;
+  margin: 0 0 1.5rem;
+  font-size: 1rem;
+  line-height: 1.55;
+}
 
-  a {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    padding: 0.9rem 1rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.6rem;
-    text-decoration: none;
-    color: inherit;
-    background: #fff;
-    transition: border-color 0.15s, box-shadow 0.15s;
+/* STAT TILES — cards brancos com borda, como no layout */
+.tiles { display: flex; flex-wrap: wrap; gap: 0.9rem; margin-bottom: 1.75rem; }
+.tile {
+  display: flex; align-items: center; gap: 0.7rem;
+  background: #fff; border: 1px solid #f0e2d6; border-radius: 14px;
+  padding: 0.85rem 1.15rem; min-width: 140px;
+}
+.tile__ico {
+  display: grid; place-items: center;
+  width: 34px; height: 34px; flex: 0 0 34px;
+  background: $creme-forte; border-radius: 10px;
+  i { color: $laranja-vivo; font-size: 1.05rem; }
+}
+.tile__dados { display: block; }
+.tile__num {
+  display: block; font-size: 1.375rem; font-weight: 800; color: $titulo;
+  line-height: 1.1; font-variant-numeric: tabular-nums;
+}
+.tile__lbl { display: block; font-size: 0.8125rem; color: $muted; }
+
+/* BUSCA do hero */
+.busca {
+  display: flex; align-items: center; gap: 0.7rem;
+  background: #fff; border: 1px solid #ecdccd; border-radius: 14px; padding: 0 1.1rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,.03);
+  i { color: #9ca3af; font-size: 1.05rem; }
+  input {
+    flex: 1; border: 0; outline: none; background: transparent;
+    padding: 1rem 0; font-size: 1rem; color: $texto; min-width: 0;
   }
-  a:hover { border-color: #93c5fd; box-shadow: 0 1px 6px rgba(0, 0, 0, 0.06); }
+  input::placeholder { color: #9ca3af; }
+  &:focus-within { border-color: #f3b989; box-shadow: 0 0 0 3px rgba(226,118,27,.12); }
+}
+.busca__hint { color: $muted; font-size: 0.85rem; margin: 0.6rem 0 0; }
 
+/* AUTOCOMPLETE do hero */
+.busca-hero { position: relative; }
+.sugestoes {
+  position: absolute; z-index: 5; top: calc(100% + 0.35rem); left: 0; right: 0;
+  list-style: none; margin: 0; padding: 0.3rem;
+  background: #fff; border: 1px solid $borda; border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.10);
+  max-height: 20rem; overflow-y: auto;
+  li + li { border-top: 1px solid #f3f4f6; }
+  a {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.6rem 0.7rem; border-radius: 8px;
+    text-decoration: none; color: $texto;
+  }
+  a:hover, a:focus-visible { background: $creme; }
+  i { color: $laranja-vivo; font-size: 0.9rem; }
   &__nome { font-weight: 600; }
-  &__meta { font-size: 0.82rem; color: #6b7280; }
+  &__meta { margin-left: auto; color: $muted; font-size: 0.8125rem; white-space: nowrap; }
 }
 
-.dias {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-
-  a {
-    display: inline-block;
-    padding: 0.5rem 0.9rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 999px;
-    text-decoration: none;
-    color: #2563eb;
-    font-size: 0.9rem;
+/* MISSAS POR DIA DA SEMANA (ponte para o eixo de intenção) */
+.dias-grid {
+  display: grid; gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+.dia {
+  display: flex; flex-direction: column; gap: 0.3rem;
+  padding: 1rem 1.1rem;
+  background: #fff; border: 1px solid $borda; border-radius: 14px;
+  text-decoration: none;
+  transition: border-color .15s, box-shadow .15s, transform .15s;
+  &:hover { border-color: #f3b989; box-shadow: 0 3px 12px rgba(0,0,0,.06); transform: translateY(-2px); }
+  &__nome { font-weight: 700; color: $titulo; font-size: 0.9375rem; }
+  &__cta {
+    color: $laranja-vivo; font-size: 0.8125rem; font-weight: 600;
+    display: inline-flex; align-items: center; gap: 0.3rem;
+    i { font-size: 0.7rem; }
   }
-  a:hover { background: #eff6ff; border-color: #93c5fd; }
 }
 
-.estado__vazio,
-.estado__erro {
-  text-align: center;
-  padding: 3rem 1rem;
+/* FAIXA A–Z */
+.alfabeto {
+  display: flex; flex-wrap: wrap; gap: 0.25rem;
+  margin-bottom: 0.85rem;
+}
+.alfabeto__letra {
+  min-width: 1.85rem; padding: 0.3rem 0.1rem;
+  background: #fff; border: 1px solid $borda; border-radius: 8px;
+  font-size: 0.8125rem; font-weight: 700; color: $texto;
+  cursor: pointer; transition: background .15s, border-color .15s, color .15s;
+  &:hover:not(:disabled) { background: $creme; border-color: #f3b989; color: $laranja; }
+  &:disabled { color: #d1d5db; cursor: default; background: #fafafa; }
+}
 
-  button {
-    margin-top: 1rem;
-    padding: 0.6rem 1.2rem;
-    border: 0;
-    border-radius: 0.5rem;
-    background: #2563eb;
-    color: #fff;
-    cursor: pointer;
+/* ================= SEÇÕES ================= */
+.sec-titulo {
+  display: flex; align-items: center; gap: 0.6rem;
+  font-size: 1.1875rem; font-weight: 800; color: $titulo; margin: 0 0 0.35rem; line-height: 1.25;
+}
+.sec-titulo__ico { color: $laranja-vivo; font-size: 1.15rem; }
+.sec-sub { color: $muted; margin: 0 0 1.25rem; font-size: 0.875rem; }
+
+/* PRINCIPAIS CIDADES */
+.destaque-grid {
+  display: grid; gap: 0.85rem;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+.destaque {
+  display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
+  padding: 1.25rem 0.75rem;
+  background: #fff; border: 1px solid $borda; border-radius: 14px;
+  text-decoration: none; text-align: center;
+  transition: border-color .15s, box-shadow .15s, transform .15s;
+  &:hover { border-color: #f3b989; box-shadow: 0 3px 12px rgba(0,0,0,.06); transform: translateY(-2px); }
+  &__ico { color: $laranja-vivo; font-size: 1.2rem; margin-bottom: 0.15rem; }
+  &__nome { font-weight: 700; color: $titulo; font-size: 0.9375rem; line-height: 1.25; }
+  &__meta { color: $muted; font-size: 0.8125rem; }
+}
+
+/* botão/link de linha (Ver todas / Ver mais) */
+.btn-linha {
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  background: #fff; border: 1px solid $borda; border-radius: 10px;
+  padding: 0.65rem 1.2rem; font-size: 0.875rem; font-weight: 600;
+  color: $texto; text-decoration: none; cursor: pointer;
+  i { font-size: 0.7rem; color: $muted; }
+  &:hover { border-color: #f3b989; color: $laranja; background: $creme; i { color: $laranja; } }
+}
+
+/* PAINEL "TODAS AS CIDADES" */
+.painel {
+  background: #fff; border: 1px solid $borda; border-radius: 16px;
+  padding: 1.1rem 1.25rem 0.5rem;
+}
+.painel__busca {
+  display: flex; align-items: center; gap: 0.7rem;
+  border-bottom: 1px solid $borda; padding-bottom: 0.9rem; margin-bottom: 0.5rem;
+  i { color: #9ca3af; }
+  input {
+    flex: 1; border: 0; outline: none; background: transparent;
+    padding: 0.35rem 0; font-size: 0.9375rem; color: $texto; min-width: 0;
+  }
+  input::placeholder { color: #9ca3af; }
+}
+
+.grupo {
+  display: grid;
+  grid-template-columns: 1.5rem 1fr;
+  gap: 0.25rem 0.75rem;
+  padding: 1rem 0;
+  border-bottom: 1px solid #f3f4f6;
+  &:last-child { border-bottom: 0; }
+}
+/* Oculta visualmente sem remover do HTML: os links seguem rastreáveis. */
+.grupo--oculto { display: none; }
+
+.grupo__letra {
+  color: $laranja-vivo; font-weight: 800; font-size: 0.9375rem; line-height: 1.6;
+}
+.grupo__lista {
+  list-style: none; margin: 0; padding: 0;
+  display: grid; gap: 0.15rem 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(165px, 1fr));
+  a {
+    color: $texto; text-decoration: none; font-size: 0.9375rem; line-height: 1.7;
+    display: inline-block;
+  }
+  a:hover { color: $laranja; text-decoration: underline; }
+}
+
+.vazio-busca { color: $muted; padding: 1.75rem 0; text-align: center; }
+
+/* ================= CTA ================= */
+.cta {
+  display: grid;
+  /* ícone | título | texto | botão — 4 colunas, uma por filho, tudo na mesma linha */
+  grid-template-columns: auto auto 1fr auto;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+  background: $creme;
+  border-radius: 16px;
+  padding: 1.5rem 1.75rem;
+}
+.cta__ico { width: 58px; height: 58px; flex: 0 0 auto; color: $laranja-vivo; }
+.cta__titulo { color: $titulo; font-size: 1.0625rem; font-weight: 800; line-height: 1.3; }
+.cta__texto { color: $texto; margin: 0; font-size: 0.9375rem; line-height: 1.5; }
+.cta__btn {
+  display: inline-flex; align-items: center; gap: 0.5rem; white-space: nowrap;
+  background: $laranja-vivo; color: #fff; text-decoration: none; font-weight: 700;
+  padding: 0.85rem 1.5rem; border-radius: 12px; font-size: 0.9375rem;
+  i { font-size: 0.7rem; }
+  &:hover { background: $laranja; }
+}
+@media (max-width: 900px) {
+  .cta { grid-template-columns: auto 1fr; }
+  .cta__texto { grid-column: 1 / -1; }
+  .cta__btn { grid-column: 1 / -1; justify-content: center; }
+}
+
+.assinatura {
+  text-align: center; color: $muted; font-size: 0.8125rem; margin: 2rem 0 0;
+  i { color: #ef6b6b; margin-right: 0.35rem; }
+}
+
+/* ================= ESTADOS AUXILIARES ================= */
+.skel-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 0.75rem; }
+
+.estado__aviso {
+  text-align: center; padding: 3rem 1.25rem; max-width: 1080px; margin: 0 auto;
+  button, a {
+    display: inline-block; margin-top: 1rem; padding: 0.6rem 1.2rem;
+    border: 0; border-radius: 0.5rem; background: #2563eb; color: #fff; cursor: pointer; text-decoration: none;
   }
 }
 

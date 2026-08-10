@@ -59,6 +59,15 @@
           <li><a [routerLink]="['/missa-' + dia, uf, c.cidadeSlug]">{{ c.cidade }}</a></li>
         }
       </ul>
+
+      <!-- Volta ao eixo GEOGRÁFICO. Sem isto a linkagem Estado→Dia é unidirecional
+           e a autoridade não circula de volta para o hub estadual. -->
+      <nav class="volta-geo" aria-label="Navegação geográfica">
+        <a [routerLink]="['/missas', uf]">
+          <i class="pi pi-map-marker" aria-hidden="true"></i>
+          Ver todas as missas em {{ estadoNome || uf.toUpperCase() }}
+        </a>
+      </nav>
     }
 
     <!-- NÍVEL CIDADE (folha) -->
@@ -87,6 +96,19 @@
             <li><a [routerLink]="['/missa-' + d.slug, uf, cidadeSlug]">Missa de {{ d.nome }} em {{ cidadeNome }}</a></li>
           }
         </ul>
+      </nav>
+
+      <!-- Volta ao eixo GEOGRÁFICO: é o nível Cidade+Dia que devolve para a Cidade
+           (e, acima dela, para o Estado) — fecha a malha nos dois sentidos. -->
+      <nav class="volta-geo" aria-label="Navegação geográfica">
+        <a [routerLink]="['/missas', uf, cidadeSlug]">
+          <i class="pi pi-map-marker" aria-hidden="true"></i>
+          Ver todos os horários de missa em {{ cidadeNome }}
+        </a>
+        <a [routerLink]="['/missas', uf]">
+          <i class="pi pi-map" aria-hidden="true"></i>
+          Ver missas em {{ estadoNome || uf.toUpperCase() }}
+        </a>
       </nav>
     }
   }

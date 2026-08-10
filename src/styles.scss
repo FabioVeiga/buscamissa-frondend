@@ -54,6 +54,15 @@ button:focus-visible,
   max-width: 72rem;
 }
 
+/* O hub de Estado tem faixa de hero sangrando de borda a borda: o .card não pode
+   limitar a largura. O próprio componente centraliza o conteúdo (.wrap, 72rem).
+   Evita o truque de 100vw, que somaria a barra de rolagem e criaria scroll lateral. */
+.layout-main > .card:has(app-estado) {
+  max-width: none;
+  padding-left: 0;
+  padding-right: 0;
+}
+
 .hero {
   text-align: center;
   margin: 0px;
