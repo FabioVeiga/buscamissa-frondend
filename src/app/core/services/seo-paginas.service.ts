@@ -28,6 +28,18 @@ export class SeoPaginasService {
   }
 
   /**
+   * Todas as UFs que têm paróquia — alimenta o índice `/estados`.
+   *
+   * É a MESMA fonte que o prerender usa para decidir quais hubs `/missas/{uf}`
+   * gerar, então o índice nunca linka um estado sem página. Não passa pelo
+   * interceptor de prerender (ele cobre só o por-item `/v2/seo/estado/{uf}`),
+   * mas `/estados` é uma página só: é uma requisição no build inteiro.
+   */
+  getEstados(): Observable<unknown> {
+    return this.http.get(`${this.base}/v2/seo/estados`);
+  }
+
+  /**
    * Árvore de um dia (hubs nacional/UF da intenção). O endpoint real sempre devolve
    * a árvore inteira (ignora `uf`) — o filtro por UF é feito no componente. O `uf`
    * aqui só marca a requisição para o interceptor SÓ-SERVER de prerender (ver
