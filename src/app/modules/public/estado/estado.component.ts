@@ -158,6 +158,7 @@ export class EstadoComponent implements OnInit, OnDestroy {
         next: (data: any) => {
           if (!data) {
             this.naoEncontrado = true;
+            this.aplicarSeoNaoEncontrado();
             return;
           }
           this.estadoNome = data.estado ?? '';
@@ -170,10 +171,35 @@ export class EstadoComponent implements OnInit, OnDestroy {
           this._cdr.markForCheck();
         },
         error: (err) => {
-          if (err?.status === 404) this.naoEncontrado = true;
-          else this.erroCarregar = true;
+          if (err?.status === 404) {
+            this.naoEncontrado = true;
+            this.aplicarSeoNaoEncontrado();
+          } else {
+            // Falha transitória (rede/500) NÃO vira noindex: a página pode ser
+            // válida e estar apenas indisponível no momento.
+            this.erroCarregar = true;
+          }
         },
       });
+  }
+
+  /**
+   * UF inexistente (`/missas/xx`): a rota casa, mas não há hub prerenderizado, então
+   * o SWA serve o shell (que carrega o title/canonical da HOME) e só depois a
+   * hidratação mostra "Estado não encontrado" — uma página de "não encontrado"
+   * marcada como indexável, ou seja um soft-404. Aqui damos identidade própria à
+   * URL e a tiramos do índice.
+   *
+   * Só no 404 da API. No `erroCarregar` seria perigoso: uma indisponibilidade
+   * momentânea marcaria noindex numa página válida.
+   */
+  private aplicarSeoNaoEncontrado(): void {
+    this._seo.update({
+      title: 'Estado não encontrado | BuscaMissa',
+      description: 'Não encontramos paróquias cadastradas para esta UF.',
+      canonical: `${SITE}/missas/${this.uf}`,
+      noindex: true,
+    });
   }
 
   tentarNovamente(): void {
