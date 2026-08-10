@@ -83,11 +83,23 @@
 
       <!-- Decorativa: em telas estreitas o <source> vazio impede o download. -->
       <div class="estado-hero__foto" aria-hidden="true">
+        <!--
+          O <source> só casa a partir de 900px, que é onde a foto aparece; abaixo
+          disso o `img` cai no GIF transparente inline e NÃO há requisição de rede.
+
+          Um `<source media="(max-width:899px)" srcset="">` não serve: srcset vazio
+          invalida aquele source, o browser cai no `img src` e baixa os 70 KB mesmo
+          com o container em display:none — foi o que aconteceu (currentSrc apontava
+          para o .webp num viewport de 390px).
+
+          O `img` continua sendo <img> (e não background-image no CSS) para o
+          preload scanner achar a imagem cedo no desktop, onde ela é o LCP.
+        -->
         <picture>
-          <source media="(max-width: 899px)" srcset="" />
-          <source type="image/webp" srcset="assets/images/catedral-estado.webp" />
-          <img src="assets/images/catedral-estado.webp" alt="" fetchpriority="high"
-               width="1200" height="1801" decoding="async" />
+          <source media="(min-width: 900px)" type="image/webp"
+                  srcset="assets/images/catedral-estado.webp" />
+          <img src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+               alt="" fetchpriority="high" width="1200" height="1801" decoding="async" />
         </picture>
       </div>
     </div>
