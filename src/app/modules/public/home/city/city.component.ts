@@ -52,7 +52,8 @@ export class CityComponent implements OnInit, OnDestroy {
   private _metricas = inject(MetricasService);
 
   /** Falso durante o prerender (Node). Guarda browser-APIs (geoloc, localStorage). */
-  private readonly _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  /** protected (não private): o template usa para não prerenderizar o mapa. */
+  protected readonly _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   isLoading = false;
   uf = "";
