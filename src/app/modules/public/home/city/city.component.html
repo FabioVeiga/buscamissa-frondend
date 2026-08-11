@@ -130,14 +130,20 @@
 
     <!-- MAPA (desktop) + rodapé -->
     <aside class="city-mapa" [class.city-mapa--visible]="mapVisible">
-      @defer (on viewport) {
-        <app-city-map
-          [igrejas]="mapIgrejas"
-          [cidadeNome]="cidadeNome"
-          [uf]="uf">
-        </app-city-map>
-      } @placeholder {
-        <div class="city-mapa__placeholder" aria-hidden="true"></div>
+      <!-- O guard de browser é o que faz o @defer voltar a funcionar: um bloco que o
+           servidor assa como @placeholder nunca é acionado na hidratação, e o mapa
+           ficava invisível. Fora do prerender, o @defer roda normal — e o Leaflet
+           (~390 KB) continua fora do bundle inicial, sem inflar o dist. -->
+      @if (_isBrowser) {
+        @defer (on viewport) {
+          <app-city-map
+            [igrejas]="mapIgrejas"
+            [cidadeNome]="cidadeNome"
+            [uf]="uf">
+          </app-city-map>
+        } @placeholder {
+          <div class="city-mapa__placeholder" aria-hidden="true"></div>
+        }
       }
 
       <!-- Rodapé "Não encontrou sua paróquia?" -->

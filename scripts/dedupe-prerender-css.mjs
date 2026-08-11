@@ -16,6 +16,18 @@
  * <head> (que só evitam FOUC pré-hidratação); o PrimeNG re-injeta seus estilos no
  * cliente de qualquer forma. A ordem dos estilos é a de primeira-ocorrência, igual
  * em todas as páginas (cascata consistente).
+ *
+ * ── 2º passo: encurtar os ids de encapsulação ────────────────────────────────
+ * `_ngcontent-ng-c3521424731=""` aparece em CADA elemento do HTML assado — medido
+ * em 13,4% do peso de uma página de paróquia (~16 MB no dist inteiro). Trocamos o
+ * sufixo gerado pelo Angular por um índice curto (`_ngcontent-ng-c3521424731` →
+ * `_ngc-7`), com o MESMO mapa aplicado ao HTML e ao CSS compartilhado.
+ *
+ * Por que é seguro: esses ids não aparecem em nenhum bundle .js (verificado: 0
+ * ocorrências) — o Angular os gera em runtime e injeta o <style> correspondente
+ * junto, para componentes criados no cliente. Ou seja, o par que precisa casar é
+ * só HTML-prerenderizado ↔ CSS-compartilhado, e os dois são reescritos aqui no
+ * mesmo passo, a partir do mesmo mapa.
  */
 import { readFileSync, writeFileSync, readdirSync, statSync } from 'fs';
 import { join } from 'path';
@@ -27,6 +39,8 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const BROWSER_DIR = join(__dirname, '..', 'dist', 'busca-missa', 'browser');
 const STYLE_RE = /<style\b[^>]*>[\s\S]*?<\/style>/gi;
 const INNER_RE = /<style\b[^>]*>([\s\S]*?)<\/style>/i;
+/** Ids de encapsulação do Angular: _ngcontent-ng-c123 / _nghost-ng-c123. */
+const ENCAP_RE = /_(ngcontent|nghost)-ng-c(\d+)/g;
 
 function listarHtml(dir) {
   const out = [];
@@ -39,13 +53,33 @@ function listarHtml(dir) {
   return out;
 }
 
+/**
+ * Mapa determinístico id-original → id-curto. Determinístico (ordenado pelo id
+ * original) para que dois builds do mesmo conteúdo gerem o mesmo hash de CSS.
+ */
+function montarMapaEncap(ids) {
+  const mapa = new Map();
+  [...ids].sort().forEach((id, i) => {
+    const tipo = id.startsWith('_ngcontent') ? 'ngc' : 'ngh';
+    mapa.set(id, `_${tipo}-${i.toString(36)}`);
+  });
+  return mapa;
+}
+
+function encurtar(texto, mapa) {
+  return texto.replace(ENCAP_RE, (achado) => mapa.get(achado) ?? achado);
+}
+
 function main() {
   const arquivos = listarHtml(BROWSER_DIR);
-  // 1ª passada: coletar blocos <style> únicos (por conteúdo interno), em ordem.
+  // 1ª passada: coletar blocos <style> únicos (por conteúdo interno), em ordem,
+  // e todos os ids de encapsulação usados (HTML + CSS entram no mesmo mapa).
   const unicos = new Map(); // innerCSS -> índice
   const ordem = [];
+  const idsEncap = new Set();
   for (const f of arquivos) {
     const html = readFileSync(f, 'utf-8');
+    for (const achado of html.match(ENCAP_RE) ?? []) idsEncap.add(achado);
     for (const bloco of html.match(STYLE_RE) ?? []) {
       const inner = bloco.match(INNER_RE)?.[1] ?? '';
       if (!inner.trim()) continue;
@@ -54,7 +88,10 @@ function main() {
   }
   if (ordem.length === 0) { console.log('[dedupe-css] nenhum <style> inline — nada a fazer.'); return; }
 
-  const cssCombinado = ordem.join('\n');
+  const mapaEncap = montarMapaEncap(idsEncap);
+  // O hash sai do CSS JÁ encurtado: o nome do arquivo tem de refletir o conteúdo
+  // final, senão dois builds diferentes poderiam compartilhar o mesmo nome.
+  const cssCombinado = encurtar(ordem.join('\n'), mapaEncap);
   const hash = createHash('sha256').update(cssCombinado).digest('hex').slice(0, 16);
   const nomeArquivo = `prerender-shared-${hash}.css`;
   writeFileSync(join(BROWSER_DIR, nomeArquivo), cssCombinado);
@@ -64,29 +101,46 @@ function main() {
   // externo em vez de inline). Ver [[swa-limite-tamanho-dedupe-css]].
   const preloadTag = `<link rel="preload" as="style" href="/${nomeArquivo}">`;
 
-  // 2ª passada: remover <style> inline e linkar o arquivo compartilhado.
+  // 2ª passada: remover <style> inline, linkar o arquivo compartilhado e encurtar
+  // os ids. TODA página passa pelo encurtamento — inclusive as sem <style>: uma
+  // página que ficasse com os ids longos não casaria mais com o CSS compartilhado
+  // (que só tem os curtos) e perderia a estilização.
   let paginas = 0, bytesAntes = 0, bytesDepois = 0;
   for (const f of arquivos) {
     const orig = readFileSync(f, 'utf-8');
-    if (!STYLE_RE.test(orig)) continue;
     bytesAntes += Buffer.byteLength(orig);
-    // Remove todos os <style>; injeta o preload cedo (logo após <head>) e o
-    // stylesheet antes de </head>.
-    let novo = orig.replace(STYLE_RE, '');
-    novo = /<head[^>]*>/.test(novo)
-      ? novo.replace(/<head[^>]*>/, (h) => `${h}${preloadTag}`)
-      : preloadTag + novo;
-    novo = novo.includes('</head>')
-      ? novo.replace('</head>', `${linkTag}</head>`)
-      : linkTag + novo;
-    writeFileSync(f, novo);
+
+    STYLE_RE.lastIndex = 0;
+    const temStyle = STYLE_RE.test(orig);
+    STYLE_RE.lastIndex = 0;
+
+    let novo = orig;
+    if (temStyle) {
+      // Remove todos os <style>; injeta o preload cedo (logo após <head>) e o
+      // stylesheet antes de </head>.
+      novo = novo.replace(STYLE_RE, '');
+      novo = /<head[^>]*>/.test(novo)
+        ? novo.replace(/<head[^>]*>/, (h) => `${h}${preloadTag}`)
+        : preloadTag + novo;
+      novo = novo.includes('</head>')
+        ? novo.replace('</head>', `${linkTag}</head>`)
+        : linkTag + novo;
+      paginas++;
+    }
+
+    novo = encurtar(novo, mapaEncap);
+    if (novo !== orig) writeFileSync(f, novo);
     bytesDepois += Buffer.byteLength(novo);
-    paginas++;
   }
   const mb = (n) => (n / 1_048_576).toFixed(1);
   console.log(
-    `[dedupe-css] ${paginas} páginas | ${ordem.length} blocos únicos → ${nomeArquivo} (${(cssCombinado.length / 1024).toFixed(1)} KB). ` +
-    `HTML: ${mb(bytesAntes)} MB → ${mb(bytesDepois)} MB (economia ${mb(bytesAntes - bytesDepois)} MB).`,
+    `[dedupe-css] ${paginas} páginas | ${ordem.length} blocos únicos → ${nomeArquivo} (${(cssCombinado.length / 1024).toFixed(1)} KB).`,
+  );
+  console.log(
+    `[dedupe-css] ${mapaEncap.size} ids de encapsulação encurtados em ${arquivos.length} páginas.`,
+  );
+  console.log(
+    `[dedupe-css] HTML: ${mb(bytesAntes)} MB → ${mb(bytesDepois)} MB (economia ${mb(bytesAntes - bytesDepois)} MB).`,
   );
 }
 
