@@ -1,10 +1,14 @@
 $laranja: #bc5d10;
 $borda: #e5e7eb;
 
+// Mesmo container do <app-page-hero> (72rem / 1.5rem): as duas páginas que usam
+// este hub abrem com o hero, e medidas diferentes deixavam a grade desalinhada
+// com o breadcrumb e o título logo acima. Sem padding-top: o respiro depois do
+// hero já vem do `margin-bottom` dele.
 .hub {
-  max-width: 1080px;
+  max-width: 72rem;
   margin: 0 auto;
-  padding: 1.5rem 1rem 3rem;
+  padding: 0 1.5rem 3rem;
 }
 
 .hub__breadcrumb {

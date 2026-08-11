@@ -1,3 +1,6 @@
+// Campo de busca do hero: markup desta página, projetado em [hero-busca].
+@use '../../../shared/styles/hero-busca' as *;
+
 $laranja: #bc5d10;
 $laranja-vivo: #e2761b;
 $creme: #fdf6f0;
@@ -19,118 +22,21 @@ $muted: #6b7280;
 .centro { display: flex; justify-content: center; margin-top: 1.25rem; }
 
 /* ================= HERO ================= */
-/* Faixa creme full-bleed; a foto ocupa a direita e "sangra" até a borda da
-   viewport, com o lado esquerdo curvo (elíptico) sobre o creme. */
-.estado-hero {
-  position: relative;
-  background: $creme;
-  overflow: hidden;
-  padding: 1.5rem 0 2.5rem;
-  margin-bottom: 2.75rem;
-  /* Sangra de borda a borda porque o .card desta página não limita a largura
-     (ver styles.scss). Sem 100vw de propósito: ele inclui a barra de rolagem. */
-  width: 100%;
-  /* .hero global (styles.scss) centraliza texto; aqui o alinhamento é à esquerda. */
-  text-align: left;
-}
-@media (min-width: 900px) {
-  /* altura maior deixa a fachada da catedral respirar (object-fit: cover recorta) */
-  .estado-hero { min-height: 30rem; display: flex; align-items: center; }
-}
-.estado-hero__conteudo {
-  position: relative;
-  z-index: 2;
-  width: 100%;
-  max-width: 72rem;
-  margin: 0 auto;
-  padding: 0 1.5rem;
-}
-@media (min-width: 900px) {
-  /* reserva a faixa da foto para o texto nunca correr por baixo da imagem */
-  .estado-hero__conteudo { padding-right: calc(42% + 1.5rem); }
-}
+/* A casca (faixa creme, breadcrumb, título, subtítulo, tiles) é do
+   <app-page-hero>. Aqui ficam só os elementos projetados nos slots, porque com
+   encapsulação emulada eles carregam o atributo DESTE componente. */
 
-.estado-hero__foto { display: none; }
-@media (min-width: 900px) {
-  .estado-hero__foto {
-    display: block;
-    position: absolute;
-    top: 0; right: 0; bottom: 0;
-    width: 44%;
-    z-index: 1;
-    img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      object-position: center 35%;
-      display: block;
-      /* curva elíptica suave no lado esquerdo, avançando sobre o creme */
-      border-top-left-radius: 38% 62%;
-      border-bottom-left-radius: 14% 24%;
-    }
-  }
+/* FOTO projetada em [hero-arte]. A caixa (posição/tamanho/ocultar no mobile) é do
+   hero; o recorte elíptico é específico da fachada da catedral e mora aqui. */
+.estado-foto img {
+  width: 100%; height: 100%;
+  object-fit: cover;
+  object-position: center 35%;
+  display: block;
+  /* curva elíptica suave no lado esquerdo, avançando sobre o creme */
+  border-top-left-radius: 38% 62%;
+  border-bottom-left-radius: 14% 24%;
 }
-
-.breadcrumb {
-  display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem;
-  font-size: 0.85rem; color: $muted; margin-bottom: 1.25rem;
-  a { color: #2563eb; text-decoration: none; }
-  a:hover { text-decoration: underline; }
-  span[aria-current] { color: #374151; font-weight: 600; }
-}
-
-.estado-hero__titulo {
-  font-size: 1.75rem;
-  font-weight: 800;
-  line-height: 1.18;
-  letter-spacing: -0.01em;
-  margin: 0 0 0.9rem;
-  color: $titulo;
-  @media (min-width: 640px) { font-size: 2.25rem; }
-  @media (min-width: 1024px) { font-size: 2.5rem; }
-}
-.estado-hero__uf { color: $laranja-vivo; }
-
-.estado-hero__sub {
-  color: $texto;
-  margin: 0 0 1.5rem;
-  font-size: 1rem;
-  line-height: 1.55;
-}
-
-/* STAT TILES — cards brancos com borda, como no layout */
-.tiles { display: flex; flex-wrap: wrap; gap: 0.9rem; margin-bottom: 1.75rem; }
-.tile {
-  display: flex; align-items: center; gap: 0.7rem;
-  background: #fff; border: 1px solid #f0e2d6; border-radius: 14px;
-  padding: 0.85rem 1.15rem; min-width: 140px;
-}
-.tile__ico {
-  display: grid; place-items: center;
-  width: 34px; height: 34px; flex: 0 0 34px;
-  background: $creme-forte; border-radius: 10px;
-  i { color: $laranja-vivo; font-size: 1.05rem; }
-}
-.tile__dados { display: block; }
-.tile__num {
-  display: block; font-size: 1.375rem; font-weight: 800; color: $titulo;
-  line-height: 1.1; font-variant-numeric: tabular-nums;
-}
-.tile__lbl { display: block; font-size: 0.8125rem; color: $muted; }
-
-/* BUSCA do hero */
-.busca {
-  display: flex; align-items: center; gap: 0.7rem;
-  background: #fff; border: 1px solid #ecdccd; border-radius: 14px; padding: 0 1.1rem;
-  box-shadow: 0 1px 3px rgba(0,0,0,.03);
-  i { color: #9ca3af; font-size: 1.05rem; }
-  input {
-    flex: 1; border: 0; outline: none; background: transparent;
-    padding: 1rem 0; font-size: 1rem; color: $texto; min-width: 0;
-  }
-  input::placeholder { color: #9ca3af; }
-  &:focus-within { border-color: #f3b989; box-shadow: 0 0 0 3px rgba(226,118,27,.12); }
-}
-.busca__hint { color: $muted; font-size: 0.85rem; margin: 0.6rem 0 0; }
 
 /* AUTOCOMPLETE do hero */
 .busca-hero { position: relative; }

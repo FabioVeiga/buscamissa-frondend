@@ -1,0 +1,51 @@
+<app-page-hero
+  [breadcrumb]="breadcrumb"
+  [titulo]="TITULO_HERO"
+  tituloDestaque="Estado"
+  subtitulo="Explore as igrejas e horários de missa em cada estado do Brasil."
+  [tiles]="tiles"
+  [tilesCarregando]="carregando"
+  hint="Digite o nome do estado para ir direto ao hub dele."
+>
+  <div class="busca" hero-busca>
+    <i class="pi pi-search" aria-hidden="true"></i>
+    <input type="search" [(ngModel)]="busca" (ngModelChange)="aoFiltrar()"
+           placeholder="Buscar estado..." aria-label="Buscar estado" autocomplete="off" />
+  </div>
+
+  <!-- Ilustração leve, não foto: esta página abre em 27 URLs indexadas e não vale
+       pagar bytes de imagem por uma peça puramente decorativa. -->
+  <svg class="estados-arte" hero-arte viewBox="0 0 240 300" preserveAspectRatio="xMidYMid meet"
+       xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="120" cy="268" rx="88" ry="9" fill="#e6c9a8" opacity="0.35" />
+
+    <!-- folha de mapa com dobras -->
+    <path d="M42 74 L98 56 L154 76 L206 58 L206 216 L154 234 L98 214 L42 232 Z"
+          fill="#f7efe5" stroke="#e6c9a8" stroke-width="2" stroke-linejoin="round" />
+    <path d="M98 56 L98 214 M154 76 L154 234" stroke="#e6c9a8" stroke-width="2"
+          stroke-dasharray="7 6" fill="none" />
+
+    <!-- rota entre duas cidades -->
+    <path d="M74 168 C 104 150, 122 128, 160 118" stroke="#d4a97a" stroke-width="2.5"
+          stroke-dasharray="5 7" stroke-linecap="round" fill="none" />
+
+    <!-- pins -->
+    <path d="M160 90 c 11 0 20 9 20 20 0 15-20 34-20 34 0 0-20-19-20-34 0-11 9-20 20-20 z"
+          fill="#e2761b" />
+    <circle cx="160" cy="110" r="7.5" fill="#fdf6f0" />
+
+    <path d="M74 146 c 8 0 14 6 14 14 0 11-14 24-14 24 0 0-14-13-14-24 0-8 6-14 14-14 z"
+          fill="#d4a97a" />
+    <circle cx="74" cy="160" r="5" fill="#fdf6f0" />
+
+    <path d="M118 186 c 7 0 12 5 12 12 0 9-12 20-12 20 0 0-12-11-12-20 0-7 5-12 12-12 z"
+          fill="#e6c9a8" />
+    <circle cx="118" cy="198" r="4.2" fill="#fdf6f0" />
+  </svg>
+</app-page-hero>
+
+<app-hub-lista icone="pi pi-map-marker" [itens]="itensVisiveis" />
+
+@if (busca && !itensVisiveis.length) {
+  <p class="estados-vazio">Nenhum estado encontrado para "{{ busca }}".</p>
+}

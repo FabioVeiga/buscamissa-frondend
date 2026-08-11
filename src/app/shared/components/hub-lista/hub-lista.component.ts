@@ -31,7 +31,11 @@ export interface HubItem {
 })
 export class HubListaComponent {
   @Input() breadcrumb: HubBreadcrumb[] = [];
-  @Input({ required: true }) titulo = '';
+  /**
+   * Opcional: nas páginas que abrem com `<app-page-hero>` o H1, o subtítulo e o
+   * breadcrumb são do hero, e o hub-lista entra só como grade de cards.
+   */
+  @Input() titulo = '';
   @Input() subtitulo?: string;
   /** Ícone PrimeIcons dos cards (ex.: 'pi pi-map-marker'). */
   @Input() icone = 'pi pi-map-marker';

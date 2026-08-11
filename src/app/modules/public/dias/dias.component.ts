@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { DIAS_INTENCAO } from '../../../core/constants/dias-intencao';
 import { SeoService } from '../../../core/services/seo.service';
 import { HubListaComponent, HubBreadcrumb, HubItem } from '../../../shared/components/hub-lista/hub-lista.component';
+import { PageHeroComponent, HeroTile } from '../../../shared/components/page-hero/page-hero.component';
 
 const SITE = 'https://buscamissa.com.br';
 
@@ -18,14 +19,9 @@ const SITE = 'https://buscamissa.com.br';
 @Component({
   selector: 'app-dias',
   standalone: true,
-  imports: [CommonModule, HubListaComponent],
-  template: `<app-hub-lista
-    [breadcrumb]="breadcrumb"
-    titulo="Missas por dia da semana"
-    subtitulo="Encontre horários de missa para qualquer dia da semana, em todo o Brasil."
-    icone="pi pi-calendar"
-    [itens]="itens"
-  />`,
+  imports: [CommonModule, HubListaComponent, PageHeroComponent],
+  templateUrl: './dias.component.html',
+  styleUrl: './dias.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class DiasComponent implements OnInit, OnDestroy {
@@ -34,6 +30,20 @@ export class DiasComponent implements OnInit, OnDestroy {
   readonly breadcrumb: HubBreadcrumb[] = [
     { label: 'Início', link: ['/home'] },
     { label: 'Dias da semana' },
+  ];
+
+  /** `\n` vira quebra de linha (o hero usa `white-space: pre-line`). */
+  readonly TITULO_HERO = 'Horários de Missa\npor';
+
+  /**
+   * Números FIXOS, de constante — nada de rede. `ChurchesService.getInfo()`
+   * (`v1/Igreja/infos`) não tem StateKey em `prerender-state-keys.ts`, então
+   * nenhum interceptor de prerender o escreve: usá-lo aqui faria o prerender
+   * desta rota depender da API estar acessível na máquina de build, e assaria no
+   * HTML indexado um número que envelhece. Contagem global é papel da Home.
+   */
+  readonly tiles: HeroTile[] = [
+    { icone: 'pi pi-calendar', numero: DIAS_INTENCAO.length, rotulo: 'dias da semana' },
   ];
 
   readonly itens: HubItem[] = DIAS_INTENCAO.map((d) => ({

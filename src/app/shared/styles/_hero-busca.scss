@@ -1,0 +1,24 @@
+// Campo de busca projetado no slot [hero-busca] do <app-page-hero>.
+//
+// Mora aqui, e não no SCSS do hero, por causa da encapsulação emulada: o markup
+// da busca pertence à PÁGINA (cada uma tem lógica própria — autocomplete de
+// cidade, filtro local...), então só o SCSS da página alcança aqueles elementos.
+// O partial evita repetir estas regras em cada consumidor sem acoplar o hero.
+//
+// Uso: `@use '../../../shared/styles/hero-busca' as *;` no topo do SCSS da página.
+
+$hb-texto: #374151;
+$hb-muted: #6b7280;
+
+.busca {
+  display: flex; align-items: center; gap: 0.7rem;
+  background: #fff; border: 1px solid #ecdccd; border-radius: 14px; padding: 0 1.1rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  i { color: #9ca3af; font-size: 1.05rem; }
+  input {
+    flex: 1; border: 0; outline: none; background: transparent;
+    padding: 1rem 0; font-size: 1rem; color: $hb-texto; min-width: 0;
+  }
+  input::placeholder { color: #9ca3af; }
+  &:focus-within { border-color: #f3b989; box-shadow: 0 0 0 3px rgba(226, 118, 27, 0.12); }
+}

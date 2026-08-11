@@ -17,6 +17,8 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { SeoPaginasService } from '../../../core/services/seo-paginas.service';
 import { SeoService } from '../../../core/services/seo.service';
 import { DIAS_INTENCAO } from '../../../core/constants/dias-intencao';
+import { PageHeroComponent, HeroTile } from '../../../shared/components/page-hero/page-hero.component';
+import { HubBreadcrumb } from '../../../shared/components/hub-lista/hub-lista.component';
 
 const SITE = 'https://buscamissa.com.br';
 
@@ -55,7 +57,7 @@ interface DiaLink {
 @Component({
   selector: 'app-estado',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, SkeletonModule],
+  imports: [CommonModule, FormsModule, RouterLink, SkeletonModule, PageHeroComponent],
   templateUrl: './estado.component.html',
   styleUrl: './estado.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -85,6 +87,15 @@ export class EstadoComponent implements OnInit, OnDestroy {
   estadoNome = '';
   totalCidades = 0;
   totalParoquias = 0;
+
+  // --- Hero (app-page-hero). Como os demais derivados abaixo, é montado UMA vez
+  // por carga: com OnPush e 26 UFs prerenderizadas, getter de template sairia caro. ---
+
+  /** `\n` vira quebra de linha — o hero renderiza o título com `white-space: pre-line`. */
+  readonly TITULO_HERO = 'Horários de Missa no\nEstado de';
+  breadcrumb: HubBreadcrumb[] = [];
+  subtituloHero = '';
+  tilesHero: HeroTile[] = [];
 
   // --- Derivados calculados UMA vez ao carregar (não são getters de template:
   // com 100+ cidades, refazer filter/sort/groupBy a cada ciclo de change
@@ -137,6 +148,20 @@ export class EstadoComponent implements OnInit, OnDestroy {
     this._seo.removeJsonLd('itemlist');
   }
 
+  /** Monta os dados do `app-page-hero`. Chamado uma vez por carga. */
+  private montarHero(): void {
+    this.breadcrumb = [
+      { label: 'Início', link: ['/home'] },
+      { label: 'Estados', link: ['/estados'] },
+      { label: this.estadoNome },
+    ];
+    this.subtituloHero = `Encontre igrejas, paróquias e horários de missa\nem todo o estado de ${this.estadoNome}.`;
+    this.tilesHero = [
+      { icone: 'pi pi-building', numero: this.totalParoquias, rotulo: 'paróquias' },
+      { icone: 'pi pi-map-marker', numero: this.totalCidades, rotulo: 'cidades' },
+    ];
+  }
+
   // ============================ carga ============================
 
   private carregar(): void {
@@ -166,6 +191,9 @@ export class EstadoComponent implements OnInit, OnDestroy {
           this.totalParoquias = data.totalParoquias ?? 0;
           this.indexarCidades(data.cidades ?? []);
           this.dias = this.montarDias(data.dias);
+          // Depois de indexarCidades: é lá que `totalCidades` é reconciliado com o
+          // número de cidades realmente listadas.
+          this.montarHero();
           this.aplicarSeo(data.seo);
           this.aplicarJsonLd();
           this._cdr.markForCheck();
