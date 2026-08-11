@@ -20,6 +20,10 @@ const RE_CIDADE = /v2\/Igreja\/cidade\/([^/]+)\/([^/?]+)/i;
 // Endpoints das páginas de SEO (Fase 3): Estado, Intenção-cidade (folha) e a
 // árvore do dia (hubs nacional/UF da intenção).
 const RE_ESTADO = /v2\/seo\/estado\/([^/?]+)/i;
+// BULK de estados (índice `/estados`). Não colide com RE_ESTADO, que exige a barra
+// depois de "estado" — foi justamente por isso que esta URL ficou de fora do
+// TransferState por tanto tempo.
+const RE_ESTADOS = /v2\/seo\/estados(?:\?|$)/i;
 const RE_INTENCAO = /v2\/seo\/missa-dia\/([^/]+)\/([^/]+)\/([^/?]+)/i;
 const RE_INTENCAO_ARVORE = /v2\/seo\/missa-dia\/([^/?]+)(?:\?|$)/i;
 
@@ -42,6 +46,14 @@ export function chaveEstado(url: string): string | null {
   const m = url.match(RE_ESTADO);
   if (!m) return null;
   return decodeURIComponent(m[1]).toLowerCase();
+}
+
+/**
+ * Chave fixa do bulk de estados (não tem parâmetro), ou null. Existe uma só, mas
+ * mantém o mesmo formato das demais para caber em `resolverStateKey`.
+ */
+export function chaveEstados(url: string): string | null {
+  return RE_ESTADOS.test(url) ? 'todos' : null;
 }
 
 /** Chave lógica dia/uf/cidade (lowercase) da Intenção-cidade, ou null. */
@@ -71,6 +83,11 @@ export function stateKeyCidade(chave: string): StateKey<unknown> {
 /** StateKey do TransferState para uma resposta de Estado. */
 export function stateKeyEstado(chave: string): StateKey<unknown> {
   return makeStateKey<unknown>(`pe:${chave}`);
+}
+
+/** StateKey do TransferState para o bulk de estados (índice `/estados`). */
+export function stateKeyEstados(chave: string): StateKey<unknown> {
+  return makeStateKey<unknown>(`pes:${chave}`);
 }
 
 /** StateKey do TransferState para uma resposta de Intenção-cidade. */
