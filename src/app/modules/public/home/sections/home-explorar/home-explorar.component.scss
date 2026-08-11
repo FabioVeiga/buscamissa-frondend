@@ -1,0 +1,96 @@
+@use '../shared' as *;
+
+// ── ENCONTRE DO SEU JEITO (3 caminhos: cidade / estado / dia) ──
+.explorar {
+  margin: 2rem 0;
+
+  &__intro {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+  &__titulo {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: $texto;
+    margin: 0 0 0.4rem;
+  }
+  &__sub {
+    font-size: 0.9rem;
+    color: $texto-2;
+    margin: 0 auto;
+    max-width: 36rem;
+    line-height: 1.5;
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+  }
+}
+
+.explorar-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 0.5rem;
+  padding: 1.75rem 1.25rem;
+  background: #fff;
+  border: 1px solid $borda;
+  border-radius: 14px;
+  text-decoration: none;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+
+  &:hover {
+    border-color: #f3b989;
+    box-shadow: 0 4px 14px rgba(17, 24, 39, 0.07);
+    transform: translateY(-2px);
+  }
+
+  &__icone {
+    width: 3.25rem;
+    height: 3.25rem;
+    border-radius: 50%;
+    background: #fff4ed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $laranja;
+    font-size: 1.3rem;
+    margin-bottom: 0.25rem;
+  }
+
+  &__titulo {
+    font-size: 1rem;
+    font-weight: 700;
+    color: $texto;
+  }
+
+  &__desc {
+    font-size: 0.85rem;
+    color: $texto-2;
+    line-height: 1.45;
+  }
+
+  &__cta {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.35rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: $laranja;
+
+    i { font-size: 0.75rem; }
+  }
+
+  // Cada caminho tem seu tom, seguindo o padrão do restante da home.
+  &--estado &__icone { background: #eefaf1; color: #2f855a; }
+  &--estado &__cta { color: #2f855a; }
+  &--dia &__icone { background: #eef2fd; color: #3556b8; }
+  &--dia &__cta { color: #3556b8; }
+
+  &--estado:hover { border-color: #a9dcbb; }
+  &--dia:hover { border-color: #b4c3ee; }
+}

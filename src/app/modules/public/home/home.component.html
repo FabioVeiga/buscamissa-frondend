@@ -148,6 +148,13 @@
   <!-- ══ ESTATÍSTICAS ══ -->
   <app-home-stats *ngIf="!resultsMode" [stats]="stats" />
 
+  <!-- ══ ENCONTRE DO SEU JEITO (cidade / estado / dia) ══ -->
+  <!-- SEM @defer: é o ponto de entrada indexável para os hubs e substitui os 27
+       chips de estado que saíram daqui. Precisa entrar no HTML do prerender. -->
+  @if (!resultsMode) {
+    <app-home-explorar />
+  }
+
   <!-- ══ MISSAS + MAPA ══ -->
   <app-home-missas-mapa
     *ngIf="!resultsMode"
@@ -164,57 +171,48 @@
   />
 
   <!-- ══ COMO FUNCIONA + NÃO ENCONTROU ══ -->
+  <!-- SEM @defer: um bloco que o servidor assa como @placeholder nunca é acionado
+       na hidratação (a seção ficava invisível em produção). É markup estático e
+       leve, então renderiza direto. -->
   @if (!resultsMode) {
-    @defer (on viewport) {
-      <app-home-como-funciona />
-    } @placeholder {
-      <div class="secao-defer-ph" aria-hidden="true"></div>
-    }
+    <app-home-como-funciona />
   }
 
   <!-- ══ SEUS FAVORITOS ══ -->
-  @if (!resultsMode) {
-    @defer (on viewport) {
-      <app-home-favoritos
-        [favoritas]="paroquiasFavoritas"
-        (remover)="removerFavorita($event)"
-      />
-    } @placeholder {
-      <div class="secao-defer-ph" aria-hidden="true"></div>
-    }
-  }
-
-  <!-- ══ EXPLORE POR CIDADE ══ -->
-  @if (!resultsMode) {
-    @defer (on viewport) {
-      <app-home-cidades
-        [cidades]="cidadesExibidas"
-        [cidadeDetectada]="cidadeDetectada"
-        [geoEncontrada]="geoStatus === 'found'"
-      />
-    } @placeholder {
-      <div class="secao-defer-ph" aria-hidden="true"></div>
-    }
-  }
-
-  <!-- ══ MISSAS POR ESTADO / POR DIA (pontos de entrada — indexáveis) ══ -->
-  <!-- Ordem: Cidade (acima) → Estado → Dia. SEM @defer: precisam entrar no HTML
-       do prerender p/ descoberta/SEO. -->
-  @if (!resultsMode) {
-    <app-home-chips
-      titulo="Missas por estado"
-      subtitulo="Explore as igrejas e horários de missa em cada estado do Brasil."
-      icone="pi pi-map"
-      [itens]="chipsEstados"
-      [destaque]="estadoDetectado"
-      [verTodosLink]="['/estados']"
-      verTodosLabel="Ver todos os estados"
+  <!-- Client-only: _loadFavorita() lê o localStorage no ngOnInit, então o servidor
+       assaria o estado vazio e o cliente a lista cheia — mismatch de hidratação.
+       O guard mantém o bloco fora do prerender em vez de usar @defer. -->
+  @if (!resultsMode && _isBrowser) {
+    <app-home-favoritos
+      [favoritas]="paroquiasFavoritas"
+      (remover)="removerFavorita($event)"
     />
+  }
+
+  <!-- ══ CIDADES POPULARES ══ -->
+  <!-- SEM @defer (mesmo motivo do "Como funciona"): sem geo, `cidadesExibidas` é a
+       constante CIDADES_POPULARES tanto no servidor quanto no cliente inicial, então
+       hidrata sem mismatch — e os 9 chips viram links crawláveis na home. -->
+  @if (!resultsMode) {
+    <app-home-cidades
+      [cidades]="cidadesExibidas"
+      [cidadeDetectada]="cidadeDetectada"
+      [geoEncontrada]="geoStatus === 'found'"
+    />
+  }
+
+  <!-- ══ MISSAS POR DIA DA SEMANA (ponto de entrada — indexável) ══ -->
+  <!-- SEM @defer: precisa entrar no HTML do prerender p/ descoberta/SEO.
+       A lista completa de estados saiu daqui: vive em /estados, no bloco
+       "Encontre do seu jeito" (acima), no menu Explorar e no footer. -->
+  @if (!resultsMode) {
     <app-home-chips
       titulo="Missas por dia da semana"
       subtitulo="Encontre horários de missa para qualquer dia da semana."
       icone="pi pi-calendar"
       [itens]="chipsDias"
+      [verTodosLink]="['/dias']"
+      verTodosLabel="Ver todos os dias"
     />
   }
 
