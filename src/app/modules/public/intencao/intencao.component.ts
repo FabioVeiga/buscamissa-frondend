@@ -94,7 +94,7 @@ export class IntencaoComponent implements OnInit {
       .pipe(takeUntilDestroyed(this._destroyRef), finalize(() => (this.isLoading = false)))
       .subscribe({
         next: (data: any) => {
-          if (!data) return void (this.naoEncontrado = true);
+          if (!data) return void this.marcarNaoEncontrado();
           this.cidadeNome = data.cidade ?? '';
           this.paroquias = data.paroquias ?? [];
           this.aplicarSeo(data.seo);
@@ -114,7 +114,7 @@ export class IntencaoComponent implements OnInit {
       .pipe(takeUntilDestroyed(this._destroyRef), finalize(() => (this.isLoading = false)))
       .subscribe({
         next: (arvore: any) => {
-          if (!arvore?.estados) return void (this.naoEncontrado = true);
+          if (!arvore?.estados) return void this.marcarNaoEncontrado();
           if (this.nivel === 'nacional') {
             this.estados = arvore.estados.map((e: any) => ({ uf: e.uf, estado: e.estado }));
             this.aplicarSeo(arvore.seo);
@@ -125,7 +125,7 @@ export class IntencaoComponent implements OnInit {
             );
           } else {
             const estado = arvore.estados.find((e: any) => e.uf?.toLowerCase() === this.uf);
-            if (!estado) return void (this.naoEncontrado = true);
+            if (!estado) return void this.marcarNaoEncontrado();
             this.estadoNome = estado.estado ?? '';
             this.cidades = estado.cidades ?? [];
             this.aplicarSeo(estado.seo);
@@ -141,8 +141,28 @@ export class IntencaoComponent implements OnInit {
   }
 
   private tratarErro(err: any): void {
-    if (err?.status === 404) this.naoEncontrado = true;
+    if (err?.status === 404) this.marcarNaoEncontrado();
+    // Falha transitória (rede/500) NÃO vira noindex: a página pode ser válida e
+    // estar apenas indisponível no momento.
     else this.erroCarregar = true;
+  }
+
+  /**
+   * Dia/UF/cidade sem missa (`/missa-domingo/xx`): a rota casa mas não há página
+   * prerenderizada, então o SWA serve o shell (que traz title/canonical da HOME) e
+   * a hidratação mostra "nenhuma missa encontrada" — página de "não encontrado"
+   * marcada como indexável, isto é, um soft-404. Aqui damos identidade própria à
+   * URL e a tiramos do índice.
+   */
+  private marcarNaoEncontrado(): void {
+    this.naoEncontrado = true;
+    const caminho = ['missa-' + this.dia, this.uf, this.cidadeSlug].filter(Boolean).join('/');
+    this._seo.update({
+      title: `Missa de ${this.rotulo} não encontrada | BuscaMissa`,
+      description: `Não encontramos paróquias com missa de ${this.rotulo} cadastradas aqui.`,
+      canonical: `${SITE}/${caminho}`,
+      noindex: true,
+    });
   }
 
   tentarNovamente(): void {
