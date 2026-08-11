@@ -1,0 +1,110 @@
+$laranja-vivo: #e2761b;
+$creme: #fdf6f0;
+$creme-forte: #fdeee2;
+$titulo: #1f2937;
+$texto: #374151;
+$muted: #6b7280;
+
+/* ================= HERO ================= */
+/* Faixa creme full-bleed; a arte ocupa a direita e "sangra" até a borda da
+   viewport, com o lado esquerdo curvo sobre o creme. */
+.ph-hero {
+  position: relative;
+  background: $creme;
+  overflow: hidden;
+  padding: 1.5rem 0 2.5rem;
+  margin-bottom: 2.75rem;
+  /* Sangra de borda a borda porque `.card:has(.ph-hero)` remove o limite de
+     largura do layout (ver styles.scss). Sem 100vw de propósito: ele inclui a
+     barra de rolagem e criaria scroll lateral. */
+  width: 100%;
+  /* .hero global (styles.scss) centraliza texto; aqui o alinhamento é à esquerda. */
+  text-align: left;
+}
+@media (min-width: 900px) {
+  /* altura maior deixa a arte respirar (object-fit: cover recorta) */
+  .ph-hero { min-height: 30rem; display: flex; align-items: center; }
+}
+
+.ph-hero__conteudo {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+@media (min-width: 900px) {
+  /* reserva a faixa da arte para o texto nunca correr por baixo dela */
+  .ph-hero__conteudo { padding-right: calc(42% + 1.5rem); }
+}
+
+/* Só a CAIXA da arte é do hero; o conteúdo projetado é estilizado pela página. */
+.ph-hero__arte { display: none; }
+@media (min-width: 900px) {
+  .ph-hero__arte {
+    display: block;
+    position: absolute;
+    top: 0; right: 0; bottom: 0;
+    width: 44%;
+    z-index: 1;
+  }
+}
+
+.ph-hero__breadcrumb {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.4rem;
+  font-size: 0.85rem; color: $muted; margin-bottom: 1.25rem;
+  a { color: #2563eb; text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  span[aria-current] { color: #374151; font-weight: 600; }
+}
+
+.ph-hero__titulo {
+  font-size: 1.75rem;
+  font-weight: 800;
+  line-height: 1.18;
+  letter-spacing: -0.01em;
+  margin: 0 0 0.9rem;
+  color: $titulo;
+  /* Quebras vêm como `\n` no input `titulo` — preserva o <br> do layout original
+     sem innerHTML. `pre-line` colapsa espaços, então só a quebra sobrevive. */
+  white-space: pre-line;
+  @media (min-width: 640px) { font-size: 2.25rem; }
+  @media (min-width: 1024px) { font-size: 2.5rem; }
+}
+.ph-hero__destaque { color: $laranja-vivo; }
+
+.ph-hero__sub {
+  color: $texto;
+  margin: 0 0 1.5rem;
+  font-size: 1rem;
+  line-height: 1.55;
+  white-space: pre-line;
+}
+
+/* STAT TILES — cards brancos com borda */
+.ph-hero__tiles { display: flex; flex-wrap: wrap; gap: 0.9rem; margin-bottom: 1.75rem; }
+.ph-tile {
+  display: flex; align-items: center; gap: 0.7rem;
+  background: #fff; border: 1px solid #f0e2d6; border-radius: 14px;
+  padding: 0.85rem 1.15rem; min-width: 140px;
+}
+.ph-tile__ico {
+  display: grid; place-items: center;
+  width: 34px; height: 34px; flex: 0 0 34px;
+  background: $creme-forte; border-radius: 10px;
+  i { color: $laranja-vivo; font-size: 1.05rem; }
+}
+.ph-tile__dados { display: block; }
+.ph-tile__num {
+  display: block; font-size: 1.375rem; font-weight: 800; color: $titulo;
+  line-height: 1.1; font-variant-numeric: tabular-nums;
+  /* Mesma caixa com número ou com skeleton — o tile não muda de altura. */
+  min-height: 1.5125rem;
+}
+.ph-tile__lbl { display: block; font-size: 0.8125rem; color: $muted; }
+
+/* Slot da busca: sem margem própria (ver comentário no template). */
+.ph-hero__busca { position: relative; }
+
+.ph-hero__hint { color: $muted; font-size: 0.85rem; margin: 0.6rem 0 0; }

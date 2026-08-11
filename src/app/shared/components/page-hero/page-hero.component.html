@@ -1,0 +1,63 @@
+<div class="ph-hero">
+  <div class="ph-hero__conteudo">
+    @if (breadcrumb.length) {
+      <nav class="ph-hero__breadcrumb" aria-label="Trilha de navegação">
+        @for (b of breadcrumb; track b.label; let last = $last) {
+          @if (b.link && !last) {
+            <a [routerLink]="b.link">{{ b.label }}</a>
+            <span aria-hidden="true">›</span>
+          } @else {
+            <span aria-current="page">{{ b.label }}</span>
+          }
+        }
+      </nav>
+    }
+
+    <h1 class="ph-hero__titulo">{{ titulo }}@if (tituloDestaque) {<span class="ph-hero__destaque"> {{ tituloDestaque }}</span>}</h1>
+
+    @if (subtitulo) {
+      <p class="ph-hero__sub">{{ subtitulo }}</p>
+    }
+
+    @if (tiles.length) {
+      <div class="ph-hero__tiles">
+        @for (t of tiles; track t.rotulo) {
+          <div class="ph-tile">
+            <span class="ph-tile__ico" aria-hidden="true"><i [class]="t.icone"></i></span>
+            <span class="ph-tile__dados">
+              @if (tilesCarregando) {
+                <span class="ph-tile__num"><p-skeleton width="2.5rem" height="1.375rem" /></span>
+              } @else {
+                <span class="ph-tile__num">{{ t.numero }}</span>
+              }
+              <span class="ph-tile__lbl">{{ t.rotulo }}</span>
+            </span>
+          </div>
+        }
+      </div>
+    }
+
+    <!--
+      Sem margem própria: o espaçamento vem do bloco anterior (.ph-hero__tiles).
+      Assim uma página sem busca (ex.: /dias) não ganha um buraco reservado.
+    -->
+    <div class="ph-hero__busca">
+      <ng-content select="[hero-busca]"></ng-content>
+    </div>
+
+    @if (hint) {
+      <p class="ph-hero__hint">{{ hint }}</p>
+    }
+  </div>
+
+  <!--
+    Caixa da arte: o hero só POSICIONA (oculta abaixo de 900px, ancora à direita).
+    O estilo do que vai dentro — <picture>/<svg> — é da página, que é dona daquele
+    markup: com encapsulação emulada o filho projetado carrega o atributo da página,
+    não o do hero. Deixar assim evita ::ng-deep e evita o hero depender de estilo
+    interno de quem o consome.
+  -->
+  <div class="ph-hero__arte" aria-hidden="true">
+    <ng-content select="[hero-arte]"></ng-content>
+  </div>
+</div>
