@@ -1,0 +1,23 @@
+// Campo de busca projetado no slot [hero-busca].
+@use '../../../shared/styles/hero-busca' as *;
+
+// Ilustração projetada em [hero-arte]. A caixa (posição, largura, ocultar abaixo
+// de 900px) é do <app-page-hero>; o preenchimento e o recorte são desta página.
+.estados-arte {
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: linear-gradient(160deg, #fdeee2 0%, #f7e0cc 100%);
+  // Mesma curva elíptica da foto em /missas/:uf — é o que faz as duas páginas
+  // parecerem do mesmo produto.
+  border-top-left-radius: 38% 62%;
+  border-bottom-left-radius: 14% 24%;
+}
+
+.estados-vazio {
+  max-width: 72rem;
+  margin: -1rem auto 0;
+  padding: 0 1.5rem 2rem;
+  color: #6b7280;
+  text-align: center;
+}
