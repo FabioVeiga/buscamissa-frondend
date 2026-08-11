@@ -90,7 +90,15 @@ export class EstadosComponent implements OnInit, OnDestroy {
         },
         // Degrada para a lista estática: um índice vazio é pior que um índice com
         // um link a mais. O risco de link para hub sem página volta só neste caso.
-        error: () => this.aplicarFallbackEstatico(),
+        //
+        // Só quando NUNCA houve dado. Com a página prerenderizada, o TransferState
+        // já emitiu a lista real de forma síncrona; deixar um erro de revalidação
+        // rebaixá-la para a lista estática trocaria dado bom (com as metas de cada
+        // UF) por dado pior. O interceptor de leitura já engole esse erro, isto é
+        // cinto de segurança para o caminho sem TransferState.
+        error: () => {
+          if (!this.itens.length) this.aplicarFallbackEstatico();
+        },
       });
   }
 

@@ -7,6 +7,7 @@ import { serverRoutes } from './app.routes.server';
 import { PrerenderCidadeInterceptor } from './core/middleware/prerender-cidade.interceptor';
 import { PrerenderParoquiaInterceptor } from './core/middleware/prerender-paroquia.interceptor';
 import { PrerenderEstadoInterceptor } from './core/middleware/prerender-estado.interceptor';
+import { PrerenderEstadosInterceptor } from './core/middleware/prerender-estados.interceptor';
 import { PrerenderIntencaoInterceptor } from './core/middleware/prerender-intencao.interceptor';
 
 const serverConfig: ApplicationConfig = {
@@ -23,6 +24,9 @@ const serverConfig: ApplicationConfig = {
     // (/v2/seo/missa-dia/{dia}/{uf}/{cidade}), servidos dos bulks em disco.
     { provide: HTTP_INTERCEPTORS, useClass: PrerenderEstadoInterceptor, multi: true },
     { provide: HTTP_INTERCEPTORS, useClass: PrerenderIntencaoInterceptor, multi: true },
+    // Bulk /v2/seo/estados para o índice /estados — a última página de SEO que
+    // ainda buscava ao vivo no prerender e ficava sem TransferState.
+    { provide: HTTP_INTERCEPTORS, useClass: PrerenderEstadosInterceptor, multi: true },
   ],
 };
 
