@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, inject, OnInit } from '@angular/core';
+import { Component, ElementRef, HostListener, inject, OnInit } from '@angular/core';
 import { RouterModule } from '@angular/router';
 import { FavoritesService } from '../../../services/favorites.service';
 import { AuthService } from '../../../services/auth.service';
@@ -16,7 +16,22 @@ export class HeaderHomeComponent implements OnInit {
   private favorites = inject(FavoritesService);
   private auth = inject(AuthService);
   private notificacoes = inject(NotificacaoService);
+  private host = inject(ElementRef<HTMLElement>);
   menuAberto = false;
+  explorarAberto = false;
+
+  /** Clique fora do header fecha o dropdown "Explorar". */
+  @HostListener('document:click', ['$event.target'])
+  onDocumentClick(alvo: EventTarget | null): void {
+    if (this.explorarAberto && !this.host.nativeElement.contains(alvo)) {
+      this.explorarAberto = false;
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscape(): void {
+    this.explorarAberto = false;
+  }
 
   get favoritosCount(): number {
     return this.favorites.quantidade();
