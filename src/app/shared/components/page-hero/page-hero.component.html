@@ -20,19 +20,24 @@
     }
 
     <!--
-      Busca ANTES dos tiles: é a ação primária da página (o que o usuário veio
-      fazer), os números são prova social — vêm depois de o usuário já saber pra
-      onde ir. Antes os tiles vinham primeiro aqui (fixo neste template, a ordem
-      no HTML de quem consome o hero não tinha efeito nenhum sobre isto: é
-      projeção via ng-content num slot de posição fixa) e empurravam a busca para
-      fora da primeira dobra no mobile (ex.: top:454px em /cidades).
-      Sem margem própria: o espaçamento é dado pelo bloco seguinte (.ph-hero__tiles)
-      quando ele existe. Assim uma página sem busca (ex.: /dias) não ganha um
-      buraco reservado, e uma página sem tiles (nenhuma hoje) também não.
+      Ordem do bloco de ação: busca -> hint -> tiles. A busca é a ação primária
+      (o que o usuário veio fazer) e os números são prova de cobertura, que só
+      fazem sentido depois de ele já saber para onde ir. A ordem é fixada AQUI
+      porque `[hero-busca]` é projetado via ng-content num slot de posição fixa:
+      reordenar os elementos no HTML de quem consome o hero não tem efeito nenhum.
+      Espaçamento: cada bloco só empurra o seguinte quando de fato existe (ver
+      SCSS), então /dias — sem busca e sem tiles — não ganha buraco reservado.
     -->
     <div class="ph-hero__busca">
       <ng-content select="[hero-busca]"></ng-content>
     </div>
+
+    <!-- O hint descreve a BUSCA ("Digite o nome da cidade..."), então vem colado
+         nela — não depois dos tiles, onde ficava órfão de um campo que já tinha
+         saído da vista. -->
+    @if (hint) {
+      <p class="ph-hero__hint">{{ hint }}</p>
+    }
 
     @if (tiles.length) {
       <div class="ph-hero__tiles">
@@ -50,10 +55,6 @@
           </div>
         }
       </div>
-    }
-
-    @if (hint) {
-      <p class="ph-hero__hint">{{ hint }}</p>
     }
   </div>
 
