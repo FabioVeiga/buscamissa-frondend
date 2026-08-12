@@ -1,4 +1,4 @@
-import { Component, DestroyRef, inject, PLATFORM_ID } from "@angular/core";
+import { Component, DestroyRef, inject, NgZone, PLATFORM_ID } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { finalize } from "rxjs/operators";
 import { CommonModule, DatePipe, isPlatformBrowser } from "@angular/common";
@@ -34,7 +34,8 @@ import { HomeStatsComponent } from "./sections/home-stats/home-stats.component";
 import { HomeComoFuncionaComponent } from "./sections/home-como-funciona/home-como-funciona.component";
 import { HomeFavoritosComponent } from "./sections/home-favoritos/home-favoritos.component";
 import { HomeCidadesComponent } from "./sections/home-cidades/home-cidades.component";
-import { HomeChipsComponent, ChipLink } from "./sections/home-chips/home-chips.component";
+import { HomeChipsComponent, ChipLink, ChipDestaque } from "./sections/home-chips/home-chips.component";
+import { HomeExplorarComponent } from "./sections/home-explorar/home-explorar.component";
 import { DIAS_INTENCAO } from "../../../core/constants/dias-intencao";
 import { HomeMissasMapaComponent } from "./sections/home-missas-mapa/home-missas-mapa.component";
 import { linkParoquia } from "../../../shared/utils/church-link.utils";
@@ -62,6 +63,7 @@ interface AddressData {
     HomeCidadesComponent,
     HomeMissasMapaComponent,
     HomeChipsComponent,
+    HomeExplorarComponent,
   ],
   providers: [MessageService, DatePipe],
   templateUrl: "./home.component.html",
@@ -95,15 +97,20 @@ export class HomeComponent {
   /** Cidades populares — exibidas quando sem geoloc */
   readonly cidadesFallback = CIDADES_POPULARES;
 
-  /** Pontos de entrada (Fase Final): "Missas por dia" e "Missas por estado". */
+  /** Ponto de entrada "Missas por dia da semana" (chips + link p/ o hub /dias). */
   readonly chipsDias: ChipLink[] = DIAS_INTENCAO.map((d) => ({
     label: d.nome,
     link: ['/missa-' + d.slug],
   }));
-  readonly chipsEstados: ChipLink[] = STATES.map((e) => ({
-    label: e.nome,
-    link: ['/missas', e.sigla.toLowerCase()],
-  }));
+
+  /** Estado detectado (derivado da mesma geo da cidade) — card "Seu estado". */
+  get estadoDetectado(): ChipDestaque | null {
+    const uf = this.cidadeDetectada?.uf;
+    if (this.geoStatus !== 'found' || !uf) return null;
+    const est = STATES.find((e) => e.sigla.toLowerCase() === uf.toLowerCase());
+    if (!est) return null;
+    return { rotulo: 'Seu estado', nome: est.nome, link: ['/missas', est.sigla.toLowerCase()] };
+  }
 
   get cidadesExibidas() {
     return this.geoStatus === 'found' && this.cidadesGrid.length
@@ -318,7 +325,9 @@ export class HomeComponent {
    * o build inteiro. Guardamos o caminho de geolocalização/scroll com este flag.
    * Ver city.component.ts / countdown-chip.component.ts (mesmo padrão).
    */
-  private _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  /** protected (não private): o template usa para não prerenderizar blocos client-only. */
+  protected _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  private _ngZone = inject(NgZone);
 
   setSearchTab(tab: 'cidade' | 'local'): void {
     if (this.searchTab === tab) return;
@@ -533,6 +542,7 @@ export class HomeComponent {
         if (!this.resultsMode && this._isBrowser) {
           this._loadProximasMissas();
           this._requestGeolocation();
+          this._agendarRefreshProximas();
         }
       })
     ).subscribe({
@@ -593,10 +603,18 @@ export class HomeComponent {
     });
   }
 
-  private _loadProximasMissas(lat?: number | null, lng?: number | null, raioKm = 10): void {
-    this.isLoadingProximas = true;
+  /** Args da última carga — usados pelo refresh periódico para repetir a mesma busca. */
+  private _ultimaBuscaProximas: { lat?: number | null; lng?: number | null; raioKm: number } | null = null;
+  private _ultimaCargaProximasEm = 0;
+
+  private _loadProximasMissas(lat?: number | null, lng?: number | null, raioKm = 10, silencioso = false): void {
+    this._ultimaBuscaProximas = { lat, lng, raioKm };
+    // No refresh automático não mostramos skeleton: a lista já está na tela e
+    // piscar o loading a cada ciclo seria pior que a espera invisível.
+    if (!silencioso) this.isLoadingProximas = true;
     this._churchService.proximasMissas(lat, lng, raioKm).subscribe({
       next: (res: any) => {
+        this._ultimaCargaProximasEm = Date.now();
         const items: any[] = res?.data ?? res ?? [];
         this.proximasMissasCards = items.slice(0, 5).map((item: any) => ({
           churchId: item.igrejaId,
@@ -624,6 +642,52 @@ export class HomeComponent {
         this.isLoadingProximas = false;
       },
       error: () => { this.isLoadingProximas = false; /* silencioso — seção simplesmente não aparece */ },
+    });
+  }
+
+  /**
+   * Mantém "próximas missas" coerente com a hora do relógio: a lista vem ordenada
+   * por proximidade temporal, então uma aba aberta por muito tempo mostraria missas
+   * que já aconteceram. Dois gatilhos, ambos SÓ no browser — um timer pendente no
+   * servidor trava o prerender e derruba o build inteiro:
+   *  - intervalo fixo, para quem deixa a página aberta;
+   *  - volta do foco da aba, que cobre o caso real mais comum (usuário retorna
+   *    depois de horas) sem esperar o próximo tick.
+   */
+  private static readonly REFRESH_PROXIMAS_MS = 5 * 60_000;
+
+  private _agendarRefreshProximas(): void {
+    if (!this._isBrowser) return;
+
+    const recarregar = (silencioso = true) => {
+      const args = this._ultimaBuscaProximas;
+      if (!args || this.resultsMode) return;
+      this._loadProximasMissas(args.lat, args.lng, args.raioKm, silencioso);
+    };
+
+    // runOutsideAngular é obrigatório, não otimização: um setInterval recorrente
+    // dentro da zona mantém ApplicationRef.isStable() em false para sempre, e a
+    // hidratação nunca conclui (NG0506) — foi exatamente isso que congelou os
+    // blocos @defer desta página. O re-entry na zona acontece no subscribe do
+    // HttpClient, então a UI atualiza normalmente.
+    const timer = this._ngZone.runOutsideAngular(() =>
+      setInterval(() => this._ngZone.run(() => recarregar()), HomeComponent.REFRESH_PROXIMAS_MS)
+    );
+
+    // Só revalida na volta do foco se a última carga já envelheceu — alt-tab
+    // rápido não deve gerar request.
+    const aoVoltarFoco = () => {
+      if (document.visibilityState !== 'visible') return;
+      if (Date.now() - this._ultimaCargaProximasEm < HomeComponent.REFRESH_PROXIMAS_MS) return;
+      this._ngZone.run(() => recarregar());
+    };
+    this._ngZone.runOutsideAngular(() =>
+      document.addEventListener('visibilitychange', aoVoltarFoco)
+    );
+
+    this._destroyRef.onDestroy(() => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', aoVoltarFoco);
     });
   }
 

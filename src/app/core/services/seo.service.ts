@@ -47,9 +47,18 @@ export class SeoService {
     this._meta.updateTag({ property: 'og:url', content: canonicalUrl });
 
     // og:image/twitter:image específicos da rota, quando informados.
+    //
+    // O `else` é essencial na navegação SPA: sem ele a imagem da rota ANTERIOR
+    // sobrevive. Como vários payloads de SEO trazem ogImage nulo (hubs de estado,
+    // cidade, intenção), uma paróquia visitada antes emprestava a própria foto ao
+    // compartilhamento da página seguinte. No prerender o bug não aparece — cada
+    // página é um documento novo —, só na navegação client-side.
     if (data.image) {
       this._meta.updateTag({ property: 'og:image', content: data.image });
       this._meta.updateTag({ name: 'twitter:image', content: data.image });
+    } else {
+      this._meta.removeTag("property='og:image'");
+      this._meta.removeTag("name='twitter:image'");
     }
   }
 

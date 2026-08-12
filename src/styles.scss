@@ -54,6 +54,20 @@ button:focus-visible,
   max-width: 72rem;
 }
 
+/* Páginas com <app-page-hero> têm faixa sangrando de borda a borda: o .card não
+   pode limitar a largura. O próprio hero centraliza o conteúdo (72rem). Evita o
+   truque de 100vw, que somaria a barra de rolagem e criaria scroll lateral.
+
+   `app-estado` continua na lista porque naquela página o hero só existe depois da
+   carga: durante o skeleton não há `.ph-hero` no DOM, e sem o seletor de elemento
+   o `.card` nasceria em 640px e pularia para full-bleed ao chegar o dado. */
+.layout-main > .card:has(.ph-hero),
+.layout-main > .card:has(app-estado) {
+  max-width: none;
+  padding-left: 0;
+  padding-right: 0;
+}
+
 .hero {
   text-align: center;
   margin: 0px;

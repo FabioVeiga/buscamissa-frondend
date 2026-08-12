@@ -1,0 +1,62 @@
+<app-page-hero
+  [breadcrumb]="breadcrumb"
+  [titulo]="TITULO_HERO"
+  tituloDestaque="Dia da Semana"
+  subtitulo="Encontre horários de missa para qualquer dia da semana, em todo o Brasil."
+  [tiles]="tiles"
+>
+  <!--
+    Sem slot [hero-busca]: são 7 itens, todos visíveis na grade abaixo. Campo de
+    busca aqui seria decoração. O hero não reserva espaço para slot vazio.
+
+    Ilustração leve em vez de foto — mesma razão de /estados.
+  -->
+  <svg class="dias-arte" hero-arte viewBox="0 0 240 300" preserveAspectRatio="xMidYMid meet"
+       xmlns="http://www.w3.org/2000/svg">
+    <ellipse cx="120" cy="252" rx="82" ry="9" fill="#e6c9a8" opacity="0.35" />
+
+    <!-- argolas -->
+    <rect x="78" y="46" width="7" height="26" rx="3.5" fill="#d4a97a" />
+    <rect x="155" y="46" width="7" height="26" rx="3.5" fill="#d4a97a" />
+
+    <!-- folha do calendário -->
+    <rect x="44" y="60" width="152" height="176" rx="14" fill="#f7efe5" stroke="#e6c9a8" stroke-width="2" />
+    <path d="M44 96 h152" stroke="#e6c9a8" stroke-width="2" />
+
+    <!-- cabeçalho: 7 colunas -->
+    <g fill="#d4a97a">
+      <rect x="58" y="74" width="12" height="6" rx="3" />
+      <rect x="78" y="74" width="12" height="6" rx="3" />
+      <rect x="98" y="74" width="12" height="6" rx="3" />
+      <rect x="118" y="74" width="12" height="6" rx="3" />
+      <rect x="138" y="74" width="12" height="6" rx="3" />
+      <rect x="158" y="74" width="12" height="6" rx="3" />
+      <rect x="178" y="74" width="8" height="6" rx="3" />
+    </g>
+
+    <!-- grade de dias, com um destacado -->
+    <g fill="#f0e2d3">
+      <rect x="58" y="110" width="20" height="20" rx="5" />
+      <rect x="86" y="110" width="20" height="20" rx="5" />
+      <rect x="114" y="110" width="20" height="20" rx="5" />
+      <rect x="142" y="110" width="20" height="20" rx="5" />
+      <rect x="170" y="110" width="20" height="20" rx="5" />
+      <rect x="58" y="140" width="20" height="20" rx="5" />
+      <rect x="114" y="140" width="20" height="20" rx="5" />
+      <rect x="142" y="140" width="20" height="20" rx="5" />
+      <rect x="170" y="140" width="20" height="20" rx="5" />
+      <rect x="58" y="170" width="20" height="20" rx="5" />
+      <rect x="86" y="170" width="20" height="20" rx="5" />
+      <rect x="114" y="170" width="20" height="20" rx="5" />
+    </g>
+    <rect x="86" y="140" width="20" height="20" rx="5" fill="#e2761b" />
+
+    <!-- sino: o dia escolhido é dia de missa -->
+    <path d="M150 186 c 0-9 6-16 14-16 s 14 7 14 16 c 0 10 4 13 4 16 h-36 c 0-3 4-6 4-16 z"
+          fill="#d4a97a" />
+    <circle cx="164" cy="166" r="3.4" fill="#d4a97a" />
+    <path d="M160 206 h8 a4 4 0 0 1-8 0 z" fill="#d4a97a" />
+  </svg>
+</app-page-hero>
+
+<app-hub-lista icone="pi pi-calendar" [itens]="itens" />

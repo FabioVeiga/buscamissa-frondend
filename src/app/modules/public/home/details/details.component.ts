@@ -441,27 +441,22 @@ export class DetailsComponent implements OnInit {
 
   // ── SEO / Schema.org ────────────────────────────────────────────────────────
 
-  // Próxima ocorrência futura em ISO 8601 com fuso de Brasília (-03:00)
-  private proximaOcorrencia(diaSemana: number, horaMin: string): string {
+  /**
+   * Fim presumido de uma missa: início + DURACAO_MISSA_HORAS.
+   *
+   * O dado de horário não tem duração — só o começo. A suposição de 1 hora já
+   * existia aqui (o `endDate` de cada Event era `somarHora(inicio, 1)`); ela foi
+   * mantida ao migrar para OpeningHoursSpecification, que precisa de `closes`
+   * para descrever um intervalo válido.
+   */
+  private static readonly DURACAO_MISSA_HORAS = 1;
+
+  private fimPresumido(horaMin: string): string {
     const [h, m] = (horaMin || "00:00").split(":").map(Number);
-    const agora = new Date();
-    const diasAte = (diaSemana - agora.getDay() + 7) % 7;
-    const d = new Date(agora);
-    d.setDate(agora.getDate() + diasAte);
-    d.setHours(h, m, 0, 0);
-    if (diasAte === 0 && d.getTime() <= agora.getTime()) d.setDate(d.getDate() + 7);
-    return this.toIsoBrasilia(d);
-  }
-
-  private somarHora(iso: string, horas: number): string {
-    const d = new Date(iso);
-    d.setHours(d.getHours() + horas);
-    return this.toIsoBrasilia(d);
-  }
-
-  private toIsoBrasilia(d: Date): string {
+    const total = (h + DetailsComponent.DURACAO_MISSA_HORAS) * 60 + m;
     const p = (n: number) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:00-03:00`;
+    // 23:30 + 1h volta para 00:30 (mesmo dia da semana no schema)
+    return `${p(Math.floor(total / 60) % 24)}:${p(total % 60)}`;
   }
 
   private aplicarPlaceSchema(igreja: any): void {
@@ -488,43 +483,40 @@ export class DetailsComponent implements OnInit {
       "https://schema.org/Saturday",
     ];
 
-    const eventos = (igreja.missas ?? [])
+    // Horários de missa como OpeningHoursSpecification, não como Event.
+    //
+    // Antes cada missa virava um Event completo, repetindo location (com o
+    // endereço inteiro), organizer, performer, offers, description e image — ~4
+    // Events por paróquia, ~93% de todo o JSON-LD da página e ~22 MB no dist
+    // (12% do total, que já roda a 74% do teto de 250 MB do Azure SWA).
+    //
+    // Além do peso, o retorno era duvidoso: o Google não tem rich result para
+    // missa recorrente, e Event é voltado a eventos pontuais/com ingresso.
+    // Para horário recorrente de um local, OpeningHoursSpecification é o padrão
+    // documentado e é o que o Google interpreta em LocalBusiness/Place.
+    //
+    // Dedupe por (dia, hora): registros repetidos no banco gerariam entradas
+    // idênticas. Ordenado por dia e hora para a saída ser estável entre builds.
+    const horarios = (igreja.missas ?? [])
       .filter((m: any) => m.diaSemana !== undefined && m.diaSemana !== null && dias[m.diaSemana])
-      .map((m: any) => {
-        const hora = (m.horario ?? "").slice(0, 5);
-        const diaNome = ["Domingo","Segunda-feira","Terça-feira","Quarta-feira","Quinta-feira","Sexta-feira","Sábado"][m.diaSemana];
-        const inicio = this.proximaOcorrencia(m.diaSemana, hora);
-        const fim = this.somarHora(inicio, 1);
-        const ev: any = {
-          "@type": "Event",
-          name: `Missa - ${diaNome}`,
-          startDate: inicio,
-          endDate: fim,
-          eventSchedule: {
-            "@type": "Schedule",
-            byDay: dias[m.diaSemana],
-            startTime: hora,
-            repeatFrequency: "P1W",
-          },
-          eventStatus: "https://schema.org/EventScheduled",
-          eventAttendanceMode: "https://schema.org/OfflineEventAttendanceMode",
-          location: { "@type": "Church", name: igreja.nome, address },
-          description: `Missa ${diaNome.toLowerCase()} às ${hora} na ${igreja.nome}, ${end.localidade}/${end.uf}.`,
-          organizer: { "@type": "Organization", name: igreja.nome },
-          performer: igreja.paroco
-            ? { "@type": "Person", name: igreja.paroco }
-            : { "@type": "Organization", name: igreja.nome },
-          offers: {
-            "@type": "Offer",
-            price: "0",
-            priceCurrency: "BRL",
-            availability: "https://schema.org/InStock",
-            url,
-          },
-        };
-        ev.image = igreja.imagemUrl || `${base}/assets/images/og-image.jpg`;
-        return ev;
-      });
+      .map((m: any) => ({ dia: m.diaSemana as number, hora: (m.horario ?? "").slice(0, 5) }))
+      .filter((m: any) => !!m.hora);
+
+    const vistos = new Set<string>();
+    const openingHours = horarios
+      .filter((m: any) => {
+        const chave = `${m.dia}|${m.hora}`;
+        if (vistos.has(chave)) return false;
+        vistos.add(chave);
+        return true;
+      })
+      .sort((a: any, b: any) => a.dia - b.dia || a.hora.localeCompare(b.hora))
+      .map((m: any) => ({
+        "@type": "OpeningHoursSpecification",
+        dayOfWeek: dias[m.dia],
+        opens: m.hora,
+        closes: this.fimPresumido(m.hora),
+      }));
 
     const place: any = {
       "@context": "https://schema.org",
@@ -541,7 +533,7 @@ export class DetailsComponent implements OnInit {
       place.telephone = `+55${igreja.contato.ddd ?? ""}${igreja.contato.telefone}`;
     }
     if (igreja.imagemUrl) place.image = igreja.imagemUrl;
-    if (eventos.length) place.event = eventos;
+    if (openingHours.length) place.openingHoursSpecification = openingHours;
 
     this._seo.setJsonLd("place", place);
   }

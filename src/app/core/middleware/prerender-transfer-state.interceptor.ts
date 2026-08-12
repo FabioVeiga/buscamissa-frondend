@@ -14,11 +14,13 @@ import {
   chaveParoquia,
   chaveCidade,
   chaveEstado,
+  chaveEstados,
   chaveIntencao,
   chaveIntencaoArvore,
   stateKeyParoquia,
   stateKeyCidade,
   stateKeyEstado,
+  stateKeyEstados,
   stateKeyIntencao,
   stateKeyIntencaoArvore,
 } from './prerender-state-keys';
@@ -33,6 +35,8 @@ function resolverStateKey(url: string): StateKey<unknown> | null {
   if (ci) return stateKeyIntencao(ci);
   const cia = chaveIntencaoArvore(url); // dia (hub) — antes do estado
   if (cia) return stateKeyIntencaoArvore(cia);
+  const ces = chaveEstados(url); // bulk (índice) — antes do estado por-item
+  if (ces) return stateKeyEstados(ces);
   const ce = chaveEstado(url);
   if (ce) return stateKeyEstado(ce);
   return null;

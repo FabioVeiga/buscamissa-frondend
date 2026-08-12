@@ -98,6 +98,28 @@ export const routes: Routes = [
             (m) => m.DetailsComponent
           ),
       },
+      // Índice de estados (SEO): /estados — paridade com /cidades.
+      {
+        path: "estados",
+        data: {
+          title: 'Missas por estado | BuscaMissa',
+          description: 'Encontre horários de missa por estado. Escolha a UF e veja as cidades e paróquias.',
+          canonical: 'https://buscamissa.com.br/estados',
+        },
+        loadComponent: () =>
+          import("./modules/public/estados/estados.component").then((m) => m.EstadosComponent),
+      },
+      // Índice de dias da semana (SEO): /dias — página-mãe das 7 landings /missa-{dia}.
+      {
+        path: "dias",
+        data: {
+          title: 'Missas por dia da semana | BuscaMissa',
+          description: 'Escolha o dia da semana e veja os horários de missa nas paróquias do Brasil.',
+          canonical: 'https://buscamissa.com.br/dias',
+        },
+        loadComponent: () =>
+          import("./modules/public/dias/dias.component").then((m) => m.DiasComponent),
+      },
       // Hub de Estado (SEO): /missas/sp — antes de missas/:uf/:cidade (menos segmentos).
       {
         path: "missas/:uf",

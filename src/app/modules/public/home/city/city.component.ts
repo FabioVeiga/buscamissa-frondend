@@ -52,7 +52,8 @@ export class CityComponent implements OnInit, OnDestroy {
   private _metricas = inject(MetricasService);
 
   /** Falso durante o prerender (Node). Guarda browser-APIs (geoloc, localStorage). */
-  private readonly _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  /** protected (não private): o template usa para não prerenderizar o mapa. */
+  protected readonly _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   isLoading = false;
   uf = "";
@@ -172,6 +173,15 @@ export class CityComponent implements OnInit, OnDestroy {
           title: seo?.title ?? `Missas em ${this.cidadeNome}/${ufUpper} — Horários atualizados | BuscaMissa`,
           description: seo?.description ?? descFallback,
           canonical: seo?.canonicalUrl,
+          // Cidade sem nenhuma paróquia = slug inválido (o prerender só gera cidade
+          // COM paróquia), então é página vazia e sai do índice — evita soft-404.
+          //
+          // O critério é `igrejas.length`, e não a flag `naoEncontrado`: aquela é
+          // sobrecarregada e também fica true quando um FILTRO não retorna nada
+          // (ver _aplicarFiltros). Usar a flag deindexaria cidade válida só porque
+          // o usuário filtrou. Aqui roda só no carregamento, e o erro de rede cai
+          // no `error:` abaixo, sem virar noindex.
+          noindex: this.igrejas.length === 0,
         });
 
         if (this.igrejas.length) {

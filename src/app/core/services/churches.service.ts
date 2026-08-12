@@ -106,6 +106,15 @@ export class ChurchesService {
     return this.addressRange$;
   }
 
+  /**
+   * Descarta o cache de `addressRange()`. Necessário para "Tentar novamente" ter
+   * efeito: o `shareReplay` guarda também o ERRO, então sem limpar, toda nova
+   * assinatura recebe a mesma falha na hora, sem tocar na rede.
+   */
+  public limparCacheEnderecos(): void {
+    this.addressRange$ = undefined;
+  }
+
   /** Busca igrejas filtradas pelos parâmetros informados */
   searchByFilters(filters: FilterSearchChurch) {
     let params = new HttpParams();

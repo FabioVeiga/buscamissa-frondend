@@ -1,88 +1,42 @@
+// Campo de busca projetado no slot [hero-busca].
+@use '../../../shared/styles/hero-busca' as *;
+
 // ── Hero ───────────────────────────────────────────────────────────────────────
-.hero-section {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.5rem 0 0.5rem;
+// A casca (faixa, breadcrumb, H1, subtítulo, tiles) é do <app-page-hero>. Aqui
+// ficam só a ilustração projetada e o container do conteúdo abaixo do hero.
 
-  &__art {
-    width: 8rem;
-    flex-shrink: 0;
-    display: none;
-    @media (min-width: 480px) { display: block; }
-
-    svg { width: 100%; height: auto; }
-  }
+.cidades-arte {
+  width: 100%;
+  height: 100%;
+  display: block;
+  background: linear-gradient(160deg, #fdeee2 0%, #f7e0cc 100%);
+  // Mesma curva elíptica da foto em /missas/:uf.
+  border-top-left-radius: 38% 62%;
+  border-bottom-left-radius: 14% 24%;
 }
 
-// ── Busca ──────────────────────────────────────────────────────────────────────
-.search-box {
-  position: relative;
-  max-width: 26rem;
-
-  &__icon {
-    position: absolute;
-    left: 0.875rem;
-    top: 50%;
-    transform: translateY(-50%);
-    color: #9ca3af;
-    font-size: 0.875rem;
-    pointer-events: none;
-  }
-
-  &__input {
-    width: 100%;
-    padding: 0.625rem 1rem 0.625rem 2.5rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.625rem;
-    font-size: 0.875rem;
-    color: #374151;
-    background: #fff;
-    outline: none;
-    transition: border-color 0.15s;
-
-    &:focus { border-color: #bc5d10; }
-    &::placeholder { color: #9ca3af; }
-  }
+// Mesmo container do hero (72rem / 1.5rem): com o `.card` em full-bleed, é ele
+// que alinha a lista com o breadcrumb e o título logo acima.
+.cidades-page {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 1.5rem 3rem;
 }
 
-// ── Stats ──────────────────────────────────────────────────────────────────────
-.stats-row {
-  display: flex;
-  gap: 1rem;
-  margin-top: 1.5rem;
-  flex-wrap: wrap;
-}
-
-.stat-item {
-  display: flex;
-  align-items: center;
-  gap: 0.625rem;
-  padding: 0.75rem 1rem;
+// Saída do estado de erro de carga.
+.cidades-retry {
+  display: inline-block;
+  margin-top: 0.9rem;
+  padding: 0.55rem 1.1rem;
   background: #fff;
-  border: 1px solid #f3f4f6;
-  border-radius: 0.75rem;
-  flex: 1;
-  min-width: 9rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.625rem;
+  color: #bc5d10;
+  font-weight: 600;
+  font-size: 0.875rem;
+  cursor: pointer;
 
-  &__icon {
-    font-size: 1.5rem;
-    color: #bc5d10;
-    opacity: 0.7;
-  }
-
-  &__value {
-    font-size: 1rem;
-    font-weight: 700;
-    color: #1f2937;
-    line-height: 1.1;
-  }
-
-  &__label {
-    font-size: 0.7rem;
-    color: #9ca3af;
-    line-height: 1.2;
-  }
+  &:hover { background: #fdf6f0; border-color: #f3b989; }
 }
 
 // ── Card de estado ─────────────────────────────────────────────────────────────

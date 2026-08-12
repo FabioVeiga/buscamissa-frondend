@@ -72,6 +72,88 @@
     }
   }
 
+  // ── Explorar (dropdown desktop) ──
+  &__explorar {
+    position: relative;
+  }
+
+  &__explorar-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  &__explorar-seta {
+    font-size: 0.65rem;
+    transition: transform 0.15s;
+  }
+
+  // O painel é escondido por visibility/opacity — nunca por *ngIf — para que os
+  // <a href> permaneçam no DOM e entrem no HTML prerenderizado de todas as páginas.
+  &__dropdown {
+    position: absolute;
+    top: calc(100% + 0.375rem);
+    left: 0;
+    z-index: 110; // acima do .bm-header (z-index: 100)
+    min-width: 15rem;
+    padding: 0.5rem;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(17, 24, 39, 0.12);
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-4px);
+    pointer-events: none;
+    transition: opacity 0.15s, transform 0.15s, visibility 0.15s;
+
+    &--aberto {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+
+    // Abaixo de 640px a nav desktop já é display:none; garante que o painel
+    // não vaze caso o breakpoint mude.
+    @media (max-width: 640px) {
+      display: none;
+    }
+  }
+
+  &__dropdown-link {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.625rem;
+    padding: 0.5rem 0.625rem;
+    border-radius: 8px;
+    text-decoration: none;
+    color: #374151;
+    transition: background 0.15s;
+
+    &:hover { background: #fff4ed; }
+
+    .pi {
+      font-size: 0.95rem;
+      color: #bc5d10;
+      margin-top: 0.15rem;
+      flex-shrink: 0;
+    }
+
+    span {
+      display: flex;
+      flex-direction: column;
+      line-height: 1.3;
+    }
+    strong { font-size: 0.875rem; font-weight: 600; }
+    small { font-size: 0.75rem; color: #6b7280; }
+  }
+
   &__contador {
     display: inline-flex;
     align-items: center;
@@ -135,6 +217,24 @@
     gap: 6px;
     color: #16a34a !important;
     font-weight: 600 !important;
+  }
+
+  // Rótulo do grupo "Explorar" no menu mobile (não é link).
+  &__mobile-grupo {
+    padding: 0.75rem 0 0.25rem;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #9ca3af;
+  }
+
+  &__mobile-link--sub {
+    gap: 0.5rem;
+    padding-left: 0.25rem;
+    font-size: 0.9375rem;
+
+    .pi { font-size: 0.85rem; color: #bc5d10; }
   }
 
   &__mobile-link {

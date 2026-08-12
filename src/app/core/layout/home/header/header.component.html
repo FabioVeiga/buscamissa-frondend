@@ -12,6 +12,36 @@
     <nav class="bm-header__nav">
       <a routerLink="/home" routerLinkActive="bm-header__link--ativo"
          [routerLinkActiveOptions]="{exact: true}" class="bm-header__link">Início</a>
+
+      <!-- Explorar: os hubs de navegação. O painel é escondido por CSS (não por
+           *ngIf) para que os <a href> entrem no HTML prerenderizado de TODAS as
+           páginas — é a linkagem interna que substituiu os chips de estado da home. -->
+      <div class="bm-header__explorar">
+        <button type="button" class="bm-header__link bm-header__explorar-btn"
+                (click)="explorarAberto = !explorarAberto"
+                aria-haspopup="true" [attr.aria-expanded]="explorarAberto">
+          Explorar <i class="pi pi-chevron-down bm-header__explorar-seta" aria-hidden="true"></i>
+        </button>
+        <div class="bm-header__dropdown" [class.bm-header__dropdown--aberto]="explorarAberto"
+             (click)="explorarAberto = false">
+          <a routerLink="/cidades" class="bm-header__dropdown-link">
+            <i class="pi pi-map-marker" aria-hidden="true"></i>
+            <span><strong>Por cidade</strong><small>Encontre missas na sua cidade</small></span>
+          </a>
+          <a routerLink="/estados" class="bm-header__dropdown-link">
+            <i class="pi pi-map" aria-hidden="true"></i>
+            <span><strong>Por estado</strong><small>Explore igrejas por estado</small></span>
+          </a>
+          <a routerLink="/dias" class="bm-header__dropdown-link">
+            <i class="pi pi-calendar" aria-hidden="true"></i>
+            <span><strong>Por dia da semana</strong><small>Encontre missas por dia</small></span>
+          </a>
+          <!-- "Por igreja" fica de fora até existir busca por nome na UI: o endpoint
+               buscar-por-filtro aceita `Nome`, mas /buscar não tem campo de nome nem
+               lê query param de texto — o item levaria a uma busca por UF/cidade. -->
+        </div>
+      </div>
+
       <a routerLink="/missa-agora" routerLinkActive="bm-header__link--ativo" class="bm-header__link bm-header__link--live">
         <span class="bm-header__dot"></span> Missa agora
       </a>
@@ -37,6 +67,18 @@
   <!-- Mobile dropdown -->
   <nav *ngIf="menuAberto" class="bm-header__mobile" (click)="menuAberto = false">
     <a routerLink="/home" class="bm-header__mobile-link">Início</a>
+
+    <span class="bm-header__mobile-grupo">Explorar</span>
+    <a routerLink="/cidades" class="bm-header__mobile-link bm-header__mobile-link--sub">
+      <i class="pi pi-map-marker" aria-hidden="true"></i> Por cidade
+    </a>
+    <a routerLink="/estados" class="bm-header__mobile-link bm-header__mobile-link--sub">
+      <i class="pi pi-map" aria-hidden="true"></i> Por estado
+    </a>
+    <a routerLink="/dias" class="bm-header__mobile-link bm-header__mobile-link--sub">
+      <i class="pi pi-calendar" aria-hidden="true"></i> Por dia da semana
+    </a>
+
     <a routerLink="/missa-agora" class="bm-header__mobile-link bm-header__mobile-link--live">
       <span class="bm-header__dot"></span> Missa agora
     </a>
