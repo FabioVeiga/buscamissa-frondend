@@ -137,6 +137,12 @@ $muted: #6b7280;
 }
 
 /* Slot da busca: sem margem própria (ver comentário no template). */
-.ph-hero__busca { position: relative; }
+/* margin-bottom só quando HÁ tiles depois: numa página sem tiles (nenhuma hoje,
+   mas o hero não deve presumir) o hint já dá o respiro sozinho. `:has()` evita
+   duplicar espaçamento quando o slot de busca está vazio (ex.: /dias). */
+.ph-hero__busca {
+  position: relative;
+  &:has(> *) { margin-bottom: 1.25rem; }
+}
 
 .ph-hero__hint { color: $muted; font-size: 0.85rem; margin: 0.6rem 0 0; }

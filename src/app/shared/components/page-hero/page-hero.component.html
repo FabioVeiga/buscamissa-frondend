@@ -19,6 +19,21 @@
       <p class="ph-hero__sub">{{ subtitulo }}</p>
     }
 
+    <!--
+      Busca ANTES dos tiles: é a ação primária da página (o que o usuário veio
+      fazer), os números são prova social — vêm depois de o usuário já saber pra
+      onde ir. Antes os tiles vinham primeiro aqui (fixo neste template, a ordem
+      no HTML de quem consome o hero não tinha efeito nenhum sobre isto: é
+      projeção via ng-content num slot de posição fixa) e empurravam a busca para
+      fora da primeira dobra no mobile (ex.: top:454px em /cidades).
+      Sem margem própria: o espaçamento é dado pelo bloco seguinte (.ph-hero__tiles)
+      quando ele existe. Assim uma página sem busca (ex.: /dias) não ganha um
+      buraco reservado, e uma página sem tiles (nenhuma hoje) também não.
+    -->
+    <div class="ph-hero__busca">
+      <ng-content select="[hero-busca]"></ng-content>
+    </div>
+
     @if (tiles.length) {
       <div class="ph-hero__tiles">
         @for (t of tiles; track t.rotulo) {
@@ -36,14 +51,6 @@
         }
       </div>
     }
-
-    <!--
-      Sem margem própria: o espaçamento vem do bloco anterior (.ph-hero__tiles).
-      Assim uma página sem busca (ex.: /dias) não ganha um buraco reservado.
-    -->
-    <div class="ph-hero__busca">
-      <ng-content select="[hero-busca]"></ng-content>
-    </div>
 
     @if (hint) {
       <p class="ph-hero__hint">{{ hint }}</p>
