@@ -7,6 +7,7 @@
   [tilesCarregando]="isLoading"
   hint="Digite o nome da cidade ou do estado."
 >
+  <!-- Ação primária ANTES dos números: a busca é o que o usuário veio fazer aqui. -->
   <div class="busca" hero-busca>
     <i class="pi pi-search" aria-hidden="true"></i>
     <input
@@ -52,71 +53,122 @@
 <div class="cidades-page">
 
   <!-- Skeleton -->
-  <div *ngIf="isLoading" class="flex flex-col gap-3 mt-6">
-    <div *ngFor="let i of [1,2,3,4,5]"
-         class="h-14 rounded-xl bg-gray-100 animate-pulse"></div>
-  </div>
-
-  <!-- Lista por estado -->
-  <section *ngIf="!isLoading" class="mt-6">
-    <h2 class="text-sm font-bold text-gray-500 uppercase tracking-widest mb-3">
-      Cidades por estado
-    </h2>
-
-    <!-- Falha de carga e busca sem resultado são coisas diferentes: com a lista
-         vazia por erro de rede, dizer que a BUSCA não encontrou nada é mentira
-         (e ainda por cima com aspas vazias, já que não há termo buscado). -->
-    <div *ngIf="semDados" class="text-center py-10 text-gray-500">
-      <i class="pi pi-exclamation-circle text-3xl mb-3 block"></i>
-      Não foi possível carregar a lista de cidades.
-      <button type="button" class="cidades-retry" (click)="recarregar()">Tentar novamente</button>
+  @if (isLoading) {
+    <div class="flex flex-col gap-3 mt-6">
+      @for (i of [1,2,3,4,5]; track i) {
+        <div class="h-14 rounded-xl bg-gray-100 animate-pulse"></div>
+      }
     </div>
+  }
 
-    <div *ngIf="!semDados && estadosFiltrados.length === 0" class="text-center py-10 text-gray-400">
-      <i class="pi pi-search text-3xl mb-3 block"></i>
-      Nenhuma cidade encontrada para "{{ busca }}"
-    </div>
+  @if (!isLoading) {
+    <!-- Falha de carga: distinta de "a busca não achou". -->
+    @if (semDados) {
+      <div class="text-center py-10 text-gray-500">
+        <i class="pi pi-exclamation-circle text-3xl mb-3 block"></i>
+        Não foi possível carregar a lista de cidades.
+        <button type="button" class="cidades-retry" (click)="recarregar()">Tentar novamente</button>
+      </div>
+    } @else {
 
-    <div class="flex flex-col gap-2">
-      <div *ngFor="let e of estadosFiltrados" class="estado-card">
+      <!-- ============ CAPITAIS E PRINCIPAIS CIDADES ============
+           Vitrine antes do índice completo: as cidades com mais paróquias
+           cadastradas, no mesmo formato de destaque de /missas/:uf. Ordenação e
+           dados vêm do mesmo payload do índice abaixo — nenhuma requisição extra. -->
+      @if (principaisCidades.length) {
+        <section class="mt-6">
+          <h2 class="sec-titulo">
+            <i class="pi pi-building sec-titulo__ico" aria-hidden="true"></i>
+            Capitais e principais cidades
+          </h2>
+          <p class="sec-sub">Cidades com mais paróquias cadastradas em todo o Brasil.</p>
 
-        <!-- Cabeçalho do estado -->
-        <button class="estado-header" (click)="toggleEstado(e)" type="button">
-          <span class="estado-badge" [ngClass]="badgeClass(e.sigla)">{{ e.sigla }}</span>
-          <div class="flex-1 text-left">
-            <span class="estado-nome">{{ e.nome }}</span>
-            <span class="estado-count">{{ e.cidades.length }} cidades</span>
+          <div class="destaque-grid">
+            @for (c of principaisCidades; track c.uf + '/' + c.slug) {
+              <a class="destaque" [routerLink]="['/missas', c.uf, c.slug]">
+                <i class="pi pi-map-marker destaque__ico" aria-hidden="true"></i>
+                <span class="destaque__nome">{{ c.nome }}</span>
+                <span class="destaque__meta">{{ c.totalParoquias }} paróquias</span>
+              </a>
+            }
           </div>
-          <i class="pi transition-transform duration-200"
-             [ngClass]="e.expandido ? 'pi-chevron-up text-primary' : 'pi-chevron-down text-gray-400'"></i>
-        </button>
+        </section>
+      }
 
-        <!-- Grid de cidades -->
-        <div *ngIf="e.expandido" class="cidades-grid px-4 pb-4 pt-2">
-          <a *ngFor="let c of e.cidades"
-             [routerLink]="['/missas', e.sigla.toLowerCase(), c.slug]"
-             class="cidade-link">
-            {{ c.nome }} <i class="pi pi-chevron-right text-[10px]"></i>
+      <!-- ============ TODAS AS CIDADES POR ESTADO ============ -->
+      <section class="mt-10">
+        <h2 class="sec-titulo">
+          <i class="pi pi-th-large sec-titulo__ico" aria-hidden="true"></i>
+          Todas as cidades por estado
+        </h2>
+        <p class="sec-sub">Escolha o estado para ver todas as cidades com paróquias cadastradas.</p>
+
+        @if (estadosFiltrados.length === 0) {
+          <p class="text-center py-10 text-gray-400">
+            <i class="pi pi-search text-3xl mb-3 block"></i>
+            Nenhuma cidade encontrada para "{{ busca }}"
+          </p>
+        }
+
+        <div class="flex flex-col gap-2">
+          @for (e of estadosFiltrados; track e.sigla) {
+            <div class="estado-card">
+
+              <!-- Cabeçalho do estado -->
+              <button class="estado-header" (click)="toggleEstado(e)" type="button"
+                      [attr.aria-expanded]="e.expandido">
+                <span class="estado-badge" [ngClass]="badgeClass(e.sigla)">{{ e.sigla }}</span>
+                <div class="flex-1 text-left">
+                  <span class="estado-nome">{{ e.nome }}</span>
+                  <span class="estado-count">{{ e.cidades.length }} cidades</span>
+                </div>
+                <i class="pi transition-transform duration-200"
+                   [ngClass]="e.expandido ? 'pi-chevron-up text-primary' : 'pi-chevron-down text-gray-400'"></i>
+              </button>
+
+              <!-- Grid de cidades: SEMPRE no DOM (display:none quando colapsado) —
+                   os <a href> continuam rastreáveis no HTML prerenderizado mesmo
+                   com o acordeão fechado. -->
+              <div class="cidades-grid px-4 pb-4 pt-2" [class.cidades-grid--oculto]="!e.expandido">
+                @for (c of e.cidades; track c.slug) {
+                  <a [routerLink]="['/missas', e.sigla.toLowerCase(), c.slug]" class="cidade-link">
+                    {{ c.nome }}
+                  </a>
+                }
+              </div>
+
+            </div>
+          }
+        </div>
+      </section>
+
+      <!-- ============ PONTE ============
+           TODO(fase 4): <app-hub-ponte eixoAtual="cidades" /> entra aqui quando o
+           componente compartilhado existir. -->
+
+      <!-- ============ CTA ============ -->
+      <div class="mt-10">
+        <div class="cta">
+          <svg class="cta__ico" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5"
+               stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+            <path d="M32 3v11M27.5 8.5h9" />
+            <path d="M32 15 21 25v29h22V25L32 15Z" />
+            <path d="M21 32 9 40v14h12M43 32l12 8v14H43" />
+            <path d="M28.5 54v-9a3.5 3.5 0 0 1 7 0v9" />
+            <circle cx="32" cy="30" r="2.5" />
+          </svg>
+          <strong class="cta__titulo">Não encontrou<br />sua cidade?</strong>
+          <p class="cta__texto">Ajude nossa comunidade a crescer — sugira sua cidade e suas paróquias.</p>
+          <a class="cta__btn" routerLink="/solicitar">
+            Sugerir minha cidade <i class="pi pi-chevron-right" aria-hidden="true"></i>
           </a>
         </div>
 
+        <p class="assinatura"><i class="pi pi-heart-fill" aria-hidden="true"></i>
+          Feito com amor para aproximar você de Deus e da sua comunidade.</p>
       </div>
-    </div>
-  </section>
 
-  <!-- CTA: Não encontrou sua cidade -->
-  <div class="nao-encontrou mt-8">
-    <div class="nao-encontrou__icon">
-      <i class="pi pi-map-marker text-2xl" style="color: #bc5d10;"></i>
-    </div>
-    <div class="flex-1 min-w-0">
-      <p class="font-semibold text-gray-800 text-sm">Não encontrou sua cidade?</p>
-      <p class="text-gray-500 text-xs mt-0.5">Ajude nossa comunidade a crescer.</p>
-    </div>
-    <a routerLink="/solicitar"
-       class="cta-btn shrink-0">
-      <i class="pi pi-send"></i> Sugerir minha cidade
-    </a>
-  </div>
+    }
+  }
 
 </div>

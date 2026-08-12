@@ -10,17 +10,19 @@ import { Observable, from, of, switchMap } from 'rxjs';
 import { chaveEstados, stateKeyEstados } from './prerender-state-keys';
 import { obterListaEstados, EstadoPayload } from './prerender-estados-bulk';
 
-/** O que o índice `/estados` realmente consome de cada item do bulk. */
+/** O que os índices `/estados` e `/cidades` consomem de cada item do bulk. */
 interface EstadoResumo {
   uf: string;
   estado: string;
   totalCidades: number;
   totalParoquias: number;
+  cidades: Array<{ cidadeSlug: string; cidade: string; totalParoquias: number }>;
 }
 
 /**
- * Interceptor SÓ-SERVER — serve o BULK `GET /v2/seo/estados` durante o prerender do
- * índice `/estados`, a partir do arquivo em `.prerender-cache/`.
+ * Interceptor SÓ-SERVER — serve o BULK `GET /v2/seo/estados` durante o prerender dos
+ * índices `/estados` e `/cidades` (Fase 2 do Explorar), a partir do arquivo em
+ * `.prerender-cache/`.
  *
  * Antes desta ligação, `/estados` era a única página de SEO que ainda buscava seus
  * dados AO VIVO no prerender e, pior, sem TransferState: ao hidratar, o cliente
@@ -30,12 +32,12 @@ interface EstadoResumo {
  * na hidratação e, na revalidação, o `catchError(() => EMPTY)` que garante que uma
  * falha NUNCA rebaixa a página já renderizada.
  *
- * PAYLOAD ENXUTO, de propósito: o bulk tem ~90 KB porque cada estado traz `seo` e a
- * lista inteira de `cidades`, mas o índice só usa uf/estado/totalCidades/
- * totalParoquias — 2 KB. Transferir o bulk cru quase triplicaria o HTML desta
- * página para dado que ninguém lê. O recorte é seguro porque `getEstados()` tem um
- * único consumidor (`EstadosComponent`); se algum dia outro passar a precisar de
- * `cidades`, este recorte precisa acompanhar.
+ * `cidades[]` ENTROU no resumo (antes recortado fora, ~2 KB → ~34 KB): `/cidades`
+ * passou a consumir a MESMA fonte canônica que `/estados` (nenhum hub geográfico
+ * deve mais buscar/somar esses números por conta própria — era a causa de
+ * `/cidades` e `/estados` mostrarem totais diferentes). `seo` continua de fora:
+ * ninguém consome. Se o tamanho do dist virar problema
+ * (`scripts/verificar-dist-size.mjs`), o próximo corte é por aqui.
  *
  * Degrada com segurança: bulk ausente ou vazio → `next.handle(req)` (chamada real).
  */
@@ -57,6 +59,7 @@ export class PrerenderEstadosInterceptor implements HttpInterceptor {
           estado: e.estado,
           totalCidades: e.totalCidades,
           totalParoquias: e.totalParoquias,
+          cidades: (e.cidades ?? []) as EstadoResumo['cidades'],
         }));
 
         this._transferState.set(stateKeyEstados(chave), resumo);

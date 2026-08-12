@@ -92,11 +92,22 @@ $muted: #6b7280;
   grid-template-columns: repeat(var(--ph-tiles-n, 3), 1fr);
   gap: 0.75rem;
   margin-bottom: 1.75rem;
+
+  /* 3+ colunas em telas estreitas: cada tile tem só ~100-110px de largura —
+     padding/gap generosos (feitos para 1-2 tiles largos) deixavam pouca folga
+     para o rótulo. Aperta só nesse caso, sem mexer no tile de 1-2 colunas. */
+  @media (max-width: 480px) {
+    &:has(.ph-tile:nth-child(3)) { gap: 0.5rem; }
+  }
 }
 .ph-tile {
-  display: flex; align-items: center; gap: 0.7rem;
+  display: flex; align-items: center; gap: 0.5rem;
   background: #fff; border: 1px solid #f0e2d6; border-radius: 14px;
   padding: 0.85rem 1.15rem; min-width: 0;
+
+  @media (max-width: 480px) {
+    padding: 0.7rem 0.6rem;
+  }
 }
 .ph-tile__ico {
   display: grid; place-items: center;
@@ -104,14 +115,26 @@ $muted: #6b7280;
   background: $creme-forte; border-radius: 10px;
   i { color: $laranja-vivo; font-size: 1.05rem; }
 }
-.ph-tile__dados { display: block; }
+/*
+ * flex: 1 1 auto + min-width: 0: sem isso, um item flex não encolhe abaixo da
+ * largura intrínseca do próprio conteúdo — o rótulo "paróquias" empurrava a
+ * caixa para fora do tile (overflow silencioso) em vez de quebrar linha, em
+ * grades de 3 colunas estreitas no mobile (era o "clássico" bug de min-width:auto
+ * do flexbox).
+ */
+.ph-tile__dados { display: block; flex: 1 1 auto; min-width: 0; }
 .ph-tile__num {
   display: block; font-size: 1.375rem; font-weight: 800; color: $titulo;
   line-height: 1.1; font-variant-numeric: tabular-nums;
   /* Mesma caixa com número ou com skeleton — o tile não muda de altura. */
   min-height: 1.5125rem;
 }
-.ph-tile__lbl { display: block; font-size: 0.8125rem; color: $muted; }
+.ph-tile__lbl {
+  display: block; font-size: 0.8125rem; color: $muted;
+  /* Quebra em vez de vazar: colunas estreitas (3-4 tiles no mobile) não têm
+     largura garantida para um rótulo de uma palavra só. */
+  overflow-wrap: break-word;
+}
 
 /* Slot da busca: sem margem própria (ver comentário no template). */
 .ph-hero__busca { position: relative; }

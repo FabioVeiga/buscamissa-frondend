@@ -1,6 +1,14 @@
 // Campo de busca projetado no slot [hero-busca].
 @use '../../../shared/styles/hero-busca' as *;
 
+$laranja: #bc5d10;
+$laranja-vivo: #e2761b;
+$creme: #fdf6f0;
+$borda: #e5e7eb;
+$titulo: #1f2937;
+$texto: #374151;
+$muted: #6b7280;
+
 // ── Hero ───────────────────────────────────────────────────────────────────────
 // A casca (faixa, breadcrumb, H1, subtítulo, tiles) é do <app-page-hero>. Aqui
 // ficam só a ilustração projetada e o container do conteúdo abaixo do hero.
@@ -23,26 +31,54 @@
   padding: 0 1.5rem 3rem;
 }
 
+// `.mt-6`/`.mt-10` no template são utilitários do Tailwind (já global via
+// styles.scss) — sem redeclarar aqui para não colidir com a escala dele.
+
 // Saída do estado de erro de carga.
 .cidades-retry {
   display: inline-block;
   margin-top: 0.9rem;
   padding: 0.55rem 1.1rem;
   background: #fff;
-  border: 1px solid #e5e7eb;
+  border: 1px solid $borda;
   border-radius: 0.625rem;
-  color: #bc5d10;
+  color: $laranja;
   font-weight: 600;
   font-size: 0.875rem;
   cursor: pointer;
 
-  &:hover { background: #fdf6f0; border-color: #f3b989; }
+  &:hover { background: $creme; border-color: #f3b989; }
 }
 
-// ── Card de estado ─────────────────────────────────────────────────────────────
+// ================= SEÇÕES (mesmo padrão de /missas/:uf) =================
+.sec-titulo {
+  display: flex; align-items: center; gap: 0.6rem;
+  font-size: 1.1875rem; font-weight: 800; color: $titulo; margin: 0 0 0.35rem; line-height: 1.25;
+}
+.sec-titulo__ico { color: $laranja-vivo; font-size: 1.15rem; }
+.sec-sub { color: $muted; margin: 0 0 1.25rem; font-size: 0.875rem; }
+
+// ── Capitais e principais cidades ──────────────────────────────────────────────
+.destaque-grid {
+  display: grid; gap: 0.85rem;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+}
+.destaque {
+  display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
+  padding: 1.25rem 0.75rem;
+  background: #fff; border: 1px solid $borda; border-radius: 14px;
+  text-decoration: none; text-align: center;
+  transition: border-color .15s, box-shadow .15s, transform .15s;
+  &:hover { border-color: #f3b989; box-shadow: 0 3px 12px rgba(0,0,0,.06); transform: translateY(-2px); }
+  &__ico { color: $laranja-vivo; font-size: 1.2rem; margin-bottom: 0.15rem; }
+  &__nome { font-weight: 700; color: $titulo; font-size: 0.9375rem; line-height: 1.25; }
+  &__meta { color: $muted; font-size: 0.8125rem; }
+}
+
+// ── Card de estado (acordeão) ──────────────────────────────────────────────────
 .estado-card {
   background: #fff;
-  border: 1px solid #e5e7eb;
+  border: 1px solid $borda;
   border-radius: 0.75rem;
   overflow: hidden;
   transition: border-color 0.15s;
@@ -60,6 +96,8 @@
   border: none;
   cursor: pointer;
   transition: background 0.15s;
+  // Alvo de toque confortável no mobile (era só a altura do texto).
+  min-height: 2.75rem;
 
   &:hover { background: #fafafa; }
 }
@@ -89,22 +127,26 @@
   &--ce      { background: #ecfdf5; color: #065f46; }
   &--pe      { background: #fef3c7; color: #92400e; }
   &--pa      { background: #f0fdf4; color: #166534; }
-  &--default { background: #f3f4f6; color: #6b7280; }
+  &--default { background: #f3f4f6; color: $muted; }
 }
 
 .estado-nome {
   font-size: 0.9rem;
   font-weight: 600;
-  color: #1f2937;
+  color: $titulo;
   margin-right: 0.5rem;
 }
 
+// Era #9ca3af (~2,5:1, abaixo do mínimo AA de 4,5:1). $muted (#6b7280) já é
+// token do projeto e passa (~4,8:1) sem inventar cor nova.
 .estado-count {
   font-size: 0.75rem;
-  color: #9ca3af;
+  color: $muted;
 }
 
 // ── Grid de cidades ────────────────────────────────────────────────────────────
+// Colapsa por display:none (não por *ngIf/@if): os <a href> continuam no HTML
+// prerenderizado com o acordeão fechado — a linkagem interna/SEO não depende de JS.
 .cidades-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -113,15 +155,18 @@
 
   @media (min-width: 480px) { grid-template-columns: repeat(3, 1fr); }
   @media (min-width: 700px) { grid-template-columns: repeat(4, 1fr); }
+
+  &--oculto { display: none; }
 }
 
 .cidade-link {
   display: flex;
   align-items: center;
-  gap: 0.25rem;
+  // Sem chevron: com centenas de cidades por estado, um ícone por link é ruído,
+  // não affordance — o link já se lê como link (cor + hover + sublinhado).
   padding: 0.375rem 0.5rem;
   font-size: 0.8125rem;
-  color: #374151;
+  color: $texto;
   text-decoration: none;
   border-radius: 0.375rem;
   transition: background 0.12s, color 0.12s;
@@ -131,45 +176,44 @@
 
   &:hover {
     background: #fff4ed;
-    color: #bc5d10;
+    color: $laranja;
+    text-decoration: underline;
+  }
+
+  // Alvo de toque ≥ 44px no mobile, sem alterar a densidade do desktop (a grade de
+  // 2 colunas já dá espaço de sobra ali; era 25px de altura efetiva).
+  @media (max-width: 640px) {
+    min-height: 2.75rem;
   }
 }
 
-// ── CTA "Não encontrou" ────────────────────────────────────────────────────────
-.nao-encontrou {
-  display: flex;
+// ================= CTA (mesmo padrão de /missas/:uf) =================
+.cta {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
   align-items: center;
-  gap: 1rem;
-  padding: 1.125rem 1.25rem;
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 0.875rem;
-  flex-wrap: wrap;
-
-  &__icon {
-    width: 2.5rem;
-    height: 2.5rem;
-    background: #fff4ed;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
+  gap: 0.75rem 1.5rem;
+  background: $creme;
+  border-radius: 16px;
+  padding: 1.5rem 1.75rem;
+}
+.cta__ico { width: 58px; height: 58px; flex: 0 0 auto; color: $laranja-vivo; }
+.cta__titulo { color: $titulo; font-size: 1.0625rem; font-weight: 800; line-height: 1.3; }
+.cta__texto { color: $texto; margin: 0; font-size: 0.9375rem; line-height: 1.5; }
+.cta__btn {
+  display: inline-flex; align-items: center; gap: 0.5rem; white-space: nowrap;
+  background: $laranja-vivo; color: #fff; text-decoration: none; font-weight: 700;
+  padding: 0.85rem 1.5rem; border-radius: 12px; font-size: 0.9375rem;
+  i { font-size: 0.7rem; }
+  &:hover { background: $laranja; }
+}
+@media (max-width: 900px) {
+  .cta { grid-template-columns: auto 1fr; }
+  .cta__texto { grid-column: 1 / -1; }
+  .cta__btn { grid-column: 1 / -1; justify-content: center; }
 }
 
-.cta-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.5rem 1.125rem;
-  border: 1.5px solid #bc5d10;
-  border-radius: 0.5rem;
-  color: #bc5d10;
-  font-size: 0.8125rem;
-  font-weight: 600;
-  text-decoration: none;
-  transition: background 0.15s;
-
-  &:hover { background: #fff4ed; }
+.assinatura {
+  text-align: center; color: $muted; font-size: 0.8125rem; margin: 2rem 0 0;
+  i { color: #ef6b6b; margin-right: 0.35rem; }
 }
