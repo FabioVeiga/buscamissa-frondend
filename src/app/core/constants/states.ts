@@ -61,3 +61,24 @@ export function nomeComPreposicao(siglaOuNome: string): string {
   if (!estado) return `em ${siglaOuNome}`;
   return `${preposicaoDe(estado.sigla)} ${estado.nome}`;
 }
+
+/** Contração de "de" + artigo ("do"/"da"/"de") derivada da preposição da UF:
+ * quem rege "no" tem artigo "o" ("do"), quem rege "na" tem artigo "a" ("da"),
+ * quem rege "em" não tem artigo (sem contração, "de"). Mesma fonte de
+ * `PREPOSICAO_UF` — não duplica dado. */
+const CONTRACAO_DE: Record<'no' | 'na' | 'em', 'do' | 'da' | 'de'> = {
+  no: 'do', na: 'da', em: 'de',
+};
+
+/**
+ * "estado {do/da/de} {nome}" com a contração correta (ex.: "estado do Paraná",
+ * "estado da Bahia", "estado de Minas Gerais") — substitui o "estado de X" que
+ * nunca contraía o artigo. Aceita sigla ou nome; sem UF reconhecida, cai em
+ * "estado de {nome}".
+ */
+export function nomeDoEstadoComArtigo(siglaOuNome: string): string {
+  const porSigla = STATES.find((e) => e.sigla === siglaOuNome.toUpperCase());
+  const estado = porSigla ?? STATES.find((e) => e.nome === siglaOuNome);
+  if (!estado) return `estado de ${siglaOuNome}`;
+  return `estado ${CONTRACAO_DE[preposicaoDe(estado.sigla)]} ${estado.nome}`;
+}

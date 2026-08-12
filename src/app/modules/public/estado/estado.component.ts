@@ -17,7 +17,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { SeoPaginasService } from '../../../core/services/seo-paginas.service';
 import { SeoService } from '../../../core/services/seo.service';
 import { DIAS_INTENCAO } from '../../../core/constants/dias-intencao';
-import { preposicaoDe } from '../../../core/constants/states';
+import { preposicaoDe, nomeDoEstadoComArtigo } from '../../../core/constants/states';
 import { PageHeroComponent, HeroTile } from '../../../shared/components/page-hero/page-hero.component';
 import { HubBreadcrumb } from '../../../shared/components/hub-lista/hub-lista.component';
 
@@ -167,7 +167,10 @@ export class EstadoComponent implements OnInit, OnDestroy {
     // fecha em `tituloHero + ' ' + tituloDestaque` (ver template). Sem \n forçado:
     // a quebra de linha do subtítulo passa a ser natural, conforme a largura da tela.
     this.tituloHero = `Horários de Missa ${preposicaoDe(this.uf)}`;
-    this.subtituloHero = `Encontre igrejas, paróquias e horários de missa em todo o estado de ${this.estadoNome}.`;
+    // "estado do Paraná" / "estado da Bahia" / "estado de Minas Gerais" — antes
+    // era sempre "estado de X", sem contrair o artigo (ex.: "estado de Bahia",
+    // incorreto). Ficava mais visível ao lado do H1 acima, que já contrai certo.
+    this.subtituloHero = `Encontre igrejas, paróquias e horários de missa em todo o ${nomeDoEstadoComArtigo(this.uf)}.`;
     // Ordem e ícone únicos entre os hubs: cidades (pi-map-marker) → paróquias (pi-building).
     this.tilesHero = [
       { icone: 'pi pi-map-marker', numero: this.totalCidades, rotulo: 'cidades' },
