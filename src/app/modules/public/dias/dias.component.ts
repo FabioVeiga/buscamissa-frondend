@@ -5,6 +5,7 @@ import { DIAS_INTENCAO } from '../../../core/constants/dias-intencao';
 import { SeoService } from '../../../core/services/seo.service';
 import { HubListaComponent, HubBreadcrumb, HubItem } from '../../../shared/components/hub-lista/hub-lista.component';
 import { PageHeroComponent, HeroTile } from '../../../shared/components/page-hero/page-hero.component';
+import { HubPonteComponent } from '../../../shared/components/hub-ponte/hub-ponte.component';
 
 const SITE = 'https://buscamissa.com.br';
 
@@ -27,7 +28,7 @@ const SITE = 'https://buscamissa.com.br';
 @Component({
   selector: 'app-dias',
   standalone: true,
-  imports: [CommonModule, RouterLink, HubListaComponent, PageHeroComponent],
+  imports: [CommonModule, RouterLink, HubListaComponent, PageHeroComponent, HubPonteComponent],
   templateUrl: './dias.component.html',
   styleUrl: './dias.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

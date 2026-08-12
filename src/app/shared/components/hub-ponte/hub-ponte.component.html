@@ -1,0 +1,16 @@
+<section class="ponte">
+  <h2 class="ponte__titulo">Você também pode explorar por</h2>
+
+  <div class="ponte__grid">
+    @for (e of outrosEixos; track e.eixo) {
+      <a class="ponte-card" [routerLink]="e.link">
+        <span class="ponte-card__icone" aria-hidden="true"><i [class]="e.icone"></i></span>
+        <span class="ponte-card__texto">
+          <span class="ponte-card__titulo">{{ e.titulo }}</span>
+          <span class="ponte-card__desc">{{ e.desc }}</span>
+        </span>
+        <i class="pi pi-arrow-right ponte-card__seta" aria-hidden="true"></i>
+      </a>
+    }
+  </div>
+</section>

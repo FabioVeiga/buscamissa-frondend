@@ -9,6 +9,7 @@ import { SeoService } from '../../../core/services/seo.service';
 import { STATES } from '../../../core/constants/states';
 import { PageHeroComponent, HeroTile } from '../../../shared/components/page-hero/page-hero.component';
 import { HubBreadcrumb } from '../../../shared/components/hub-lista/hub-lista.component';
+import { HubPonteComponent } from '../../../shared/components/hub-ponte/hub-ponte.component';
 
 const SITE = 'https://buscamissa.com.br';
 /** Cap do bloco "Capitais e principais cidades" — vitrine, não substitui o índice completo. */
@@ -42,7 +43,7 @@ interface EstadoBulk {
 @Component({
   selector: 'app-cidades',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, PageHeroComponent],
+  imports: [CommonModule, RouterLink, FormsModule, PageHeroComponent, HubPonteComponent],
   templateUrl: './cidades.component.html',
   styleUrl: './cidades.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

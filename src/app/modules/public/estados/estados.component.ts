@@ -8,6 +8,7 @@ import { SeoPaginasService } from '../../../core/services/seo-paginas.service';
 import { SeoService } from '../../../core/services/seo.service';
 import { HubListaComponent, HubBreadcrumb, HubItem } from '../../../shared/components/hub-lista/hub-lista.component';
 import { PageHeroComponent, HeroTile } from '../../../shared/components/page-hero/page-hero.component';
+import { HubPonteComponent } from '../../../shared/components/hub-ponte/hub-ponte.component';
 import { metaParoquiasCidades } from '../../../shared/utils/plural.utils';
 
 const SITE = 'https://buscamissa.com.br';
@@ -33,7 +34,7 @@ interface EstadoResumo {
 @Component({
   selector: 'app-estados',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, HubListaComponent, PageHeroComponent],
+  imports: [CommonModule, FormsModule, RouterLink, HubListaComponent, PageHeroComponent, HubPonteComponent],
   templateUrl: './estados.component.html',
   styleUrl: './estados.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
