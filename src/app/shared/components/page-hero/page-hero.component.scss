@@ -82,12 +82,21 @@ $muted: #6b7280;
   white-space: pre-line;
 }
 
-/* STAT TILES — cards brancos com borda */
-.ph-hero__tiles { display: flex; flex-wrap: wrap; gap: 0.9rem; margin-bottom: 1.75rem; }
+/* STAT TILES — cards brancos com borda.
+   Grade de colunas IGUAIS (não flex-wrap/min-width): a largura por conteúdo
+   fazia os tiles ficarem em escada (ex.: 161/200/229px em 375px) e, com 3 tiles
+   de rótulo longo, sobrava um órfão sozinho na última linha. `--ph-tiles-n` é
+   setado no host conforme `tiles.length` — nunca 2+1, nunca degrau. */
+.ph-hero__tiles {
+  display: grid;
+  grid-template-columns: repeat(var(--ph-tiles-n, 3), 1fr);
+  gap: 0.75rem;
+  margin-bottom: 1.75rem;
+}
 .ph-tile {
   display: flex; align-items: center; gap: 0.7rem;
   background: #fff; border: 1px solid #f0e2d6; border-radius: 14px;
-  padding: 0.85rem 1.15rem; min-width: 140px;
+  padding: 0.85rem 1.15rem; min-width: 0;
 }
 .ph-tile__ico {
   display: grid; place-items: center;

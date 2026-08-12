@@ -17,6 +17,7 @@ import { SkeletonModule } from 'primeng/skeleton';
 import { SeoPaginasService } from '../../../core/services/seo-paginas.service';
 import { SeoService } from '../../../core/services/seo.service';
 import { DIAS_INTENCAO } from '../../../core/constants/dias-intencao';
+import { preposicaoDe } from '../../../core/constants/states';
 import { PageHeroComponent, HeroTile } from '../../../shared/components/page-hero/page-hero.component';
 import { HubBreadcrumb } from '../../../shared/components/hub-lista/hub-lista.component';
 
@@ -91,8 +92,15 @@ export class EstadoComponent implements OnInit, OnDestroy {
   // --- Hero (app-page-hero). Como os demais derivados abaixo, é montado UMA vez
   // por carga: com OnPush e 26 UFs prerenderizadas, getter de template sairia caro. ---
 
-  /** `\n` vira quebra de linha — o hero renderiza o título com `white-space: pre-line`. */
-  readonly TITULO_HERO = 'Horários de Missa no\nEstado de';
+  /**
+   * "Horários de Missa {preposição}" (ex.: "... no"), com o nome do estado
+   * entrando por `tituloDestaque` (ex.: "Paraná") — o H1 fecha em
+   * "Horários de Missa no Paraná". Monta uma vez por carga, em `montarHero()`:
+   * antes disso a string fixa "no Estado de" não respeitava a contração do
+   * artigo ("no Estado de São Paulo" em vez de "em São Paulo"), e o `\n` forçado
+   * no meio quebrava o título/subtítulo no mobile.
+   */
+  tituloHero = 'Horários de Missa';
   breadcrumb: HubBreadcrumb[] = [];
   subtituloHero = '';
   tilesHero: HeroTile[] = [];
@@ -155,10 +163,15 @@ export class EstadoComponent implements OnInit, OnDestroy {
       { label: 'Estados', link: ['/estados'] },
       { label: this.estadoNome },
     ];
-    this.subtituloHero = `Encontre igrejas, paróquias e horários de missa\nem todo o estado de ${this.estadoNome}.`;
+    // Preposição correta por UF ("no Paraná", "em São Paulo", "na Bahia") — o H1
+    // fecha em `tituloHero + ' ' + tituloDestaque` (ver template). Sem \n forçado:
+    // a quebra de linha do subtítulo passa a ser natural, conforme a largura da tela.
+    this.tituloHero = `Horários de Missa ${preposicaoDe(this.uf)}`;
+    this.subtituloHero = `Encontre igrejas, paróquias e horários de missa em todo o estado de ${this.estadoNome}.`;
+    // Ordem e ícone únicos entre os hubs: cidades (pi-map-marker) → paróquias (pi-building).
     this.tilesHero = [
-      { icone: 'pi pi-building', numero: this.totalParoquias, rotulo: 'paróquias' },
       { icone: 'pi pi-map-marker', numero: this.totalCidades, rotulo: 'cidades' },
+      { icone: 'pi pi-building', numero: this.totalParoquias, rotulo: 'paróquias' },
     ];
   }
 

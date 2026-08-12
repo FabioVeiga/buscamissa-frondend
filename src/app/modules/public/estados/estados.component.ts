@@ -7,6 +7,7 @@ import { SeoPaginasService } from '../../../core/services/seo-paginas.service';
 import { SeoService } from '../../../core/services/seo.service';
 import { HubListaComponent, HubBreadcrumb, HubItem } from '../../../shared/components/hub-lista/hub-lista.component';
 import { PageHeroComponent, HeroTile } from '../../../shared/components/page-hero/page-hero.component';
+import { metaParoquiasCidades } from '../../../shared/utils/plural.utils';
 
 const SITE = 'https://buscamissa.com.br';
 
@@ -110,7 +111,7 @@ export class EstadosComponent implements OnInit, OnDestroy {
     this.estados = estados;
     this.itens = estados.map((e) => ({
       nome: e.estado,
-      meta: `${e.totalParoquias} paróquia(s) em ${e.totalCidades} cidade(s)`,
+      meta: metaParoquiasCidades(e.totalParoquias, e.totalCidades),
       link: ['/missas', e.uf.toLowerCase()],
     }));
     this.itensVisiveis = this.itens;
@@ -119,8 +120,9 @@ export class EstadosComponent implements OnInit, OnDestroy {
     const paroquias = estados.reduce((s, e) => s + (e.totalParoquias ?? 0), 0);
     const cidades = estados.reduce((s, e) => s + (e.totalCidades ?? 0), 0);
     this.tiles = [
-      { icone: 'pi pi-building', numero: paroquias, rotulo: 'paróquias' },
+      // Ordem e ícone únicos entre os hubs: cidades → paróquias → estados.
       { icone: 'pi pi-map-marker', numero: cidades, rotulo: 'cidades' },
+      { icone: 'pi pi-building', numero: paroquias, rotulo: 'paróquias' },
       { icone: 'pi pi-map', numero: estados.length, rotulo: 'estados' },
     ];
     this.carregando = false;

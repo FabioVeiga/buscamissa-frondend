@@ -90,6 +90,15 @@ $muted: #6b7280;
   cursor: pointer; transition: background .15s, border-color .15s, color .15s;
   &:hover:not(:disabled) { background: $creme; border-color: #f3b989; color: $laranja; }
   &:disabled { color: #d1d5db; cursor: default; background: #fafafa; }
+
+  // Alvo de toque: 26×24px no mobile era abaixo do mínimo prático (44px). Cresce
+  // só o padding/min-size (área clicável) no mobile — a letra em si (font-size)
+  // não muda, então o alfabeto não fica visualmente maior, só mais fácil de tocar.
+  @media (max-width: 640px) {
+    min-width: 2.75rem;
+    min-height: 2.75rem;
+    padding: 0.3rem 0.1rem;
+  }
 }
 
 /* ================= SEÇÕES ================= */
