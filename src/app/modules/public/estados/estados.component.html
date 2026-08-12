@@ -44,8 +44,57 @@
   </svg>
 </app-page-hero>
 
+<!--
+  `.wrap` (72rem / 1.5rem, mesmo padrão de estado.component.scss) só no H2/CTA:
+  <app-hub-lista> já traz seu próprio container (.hub) com a mesma medida —
+  envolvê-la de novo aqui somaria padding em dobro e estreitaria a grade em
+  relação ao título acima dela.
+-->
+<div class="wrap mt-6">
+  <h2 class="sec-titulo">
+    <i class="pi pi-map sec-titulo__ico" aria-hidden="true"></i>
+    Estados com missas cadastradas
+  </h2>
+  <!--
+    Sem isto, a página mostra 12 de 27 estados e o silêncio lê como "site
+    incompleto". Só entram UFs com paróquia cadastrada (mesma regra que decide
+    quais /missas/:uf existem) — a página não está faltando dado, está sendo
+    honesta sobre o que o BuscaMissa já cobre.
+  -->
+  <p class="sec-sub">
+    Estes são os estados que já têm paróquias cadastradas no BuscaMissa. Conforme
+    novas cidades entram na plataforma, mais estados aparecem aqui.
+  </p>
+</div>
+
 <app-hub-lista icone="pi pi-map-marker" [itens]="itensVisiveis" />
 
 @if (busca && !itensVisiveis.length) {
   <p class="estados-vazio">Nenhum estado encontrado para "{{ busca }}".</p>
 }
+
+<!-- ============ PONTE ============
+     TODO(fase 4): <app-hub-ponte eixoAtual="estados" /> entra aqui quando o
+     componente compartilhado existir. -->
+
+<!-- ============ CTA ============ -->
+<div class="wrap mt-10">
+  <div class="cta">
+    <svg class="cta__ico" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+      <path d="M32 3v11M27.5 8.5h9" />
+      <path d="M32 15 21 25v29h22V25L32 15Z" />
+      <path d="M21 32 9 40v14h12M43 32l12 8v14H43" />
+      <path d="M28.5 54v-9a3.5 3.5 0 0 1 7 0v9" />
+      <circle cx="32" cy="30" r="2.5" />
+    </svg>
+    <strong class="cta__titulo">Seu estado ainda<br />não está na lista?</strong>
+    <p class="cta__texto">Ajude o BuscaMissa a chegar até a sua paróquia — cadastre a igreja da sua comunidade.</p>
+    <a class="cta__btn" routerLink="/nova">
+      Cadastrar igreja <i class="pi pi-chevron-right" aria-hidden="true"></i>
+    </a>
+  </div>
+
+  <p class="assinatura"><i class="pi pi-heart-fill" aria-hidden="true"></i>
+    Feito com amor para aproximar você de Deus e da sua comunidade.</p>
+</div>

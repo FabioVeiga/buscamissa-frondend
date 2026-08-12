@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnDestroy, OnInit, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { DIAS_INTENCAO } from '../../../core/constants/dias-intencao';
 import { SeoService } from '../../../core/services/seo.service';
 import { HubListaComponent, HubBreadcrumb, HubItem } from '../../../shared/components/hub-lista/hub-lista.component';
@@ -8,8 +9,15 @@ import { PageHeroComponent, HeroTile } from '../../../shared/components/page-her
 const SITE = 'https://buscamissa.com.br';
 
 /**
- * Índice de DIAS DA SEMANA (`/dias`) — paridade com `/estados` e `/cidades`.
- * Fecha o eixo "dia": as 7 landings `/missa-{dia}` existiam sem página-mãe.
+ * Índice de DIAS DA SEMANA (`/dias`) — fecha o eixo "dia": as 7 landings
+ * `/missa-{dia}` existiam sem página-mãe.
+ *
+ * Estrutura DELIBERADAMENTE diferente de `/cidades`/`/estados`: aqueles são
+ * índices de navegação (o usuário escolhe onde), este tem uma intenção mais
+ * imediata ("que horas tem missa hoje?") — por isso o hero é curto (sem tile,
+ * sem busca: 7 itens cabem todos na grade abaixo, buscar seria decoração) e o
+ * primeiro bloco de conteúdo é o destaque para `/missa-hoje` (existia e não era
+ * referenciado em lugar nenhum do hub de dias), não a grade dos 7 dias.
  *
  * Alimentado pela constante `DIAS_INTENCAO`, NÃO pela API: os 7 dias são fixos e
  * todas as landings correspondentes já são prerenderizadas, então não há risco de
@@ -19,7 +27,7 @@ const SITE = 'https://buscamissa.com.br';
 @Component({
   selector: 'app-dias',
   standalone: true,
-  imports: [CommonModule, HubListaComponent, PageHeroComponent],
+  imports: [CommonModule, RouterLink, HubListaComponent, PageHeroComponent],
   templateUrl: './dias.component.html',
   styleUrl: './dias.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -36,19 +44,19 @@ export class DiasComponent implements OnInit, OnDestroy {
   readonly TITULO_HERO = 'Horários de Missa\npor';
 
   /**
-   * Números FIXOS, de constante — nada de rede. `ChurchesService.getInfo()`
-   * (`v1/Igreja/infos`) não tem StateKey em `prerender-state-keys.ts`, então
-   * nenhum interceptor de prerender o escreve: usá-lo aqui faria o prerender
-   * desta rota depender da API estar acessível na máquina de build, e assaria no
-   * HTML indexado um número que envelhece. Contagem global é papel da Home.
+   * Sem tiles: "7 · dias da semana" era tautológico (a semana tem 7 dias, o
+   * número não informa nada) e ocupava espaço acima da dobra sem valor. `/dias`
+   * não segue a estrutura de `/cidades`/`/estados` de propósito — a intenção
+   * aqui é diferente (ver comentário da classe).
    */
-  readonly tiles: HeroTile[] = [
-    { icone: 'pi pi-calendar', numero: DIAS_INTENCAO.length, rotulo: 'dias da semana' },
-  ];
+  readonly tiles: HeroTile[] = [];
 
+  /**
+   * Sem meta: "Missas de domingo" só repetia o título do card ("Domingo") — a
+   * definição mais literal de microcopy sem informação.
+   */
   readonly itens: HubItem[] = DIAS_INTENCAO.map((d) => ({
     nome: d.nome,
-    meta: `Missas de ${d.nome.toLowerCase()}`,
     link: ['/missa-' + d.slug],
   }));
 

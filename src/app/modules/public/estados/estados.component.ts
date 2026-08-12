@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnDe
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { STATES } from '../../../core/constants/states';
 import { SeoPaginasService } from '../../../core/services/seo-paginas.service';
 import { SeoService } from '../../../core/services/seo.service';
@@ -32,7 +33,7 @@ interface EstadoResumo {
 @Component({
   selector: 'app-estados',
   standalone: true,
-  imports: [CommonModule, FormsModule, HubListaComponent, PageHeroComponent],
+  imports: [CommonModule, FormsModule, RouterLink, HubListaComponent, PageHeroComponent],
   templateUrl: './estados.component.html',
   styleUrl: './estados.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

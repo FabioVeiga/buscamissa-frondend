@@ -6,8 +6,10 @@
   [tiles]="tiles"
 >
   <!--
-    Sem slot [hero-busca]: são 7 itens, todos visíveis na grade abaixo. Campo de
-    busca aqui seria decoração. O hero não reserva espaço para slot vazio.
+    Sem slot [hero-busca] e sem tiles ([tiles]="[]" — ver dias.component.ts): são
+    7 itens, todos visíveis na grade abaixo, e o número "7 dias da semana" não
+    informava nada. O hero não reserva espaço para nenhum dos dois vazio, então
+    fica deliberadamente mais curto que o de /cidades e /estados.
 
     Ilustração leve em vez de foto — mesma razão de /estados.
   -->
@@ -59,4 +61,54 @@
   </svg>
 </app-page-hero>
 
+<!-- ============ MISSA DE HOJE ============
+     A ação real desta página: a rota existe (/missa-hoje) e não era referenciada
+     em lugar nenhum do hub de dias. Mais destaque visual que os 7 dias abaixo —
+     de propósito, é a intenção mais imediata de quem chega em /dias. -->
+<div class="wrap mt-6">
+  <a class="hoje" routerLink="/missa-hoje">
+    <span class="hoje__ico" aria-hidden="true"><i class="pi pi-calendar-plus"></i></span>
+    <span class="hoje__texto">
+      <strong class="hoje__titulo">Missa de hoje</strong>
+      <span class="hoje__sub">Veja direto os horários de missa de hoje, sem escolher o dia.</span>
+    </span>
+    <i class="pi pi-arrow-right hoje__seta" aria-hidden="true"></i>
+  </a>
+</div>
+
+<!-- ============ ESCOLHA O DIA DA SEMANA ============ -->
+<div class="wrap mt-10">
+  <h2 class="sec-titulo">
+    <i class="pi pi-calendar sec-titulo__ico" aria-hidden="true"></i>
+    Escolha o dia da semana
+  </h2>
+  <p class="sec-sub">Veja os horários de missa cadastrados para cada dia, em todo o Brasil.</p>
+</div>
+
 <app-hub-lista icone="pi pi-calendar" [itens]="itens" />
+
+<!-- ============ PONTE ============
+     TODO(fase 4): <app-hub-ponte eixoAtual="dias" /> entra aqui quando o
+     componente compartilhado existir. -->
+
+<!-- ============ CTA ============ -->
+<div class="wrap mt-10">
+  <div class="cta">
+    <svg class="cta__ico" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5"
+         stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" focusable="false">
+      <path d="M32 3v11M27.5 8.5h9" />
+      <path d="M32 15 21 25v29h22V25L32 15Z" />
+      <path d="M21 32 9 40v14h12M43 32l12 8v14H43" />
+      <path d="M28.5 54v-9a3.5 3.5 0 0 1 7 0v9" />
+      <circle cx="32" cy="30" r="2.5" />
+    </svg>
+    <strong class="cta__titulo">Encontre uma missa<br />perto de você</strong>
+    <p class="cta__texto">O Busca Missa conecta você às paróquias da sua comunidade. Participe!</p>
+    <a class="cta__btn" routerLink="/missa-agora">
+      Buscar missa agora <i class="pi pi-chevron-right" aria-hidden="true"></i>
+    </a>
+  </div>
+
+  <p class="assinatura"><i class="pi pi-heart-fill" aria-hidden="true"></i>
+    Feito com amor para aproximar você de Deus e da sua comunidade.</p>
+</div>
