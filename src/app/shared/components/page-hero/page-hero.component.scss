@@ -20,6 +20,10 @@ $muted: #6b7280;
   width: 100%;
   /* .hero global (styles.scss) centraliza texto; aqui o alinhamento é à esquerda. */
   text-align: left;
+
+  /* Bloco de estatísticas + respiro final ficavam grandes demais no mobile
+     (faixa creme ocupando boa parte da primeira dobra). */
+  @media (max-width: 640px) { padding-bottom: 1.5rem; margin-bottom: 2rem; }
 }
 @media (min-width: 900px) {
   /* altura maior deixa a arte respirar (object-fit: cover recorta) */
@@ -98,7 +102,7 @@ $muted: #6b7280;
   /* Último bloco do hero: o fechamento é o padding-bottom do .ph-hero. */
   margin: 1.5rem 0 0;
 
-  @media (max-width: 640px) { gap: 0.5rem; }
+  @media (max-width: 640px) { gap: 0.5rem; margin-top: 1rem; }
 }
 
 /*
@@ -131,8 +135,10 @@ $muted: #6b7280;
     flex-direction: column;
     align-items: center;
     text-align: center;
-    gap: 0.35rem;
-    padding: 0.9rem 0.5rem;
+    gap: 0.2rem;
+    /* Compacto: era 0.9rem 0.5rem (~99px de altura) — o bloco de 3 tiles
+       competia com o conteúdo logo abaixo por espaço na tela. */
+    padding: 0.55rem 0.4rem;
   }
 }
 
@@ -145,10 +151,9 @@ $muted: #6b7280;
   i { color: $laranja-vivo; font-size: 1rem; }
 
   @media (max-width: 640px) {
-    /* Empilhado o ícone não disputa largura com o texto, então pode voltar a
-       respirar um pouco. */
-    width: 32px; height: 32px; flex: 0 0 32px;
-    border-radius: 10px;
+    width: 24px; height: 24px; flex: 0 0 24px;
+    border-radius: 8px;
+    i { font-size: 0.8rem; }
   }
 }
 
@@ -171,6 +176,11 @@ $muted: #6b7280;
   line-height: 1.1; font-variant-numeric: tabular-nums;
   /* Mesma caixa com número ou com skeleton — o tile não muda de altura. */
   min-height: 1.5125rem;
+
+  /* Um pouco menor no mobile: some dos ~20px que o bloco de tiles tirava da
+     dobra sem comprometer a leitura (o número continua sendo o elemento
+     dominante do tile). */
+  @media (max-width: 640px) { font-size: 1.125rem; min-height: 1.25rem; }
 }
 .ph-tile__lbl {
   display: block; font-size: 0.8125rem; color: $muted; line-height: 1.25;
@@ -178,6 +188,8 @@ $muted: #6b7280;
      quando a palavra não cabe sozinha na linha. Com a composição vertical, os
      rótulos atuais (cidades/paróquias/estados) não chegam perto disso. */
   overflow-wrap: break-word;
+
+  @media (max-width: 640px) { font-size: 0.75rem; }
 }
 
 /* ===== Ritmo do bloco de ação: busca -> hint -> tiles =====

@@ -126,16 +126,26 @@
                    [ngClass]="e.expandido ? 'pi-chevron-up text-primary' : 'pi-chevron-down text-gray-400'"></i>
               </button>
 
-              <!-- Grid de cidades: SEMPRE no DOM (display:none quando colapsado) —
-                   os <a href> continuam rastreáveis no HTML prerenderizado mesmo
-                   com o acordeão fechado. -->
+              <!-- Grid de cidades: SEMPRE no DOM (display:none quando colapsado ou
+                   além do cap de "ver mais") — os <a href> continuam rastreáveis
+                   no HTML prerenderizado independente do estado da UI. -->
               <div class="cidades-grid px-4 pb-4 pt-2" [class.cidades-grid--oculto]="!e.expandido">
-                @for (c of e.cidades; track c.slug) {
-                  <a [routerLink]="['/missas', e.sigla.toLowerCase(), c.slug]" class="cidade-link">
+                @for (c of e.cidades; track c.slug; let i = $index) {
+                  <a [routerLink]="['/missas', e.sigla.toLowerCase(), c.slug]" class="cidade-link"
+                     [class.cidade-link--oculto]="cidadeOculta(e, i)">
                     {{ c.nome }}
                   </a>
                 }
               </div>
+
+              @if (e.expandido && temMaisCidades(e)) {
+                <div class="ver-mais-cidades">
+                  <button type="button" class="ver-mais-cidades__btn" (click)="toggleVerTodas(e)">
+                    Ver mais {{ cidadesOcultasCount(e) }} cidades
+                    <i class="pi pi-chevron-down" aria-hidden="true"></i>
+                  </button>
+                </div>
+              }
 
             </div>
           }

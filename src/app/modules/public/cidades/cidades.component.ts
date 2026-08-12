@@ -14,9 +14,16 @@ import { HubPonteComponent } from '../../../shared/components/hub-ponte/hub-pont
 const SITE = 'https://buscamissa.com.br';
 /** Cap do bloco "Capitais e principais cidades" — vitrine, não substitui o índice completo. */
 const TOP_CIDADES = 8;
+/**
+ * Cap de cidades visíveis por estado ao abrir o acordeão — sem isso, um estado
+ * como o Paraná (159 cidades) despeja uma grade enorme de uma vez, o tipo de
+ * "parede de links" que lê mal principalmente no mobile. Mesmo padrão de
+ * "ver mais" que `estado.component.ts` já usa no índice A–Z.
+ */
+const CAP_CIDADES_POR_ESTADO = 24;
 
 interface CidadeItem { nome: string; slug: string; totalParoquias: number; }
-interface EstadoItem { sigla: string; nome: string; cidades: CidadeItem[]; expandido: boolean; }
+interface EstadoItem { sigla: string; nome: string; cidades: CidadeItem[]; expandido: boolean; verTodas: boolean; }
 interface CidadeDestaque { nome: string; slug: string; uf: string; totalParoquias: number; }
 
 /** Formato de item de `/v2/seo/estados` — mesmo bulk que alimenta `/estados` e o prerender. */
@@ -103,6 +110,9 @@ export class CidadesComponent implements OnInit, OnDestroy {
       .map(e => ({
         ...e,
         expandido: true,
+        // Busca já é uma lista curta e intencional — o cap de "ver mais" não
+        // deveria esconder o resultado que a pessoa acabou de procurar.
+        verTodas: true,
         cidades: e.cidades.filter(c => this.normalizar(c.nome).includes(q)),
       }))
       .filter(e => this.normalizar(e.nome).includes(q) || e.cidades.length > 0);
@@ -167,6 +177,7 @@ export class CidadesComponent implements OnInit, OnDestroy {
           .map((c) => ({ nome: c.cidade, slug: c.cidadeSlug, totalParoquias: c.totalParoquias }))
           .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
         expandido: false,
+        verTodas: false,
       }))
       .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 
@@ -201,6 +212,21 @@ export class CidadesComponent implements OnInit, OnDestroy {
   }
 
   toggleEstado(e: EstadoItem): void { e.expandido = !e.expandido; }
+
+  toggleVerTodas(e: EstadoItem): void { e.verTodas = !e.verTodas; }
+
+  /** Cap de exibição por estado — ver `CAP_CIDADES_POR_ESTADO`. */
+  cidadeOculta(e: EstadoItem, indice: number): boolean {
+    return !e.verTodas && indice >= CAP_CIDADES_POR_ESTADO && e.cidades.length > CAP_CIDADES_POR_ESTADO;
+  }
+
+  temMaisCidades(e: EstadoItem): boolean {
+    return !e.verTodas && e.cidades.length > CAP_CIDADES_POR_ESTADO;
+  }
+
+  cidadesOcultasCount(e: EstadoItem): number {
+    return e.cidades.length - CAP_CIDADES_POR_ESTADO;
+  }
 
   badgeClass(sigla: string): string {
     return this.estadoCores[sigla] ?? 'badge--default';

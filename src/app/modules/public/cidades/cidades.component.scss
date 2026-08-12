@@ -187,6 +187,28 @@ $muted: #6b7280;
   @media (max-width: 640px) {
     min-height: 44px;
   }
+
+  // Além do cap de "ver mais" (CAP_CIDADES_POR_ESTADO): continua no HTML
+  // (rastreável), só não ocupa espaço na tela até o clique.
+  &--oculto { display: none; }
+}
+
+// Botão "ver mais N cidades" — mesma gramática do "Ver mais cidades" de
+// /missas/:uf (btn-linha), sem duplicar a classe porque essa vive num
+// componente diferente.
+.ver-mais-cidades {
+  display: flex;
+  justify-content: center;
+  padding: 0 1rem 1rem;
+
+  &__btn {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    background: #fff; border: 1px solid $borda; border-radius: 10px;
+    padding: 0.5rem 1rem; font-size: 0.8125rem; font-weight: 600;
+    color: $texto; cursor: pointer;
+    i { font-size: 0.65rem; color: $muted; }
+    &:hover { border-color: #f3b989; color: $laranja; background: $creme; i { color: $laranja; } }
+  }
 }
 
 // ================= CTA (mesmo padrão de /missas/:uf) =================
