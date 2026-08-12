@@ -96,8 +96,9 @@ $muted: #6b7280;
   border: none;
   cursor: pointer;
   transition: background 0.15s;
-  // Alvo de toque confortável no mobile (era só a altura do texto).
-  min-height: 2.75rem;
+  // Alvo de toque confortável no mobile (era só a altura do texto). Em px, não
+  // rem: a raiz do site é 14px (não 16px) — 2.75rem virava 38.5px, não 44px.
+  min-height: 44px;
 
   &:hover { background: #fafafa; }
 }
@@ -181,9 +182,10 @@ $muted: #6b7280;
   }
 
   // Alvo de toque ≥ 44px no mobile, sem alterar a densidade do desktop (a grade de
-  // 2 colunas já dá espaço de sobra ali; era 25px de altura efetiva).
+  // 2 colunas já dá espaço de sobra ali; era 25px de altura efetiva). Em px: a
+  // raiz do site é 14px, não 16px — 2.75rem dava 38.5px, não 44px.
   @media (max-width: 640px) {
-    min-height: 2.75rem;
+    min-height: 44px;
   }
 }
 
