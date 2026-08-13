@@ -1,4 +1,10 @@
 {
+  "routes": [
+    {
+      "route": "/*",
+      "statusCode": 404
+    }
+  ],
   "navigationFallback": {
     "rewrite": "/index.csr.html",
     "exclude": [
