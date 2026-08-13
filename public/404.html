@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!--
+      Página de erro servida pelo Azure SWA via responseOverrides["404"] em
+      src/staticwebapp.config.json. Substitui a página padrão do Azure e, principalmente,
+      o comportamento anterior: até 2026-08-13 toda URL sem arquivo caía no
+      navigationFallback e recebia 200 com o HTML da HOME e canonical=/home — a causa
+      direta dos Soft 404 e das duplicatas de canonical no Search Console.
+
+      Deliberadamente SEM Angular, SEM JavaScript e SEM request externo: precisa
+      funcionar como resposta terminal, sem depender de bundle nem de hidratação.
+
+      Sem <link rel="canonical">: uma página de erro não é a versão canônica de nada.
+    -->
+    <meta name="robots" content="noindex, follow" />
+    <title>Página não encontrada | BuscaMissa</title>
+
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+
+    <style>
+      :root {
+        --texto: #111827;
+        --suave: #6b7280;
+        --borda: #e5e7eb;
+        --primaria: #b8860b;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 1.5rem;
+        font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+        color: var(--texto);
+        background: #fafaf9;
+      }
+      main { max-width: 32rem; text-align: center; }
+      .codigo {
+        font-size: 3.5rem;
+        font-weight: 800;
+        line-height: 1;
+        color: var(--primaria);
+        margin: 0 0 0.75rem;
+      }
+      h1 { font-size: 1.375rem; font-weight: 800; margin: 0 0 0.75rem; }
+      p { font-size: 0.9375rem; line-height: 1.6; color: var(--suave); margin: 0 0 1.75rem; }
+      ul { list-style: none; display: flex; flex-wrap: wrap; gap: 0.625rem; justify-content: center; padding: 0; margin: 0; }
+      a {
+        display: inline-block;
+        padding: 0.625rem 1.125rem;
+        border: 1px solid var(--borda);
+        border-radius: 0.5rem;
+        background: #fff;
+        color: var(--texto);
+        font-size: 0.875rem;
+        font-weight: 600;
+        text-decoration: none;
+      }
+      a.principal { background: var(--primaria); border-color: var(--primaria); color: #fff; }
+      a:hover { border-color: var(--primaria); }
+      @media (min-width: 640px) { h1 { font-size: 1.625rem; } }
+      @media (prefers-color-scheme: dark) {
+        :root { --texto: #f3f4f6; --suave: #9ca3af; --borda: #374151; }
+        body { background: #111827; }
+        a { background: #1f2937; }
+      }
+    </style>
+  </head>
+
+  <body>
+    <main>
+      <p class="codigo">404</p>
+      <h1>Esta página não existe</h1>
+      <p>
+        O endereço que você abriu não corresponde a nenhuma paróquia, cidade ou estado
+        do BuscaMissa. Ele pode ter sido digitado errado, ou o cadastro pode ter sido
+        removido.
+      </p>
+      <ul>
+        <li><a class="principal" href="/cidades">Buscar por cidade</a></li>
+        <li><a href="/home">Ir para a página inicial</a></li>
+        <li><a href="/nova">Cadastrar uma igreja</a></li>
+      </ul>
+    </main>
+  </body>
+</html>

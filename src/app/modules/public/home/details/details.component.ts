@@ -247,6 +247,18 @@ export class DetailsComponent implements OnInit {
         const cidadeUf = igreja.endereco?.localidade
           ? `${igreja.endereco.localidade}${igreja.endereco?.uf ? '/' + igreja.endereco.uf : ''}`
           : '';
+        // Paróquia REAL, mas sem nenhum horário cadastrado: fica em 200, com a página
+        // e a canonical próprias — só sai do índice. Não é o mesmo que
+        // `marcarNaoEncontrada()`: aquela é "esta URL não corresponde a paróquia
+        // nenhuma"; esta é "a paróquia existe, ainda não temos os horários dela".
+        //
+        // A página segue linkada pela página da cidade (que lista TODAS as paróquias)
+        // e continua útil para quem chega nela: endereço, contato e mapa. O que ela
+        // não tem é o conteúdo que o title promete — daí o noindex, que evita o
+        // Soft 404 sem tirar a página do ar. Volta a indexar sozinha quando ganhar
+        // horário, sem intervenção.
+        const semHorarios = (igreja.missas?.length ?? 0) === 0;
+
         this._seo.update({
           title: seo?.title ?? (cidadeUf
             ? `${igreja.nome} — Missas em ${cidadeUf} | BuscaMissa`
@@ -254,6 +266,9 @@ export class DetailsComponent implements OnInit {
           description: seo?.description ?? `Confira os horários de missa, endereço e contato da ${igreja.nome}${cidadeUf ? ' em ' + cidadeUf : ''}. Encontre missas perto de você no BuscaMissa.`,
           canonical: seo?.canonicalUrl,
           image: igreja.imagemUrl || undefined,
+          noindex: semHorarios,
+          // A paróquia existe: breadcrumb e links de hub continuam válidos.
+          seguirLinks: true,
         });
         this.aplicarBreadcrumbSchema(igreja);
         this.aplicarPlaceSchema(igreja);

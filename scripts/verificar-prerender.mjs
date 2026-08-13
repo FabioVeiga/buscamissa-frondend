@@ -127,7 +127,7 @@ if (browserDir) {
 // (build:dev, ou API fora no prebuild), a checagem é pulada — mesma degradação de antes.
 const COBERTURA_MINIMA = 0.9;
 
-/** Espelha o filtro de app.routes.server.ts (paroquiasComMissaDoDisco). */
+/** Espelha exatamente o universo de app.routes.server.ts (paroquiasDoDisco/cidadesDoDisco). */
 const esperadoPorSecao = {
   missas: () => {
     const cidades = lerCache('cidades.json');
@@ -137,15 +137,15 @@ const esperadoPorSecao = {
     return (cidades?.filter((c) => c?.uf && c?.cidadeSlug).length ?? 0)
       + (estados?.filter((e) => e?.uf).length ?? 0);
   },
+  // TODAS as paróquias do disco — o filtro por missa/confiança saiu junto com o de
+  // app.routes.server.ts. O número não é fixo no código de propósito: sai do
+  // .prerender-cache, então acompanha o crescimento da base (dev ~2.090, prod ~4.727)
+  // sem virar constante desatualizada. Continua sendo uma exigência exata (≥90% do
+  // que o prebuild prometeu), não uma faixa larga que deixa regressão passar.
   paroquia: () => {
     const lista = lerCache('paroquias.json');
     if (!lista) return null;
-    return lista.filter(
-      (p) =>
-        (p?.igreja?.missas?.length ?? 0) > 0 &&
-        (p?.igreja?.statusConfianca === 2 || p?.igreja?.statusConfianca === 3) &&
-        p.uf && p.cidadeSlug && p.slug,
-    ).length;
+    return lista.filter((p) => p?.uf && p?.cidadeSlug && p?.slug).length;
   },
 };
 

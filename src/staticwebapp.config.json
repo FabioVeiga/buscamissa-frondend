@@ -1,7 +1,9 @@
 {
   "navigationFallback": {
-    "rewrite": "/index.html",
+    "rewrite": "/index.csr.html",
     "exclude": [
+      "/paroquia/*",
+      "/missas/*",
       "/assets/*",
       "/*.css",
       "/*.js",
@@ -13,6 +15,12 @@
       "/*.xml",
       "/*.txt"
     ]
+  },
+  "responseOverrides": {
+    "404": {
+      "rewrite": "/404.html",
+      "statusCode": 404
+    }
   },
   "globalHeaders": {
     "X-Content-Type-Options": "nosniff",

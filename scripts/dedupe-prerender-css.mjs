@@ -42,13 +42,26 @@ const INNER_RE = /<style\b[^>]*>([\s\S]*?)<\/style>/i;
 /** Ids de encapsulação do Angular: _ngcontent-ng-c123 / _nghost-ng-c123. */
 const ENCAP_RE = /_(ngcontent|nghost)-ng-c(\d+)/g;
 
+/**
+ * HTML que NÃO é página prerenderizada e por isso fica fora do dedupe.
+ *
+ * `404.html` é asset estático de `public/`, servido pelo Azure SWA em
+ * `responseOverrides` — precisa ser autocontido, porque é a resposta terminal de uma
+ * URL que não existe. Sem esta exceção o dedupe extraía o `<style>` inline dele e
+ * punha no lugar um `<link>` para o CSS compartilhado: a página de erro passava a
+ * depender de um request extra de ~197 KB (e de um hash que muda a cada build) para
+ * renderizar. O dedupe existe para CSS repetido em milhares de páginas; um arquivo
+ * único não tem o que deduplicar.
+ */
+const FORA_DO_DEDUPE = new Set(['404.html']);
+
 function listarHtml(dir) {
   const out = [];
   for (const nome of readdirSync(dir)) {
     const p = join(dir, nome);
     const st = statSync(p);
     if (st.isDirectory()) out.push(...listarHtml(p));
-    else if (nome.endsWith('.html')) out.push(p);
+    else if (nome.endsWith('.html') && !FORA_DO_DEDUPE.has(nome)) out.push(p);
   }
   return out;
 }

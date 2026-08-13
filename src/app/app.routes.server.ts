@@ -18,38 +18,42 @@ import { buscarRotasSeo, normalizarBaseUrl } from '../../scripts/lib/seo-routes.
  *   sitemap).
  * - Fase 2.5 (aqui): prerender das páginas de PARÓQUIA (`/paroquia/:uf/:cidade/:slug`).
  *   O bulk `/v2/seo/paroquias` (interceptor só-server) evita as chamadas individuais.
- *   Prerenderiza SÓ paróquias com confiança Média/Alta (ver paroquiasComMissaDoDisco):
- *   corta as páginas thin (sem horário) e as com horário nunca validado/desatualizado
- *   (StatusConfianca Desconhecida/Baixa) — em prod (~4.5k paróquias) o dist estourava
- *   200 MB mesmo só com o filtro "tem missa" (3.471 páginas). Cortar por confiança leva
- *   a ~2.743, priorizando as páginas com dado mais confiável/visitado. As demais seguem
- *   CSR (e continuam no sitemap).
+ *   Prerenderiza TODAS as paróquias do disco (ver paroquiasDoDisco). Até 2026-08-13
+ *   havia um filtro por `missas.length > 0` e confiança Média/Alta, motivado pelo
+ *   tamanho do dist; ele deixava ~1.754 paróquias reais sem arquivo, e é justamente
+ *   a ausência de arquivo que o Azure SWA lê como "não existe". Sem cobertura total
+ *   não há como o servidor separar paróquia real de URL inventada — as duas caíam no
+ *   `navigationFallback` e voltavam 200 com o HTML da HOME.
+ *   Custo do dist coberto elevando o guard para 220 MB (ver verificar-dist-size.mjs).
  */
-
-/** Espelha Enums/StatusConfiancaEnum.cs do backend (api-public). */
-const enum StatusConfianca {
-  Media = 2,
-  Alta = 3,
-}
 
 /**
- * Lê o bulk baixado pelo prebuild (.prerender-cache/paroquias.json, que tem `missas`
- * e `statusConfianca`) e retorna as rotas só das paróquias com confiança Média/Alta.
- * Retorna null se o arquivo não existe (ex.: build:dev sem prebuild) → o caller cai
- * no fallback (todas via routes).
+ * Lê o bulk baixado pelo prebuild (.prerender-cache/paroquias.json) e retorna a rota
+ * de TODAS as paróquias. Retorna null se o arquivo não existe (ex.: build:dev sem
+ * prebuild) → o caller cai no fallback (todas via routes).
+ *
+ * Antes chamava-se `paroquiasComMissaDoDisco` e filtrava por `missas.length > 0` e
+ * `statusConfianca ∈ {Média, Alta}`, deixando ~1.754 paróquias sem arquivo no dist.
+ * O filtro saiu porque o Azure SWA decide 200 vs 404 **só por existência de arquivo** —
+ * ele não consulta a API. Enquanto uma paróquia real não tivesse arquivo, era
+ * impossível distinguir "existe mas não prerenderizamos" de "não existe", e o
+ * `navigationFallback` respondia 200 com o HTML da HOME para as duas.
+ *
+ * Com todas no disco, a regra passa a ser exata:
+ *   arquivo existe   → 200 (indexável; sem horário sai noindex pelo details.component)
+ *   arquivo não existe → 404 de verdade
+ *
+ * As sem horário continuam existindo de propósito: a página de cidade lista TODAS as
+ * paróquias, então 404 nelas quebraria a navegação de quem clica na lista.
  */
-function paroquiasComMissaDoDisco(): Array<{ uf: string; cidade: string; slug: string }> | null {
+function paroquiasDoDisco(): Array<{ uf: string; cidade: string; slug: string }> | null {
   const arquivo = join(process.cwd(), '.prerender-cache', 'paroquias.json');
   if (!existsSync(arquivo)) return null;
   const lista = JSON.parse(readFileSync(arquivo, 'utf-8')) as Array<{
     uf: string; cidadeSlug: string; slug: string;
-    igreja?: { missas?: unknown[]; statusConfianca?: number };
   }>;
   return lista
-    .filter((p) =>
-      (p?.igreja?.missas?.length ?? 0) > 0 &&
-      (p?.igreja?.statusConfianca === StatusConfianca.Media || p?.igreja?.statusConfianca === StatusConfianca.Alta) &&
-      p.uf && p.cidadeSlug && p.slug)
+    .filter((p) => p?.uf && p?.cidadeSlug && p?.slug)
     .map((p) => ({ uf: p.uf, cidade: p.cidadeSlug, slug: p.slug }));
 }
 
@@ -175,16 +179,15 @@ export const serverRoutes: ServerRoute[] = [
     },
   },
 
-  // Fase 2.5 — paróquias (só as COM missa). As chaves (uf/cidade/slug) casam com os
-  // :param de app.routes.ts. Preferimos o cache do prebuild (tem `missas`) pra
-  // filtrar; sem ele (build:dev) ou se `/v2/seo/routes` falhar, cai no fallback
-  // (todas / lista vazia) — nunca derruba o deploy.
+  // Fase 2.5 — paróquias (TODAS). As chaves (uf/cidade/slug) casam com os :param de
+  // app.routes.ts. Preferimos o cache do prebuild; sem ele (build:dev) ou se
+  // `/v2/seo/routes` falhar, cai no fallback (lista vazia) — nunca derruba o deploy.
   {
     path: 'paroquia/:uf/:cidade/:slug',
     renderMode: RenderMode.Prerender,
     getPrerenderParams: async () => {
-      const comMissa = paroquiasComMissaDoDisco();
-      if (comMissa) return comMissa;
+      const doDisco = paroquiasDoDisco();
+      if (doDisco) return doDisco;
       const base = normalizarBaseUrl(environment.config.apiURL);
       const { parishes } = await buscarRotasSeo(base);
       return parishes.map((p: { uf: string; citySlug: string; slug: string }) => ({
