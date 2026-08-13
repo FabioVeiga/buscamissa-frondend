@@ -66,6 +66,31 @@ function lerCache<T>(arquivo: string): T | null {
   return JSON.parse(readFileSync(caminho, 'utf-8')) as T;
 }
 
+/**
+ * Cidades a prerenderizar, do cache do prebuild (.prerender-cache/cidades.json —
+ * o MESMO arquivo que o PrerenderCidadeInterceptor já consome para servir os dados
+ * do disco). Retorna null se o arquivo não existe (ex.: build:dev sem prebuild).
+ *
+ * Por que disco e não `/v2/seo/routes`: esta era a ÚNICA categoria cujo
+ * getPrerenderParams dependia de rede no meio do build, com timeout de 8s
+ * (scripts/lib/seo-routes.mjs). Quando esse fetch degradava, `buscarRotasSeo`
+ * devolvia `{cities: []}` — silenciosamente, porque o fallback vazio é by design e
+ * o guard-rail não falha com zero páginas numa seção. Resultado observado em
+ * produção (2026-08-13): ZERO das 988 páginas `/missas/{uf}/{cidade}` estavam
+ * prerenderizadas; todas caíam no fallback do proxy, que devolve o HTML da HOME
+ * (200, canonical=/home) — a causa direta dos "Duplicate, Google chose different
+ * canonical" e do "Discovered - currently not indexed" no Search Console.
+ *
+ * Paróquias e estados já liam do disco e por isso nunca sofreram esse problema.
+ */
+function cidadesDoDisco(): Array<{ uf: string; cidade: string }> | null {
+  const lista = lerCache<Array<{ uf?: string; cidadeSlug?: string }>>('cidades.json');
+  if (!lista) return null;
+  return lista
+    .filter((c) => c?.uf && c?.cidadeSlug)
+    .map((c) => ({ uf: c.uf!.toLowerCase(), cidade: c.cidadeSlug! }));
+}
+
 /** UFs (lowercase) que têm paróquia — do cache estados.json, senão do bulk ao vivo. */
 async function ufsParaPrerender(): Promise<Array<{ uf: string }>> {
   let lista = lerCache<Array<{ uf: string }>>('estados.json');
@@ -131,12 +156,16 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'cookies', renderMode: RenderMode.Prerender },
 
   // Fase 2 — cidades. As chaves (uf/cidade) casam com os :param de app.routes.ts.
-  // Se `/v2/seo/routes` falhar no build, o helper retorna lista vazia: nenhuma
-  // cidade é prerenderizada (segue CSR) em vez de derrubar o deploy.
+  // Preferimos o cache do prebuild (mesma fonte do PrerenderCidadeInterceptor);
+  // sem ele (build:dev) caímos em `/v2/seo/routes`. Se ambos falharem, a lista
+  // vem vazia (segue CSR) em vez de derrubar o deploy — mas o guard-rail do
+  // postbuild agora barra o deploy nesse caso (ver verificar-prerender.mjs).
   {
     path: 'missas/:uf/:cidade',
     renderMode: RenderMode.Prerender,
     getPrerenderParams: async () => {
+      const doDisco = cidadesDoDisco();
+      if (doDisco) return doDisco;
       const base = normalizarBaseUrl(environment.config.apiURL);
       const { cities } = await buscarRotasSeo(base);
       return cities.map((c: { uf: string; citySlug: string }) => ({

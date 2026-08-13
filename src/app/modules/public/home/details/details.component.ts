@@ -78,6 +78,8 @@ export class DetailsComponent implements OnInit {
   churchInfo: any;
   /** Erro de rede/API ao carregar — mostra estado com "Tentar novamente" */
   erroCarregar = false;
+  /** 404 da API: a paróquia dessa URL não existe. Estado próprio + noindex. */
+  naoEncontrada = false;
   /** Última requisição (cold observable do HttpClient) — reusada pelo retry */
   private _reqAtual: import("rxjs").Observable<any> | null = null;
 
@@ -202,6 +204,7 @@ export class DetailsComponent implements OnInit {
     this._reqAtual = req;
     this.isLoading = true;
     this.erroCarregar = false;
+    this.naoEncontrada = false;
     // SWR: com o interceptor de TransferState, `next` roda 2x (cache prerenderizado,
     // depois a revalidação viva). Reatribuir o dado é idempotente; os efeitos ÚNICOS
     // (analytics/métricas/selo) só podem rodar na 1ª emissão.
@@ -215,8 +218,7 @@ export class DetailsComponent implements OnInit {
 
         if (!igreja) {
           this.churchInfo = igreja;
-          this._toast.add({ severity: "error", summary: "Erro", detail: "Dados da igreja não encontrados." });
-          this._router.navigate(['/home']);
+          this.marcarNaoEncontrada();
           return;
         }
 
@@ -256,10 +258,31 @@ export class DetailsComponent implements OnInit {
         this.aplicarBreadcrumbSchema(igreja);
         this.aplicarPlaceSchema(igreja);
       },
-      error: () => {
-        // Estado de erro na página (com retry) — toast some e deixava a tela em branco
-        this.erroCarregar = true;
+      error: (err: any) => {
+        // 404 da API = a URL não corresponde a nenhuma paróquia. Antes isso caía no
+        // mesmo balaio de "erro de rede"; e o caminho `!igreja` acima redirecionava
+        // para /home. Os dois davam ao Google uma página 200 com conteúdo de outra
+        // página — o padrão exato do Soft 404 reportado no Search Console.
+        //
+        // Falha transitória (rede/5xx) continua sendo erro com retry, NUNCA noindex:
+        // uma indisponibilidade momentânea não pode desindexar paróquia válida.
+        // Mesmo critério já aplicado em city/estado/intencao.
+        if (err?.status === 404) this.marcarNaoEncontrada();
+        else this.erroCarregar = true;
       },
+    });
+  }
+
+  /** Paróquia inexistente: estado próprio, sem dados de outra página, e fora do índice. */
+  private marcarNaoEncontrada(): void {
+    this.naoEncontrada = true;
+    this.churchInfo = null;
+    this._seo.removeJsonLd('place');
+    this._seo.removeJsonLd('breadcrumb');
+    this._seo.update({
+      title: 'Paróquia não encontrada | BuscaMissa',
+      description: 'Não encontramos esta paróquia. Veja as igrejas cadastradas na sua cidade.',
+      noindex: true,
     });
   }
 

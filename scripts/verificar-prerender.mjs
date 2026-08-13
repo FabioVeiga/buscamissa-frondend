@@ -113,6 +113,81 @@ if (browserDir) {
   }
 }
 
+// ── Guard-rail de COBERTURA ────────────────────────────────────────────────
+//
+// O guard-rail acima só pega páginas assadas EM ERRO. Ele deixa passar o modo de
+// falha que de fato chegou à produção: uma seção com ZERO páginas. Em 2026-08-13
+// as 988 páginas `/missas/{uf}/{cidade}` estavam TODAS ausentes do dist de prod —
+// `getPrerenderParams` caiu no fallback vazio de `/v2/seo/routes` e o build saiu 0.
+// Como o proxy responde 200 com o HTML da HOME para qualquer rota não prerenderizada,
+// o Google recebeu 988 cópias da home com canonical=/home.
+//
+// Aqui comparamos o que foi ASSADO com o que o prebuild PROMETEU (.prerender-cache).
+// É auto-calibrado: não há número mágico para desatualizar. Se o cache não existe
+// (build:dev, ou API fora no prebuild), a checagem é pulada — mesma degradação de antes.
+const COBERTURA_MINIMA = 0.9;
+
+/** Espelha o filtro de app.routes.server.ts (paroquiasComMissaDoDisco). */
+const esperadoPorSecao = {
+  missas: () => {
+    const cidades = lerCache('cidades.json');
+    const estados = lerCache('estados.json');
+    if (!cidades && !estados) return null;
+    // A pasta "missas" acumula os dois níveis: /missas/{uf} e /missas/{uf}/{cidade}.
+    return (cidades?.filter((c) => c?.uf && c?.cidadeSlug).length ?? 0)
+      + (estados?.filter((e) => e?.uf).length ?? 0);
+  },
+  paroquia: () => {
+    const lista = lerCache('paroquias.json');
+    if (!lista) return null;
+    return lista.filter(
+      (p) =>
+        (p?.igreja?.missas?.length ?? 0) > 0 &&
+        (p?.igreja?.statusConfianca === 2 || p?.igreja?.statusConfianca === 3) &&
+        p.uf && p.cidadeSlug && p.slug,
+    ).length;
+  },
+};
+
+function lerCache(arquivo) {
+  const caminho = join(ROOT, '.prerender-cache', arquivo);
+  if (!existsSync(caminho)) return null;
+  try {
+    return JSON.parse(readFileSync(caminho, 'utf-8'));
+  } catch {
+    return null;
+  }
+}
+
+for (const [secao, contar] of Object.entries(esperadoPorSecao)) {
+  const esperado = contar();
+  if (esperado === null) {
+    console.log(`[cobertura] "${secao}": sem cache do prebuild — checagem pulada.`);
+    continue;
+  }
+  if (esperado === 0) {
+    console.log(`[cobertura] "${secao}": prebuild não prometeu nenhuma página — nada a exigir.`);
+    continue;
+  }
+
+  const dir = acharPastaSecao(distBase, secao);
+  const gerado = dir ? listarIndexHtml(dir).length : 0;
+  const ratio = gerado / esperado;
+  console.log(
+    `[cobertura] "${secao}": ${gerado}/${esperado} páginas (${(ratio * 100).toFixed(1)}%) | mínimo: ${(COBERTURA_MINIMA * 100).toFixed(0)}%`,
+  );
+
+  if (ratio < COBERTURA_MINIMA) {
+    algumFalhou = true;
+    console.error(
+      `\n❌ [cobertura] "${secao}" prerenderizou ${gerado} de ${esperado} páginas esperadas.`,
+    );
+    console.error('   Cada página faltante vira 200 com o HTML da HOME no proxy (duplicata para o Google).');
+    console.error('   Verifique o getPrerenderParams da seção em src/app/app.routes.server.ts');
+    console.error('   e se o prebuild (baixar-bulk-prerender.mjs) baixou o bulk correspondente.');
+  }
+}
+
 if (algumFalhou) {
   console.error('\n   Build abortado para não publicar páginas de erro indexáveis.\n');
   process.exit(1);
