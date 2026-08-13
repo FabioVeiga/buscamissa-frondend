@@ -12,7 +12,7 @@ import { RouterModule } from "@angular/router";
     FooterHomeComponent,
     RouterModule,
   ],
-  template: `<div class="layout-wrapper" style="padding:3px">
+  template: `<div class="layout-wrapper">
     <a class="skip-link" href="#conteudo">Pular para o conteúdo</a>
     <div class="layout-main-container">
       <app-header-home></app-header-home>

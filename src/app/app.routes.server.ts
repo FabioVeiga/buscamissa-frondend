@@ -169,6 +169,12 @@ export const serverRoutes: ServerRoute[] = [
   // Índice de estados (`/estados`) — estático (constante STATES), sem :param.
   { path: 'estados', renderMode: RenderMode.Prerender },
 
+  // Índice de cidades (`/cidades`) — mesma fonte/interceptor de `/estados`
+  // (`PrerenderEstadosInterceptor`, agora com `cidades[]` no resumo). Antes CSR
+  // (caía no `**` abaixo): era o hub com mais links internos (381 cidades) e o
+  // único sem HTML prerenderizado nem JSON-LD.
+  { path: 'cidades', renderMode: RenderMode.Prerender },
+
   // Índice de dias (`/dias`) — estático (constante DIAS_INTENCAO), sem :param.
   { path: 'dias', renderMode: RenderMode.Prerender },
 

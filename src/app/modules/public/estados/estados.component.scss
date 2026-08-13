@@ -1,6 +1,60 @@
 // Campo de busca projetado no slot [hero-busca].
 @use '../../../shared/styles/hero-busca' as *;
 
+$laranja: #bc5d10;
+$laranja-vivo: #e2761b;
+$creme: #fdf6f0;
+$titulo: #1f2937;
+$texto: #374151;
+$muted: #6b7280;
+
+// Mesmo container de estado.component.scss (72rem / 1.5rem): alinha o H2/CTA
+// com o breadcrumb/título do hero acima e com a grade do <app-hub-lista> abaixo
+// (que traz o próprio container idêntico).
+.wrap {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.sec-titulo {
+  display: flex; align-items: center; gap: 0.6rem;
+  font-size: 1.1875rem; font-weight: 800; color: $titulo; margin: 0 0 0.35rem; line-height: 1.25;
+}
+.sec-titulo__ico { color: $laranja-vivo; font-size: 1.15rem; }
+.sec-sub { color: $muted; margin: 0 0 1.25rem; font-size: 0.875rem; }
+
+// ================= CTA (mesmo padrão de /missas/:uf e /cidades) =================
+.cta {
+  display: grid;
+  grid-template-columns: auto auto 1fr auto;
+  align-items: center;
+  gap: 0.75rem 1.5rem;
+  background: $creme;
+  border-radius: 16px;
+  padding: 1.5rem 1.75rem;
+}
+.cta__ico { width: 58px; height: 58px; flex: 0 0 auto; color: $laranja-vivo; }
+.cta__titulo { color: $titulo; font-size: 1.0625rem; font-weight: 800; line-height: 1.3; }
+.cta__texto { color: $texto; margin: 0; font-size: 0.9375rem; line-height: 1.5; }
+.cta__btn {
+  display: inline-flex; align-items: center; gap: 0.5rem; white-space: nowrap;
+  background: $laranja-vivo; color: #fff; text-decoration: none; font-weight: 700;
+  padding: 0.85rem 1.5rem; border-radius: 12px; font-size: 0.9375rem;
+  i { font-size: 0.7rem; }
+  &:hover { background: $laranja; }
+}
+@media (max-width: 900px) {
+  .cta { grid-template-columns: auto 1fr; }
+  .cta__texto { grid-column: 1 / -1; }
+  .cta__btn { grid-column: 1 / -1; justify-content: center; }
+}
+
+.assinatura {
+  text-align: center; color: $muted; font-size: 0.8125rem; margin: 2rem 0 0;
+  i { color: #ef6b6b; margin-right: 0.35rem; }
+}
+
 // Ilustração projetada em [hero-arte]. A caixa (posição, largura, ocultar abaixo
 // de 900px) é do <app-page-hero>; o preenchimento e o recorte são desta página.
 .estados-arte {

@@ -20,6 +20,10 @@ $muted: #6b7280;
   width: 100%;
   /* .hero global (styles.scss) centraliza texto; aqui o alinhamento é à esquerda. */
   text-align: left;
+
+  /* Bloco de estatísticas + respiro final ficavam grandes demais no mobile
+     (faixa creme ocupando boa parte da primeira dobra). */
+  @media (max-width: 640px) { padding-bottom: 1.5rem; margin-bottom: 2rem; }
 }
 @media (min-width: 900px) {
   /* altura maior deixa a arte respirar (object-fit: cover recorta) */
@@ -80,31 +84,123 @@ $muted: #6b7280;
   font-size: 1rem;
   line-height: 1.55;
   white-space: pre-line;
+
+  /* No mobile o hero disputa a primeira dobra com a busca: 1.25rem mantém a
+     separação legível e devolve alguns px para a ação primária. */
+  @media (max-width: 640px) { margin-bottom: 1.25rem; }
 }
 
-/* STAT TILES — cards brancos com borda */
-.ph-hero__tiles { display: flex; flex-wrap: wrap; gap: 0.9rem; margin-bottom: 1.75rem; }
-.ph-tile {
-  display: flex; align-items: center; gap: 0.7rem;
-  background: #fff; border: 1px solid #f0e2d6; border-radius: 14px;
-  padding: 0.85rem 1.15rem; min-width: 140px;
+/* STAT TILES — cards brancos com borda.
+   Grade de colunas IGUAIS (não flex-wrap/min-width): a largura por conteúdo
+   fazia os tiles ficarem em escada (ex.: 161/200/229px em 375px) e, com 3 tiles
+   de rótulo longo, sobrava um órfão sozinho na última linha. `--ph-tiles-n` é
+   setado no host conforme `tiles.length` — nunca 2+1, nunca degrau. */
+.ph-hero__tiles {
+  display: grid;
+  grid-template-columns: repeat(var(--ph-tiles-n, 3), 1fr);
+  gap: 0.75rem;
+  /* Último bloco do hero: o fechamento é o padding-bottom do .ph-hero. */
+  margin: 1.5rem 0 0;
+
+  @media (max-width: 640px) { gap: 0.5rem; margin-top: 1rem; }
 }
+
+/*
+ * DESKTOP: composição horizontal (ícone ao lado do número+rótulo) — é a que dá
+ * a densidade "premium" da referência /missas/:uf.
+ *
+ * O padding lateral é 0.85rem (não 1.15rem) porque a coluna de texto aqui é mais
+ * apertada do que parece: a partir de 900px o hero reserva 42% da largura para a
+ * arte, então em 1280px os 3 tiles dividem só ~435px. Com 1.15rem sobravam 63px
+ * para o rótulo e "paróquias" ocupa 63px — passava por ~2px, e qualquer variação
+ * de renderização de fonte o quebraria em duas linhas.
+ */
+.ph-tile {
+  display: flex; align-items: center; gap: 0.5rem;
+  background: #fff; border: 1px solid #f0e2d6; border-radius: 14px;
+  padding: 0.85rem; min-width: 0;
+
+  /*
+   * MOBILE: composição VERTICAL (ícone em cima, número, rótulo) — mini-métrica,
+   * não card horizontal.
+   *
+   * Por quê: em 375px cada um dos 3 tiles tem ~106px. Na horizontal, o ícone
+   * (34px) + gap (7px) + padding (17px) consomem 58px, sobrando ~48px de coluna
+   * de texto — menos que os ~54px de que "paróquias" precisa, então o rótulo
+   * quebrava em duas linhas ("paróqui/as") e o tile parecia defeito.
+   * Empilhando, o rótulo passa a dispor da largura interna INTEIRA do tile
+   * (~92px) e cabe inteiro, sem encolher fonte nem cortar texto.
+   */
+  @media (max-width: 640px) {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 0.2rem;
+    /* Compacto: era 0.9rem 0.5rem (~99px de altura) — o bloco de 3 tiles
+       competia com o conteúdo logo abaixo por espaço na tela. */
+    padding: 0.55rem 0.4rem;
+  }
+}
+
 .ph-tile__ico {
   display: grid; place-items: center;
-  width: 34px; height: 34px; flex: 0 0 34px;
-  background: $creme-forte; border-radius: 10px;
-  i { color: $laranja-vivo; font-size: 1.05rem; }
+  /* 30px, não 34px: na composição horizontal o ícone divide a largura com o
+     texto, e cada px que ele devolve é px de rótulo (ver comentário em .ph-tile). */
+  width: 30px; height: 30px; flex: 0 0 30px;
+  background: $creme-forte; border-radius: 9px;
+  i { color: $laranja-vivo; font-size: 1rem; }
+
+  @media (max-width: 640px) {
+    width: 24px; height: 24px; flex: 0 0 24px;
+    border-radius: 8px;
+    i { font-size: 0.8rem; }
+  }
 }
-.ph-tile__dados { display: block; }
+
+/*
+ * flex: 1 1 auto + min-width: 0: sem isso, um item flex não encolhe abaixo da
+ * largura intrínseca do próprio conteúdo — o rótulo empurrava a caixa para fora
+ * do tile (overflow silencioso) em vez de acomodar, em grades estreitas
+ * (o "clássico" min-width:auto do flexbox).
+ */
+.ph-tile__dados { display: block; flex: 1 1 auto; min-width: 0; }
+@media (max-width: 640px) {
+  /* Empilhado: ocupa a largura toda para o texto centralizar sobre o tile
+     inteiro (com align-items:center um item de largura automática encolheria
+     ao conteúdo). */
+  .ph-tile__dados { width: 100%; flex: 0 0 auto; }
+}
+
 .ph-tile__num {
   display: block; font-size: 1.375rem; font-weight: 800; color: $titulo;
   line-height: 1.1; font-variant-numeric: tabular-nums;
   /* Mesma caixa com número ou com skeleton — o tile não muda de altura. */
   min-height: 1.5125rem;
+
+  /* Um pouco menor no mobile: some dos ~20px que o bloco de tiles tirava da
+     dobra sem comprometer a leitura (o número continua sendo o elemento
+     dominante do tile). */
+  @media (max-width: 640px) { font-size: 1.125rem; min-height: 1.25rem; }
 }
-.ph-tile__lbl { display: block; font-size: 0.8125rem; color: $muted; }
+.ph-tile__lbl {
+  display: block; font-size: 0.8125rem; color: $muted; line-height: 1.25;
+  /* Rede de segurança para um rótulo futuro mais longo que a coluna: só dispara
+     quando a palavra não cabe sozinha na linha. Com a composição vertical, os
+     rótulos atuais (cidades/paróquias/estados) não chegam perto disso. */
+  overflow-wrap: break-word;
 
-/* Slot da busca: sem margem própria (ver comentário no template). */
-.ph-hero__busca { position: relative; }
+  @media (max-width: 640px) { font-size: 0.75rem; }
+}
 
-.ph-hero__hint { color: $muted; font-size: 0.85rem; margin: 0.6rem 0 0; }
+/* ===== Ritmo do bloco de ação: busca -> hint -> tiles =====
+   Cada bloco só empurra o seguinte quando existe de fato — `:has(> *)` cobre o
+   caso do slot projetado vazio (/dias não tem busca) e o `@if` do template cobre
+   hint e tiles. Assim nenhum hub ganha respiro reservado para algo que não tem. */
+.ph-hero__busca {
+  position: relative;
+  &:has(> *) { margin-bottom: 0.55rem; }
+}
+
+/* Colado à busca: é o texto auxiliar DELA. O respiro até os tiles vem do
+   margin-top deles (margens adjacentes colapsam, então não soma em dobro). */
+.ph-hero__hint { color: $muted; font-size: 0.85rem; margin: 0; }

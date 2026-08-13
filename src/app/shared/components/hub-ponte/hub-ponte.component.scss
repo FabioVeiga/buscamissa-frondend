@@ -1,0 +1,61 @@
+$laranja: #bc5d10;
+$laranja-vivo: #e2761b;
+$borda: #e5e7eb;
+$titulo: #1f2937;
+$muted: #6b7280;
+
+// Mesmo container 72rem/1.5rem dos demais blocos dos hubs (.wrap em
+// estado/estados/dias.component.scss) — a Ponte é sempre o penúltimo bloco
+// antes do CTA, então herda o mesmo alinhamento horizontal.
+.ponte {
+  max-width: 72rem;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.ponte__titulo {
+  font-size: 1.0625rem;
+  font-weight: 800;
+  color: $titulo;
+  margin: 0 0 1rem;
+}
+
+.ponte__grid {
+  display: grid;
+  gap: 0.85rem;
+  // Dois cards (o eixo atual some da lista): metade/metade a partir de 480px,
+  // empilhados abaixo disso.
+  grid-template-columns: 1fr;
+  @media (min-width: 480px) { grid-template-columns: repeat(2, 1fr); }
+}
+
+.ponte-card {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 1.1rem 1.25rem;
+  background: #fff;
+  border: 1px solid $borda;
+  border-radius: 14px;
+  text-decoration: none;
+  transition: border-color .15s, box-shadow .15s, transform .15s;
+
+  &:hover {
+    border-color: #f3b989;
+    box-shadow: 0 3px 12px rgba(0, 0, 0, .06);
+    transform: translateY(-2px);
+  }
+
+  &__icone {
+    display: grid; place-items: center;
+    width: 2.75rem; height: 2.75rem; flex: 0 0 2.75rem;
+    background: #fff4ed; border-radius: 10px;
+    i { color: $laranja-vivo; font-size: 1.1rem; }
+  }
+
+  &__texto { display: flex; flex-direction: column; gap: 0.15rem; flex: 1; min-width: 0; }
+  &__titulo { font-weight: 700; color: $titulo; font-size: 0.9375rem; }
+  &__desc { font-size: 0.8125rem; color: $muted; }
+
+  &__seta { color: #9ca3af; font-size: 0.85rem; flex-shrink: 0; }
+}

@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, HostBinding, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
 import { SkeletonModule } from 'primeng/skeleton';
@@ -54,6 +54,18 @@ export class PageHeroComponent {
 
   /** Lista vazia remove a faixa de tiles inteira — sem reservar espaço. */
   @Input() tiles: HeroTile[] = [];
+
+  /**
+   * Nº de colunas da grade de tiles = nº de tiles (1 a 4). Grade de colunas
+   * IGUAIS em vez de flex-wrap: garante largura idêntica entre tiles e elimina
+   * o órfão de última linha (2+1) que o flex-wrap produzia com 3 tiles em
+   * telas estreitas. Acima de 4 tiles, trava em 4 colunas (2 linhas de 2)
+   * em vez de espremer colunas ao infinito.
+   */
+  @HostBinding('style.--ph-tiles-n')
+  get tilesColunas(): number {
+    return Math.min(Math.max(this.tiles.length, 1), 4);
+  }
 
   /**
    * Troca SÓ os números por skeleton, preservando a altura do tile (anti-CLS).
