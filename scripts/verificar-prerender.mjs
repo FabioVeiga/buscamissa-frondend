@@ -123,8 +123,14 @@ if (browserDir) {
 // o Google recebeu 988 cópias da home com canonical=/home.
 //
 // Aqui comparamos o que foi ASSADO com o que o prebuild PROMETEU (.prerender-cache).
-// É auto-calibrado: não há número mágico para desatualizar. Se o cache não existe
-// (build:dev, ou API fora no prebuild), a checagem é pulada — mesma degradação de antes.
+// É auto-calibrado: não há número mágico para desatualizar.
+//
+// CACHE AUSENTE É FALHA DURA, não "checagem pulada". Essa era a segunda metade do
+// mesmo buraco: `/paroquia/*` e `/missas/*` saíram do `navigationFallback`, então
+// página não prerenderizada = 404 numa URL REAL. E o cache some exatamente quando a
+// API falha — ou seja, o guard se desligava justo no cenário em que o estrago
+// acontece. Sem o cache não há como afirmar que a cobertura está correta, e "não sei"
+// tem que barrar o deploy, não liberá-lo.
 const COBERTURA_MINIMA = 0.9;
 
 /** Espelha exatamente o universo de app.routes.server.ts (paroquiasDoDisco/cidadesDoDisco). */
@@ -132,10 +138,13 @@ const esperadoPorSecao = {
   missas: () => {
     const cidades = lerCache('cidades.json');
     const estados = lerCache('estados.json');
-    if (!cidades && !estados) return null;
+    // Os DOIS são obrigatórios: cidades.json alimenta /missas/{uf}/{cidade} e
+    // estados.json alimenta /missas/{uf}. Faltando um, metade da seção some do dist
+    // e vira 404. Antes bastava um dos dois existir para a checagem rodar.
+    if (!cidades || !estados) return null;
     // A pasta "missas" acumula os dois níveis: /missas/{uf} e /missas/{uf}/{cidade}.
-    return (cidades?.filter((c) => c?.uf && c?.cidadeSlug).length ?? 0)
-      + (estados?.filter((e) => e?.uf).length ?? 0);
+    return cidades.filter((c) => c?.uf && c?.cidadeSlug).length
+      + estados.filter((e) => e?.uf).length;
   },
   // TODAS as paróquias do disco — o filtro por missa/confiança saiu junto com o de
   // app.routes.server.ts. O número não é fixo no código de propósito: sai do
@@ -161,12 +170,24 @@ function lerCache(arquivo) {
 
 for (const [secao, contar] of Object.entries(esperadoPorSecao)) {
   const esperado = contar();
+
+  // Cache ausente/ilegível: não dá para verificar cobertura, e estas seções estão
+  // fora do navigationFallback. Barra o deploy.
   if (esperado === null) {
-    console.log(`[cobertura] "${secao}": sem cache do prebuild — checagem pulada.`);
+    algumFalhou = true;
+    console.error(`\n❌ [cobertura] "${secao}": cache do prebuild AUSENTE ou ilegível em .prerender-cache/.`);
+    console.error('   Sem ele não há como afirmar que as páginas desta seção foram geradas — e como');
+    console.error('   ela está fora do navigationFallback, cada página faltante é 404 numa URL real.');
+    console.error('   Rode o prebuild (scripts/baixar-bulk-prerender.mjs) antes do build.');
     continue;
   }
+
+  // Zero prometido também barra: nenhum ambiente real tem zero cidade ou zero
+  // paróquia, então isso é sintoma de cache corrompido, não estado legítimo.
   if (esperado === 0) {
-    console.log(`[cobertura] "${secao}": prebuild não prometeu nenhuma página — nada a exigir.`);
+    algumFalhou = true;
+    console.error(`\n❌ [cobertura] "${secao}": o cache do prebuild prometeu ZERO páginas.`);
+    console.error('   Nenhum ambiente real tem essa seção vazia — cache corrompido ou API degradada.');
     continue;
   }
 
