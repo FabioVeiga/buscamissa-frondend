@@ -42,13 +42,26 @@ const INNER_RE = /<style\b[^>]*>([\s\S]*?)<\/style>/i;
 /** Ids de encapsulação do Angular: _ngcontent-ng-c123 / _nghost-ng-c123. */
 const ENCAP_RE = /_(ngcontent|nghost)-ng-c(\d+)/g;
 
+/**
+ * HTML que NÃO é página prerenderizada e por isso fica fora do dedupe.
+ *
+ * `404.html` é asset estático de `public/`, servido pelo Azure SWA em
+ * `responseOverrides` — precisa ser autocontido, porque é a resposta terminal de uma
+ * URL que não existe. Sem esta exceção o dedupe extraía o `<style>` inline dele e
+ * punha no lugar um `<link>` para o CSS compartilhado: a página de erro passava a
+ * depender de um request extra de ~197 KB (e de um hash que muda a cada build) para
+ * renderizar. O dedupe existe para CSS repetido em milhares de páginas; um arquivo
+ * único não tem o que deduplicar.
+ */
+const FORA_DO_DEDUPE = new Set(['404.html']);
+
 function listarHtml(dir) {
   const out = [];
   for (const nome of readdirSync(dir)) {
     const p = join(dir, nome);
     const st = statSync(p);
     if (st.isDirectory()) out.push(...listarHtml(p));
-    else if (nome.endsWith('.html')) out.push(p);
+    else if (nome.endsWith('.html') && !FORA_DO_DEDUPE.has(nome)) out.push(p);
   }
   return out;
 }
@@ -68,6 +81,62 @@ function montarMapaEncap(ids) {
 
 function encurtar(texto, mapa) {
   return texto.replace(ENCAP_RE, (achado) => mapa.get(achado) ?? achado);
+}
+
+/**
+ * Enxuga o `<head>`: remove comentários descritivos e a indentação.
+ *
+ * Esses bytes vêm de `src/index.html` — documentação escrita para quem lê o fonte,
+ * que o Angular copia para CADA página prerenderizada. Medido no build de prod de
+ * 2026-08-13: 2,63 KB de comentários + 0,94 KB de indentação por página × 5.942
+ * páginas ≈ 21 MB, num dist que bateu 226 MB contra o teto de 220.
+ *
+ * SÓ MEXE NO `<head>`, e isso é a garantia de segurança, não uma limitação:
+ *
+ *  - Hidratação acontece sob `<body>`. O Angular casa a árvore serializada com o DOM
+ *    do cliente; mexer em text node ou comentário do body arrisca NG0500 e congela
+ *    todo `@defer` da página sem erro visível (ver [[ssr-timers-quebram-prerender]],
+ *    onde esse sintoma já custou caro).
+ *  - E não há o que ganhar lá: medido na mesma amostra, o body tem 0,00 KB de
+ *    comentário descritivo e 0,01 KB de indentação — o Angular já o emite minificado.
+ *    Restringir ao head captura 3,57 dos 3,58 KB disponíveis (99,7%).
+ *
+ * Os `<!---->` (âncoras de hidratação) vivem todos no body e portanto nem são
+ * alcançados. Ainda assim a regex de comentário exige conteúdo não-vazio, para que a
+ * função continue correta se um dia um `<!---->` aparecer no head.
+ *
+ * Conteúdo de `<script>` e `<style>` é preservado intacto: o texto é fatiado nesses
+ * blocos e só os pedaços FORA deles são transformados. Sem isso, colapsar espaço
+ * dentro do JSON-LD ou dos scripts de consentimento seria mexer em dado e em código.
+ */
+const BLOCO_INTOCAVEL_RE = /<(script|style)\b[^>]*>[\s\S]*?<\/\1>/gi;
+
+function enxugarHead(html) {
+  const fim = html.indexOf('</head>');
+  if (fim === -1) return html;
+  const head = html.slice(0, fim);
+  const resto = html.slice(fim);
+
+  let saida = '';
+  let ultimo = 0;
+  BLOCO_INTOCAVEL_RE.lastIndex = 0;
+  for (let m; (m = BLOCO_INTOCAVEL_RE.exec(head)) !== null; ) {
+    saida += limparTrecho(head.slice(ultimo, m.index)) + m[0];
+    ultimo = m.index + m[0].length;
+  }
+  saida += limparTrecho(head.slice(ultimo));
+
+  return saida + resto;
+}
+
+/** Remove comentários com conteúdo e a indentação de início de linha. */
+function limparTrecho(t) {
+  return t
+    // `[\s\S]*?\S[\s\S]*?` exige ao menos um caractere não-branco: `<!---->` e
+    // `<!-- -->` são preservados por construção.
+    .replace(/<!--[\s\S]*?\S[\s\S]*?-->/g, '')
+    .replace(/\n[ \t]+/g, '\n')
+    .replace(/\n{2,}/g, '\n');
 }
 
 function main() {
@@ -129,6 +198,9 @@ function main() {
     }
 
     novo = encurtar(novo, mapaEncap);
+    // Por último: o enxugamento do head roda depois da injeção do preload/stylesheet
+    // e do encurtamento de ids, para operar sobre o head já em sua forma final.
+    novo = enxugarHead(novo);
     if (novo !== orig) writeFileSync(f, novo);
     bytesDepois += Buffer.byteLength(novo);
   }

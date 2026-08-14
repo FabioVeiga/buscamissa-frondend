@@ -18,38 +18,42 @@ import { buscarRotasSeo, normalizarBaseUrl } from '../../scripts/lib/seo-routes.
  *   sitemap).
  * - Fase 2.5 (aqui): prerender das páginas de PARÓQUIA (`/paroquia/:uf/:cidade/:slug`).
  *   O bulk `/v2/seo/paroquias` (interceptor só-server) evita as chamadas individuais.
- *   Prerenderiza SÓ paróquias com confiança Média/Alta (ver paroquiasComMissaDoDisco):
- *   corta as páginas thin (sem horário) e as com horário nunca validado/desatualizado
- *   (StatusConfianca Desconhecida/Baixa) — em prod (~4.5k paróquias) o dist estourava
- *   200 MB mesmo só com o filtro "tem missa" (3.471 páginas). Cortar por confiança leva
- *   a ~2.743, priorizando as páginas com dado mais confiável/visitado. As demais seguem
- *   CSR (e continuam no sitemap).
+ *   Prerenderiza TODAS as paróquias do disco (ver paroquiasDoDisco). Até 2026-08-13
+ *   havia um filtro por `missas.length > 0` e confiança Média/Alta, motivado pelo
+ *   tamanho do dist; ele deixava ~1.754 paróquias reais sem arquivo, e é justamente
+ *   a ausência de arquivo que o Azure SWA lê como "não existe". Sem cobertura total
+ *   não há como o servidor separar paróquia real de URL inventada — as duas caíam no
+ *   `navigationFallback` e voltavam 200 com o HTML da HOME.
+ *   Custo do dist coberto elevando o guard para 220 MB (ver verificar-dist-size.mjs).
  */
-
-/** Espelha Enums/StatusConfiancaEnum.cs do backend (api-public). */
-const enum StatusConfianca {
-  Media = 2,
-  Alta = 3,
-}
 
 /**
- * Lê o bulk baixado pelo prebuild (.prerender-cache/paroquias.json, que tem `missas`
- * e `statusConfianca`) e retorna as rotas só das paróquias com confiança Média/Alta.
- * Retorna null se o arquivo não existe (ex.: build:dev sem prebuild) → o caller cai
- * no fallback (todas via routes).
+ * Lê o bulk baixado pelo prebuild (.prerender-cache/paroquias.json) e retorna a rota
+ * de TODAS as paróquias. Retorna null se o arquivo não existe (ex.: build:dev sem
+ * prebuild) → o caller cai no fallback (todas via routes).
+ *
+ * Antes chamava-se `paroquiasComMissaDoDisco` e filtrava por `missas.length > 0` e
+ * `statusConfianca ∈ {Média, Alta}`, deixando ~1.754 paróquias sem arquivo no dist.
+ * O filtro saiu porque o Azure SWA decide 200 vs 404 **só por existência de arquivo** —
+ * ele não consulta a API. Enquanto uma paróquia real não tivesse arquivo, era
+ * impossível distinguir "existe mas não prerenderizamos" de "não existe", e o
+ * `navigationFallback` respondia 200 com o HTML da HOME para as duas.
+ *
+ * Com todas no disco, a regra passa a ser exata:
+ *   arquivo existe   → 200 (indexável; sem horário sai noindex pelo details.component)
+ *   arquivo não existe → 404 de verdade
+ *
+ * As sem horário continuam existindo de propósito: a página de cidade lista TODAS as
+ * paróquias, então 404 nelas quebraria a navegação de quem clica na lista.
  */
-function paroquiasComMissaDoDisco(): Array<{ uf: string; cidade: string; slug: string }> | null {
+function paroquiasDoDisco(): Array<{ uf: string; cidade: string; slug: string }> | null {
   const arquivo = join(process.cwd(), '.prerender-cache', 'paroquias.json');
   if (!existsSync(arquivo)) return null;
   const lista = JSON.parse(readFileSync(arquivo, 'utf-8')) as Array<{
     uf: string; cidadeSlug: string; slug: string;
-    igreja?: { missas?: unknown[]; statusConfianca?: number };
   }>;
   return lista
-    .filter((p) =>
-      (p?.igreja?.missas?.length ?? 0) > 0 &&
-      (p?.igreja?.statusConfianca === StatusConfianca.Media || p?.igreja?.statusConfianca === StatusConfianca.Alta) &&
-      p.uf && p.cidadeSlug && p.slug)
+    .filter((p) => p?.uf && p?.cidadeSlug && p?.slug)
     .map((p) => ({ uf: p.uf, cidade: p.cidadeSlug, slug: p.slug }));
 }
 
@@ -64,6 +68,31 @@ function lerCache<T>(arquivo: string): T | null {
   const caminho = join(process.cwd(), '.prerender-cache', arquivo);
   if (!existsSync(caminho)) return null;
   return JSON.parse(readFileSync(caminho, 'utf-8')) as T;
+}
+
+/**
+ * Cidades a prerenderizar, do cache do prebuild (.prerender-cache/cidades.json —
+ * o MESMO arquivo que o PrerenderCidadeInterceptor já consome para servir os dados
+ * do disco). Retorna null se o arquivo não existe (ex.: build:dev sem prebuild).
+ *
+ * Por que disco e não `/v2/seo/routes`: esta era a ÚNICA categoria cujo
+ * getPrerenderParams dependia de rede no meio do build, com timeout de 8s
+ * (scripts/lib/seo-routes.mjs). Quando esse fetch degradava, `buscarRotasSeo`
+ * devolvia `{cities: []}` — silenciosamente, porque o fallback vazio é by design e
+ * o guard-rail não falha com zero páginas numa seção. Resultado observado em
+ * produção (2026-08-13): ZERO das 988 páginas `/missas/{uf}/{cidade}` estavam
+ * prerenderizadas; todas caíam no fallback do proxy, que devolve o HTML da HOME
+ * (200, canonical=/home) — a causa direta dos "Duplicate, Google chose different
+ * canonical" e do "Discovered - currently not indexed" no Search Console.
+ *
+ * Paróquias e estados já liam do disco e por isso nunca sofreram esse problema.
+ */
+function cidadesDoDisco(): Array<{ uf: string; cidade: string }> | null {
+  const lista = lerCache<Array<{ uf?: string; cidadeSlug?: string }>>('cidades.json');
+  if (!lista) return null;
+  return lista
+    .filter((c) => c?.uf && c?.cidadeSlug)
+    .map((c) => ({ uf: c.uf!.toLowerCase(), cidade: c.cidadeSlug! }));
 }
 
 /** UFs (lowercase) que têm paróquia — do cache estados.json, senão do bulk ao vivo. */
@@ -131,12 +160,16 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'cookies', renderMode: RenderMode.Prerender },
 
   // Fase 2 — cidades. As chaves (uf/cidade) casam com os :param de app.routes.ts.
-  // Se `/v2/seo/routes` falhar no build, o helper retorna lista vazia: nenhuma
-  // cidade é prerenderizada (segue CSR) em vez de derrubar o deploy.
+  // Preferimos o cache do prebuild (mesma fonte do PrerenderCidadeInterceptor);
+  // sem ele (build:dev) caímos em `/v2/seo/routes`. Se ambos falharem, a lista
+  // vem vazia (segue CSR) em vez de derrubar o deploy — mas o guard-rail do
+  // postbuild agora barra o deploy nesse caso (ver verificar-prerender.mjs).
   {
     path: 'missas/:uf/:cidade',
     renderMode: RenderMode.Prerender,
     getPrerenderParams: async () => {
+      const doDisco = cidadesDoDisco();
+      if (doDisco) return doDisco;
       const base = normalizarBaseUrl(environment.config.apiURL);
       const { cities } = await buscarRotasSeo(base);
       return cities.map((c: { uf: string; citySlug: string }) => ({
@@ -146,16 +179,15 @@ export const serverRoutes: ServerRoute[] = [
     },
   },
 
-  // Fase 2.5 — paróquias (só as COM missa). As chaves (uf/cidade/slug) casam com os
-  // :param de app.routes.ts. Preferimos o cache do prebuild (tem `missas`) pra
-  // filtrar; sem ele (build:dev) ou se `/v2/seo/routes` falhar, cai no fallback
-  // (todas / lista vazia) — nunca derruba o deploy.
+  // Fase 2.5 — paróquias (TODAS). As chaves (uf/cidade/slug) casam com os :param de
+  // app.routes.ts. Preferimos o cache do prebuild; sem ele (build:dev) ou se
+  // `/v2/seo/routes` falhar, cai no fallback (lista vazia) — nunca derruba o deploy.
   {
     path: 'paroquia/:uf/:cidade/:slug',
     renderMode: RenderMode.Prerender,
     getPrerenderParams: async () => {
-      const comMissa = paroquiasComMissaDoDisco();
-      if (comMissa) return comMissa;
+      const doDisco = paroquiasDoDisco();
+      if (doDisco) return doDisco;
       const base = normalizarBaseUrl(environment.config.apiURL);
       const { parishes } = await buscarRotasSeo(base);
       return parishes.map((p: { uf: string; citySlug: string; slug: string }) => ({
@@ -168,6 +200,12 @@ export const serverRoutes: ServerRoute[] = [
 
   // Índice de estados (`/estados`) — estático (constante STATES), sem :param.
   { path: 'estados', renderMode: RenderMode.Prerender },
+
+  // Índice de cidades (`/cidades`) — mesma fonte/interceptor de `/estados`
+  // (`PrerenderEstadosInterceptor`, agora com `cidades[]` no resumo). Antes CSR
+  // (caía no `**` abaixo): era o hub com mais links internos (381 cidades) e o
+  // único sem HTML prerenderizado nem JSON-LD.
+  { path: 'cidades', renderMode: RenderMode.Prerender },
 
   // Índice de dias (`/dias`) — estático (constante DIAS_INTENCAO), sem :param.
   { path: 'dias', renderMode: RenderMode.Prerender },

@@ -19,6 +19,26 @@
       <p class="ph-hero__sub">{{ subtitulo }}</p>
     }
 
+    <!--
+      Ordem do bloco de ação: busca -> hint -> tiles. A busca é a ação primária
+      (o que o usuário veio fazer) e os números são prova de cobertura, que só
+      fazem sentido depois de ele já saber para onde ir. A ordem é fixada AQUI
+      porque `[hero-busca]` é projetado via ng-content num slot de posição fixa:
+      reordenar os elementos no HTML de quem consome o hero não tem efeito nenhum.
+      Espaçamento: cada bloco só empurra o seguinte quando de fato existe (ver
+      SCSS), então /dias — sem busca e sem tiles — não ganha buraco reservado.
+    -->
+    <div class="ph-hero__busca">
+      <ng-content select="[hero-busca]"></ng-content>
+    </div>
+
+    <!-- O hint descreve a BUSCA ("Digite o nome da cidade..."), então vem colado
+         nela — não depois dos tiles, onde ficava órfão de um campo que já tinha
+         saído da vista. -->
+    @if (hint) {
+      <p class="ph-hero__hint">{{ hint }}</p>
+    }
+
     @if (tiles.length) {
       <div class="ph-hero__tiles">
         @for (t of tiles; track t.rotulo) {
@@ -35,18 +55,6 @@
           </div>
         }
       </div>
-    }
-
-    <!--
-      Sem margem própria: o espaçamento vem do bloco anterior (.ph-hero__tiles).
-      Assim uma página sem busca (ex.: /dias) não ganha um buraco reservado.
-    -->
-    <div class="ph-hero__busca">
-      <ng-content select="[hero-busca]"></ng-content>
-    </div>
-
-    @if (hint) {
-      <p class="ph-hero__hint">{{ hint }}</p>
     }
   </div>
 

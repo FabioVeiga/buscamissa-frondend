@@ -9,7 +9,9 @@
   &__inner {
     max-width: 72rem;
     margin: 0 auto;
-    padding: 0 1.25rem;
+    // 1.5rem: mesmo padding lateral do conteúdo (.ph-hero__conteudo, .hub, .wrap,
+    // .cidades-page) — antes era 1.25rem e o logo ficava 4px à esquerda do H1.
+    padding: 0 1.5rem;
     height: 3.75rem;
     display: flex;
     align-items: center;

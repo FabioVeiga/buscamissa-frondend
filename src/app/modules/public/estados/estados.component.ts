@@ -2,11 +2,14 @@ import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnDe
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import { STATES } from '../../../core/constants/states';
 import { SeoPaginasService } from '../../../core/services/seo-paginas.service';
 import { SeoService } from '../../../core/services/seo.service';
 import { HubListaComponent, HubBreadcrumb, HubItem } from '../../../shared/components/hub-lista/hub-lista.component';
 import { PageHeroComponent, HeroTile } from '../../../shared/components/page-hero/page-hero.component';
+import { HubPonteComponent } from '../../../shared/components/hub-ponte/hub-ponte.component';
+import { metaParoquiasCidades } from '../../../shared/utils/plural.utils';
 
 const SITE = 'https://buscamissa.com.br';
 
@@ -31,7 +34,7 @@ interface EstadoResumo {
 @Component({
   selector: 'app-estados',
   standalone: true,
-  imports: [CommonModule, FormsModule, HubListaComponent, PageHeroComponent],
+  imports: [CommonModule, FormsModule, RouterLink, HubListaComponent, PageHeroComponent, HubPonteComponent],
   templateUrl: './estados.component.html',
   styleUrl: './estados.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -110,7 +113,7 @@ export class EstadosComponent implements OnInit, OnDestroy {
     this.estados = estados;
     this.itens = estados.map((e) => ({
       nome: e.estado,
-      meta: `${e.totalParoquias} paróquia(s) em ${e.totalCidades} cidade(s)`,
+      meta: metaParoquiasCidades(e.totalParoquias, e.totalCidades),
       link: ['/missas', e.uf.toLowerCase()],
     }));
     this.itensVisiveis = this.itens;
@@ -119,8 +122,9 @@ export class EstadosComponent implements OnInit, OnDestroy {
     const paroquias = estados.reduce((s, e) => s + (e.totalParoquias ?? 0), 0);
     const cidades = estados.reduce((s, e) => s + (e.totalCidades ?? 0), 0);
     this.tiles = [
-      { icone: 'pi pi-building', numero: paroquias, rotulo: 'paróquias' },
+      // Ordem e ícone únicos entre os hubs: cidades → paróquias → estados.
       { icone: 'pi pi-map-marker', numero: cidades, rotulo: 'cidades' },
+      { icone: 'pi pi-building', numero: paroquias, rotulo: 'paróquias' },
       { icone: 'pi pi-map', numero: estados.length, rotulo: 'estados' },
     ];
     this.carregando = false;

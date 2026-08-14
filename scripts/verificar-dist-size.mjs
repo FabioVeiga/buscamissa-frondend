@@ -22,7 +22,27 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 
 // Azure SWA Free rejeita conteúdo > 250 MB (descomprimido). Margem folgada, NÃO 249.
-const LIMITE_MB = 200;
+//
+// 200 → 220 MB em 2026-08-13, junto com a expansão da cobertura de prerender.
+// Motivo: o SWA decide 200 vs 404 só por existência de arquivo. Enquanto ~1.754
+// paróquias reais ficavam sem arquivo (filtro de missa/confiança), era impossível
+// separar paróquia real de URL inexistente, e o fallback devolvia 200 com o HTML da
+// HOME nas duas. Prerenderizar todas é o que torna o 404 real possível.
+//
+// Projeção para prod a partir das médias MEDIDAS no build de staging de 2026-08-13
+// (paróquia 34,6 KB · cidade 46,4 KB · estado 39,3 KB, já pós-dedupe de CSS), aplicadas
+// ao universo de prod (4.727 paróquias / 988 cidades / 26 estados): **~211,5 MB**.
+// Contra o teto físico de ~250 MB do plano Free, 220 MB é alarme antecipado.
+//
+// ATENÇÃO: a folga contra este guard é de só ~8,5 MB (4%). É estreita de propósito —
+// se o build abortar aqui, a saída NÃO é subir o limite de novo. É cortar peso do HTML,
+// nesta ordem (ambos medidos, ambos sem efeito em comportamento):
+//   1. comentários descritivos herdados de src/index.html — ~2,7 KB idênticos por
+//      página (os <!----> de hidratação do Angular NÃO podem sair);
+//   2. os 4 blocos <script> inline de src/index.html — ~2,5 KB idênticos por página,
+//      dedupáveis para arquivo externo (cuidado: mexe no timing do Consent Mode).
+// Juntos economizam ~5,2 KB/página ≈ 30 MB em prod, levando a projeção a ~181 MB.
+const LIMITE_MB = 220;
 const LIMITE_BYTES = LIMITE_MB * 1024 * 1024;
 // Teto de arquivos: se alguém reintroduzir prerender de milhares de páginas por engano,
 // a esteira quebra na hora — não depois do deploy. Base atual (~8 estáticas + ~380

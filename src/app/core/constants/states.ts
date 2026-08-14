@@ -27,4 +27,58 @@ export const STATES = [
     { sigla: "SE", nome: "Sergipe" },
     { sigla: "TO", nome: "Tocantins" },
   ];
-  
+
+/**
+ * Preposição de regência ("no"/"na"/"em") por UF — não é regra gramatical
+ * derivável (gênero de topônimo tem muita exceção em pt-BR), por isso é mapa
+ * explícito. Alimenta o H1 de `/missas/:uf`: "Horários de Missa no Paraná",
+ * "... em São Paulo", "... na Bahia" — em vez do genérico e incorreto
+ * "no Estado de X" que não respeita a contração do artigo.
+ */
+const PREPOSICAO_UF: Record<string, 'no' | 'na' | 'em'> = {
+  AC: 'no', AL: 'em', AP: 'no', AM: 'no', BA: 'na', CE: 'no',
+  DF: 'no', ES: 'no', GO: 'em', MA: 'no', MT: 'no', MS: 'no',
+  MG: 'em', PA: 'no', PB: 'na', PR: 'no', PE: 'em', PI: 'no',
+  RJ: 'no', RN: 'no', RS: 'no', RO: 'em', RR: 'em', SC: 'em',
+  SP: 'em', SE: 'em', TO: 'no',
+};
+
+/** Só a preposição ("no"/"na"/"em") de uma UF. Aceita sigla ou nome; sem UF reconhecida, "em". */
+export function preposicaoDe(siglaOuNome: string): 'no' | 'na' | 'em' {
+  const porSigla = STATES.find((e) => e.sigla === siglaOuNome.toUpperCase());
+  const estado = porSigla ?? STATES.find((e) => e.nome === siglaOuNome);
+  return (estado && PREPOSICAO_UF[estado.sigla]) ?? 'em';
+}
+
+/**
+ * Nome do estado já precedido da preposição correta (ex.: "no Paraná",
+ * "em São Paulo"). Aceita sigla ou nome; sem UF reconhecida, cai em "em {nome}"
+ * (degrada de forma segura, nunca lança).
+ */
+export function nomeComPreposicao(siglaOuNome: string): string {
+  const porSigla = STATES.find((e) => e.sigla === siglaOuNome.toUpperCase());
+  const estado = porSigla ?? STATES.find((e) => e.nome === siglaOuNome);
+  if (!estado) return `em ${siglaOuNome}`;
+  return `${preposicaoDe(estado.sigla)} ${estado.nome}`;
+}
+
+/** Contração de "de" + artigo ("do"/"da"/"de") derivada da preposição da UF:
+ * quem rege "no" tem artigo "o" ("do"), quem rege "na" tem artigo "a" ("da"),
+ * quem rege "em" não tem artigo (sem contração, "de"). Mesma fonte de
+ * `PREPOSICAO_UF` — não duplica dado. */
+const CONTRACAO_DE: Record<'no' | 'na' | 'em', 'do' | 'da' | 'de'> = {
+  no: 'do', na: 'da', em: 'de',
+};
+
+/**
+ * "estado {do/da/de} {nome}" com a contração correta (ex.: "estado do Paraná",
+ * "estado da Bahia", "estado de Minas Gerais") — substitui o "estado de X" que
+ * nunca contraía o artigo. Aceita sigla ou nome; sem UF reconhecida, cai em
+ * "estado de {nome}".
+ */
+export function nomeDoEstadoComArtigo(siglaOuNome: string): string {
+  const porSigla = STATES.find((e) => e.sigla === siglaOuNome.toUpperCase());
+  const estado = porSigla ?? STATES.find((e) => e.nome === siglaOuNome);
+  if (!estado) return `estado de ${siglaOuNome}`;
+  return `estado ${CONTRACAO_DE[preposicaoDe(estado.sigla)]} ${estado.nome}`;
+}
