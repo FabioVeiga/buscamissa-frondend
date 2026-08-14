@@ -13,7 +13,11 @@
     <!-- Preconnect / dns-prefetch antes dos scripts externos -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://busca-missa.azurewebsites.net" />
+    <!-- Host REAL da api-public. O preconnect apontava para `busca-missa.azurewebsites.net`,
+         que é o monólito antigo: o site não fala mais com ele (hoje responde 401/404),
+         então o handshake era desperdiçado e a API de verdade abria conexão do zero no
+         caminho crítico da primeira busca. -->
+    <link rel="preconnect" href="https://app-buscamissa-prod-api-public.azurewebsites.net" crossorigin />
     <link rel="dns-prefetch" href="https://tag.goadopt.io" />
 
     <!-- LGPD: Google Consent Mode com tudo negado por padrão.

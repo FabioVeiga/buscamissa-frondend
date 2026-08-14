@@ -10,6 +10,16 @@ export interface SeoData {
   image?: string;
   /** true = página privada/transacional (login, painel...): não deve ser indexada. */
   noindex?: boolean;
+  /**
+   * Só tem efeito junto com `noindex`. Default `false` = `noindex, nofollow`, que é o
+   * certo para página privada ou inexistente (não há para onde mandar o robô).
+   *
+   * `true` emite `noindex, follow`, para a página que EXISTE e é linkada mas não deve
+   * ser indexada agora — caso da paróquia real ainda sem horários. Ali o `nofollow`
+   * seria errado: a página tem breadcrumb e links de hub legítimos, e não queremos
+   * cortar esses caminhos de rastreamento só porque o conteúdo ainda está incompleto.
+   */
+  seguirLinks?: boolean;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -23,7 +33,10 @@ export class SeoService {
 
     // Páginas privadas/transacionais (login, painel do responsável) nunca
     // devem ser indexadas nem seguidas pelo Google.
-    this._meta.updateTag({ name: 'robots', content: data.noindex ? 'noindex, nofollow' : 'index, follow' });
+    const robots = data.noindex
+      ? (data.seguirLinks ? 'noindex, follow' : 'noindex, nofollow')
+      : 'index, follow';
+    this._meta.updateTag({ name: 'robots', content: robots });
 
     if (data.description) {
       this._meta.updateTag({ name: 'description', content: data.description });

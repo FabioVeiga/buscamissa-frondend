@@ -18,6 +18,21 @@
       class="p-button-sm p-button-outlined mt-2" (click)="tentarNovamente()"></button>
   </div>
 
+  <!-- Paróquia inexistente (404 da API) — estado próprio, com saídas úteis.
+       A rota segue 200 (SPA), mas a página é marcada noindex pelo componente. -->
+  <div *ngIf="!isLoading && naoEncontrada" class="flex flex-col items-center gap-3 py-16 text-center">
+    <i class="pi pi-map-marker text-4xl text-gray-300"></i>
+    <h1 class="text-lg font-semibold m-0">Paróquia não encontrada</h1>
+    <p class="text-sm text-gray-500 m-0 max-w-md">
+      Esta página não existe ou a paróquia foi removida. Você pode procurar pela sua cidade
+      ou cadastrar a igreja que está faltando.
+    </p>
+    <div class="flex flex-wrap gap-2 justify-center mt-2">
+      <a routerLink="/cidades" class="p-button p-button-sm p-button-outlined">Buscar por cidade</a>
+      <a routerLink="/nova" class="p-button p-button-sm p-button-outlined">Cadastrar igreja</a>
+    </div>
+  </div>
+
   <ng-container *ngIf="!isLoading && churchInfo">
 
     <!-- Breadcrumb -->

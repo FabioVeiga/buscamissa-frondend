@@ -42,11 +42,41 @@ function lerApiUrl() {
 const DIAS = ['domingo', 'segunda-feira', 'terca-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sabado'];
 
 /**
+ * Piso ABSOLUTO de itens por bulk CRÍTICO.
+ *
+ * Crítico = seção que `staticwebapp.config.json` tira do `navigationFallback`
+ * (`/paroquia/*` e `/missas/*`). Nessas, ausência de arquivo no dist significa 404 —
+ * então um cache truncado não degrada a página, ele APAGA a página do site.
+ *
+ * A validação estrutural que já existia (`Array.isArray`) aceita `[]` como resposta
+ * válida. Era o buraco: bastava a API devolver lista vazia ou parcial para o build
+ * seguir verde e publicar milhares de 404 em URLs reais.
+ *
+ * Estes números NÃO são a contagem esperada — são piso de sanidade, calibrados abaixo
+ * do MENOR ambiente (dev: 2.090 paróquias, 381 cidades, 12 UFs; prod: 4.727, 988, 26).
+ * Servem para pegar truncamento catastrófico (vazio, ou uma fração do total) sem
+ * quebrar com variação legítima da base. Um piso absoluto não pega truncamento
+ * parcial suave (ex.: 3.000 de 4.727 em prod) — para isso o guard de cobertura do
+ * postbuild é a segunda linha, e a terceira seria comparar com o build anterior.
+ */
+const PISO_ITENS = {
+  'paroquias.json': 1000,
+  'cidades.json': 200,
+  'estados.json': 5,
+};
+
+/**
  * Baixa `rota` para `arquivo`. `tipo`:
  *  - 'array'  → valida Array (bulks de cidades/paróquias/estados);
  *  - 'objeto' → valida objeto não-array (árvore de intenção /v2/seo/missa-dia/{dia}).
+ *
+ * Bulks com piso em PISO_ITENS são CRÍTICOS: em qualquer falha a função lança, o
+ * arquivo NÃO é gravado e o prebuild aborta (ver main). Os demais seguem best-effort —
+ * as rotas deles continuam no `navigationFallback`, então no pior caso caem no shell
+ * CSR em 200, nunca em 404.
  */
 async function baixar(base, rota, arquivo, tipo = 'array') {
+  const critico = arquivo in PISO_ITENS;
   const url = `${base}${rota}`;
   const inicio = Date.now();
   const controller = new AbortController();
@@ -58,16 +88,32 @@ async function baixar(base, rota, arquivo, tipo = 'array') {
     if (tipo === 'array' && !Array.isArray(dados)) throw new Error('resposta não é um array');
     if (tipo === 'objeto' && (dados === null || typeof dados !== 'object' || Array.isArray(dados)))
       throw new Error('resposta não é um objeto');
+
+    // Piso ANTES de gravar: cache reprovado nunca chega ao disco, para não ser
+    // confundido com cache bom por nenhum passo posterior.
+    if (critico && dados.length < PISO_ITENS[arquivo]) {
+      throw new Error(
+        `apenas ${dados.length} itens, abaixo do piso de ${PISO_ITENS[arquivo]} — ` +
+        `resposta truncada ou incompleta`,
+      );
+    }
+
     mkdirSync(CACHE_DIR, { recursive: true });
     const json = JSON.stringify(dados);
     writeFileSync(join(CACHE_DIR, arquivo), json);
     const ms = Date.now() - inicio;
     const mb = (json.length / 1_048_576).toFixed(1);
     const qtd = Array.isArray(dados) ? `${dados.length} itens` : 'árvore';
-    console.log(`[prerender-cache] ${qtd} de ${rota} → ${arquivo} (${mb} MB, ${ms}ms).`);
+    const piso = critico ? ` [crítico, piso ${PISO_ITENS[arquivo]}]` : '';
+    console.log(`[prerender-cache] ${qtd} de ${rota} → ${arquivo} (${mb} MB, ${ms}ms)${piso}.`);
     return true;
   } catch (err) {
-    console.warn(`[prerender-cache] falha ao baixar ${rota} (${err?.message ?? err}) — interceptor fará fetch ao vivo.`);
+    const msg = err?.message ?? err;
+    if (critico) {
+      console.error(`\n❌ [prerender-cache] bulk CRÍTICO ${rota} falhou: ${msg}`);
+      throw err;
+    }
+    console.warn(`[prerender-cache] falha ao baixar ${rota} (${msg}) — interceptor fará fetch ao vivo.`);
     return false;
   } finally {
     clearTimeout(timer);
@@ -77,13 +123,29 @@ async function baixar(base, rota, arquivo, tipo = 'array') {
 async function main() {
   const base = lerApiUrl();
   console.log(`[prerender-cache] ambiente=${ENV} base=${base}`);
-  await Promise.all([
+
+  // allSettled (não all) para que TODOS os bulks sejam tentados e o log mostre todas
+  // as falhas de uma vez — com `all`, a primeira rejeição esconderia as demais e o
+  // diagnóstico viraria uma falha por execução.
+  const tarefas = [
     baixar(base, '/v2/seo/cidades', 'cidades.json'),
     baixar(base, '/v2/seo/paroquias', 'paroquias.json'),
     // Fase 3 — Estado (array de UFs) + árvore de intenção por dia (objeto).
     baixar(base, '/v2/seo/estados', 'estados.json'),
     ...DIAS.map((d) => baixar(base, `/v2/seo/missa-dia/${d}`, `missa-${d}.json`, 'objeto')),
-  ]);
+  ];
+  const resultados = await Promise.allSettled(tarefas);
+
+  const criticasFalharam = resultados.filter((r) => r.status === 'rejected');
+  if (criticasFalharam.length > 0) {
+    console.error(
+      `\n   ${criticasFalharam.length} bulk(s) crítico(s) sem cache válido. Build ABORTADO.\n` +
+      `   Sem esse cache, /paroquia/* e /missas/* não são prerenderizadas — e como estão\n` +
+      `   fora do navigationFallback, cada página faltante vira 404 numa URL REAL.\n` +
+      `   Publicar assim tira milhares de páginas do índice. Corrija a API e rode de novo.\n`,
+    );
+    process.exit(1);
+  }
 }
 
 main();
