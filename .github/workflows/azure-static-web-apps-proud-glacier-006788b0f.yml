@@ -31,9 +31,11 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }} # Used for Github integrations (i.e. PR comments)
           action: "upload"
           ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
-          app_location: "/" # App source code path
+          # Com skip_app_build o action ignora output_location e lê de app_location —
+          # ver o comentário no workflow de master.
+          app_location: "dist/busca-missa/browser" # Conteúdo JÁ construído pelo step acima
           api_location: "" # API source code path - Optional
-          output_location: "dist/busca-missa/browser" # Built app content directory - Optional
+          output_location: "" # Vazio: o conteúdo já é o app_location
           # Ver o comentário equivalente no workflow de master: publica o dist que o
           # step acima gerou e os guards validaram, em vez de deixar o Oryx reconstruir
           # e publicar um artefato diferente do que foi verificado.

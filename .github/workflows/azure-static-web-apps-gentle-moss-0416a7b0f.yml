@@ -32,9 +32,13 @@ jobs:
           action: "upload"
           ###### Repository/Build Configurations - These values can be configured to match your app requirements. ######
           # For more information regarding Static Web App workflow configurations, please visit: https://aka.ms/swaworkflowconfig
-          app_location: "/" # App source code path
+          # Com skip_app_build, o action IGNORA output_location e procura o artefato
+          # direto em app_location — por isso ele aponta para o dist já construído, e
+          # não para a raiz do repo. Deixar app_location: "/" faz o deploy falhar com
+          # "Failed to find a default file in the app artifacts folder (/)".
+          app_location: "dist/busca-missa/browser" # Conteúdo JÁ construído pelo step acima
           api_location: "" # Api source code path - optional
-          output_location: "dist/busca-missa/browser" # Built app content directory - optional
+          output_location: "" # Vazio: o conteúdo já é o app_location
           # skip_app_build: publica o dist que o step "Build Application" acima gerou e
           # que os guards do postbuild JÁ validaram.
           #
