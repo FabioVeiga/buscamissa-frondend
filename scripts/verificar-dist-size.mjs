@@ -44,10 +44,22 @@ const ROOT = join(__dirname, '..');
 // Juntos economizam ~5,2 KB/página ≈ 30 MB em prod, levando a projeção a ~181 MB.
 const LIMITE_MB = 220;
 const LIMITE_BYTES = LIMITE_MB * 1024 * 1024;
-// Teto de arquivos: se alguém reintroduzir prerender de milhares de páginas por engano,
-// a esteira quebra na hora — não depois do deploy. Base atual (~8 estáticas + ~380
-// cidades + ~3.4k paróquias com missa) fica muito abaixo; 15000 dá folga sem mascarar.
-const MAX_FILES = 15000;
+// Teto de ARQUIVOS — o guard que mais importa, e o que estava errado.
+//
+// 15.000 era a cota oficial do SWA. O limite REAL é operacional e muito menor: o Azure
+// faz polling por 300 s na distribuição de conteúdo e desiste, e o gatilho é a contagem
+// de arquivos (relatos da comunidade apontam ~3.000). Evidência própria, em master:
+//
+//   3.311 arquivos → deploy OK                                        (12/08)
+//   6.050 arquivos → "Failure during content distribution" @ 298,8 s  (14/08)
+//
+// O build de 6.050 passou neste guard com 15.000 e mesmo assim não publicou — o guard
+// dava confiança falsa. 3.400 fica logo acima da faixa provada boa, para barrar o
+// crescimento ANTES do deploy falhar em vez de depois.
+//
+// Se este guard estourar, o caminho NÃO é aumentá-lo: é reduzir o teto de páginas
+// (MAX_PAROQUIAS_PRERENDER em app.routes.server.ts) ou reavaliar a plataforma.
+const MAX_FILES = 3400;
 
 /** Acha dist/<app>/browser varrendo os apps sob dist/. */
 function acharBrowserDir(base) {

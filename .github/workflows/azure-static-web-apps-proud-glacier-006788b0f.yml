@@ -34,7 +34,10 @@ jobs:
           app_location: "/" # App source code path
           api_location: "" # API source code path - Optional
           output_location: "dist/busca-missa/browser" # Built app content directory - Optional
-          app_build_command: "npm run build:staging"
+          # Ver o comentário equivalente no workflow de master: publica o dist que o
+          # step acima gerou e os guards validaram, em vez de deixar o Oryx reconstruir
+          # e publicar um artefato diferente do que foi verificado.
+          skip_app_build: true
           ###### End of Repository/Build Configurations ######
 
   close_pull_request_job:

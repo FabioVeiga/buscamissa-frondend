@@ -18,42 +18,107 @@ import { buscarRotasSeo, normalizarBaseUrl } from '../../scripts/lib/seo-routes.
  *   sitemap).
  * - Fase 2.5 (aqui): prerender das páginas de PARÓQUIA (`/paroquia/:uf/:cidade/:slug`).
  *   O bulk `/v2/seo/paroquias` (interceptor só-server) evita as chamadas individuais.
- *   Prerenderiza TODAS as paróquias do disco (ver paroquiasDoDisco). Até 2026-08-13
- *   havia um filtro por `missas.length > 0` e confiança Média/Alta, motivado pelo
- *   tamanho do dist; ele deixava ~1.754 paróquias reais sem arquivo, e é justamente
- *   a ausência de arquivo que o Azure SWA lê como "não existe". Sem cobertura total
- *   não há como o servidor separar paróquia real de URL inventada — as duas caíam no
- *   `navigationFallback` e voltavam 200 com o HTML da HOME.
- *   Custo do dist coberto elevando o guard para 220 MB (ver verificar-dist-size.mjs).
+ *   Prerenderiza um SUBCONJUNTO das paróquias, sob teto (ver paroquiasDoDisco).
+ *
+ *   Em 2026-08-13 o filtro foi removido para prerenderizar todas as 4.727: no SWA
+ *   "sem arquivo = 404", então cobertura total era o que permitia 404 real em
+ *   `/paroquia/*`. Só que 4.717 paróquias = 6.050 arquivos, e o deploy em master
+ *   morreu no timeout de 300 s da distribuição de conteúdo do SWA (2026-08-14).
+ *
+ *   Decisão de 2026-08-23: cabe no teto da plataforma e abre mão do 404 de paróquia.
+ *   `/paroquia/*` volta ao `navigationFallback` (shell CSR em 200, SEM canonical), e
+ *   `/missas/*` continua fora dele — lá o universo é pequeno e 100% prerenderizado,
+ *   então o 404 real se sustenta. O ganho maior de SEO não depende disso: é o
+ *   fallback ter deixado de ser a HOME prerenderizada com `canonical=/home`.
  */
 
 /**
- * Lê o bulk baixado pelo prebuild (.prerender-cache/paroquias.json) e retorna a rota
- * de TODAS as paróquias. Retorna null se o arquivo não existe (ex.: build:dev sem
- * prebuild) → o caller cai no fallback (todas via routes).
+ * Teto de páginas de paróquia prerenderizadas.
  *
- * Antes chamava-se `paroquiasComMissaDoDisco` e filtrava por `missas.length > 0` e
- * `statusConfianca ∈ {Média, Alta}`, deixando ~1.754 paróquias sem arquivo no dist.
- * O filtro saiu porque o Azure SWA decide 200 vs 404 **só por existência de arquivo** —
- * ele não consulta a API. Enquanto uma paróquia real não tivesse arquivo, era
- * impossível distinguir "existe mas não prerenderizamos" de "não existe", e o
- * `navigationFallback` respondia 200 com o HTML da HOME para as duas.
+ * NÃO é uma escolha editorial — é orçamento de arquivos. O Azure SWA faz polling por
+ * 300 s na distribuição de conteúdo e desiste; o gatilho é a CONTAGEM DE ARQUIVOS, não
+ * o tamanho. Evidência de produção:
  *
- * Com todas no disco, a regra passa a ser exata:
- *   arquivo existe   → 200 (indexável; sem horário sai noindex pelo details.component)
- *   arquivo não existe → 404 de verdade
+ *   3.311 arquivos → deploy OK   (12/08)
+ *   6.050 arquivos → "Failure during content distribution" aos 298,8 s   (14/08)
  *
- * As sem horário continuam existindo de propósito: a página de cidade lista TODAS as
- * paróquias, então 404 nelas quebraria a navegação de quem clica na lista.
+ * A cota oficial do SWA (15.000 arquivos / 250 MB) não descreve esse limite — o build
+ * de 6.050 estava dentro dela e ainda assim não publicou.
+ *
+ * Orçamento: 118 não-HTML + 13 estáticas + 1 (404.html) + 26 estados + 987 cidades
+ * + 189 intenção = 1.334 fixos. Com 1.900 paróquias → 3.234 arquivos, DENTRO da faixa
+ * já provada. 2.000 daria 3.334, que cabe no guard mas sai do território conhecido —
+ * subir só depois de um deploy verde, de forma controlada.
+ */
+const MAX_PAROQUIAS_PRERENDER = 1900;
+
+/** Ranking de qualidade: confiança desc → nº de missas desc → alteração asc (estável). */
+function porQualidade(a: ParoquiaCache, b: ParoquiaCache): number {
+  return (
+    (b.igreja?.statusConfianca ?? 0) - (a.igreja?.statusConfianca ?? 0) ||
+    (b.igreja?.missas?.length ?? 0) - (a.igreja?.missas?.length ?? 0) ||
+    String(a.igreja?.alteracao ?? '').localeCompare(String(b.igreja?.alteracao ?? ''))
+  );
+}
+
+interface ParoquiaCache {
+  uf: string;
+  cidadeSlug: string;
+  slug: string;
+  igreja?: { missas?: unknown[]; statusConfianca?: number; alteracao?: string };
+}
+
+/**
+ * Escolhe QUAIS paróquias entram no prerender, dentro do teto acima.
+ *
+ * Duas fases, e a ordem importa:
+ *
+ *  1. PISO DE DESCOBERTA — a melhor paróquia de CADA cidade. Cobre 100% das 802
+ *     cidades, garantindo que toda página de cidade tenha profundidade real em HTML
+ *     abaixo dela. É por essa hierarquia (estado → cidade → paróquia) que o Google
+ *     desce, então uma cidade sem nenhuma paróquia assada é um galho morto.
+ *  2. RESTO POR QUALIDADE — preenche o que sobra pelo ranking acima.
+ *
+ * Por que não ordenar só por qualidade: medido contra os dados reais de produção, o
+ * ranking global puro dava fome geográfica. O RS ficava com 17 de 177 paróquias (9,6%)
+ * e AL com 1 de 8, só porque a base desses estados tem confiança mais baixa — enquanto
+ * SP levava 36% de todo o orçamento. Com o piso por cidade o RS sobe para 24%, a
+ * cobertura de cidades vai de 71% para 100%, e ainda assim 96,8% das selecionadas têm
+ * confiança Média/Alta. Round-robin por UF foi descartado por trocar isso por SP em
+ * 9,6%, que é pior negócio.
+ *
+ * Determinístico: as chaves de cidade são ordenadas antes do corte, então dois builds
+ * do mesmo cache selecionam exatamente o mesmo conjunto.
+ *
+ * Retorna null se o cache não existe (ex.: build:dev sem prebuild) → o caller cai no
+ * fallback. Em staging/prod o cache é obrigatório (ver baixar-bulk-prerender.mjs).
  */
 function paroquiasDoDisco(): Array<{ uf: string; cidade: string; slug: string }> | null {
   const arquivo = join(process.cwd(), '.prerender-cache', 'paroquias.json');
   if (!existsSync(arquivo)) return null;
-  const lista = JSON.parse(readFileSync(arquivo, 'utf-8')) as Array<{
-    uf: string; cidadeSlug: string; slug: string;
-  }>;
-  return lista
-    .filter((p) => p?.uf && p?.cidadeSlug && p?.slug)
+  const lista = JSON.parse(readFileSync(arquivo, 'utf-8')) as ParoquiaCache[];
+
+  // Paróquia sem NENHUM horário não entra: a página não tem o conteúdo que promete.
+  // Ela segue em CSR e o details.component aplica `noindex` após a hidratação.
+  const elegiveis = lista.filter(
+    (p) => p?.uf && p?.cidadeSlug && p?.slug && (p.igreja?.missas?.length ?? 0) > 0,
+  );
+
+  // Fase 1 — melhor de cada cidade.
+  const melhorPorCidade = new Map<string, ParoquiaCache>();
+  for (const p of elegiveis) {
+    const chave = `${p.uf}/${p.cidadeSlug}`;
+    const atual = melhorPorCidade.get(chave);
+    if (!atual || porQualidade(p, atual) < 0) melhorPorCidade.set(chave, p);
+  }
+  const piso = [...melhorPorCidade.keys()].sort().map((k) => melhorPorCidade.get(k)!);
+
+  // Fase 2 — resto por qualidade.
+  const jaEscolhidas = new Set(piso);
+  const resto = elegiveis.filter((p) => !jaEscolhidas.has(p)).sort(porQualidade);
+
+  return [...piso, ...resto]
+    .slice(0, MAX_PAROQUIAS_PRERENDER)
     .map((p) => ({ uf: p.uf, cidade: p.cidadeSlug, slug: p.slug }));
 }
 

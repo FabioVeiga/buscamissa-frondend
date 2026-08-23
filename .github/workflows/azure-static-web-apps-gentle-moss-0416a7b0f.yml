@@ -35,7 +35,19 @@ jobs:
           app_location: "/" # App source code path
           api_location: "" # Api source code path - optional
           output_location: "dist/busca-missa/browser" # Built app content directory - optional
-          app_build_command: "npm run build:prod"
+          # skip_app_build: publica o dist que o step "Build Application" acima gerou e
+          # que os guards do postbuild JÁ validaram.
+          #
+          # Antes havia `app_build_command`, e com ele o Oryx rodava `npm run build:prod`
+          # DE NOVO dentro do Azure — ou seja, validávamos um artefato e publicávamos
+          # outro. Não era teórico: no deploy de 12/08 o step do Actions produziu 4.297
+          # arquivos (guards verdes) e o Oryx publicou 3.193 rotas, porque naquele build
+          # o fetch de `/v2/seo/routes` degradou e as 988 cidades sumiram. Foi assim que
+          # as cidades ficaram fora de produção com a esteira toda verde.
+          #
+          # De quebra, o build deixa de rodar duas vezes e a API de prod para de ser
+          # consultada em dobro a cada deploy.
+          skip_app_build: true
           ###### End of Repository/Build Configurations ######
 
   close_pull_request_job:
