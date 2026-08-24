@@ -10,6 +10,7 @@ import { STATES } from '../../../core/constants/states';
 import { PageHeroComponent, HeroTile } from '../../../shared/components/page-hero/page-hero.component';
 import { HubBreadcrumb } from '../../../shared/components/hub-lista/hub-lista.component';
 import { HubPonteComponent } from '../../../shared/components/hub-ponte/hub-ponte.component';
+import { normalizarTexto } from '../../../shared/utils/busca.utils';
 
 const SITE = 'https://buscamissa.com.br';
 /** Cap do bloco "Capitais e principais cidades" — vitrine, não substitui o índice completo. */
@@ -104,7 +105,7 @@ export class CidadesComponent implements OnInit, OnDestroy {
   }
 
   get estadosFiltrados(): EstadoItem[] {
-    const q = this.normalizar(this.busca);
+    const q = normalizarTexto(this.busca);
     if (!q) return this.estados;
     return this.estados
       .map(e => ({
@@ -113,9 +114,9 @@ export class CidadesComponent implements OnInit, OnDestroy {
         // Busca já é uma lista curta e intencional — o cap de "ver mais" não
         // deveria esconder o resultado que a pessoa acabou de procurar.
         verTodas: true,
-        cidades: e.cidades.filter(c => this.normalizar(c.nome).includes(q)),
+        cidades: e.cidades.filter(c => normalizarTexto(c.nome).includes(q)),
       }))
-      .filter(e => this.normalizar(e.nome).includes(q) || e.cidades.length > 0);
+      .filter(e => normalizarTexto(e.nome).includes(q) || e.cidades.length > 0);
   }
 
   ngOnInit(): void {
@@ -232,9 +233,6 @@ export class CidadesComponent implements OnInit, OnDestroy {
     return this.estadoCores[sigla] ?? 'badge--default';
   }
 
-  normalizar(s: string): string {
-    return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
-  }
 
   private aplicarSeo(): void {
     this._seo.update({

@@ -10,6 +10,7 @@ import { MassTimeCardComponent } from "../../../shared/components/mass-time-card
 import { MassCardData } from "../../../shared/models/mass-card.model";
 import { Mass } from "../../../core/interfaces/church.interface";
 import { getMissaAgoraUrgency, getCountdownLabel } from "../../../shared/utils/mass-time.utils";
+import { normalizarTexto } from "../../../shared/utils/busca.utils";
 import { CIDADES_POPULARES_MISSA_AGORA } from "../../../core/constants/cidades-populares";
 import { GeolocationService } from "../../../core/services/geolocation.service";
 import { MetricasService, PaginaMetrica } from "../../../core/services/metricas.service";
@@ -251,13 +252,13 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
 
   /** Sugestões só a partir de 3 caracteres (estilo Google), máx. 8 */
   onCidadeInput(): void {
-    const q = this._normalizar(this.cidadeQuery);
+    const q = normalizarTexto(this.cidadeQuery);
     if (q.length < 3 || !this._todasCidades) {
       this.cidadeSugestoes = [];
       return;
     }
     this.cidadeSugestoes = this._todasCidades
-      .filter(c => this._normalizar(c.nome).includes(q))
+      .filter(c => normalizarTexto(c.nome).includes(q))
       .slice(0, 8);
   }
 
@@ -272,9 +273,6 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
       .toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
   }
 
-  private _normalizar(s: string): string {
-    return (s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
-  }
 
   getUrgency(card: MassCardData) {
     if (card.mass.diaSemana == null) return null;
