@@ -2,7 +2,6 @@
   "navigationFallback": {
     "rewrite": "/index.csr.html",
     "exclude": [
-      "/paroquia/*",
       "/missas/*",
       "/assets/*",
       "/*.css",

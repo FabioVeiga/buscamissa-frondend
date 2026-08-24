@@ -140,9 +140,11 @@ async function main() {
   if (criticasFalharam.length > 0) {
     console.error(
       `\n   ${criticasFalharam.length} bulk(s) crítico(s) sem cache válido. Build ABORTADO.\n` +
-      `   Sem esse cache, /paroquia/* e /missas/* não são prerenderizadas — e como estão\n` +
-      `   fora do navigationFallback, cada página faltante vira 404 numa URL REAL.\n` +
-      `   Publicar assim tira milhares de páginas do índice. Corrija a API e rode de novo.\n`,
+      `   Sem esse cache o prerender sai vazio: /missas/* está FORA do navigationFallback,\n` +
+      `   então cada cidade faltante vira 404 numa URL REAL; e as páginas de paróquia\n` +
+      `   caem todas no shell CSR, sem HTML para o Google.\n` +
+      `   Causa mais comum: cold start da API (503 nos primeiros segundos). Confira\n` +
+      `   ${base}/health e rode de novo — se responder 200, era só a instância acordando.\n`,
     );
     process.exit(1);
   }

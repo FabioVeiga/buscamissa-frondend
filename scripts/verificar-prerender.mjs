@@ -133,6 +133,9 @@ if (browserDir) {
 // tem que barrar o deploy, não liberá-lo.
 const COBERTURA_MINIMA = 0.9;
 
+/** Espelha MAX_PAROQUIAS_PRERENDER de src/app/app.routes.server.ts. */
+const MAX_PAROQUIAS_PRERENDER = 1900;
+
 /** Espelha exatamente o universo de app.routes.server.ts (paroquiasDoDisco/cidadesDoDisco). */
 const esperadoPorSecao = {
   missas: () => {
@@ -146,15 +149,20 @@ const esperadoPorSecao = {
     return cidades.filter((c) => c?.uf && c?.cidadeSlug).length
       + estados.filter((e) => e?.uf).length;
   },
-  // TODAS as paróquias do disco — o filtro por missa/confiança saiu junto com o de
-  // app.routes.server.ts. O número não é fixo no código de propósito: sai do
-  // .prerender-cache, então acompanha o crescimento da base (dev ~2.090, prod ~4.727)
-  // sem virar constante desatualizada. Continua sendo uma exigência exata (≥90% do
-  // que o prebuild prometeu), não uma faixa larga que deixa regressão passar.
+  // Paróquias ELEGÍVEIS (com horário), limitadas pelo mesmo teto de
+  // app.routes.server.ts. Espelhamos só a CONTAGEM, não o algoritmo de seleção: o teto
+  // é determinístico, então basta `min(elegíveis, teto)` para saber quantas páginas
+  // deveriam existir — e assim não há um segundo lugar com o critério de ranking, que
+  // poderia divergir em silêncio do original.
+  //
+  // ⚠️ Se MAX_PAROQUIAS_PRERENDER mudar em app.routes.server.ts, mudar aqui também.
   paroquia: () => {
     const lista = lerCache('paroquias.json');
     if (!lista) return null;
-    return lista.filter((p) => p?.uf && p?.cidadeSlug && p?.slug).length;
+    const elegiveis = lista.filter(
+      (p) => p?.uf && p?.cidadeSlug && p?.slug && (p?.igreja?.missas?.length ?? 0) > 0,
+    ).length;
+    return Math.min(elegiveis, MAX_PAROQUIAS_PRERENDER);
   },
 };
 
