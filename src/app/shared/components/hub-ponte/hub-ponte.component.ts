@@ -43,8 +43,8 @@ export class HubPonteComponent {
   /** Fonte única dos 3 eixos — mesmos rótulos/ícones do header e da home. */
   private static readonly EIXOS: EixoItem[] = [
     { eixo: 'cidades', icone: 'pi pi-map-marker', titulo: 'Por cidade', desc: 'Encontre missas na sua cidade', link: '/cidades' },
-    { eixo: 'estados', icone: 'pi pi-map', titulo: 'Por estado', desc: 'Explore igrejas por estado', link: '/estados' },
-    { eixo: 'dias', icone: 'pi pi-calendar', titulo: 'Por dia da semana', desc: 'Encontre missas por dia', link: '/dias' },
+    { eixo: 'estados', icone: 'pi pi-map', titulo: 'Por estado', desc: 'Veja as cidades do seu estado', link: '/estados' },
+    { eixo: 'dias', icone: 'pi pi-calendar', titulo: 'Por dia da semana', desc: 'Veja os horários de cada dia', link: '/dias' },
   ];
 
   get outrosEixos(): EixoItem[] {
