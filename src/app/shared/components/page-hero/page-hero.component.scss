@@ -105,6 +105,22 @@ $muted: #6b7280;
   @media (max-width: 640px) { margin-bottom: 1.25rem; }
 }
 
+/* COBERTURA EM LINHA — alternativa aos tiles nos índices nacionais.
+   Discreta de propósito: é prova de cobertura, não chamada para ação. Fica no
+   mesmo lugar dos tiles e ocupa uma altura de linha em vez de ~90px, devolvendo
+   a dobra do mobile para o conteúdo que a pessoa veio procurar. */
+.ph-hero__cobertura {
+  margin: 1.25rem 0 0;
+  font-size: 0.875rem;
+  color: $muted;
+  line-height: 1.5;
+  /* `·` é separador, não hífen: sem isto a linha pode quebrar logo depois dele e
+     abrir a próxima com um ponto órfão. */
+  text-wrap: pretty;
+
+  @media (max-width: 640px) { margin-top: 1rem; font-size: 0.8125rem; }
+}
+
 /* STAT TILES — cards brancos com borda.
    Grade de colunas IGUAIS (não flex-wrap/min-width): a largura por conteúdo
    fazia os tiles ficarem em escada (ex.: 161/200/229px em 375px) e, com 3 tiles

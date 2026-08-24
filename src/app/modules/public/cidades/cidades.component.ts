@@ -10,13 +10,13 @@ import { MetricasService, PaginaMetrica } from '../../../core/services/metricas.
 import { SeoPaginasService } from '../../../core/services/seo-paginas.service';
 import { SeoService } from '../../../core/services/seo.service';
 import { STATES } from '../../../core/constants/states';
-import { PageHeroComponent, HeroTile } from '../../../shared/components/page-hero/page-hero.component';
+import { PageHeroComponent } from '../../../shared/components/page-hero/page-hero.component';
 import { HubBreadcrumb } from '../../../shared/components/hub-lista/hub-lista.component';
 import { HubPonteComponent } from '../../../shared/components/hub-ponte/hub-ponte.component';
 import {
   BuscaLocalService, CidadeBusca, IgrejaBusca, ResultadoBusca,
 } from '../../../core/services/busca-local.service';
-import { paroquias } from '../../../shared/utils/plural.utils';
+import { cidades, estados, paroquias } from '../../../shared/utils/plural.utils';
 
 const SITE = 'https://buscamissa.com.br';
 /** Cap do bloco "Capitais e principais cidades" — vitrine, não substitui o índice completo. */
@@ -110,12 +110,14 @@ export class CidadesComponent implements OnInit, OnDestroy {
   /** `\n` vira quebra de linha (o hero usa `white-space: pre-line`). */
   readonly TITULO_HERO = 'Horários de Missa\npor';
 
-  /** Ordem e ícone únicos entre os hubs: cidades → paróquias → estados. */
-  tiles: HeroTile[] = [
-    { icone: 'pi pi-map-marker', numero: 0, rotulo: 'cidades' },
-    { icone: 'pi pi-building', numero: 0, rotulo: 'paróquias' },
-    { icone: 'pi pi-map', numero: 0, rotulo: 'estados' },
-  ];
+  /**
+   * Prova de cobertura em uma linha. Eram três tiles numéricos logo abaixo da
+   * busca: ~90px de altura, não acionáveis, e num índice NACIONAL os números são
+   * abstratos ("1.026 cidades" não ajuda ninguém a decidir para onde ir). No
+   * mobile eles empurravam a vitrine de cidades para fora da primeira dobra.
+   * Vazio até a carga terminar — hero sem número é melhor que hero com zeros.
+   */
+  cobertura = '';
 
   /**
    * `getEstados()` falhou. Distingue "não carregou" de "a busca não achou": sem isso a
@@ -171,7 +173,7 @@ export class CidadesComponent implements OnInit, OnDestroy {
         error: () => {
           this.isLoading = false;
           this.semDados = true;
-          this.tiles = [];
+          this.cobertura = '';
           this._cdr.markForCheck();
         },
       });
@@ -181,7 +183,7 @@ export class CidadesComponent implements OnInit, OnDestroy {
     if (!lista.length) {
       this.isLoading = false;
       this.semDados = true;
-      this.tiles = [];
+      this.cobertura = '';
       this._cdr.markForCheck();
       return;
     }
@@ -225,21 +227,19 @@ export class CidadesComponent implements OnInit, OnDestroy {
     this.totalParoquias = lista.reduce((s, e) => s + (e.totalParoquias ?? 0), 0);
     this.isLoading = false;
     this.semDados = false;
-    this.montarTiles(lista.length);
+    this.montarCobertura(lista.length);
     this.aplicarJsonLd();
     this._cdr.markForCheck();
   }
 
-  /**
-   * Sempre um ARRAY NOVO: `PageHeroComponent` é OnPush e só re-renderiza quando a
-   * referência do input muda — mutar `tiles` no lugar não repintaria nada.
-   */
-  private montarTiles(totalEstados: number): void {
-    this.tiles = [
-      { icone: 'pi pi-map-marker', numero: this.totalCidades, rotulo: 'cidades' },
-      { icone: 'pi pi-building', numero: this.totalParoquias, rotulo: 'paróquias' },
-      { icone: 'pi pi-map', numero: totalEstados, rotulo: 'estados' },
-    ];
+  /** "388 cidades · 2.143 paróquias · 12 estados" — separador de meio-ponto e
+      milhar em pt-BR, para o número ser lido de relance e não soletrado. */
+  private montarCobertura(totalEstados: number): void {
+    const n = (v: number) => v.toLocaleString('pt-BR');
+    this.cobertura =
+      `${n(this.totalCidades)} ${cidades(this.totalCidades).split(' ')[1]} · ` +
+      `${n(this.totalParoquias)} ${paroquias(this.totalParoquias).split(' ')[1]} · ` +
+      `${n(totalEstados)} ${estados(totalEstados).split(' ')[1]}`;
   }
 
   // ============================ busca do hero ============================

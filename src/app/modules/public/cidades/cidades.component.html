@@ -2,10 +2,9 @@
   [breadcrumb]="breadcrumb"
   [titulo]="TITULO_HERO"
   tituloDestaque="Cidade"
-  subtitulo="Encontre horários de missas em sua cidade."
-  [tiles]="tiles"
-  [tilesCarregando]="isLoading"
-  hint="Digite o nome da cidade ou do estado."
+  subtitulo="Encontre uma missa perto de você."
+  [coberturaTexto]="cobertura"
+  hint="Digite o nome da cidade ou da igreja."
 >
   <!--
     Ação primária ANTES dos números: a busca é o que o usuário veio fazer aqui.
@@ -148,7 +147,7 @@
             <i class="pi pi-building sec-titulo__ico" aria-hidden="true"></i>
             Capitais e principais cidades
           </h2>
-          <p class="sec-sub">Cidades com mais paróquias cadastradas em todo o Brasil.</p>
+          <p class="sec-sub">As cidades com mais igrejas cadastradas.</p>
 
           <div class="destaque-grid">
             @for (c of principaisCidades; track c.uf + '/' + c.slug) {
@@ -166,9 +165,9 @@
       <section class="mt-10">
         <h2 class="sec-titulo">
           <i class="pi pi-th-large sec-titulo__ico" aria-hidden="true"></i>
-          Todas as cidades por estado
+          Escolha uma cidade
         </h2>
-        <p class="sec-sub">Escolha o estado para ver todas as cidades com paróquias cadastradas.</p>
+        <p class="sec-sub">Abra o estado para ver as cidades.</p>
 
         <div class="flex flex-col gap-2">
           @for (e of estados; track e.sigla) {
