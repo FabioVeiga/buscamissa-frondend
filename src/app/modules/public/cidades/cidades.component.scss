@@ -23,6 +23,67 @@ $muted: #6b7280;
   border-bottom-left-radius: 14% 24%;
 }
 
+// ── Autocomplete do hero ───────────────────────────────────────────────────────
+// Mesma gramática do autocomplete de /missas/:uf: painel branco ancorado ao campo,
+// pin laranja, meta à direita. A diferença é que aqui há DOIS tipos de resultado, e
+// o painel precisa deixar isso óbvio sem virar interface de filtro.
+
+.busca-hero { position: relative; }
+
+.sugestoes {
+  position: absolute; z-index: 5; top: calc(100% + 0.35rem); left: 0; right: 0;
+  margin: 0; padding: 0.3rem;
+  background: #fff; border: 1px solid $borda; border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .10);
+  // Teto pensado para 375x667 com o teclado aberto: o painel rola por dentro em
+  // vez de empurrar a página, para que o primeiro resultado NUNCA exija rolar a
+  // tela. `min()` com vh porque em telas baixas 19rem já passaria da área útil.
+  max-height: min(19rem, 46vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  ul { list-style: none; margin: 0; padding: 0; }
+  li + li { border-top: 1px solid #f3f4f6; }
+
+  a {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.6rem 0.7rem; border-radius: 8px;
+    text-decoration: none; color: $texto;
+  }
+  a:hover, a:focus-visible { background: $creme; }
+  i { color: $laranja-vivo; font-size: 0.9rem; flex: 0 0 auto; }
+
+  &__nome { font-weight: 600; }
+
+  // Rótulo do grupo: minúsculo e discreto de propósito. Ele responde "o que é esta
+  // linha", que é a única dúvida real do painel — não é um cabeçalho de seção e
+  // não deve competir com os resultados.
+  &__grupo {
+    margin: 0.35rem 0 0.15rem; padding: 0 0.7rem;
+    font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; color: $muted;
+  }
+  ul + &__grupo { margin-top: 0.5rem; border-top: 1px solid #f3f4f6; padding-top: 0.5rem; }
+
+  // CIDADE: nome à esquerda, UF + total à direita, uma linha só.
+  &__meta {
+    margin-left: auto; color: $muted; font-size: 0.8125rem; white-space: nowrap;
+    padding-left: 0.5rem;
+  }
+
+  // IGREJA: duas linhas. A cidade embaixo do nome é o que impede confundir
+  // "São José" (a cidade) com "Paróquia São José" (a igreja).
+  &__igreja { align-items: flex-start; }
+  &__igreja i { margin-top: 0.15rem; }
+  &__texto { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+  &__local { color: $muted; font-size: 0.8125rem; }
+
+  &__vazio {
+    margin: 0; padding: 0.9rem 0.7rem;
+    color: $muted; font-size: 0.875rem; line-height: 1.45; text-align: center;
+  }
+}
+
 // Mesmo container do hero (72rem / 1.5rem): com o `.card` em full-bleed, é ele
 // que alinha a lista com o breadcrumb e o título logo acima.
 .cidades-page {
