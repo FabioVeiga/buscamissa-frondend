@@ -16,6 +16,7 @@
     "build:prod": "ng build --configuration=production",
     "prebuild:prod": "node scripts/baixar-bulk-prerender.mjs prod && node scripts/gerar-indice-busca.mjs && node scripts/gerar-sitemap.mjs prod",
     "postbuild:prod": "node scripts/copiar-index-csr.mjs && node scripts/dedupe-prerender-css.mjs && node scripts/verificar-prerender.mjs && node scripts/verificar-dist-size.mjs",
+    "indice:dev": "node scripts/gerar-indice-busca.mjs --api=https://app-buscamissa-dev-api-public.azurewebsites.net",
     "watch": "ng build --watch --configuration=development",
     "test": "ng test"
   },
