@@ -1,15 +1,22 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, OnDestroy, OnInit, inject } from '@angular/core';
-import { CommonModule } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import {
+  ChangeDetectionStrategy, ChangeDetectorRef, Component, DestroyRef, ElementRef,
+  HostListener, OnDestroy, OnInit, PLATFORM_ID, ViewChild, inject,
+} from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MetricasService, PaginaMetrica } from '../../../core/services/metricas.service';
 import { SeoPaginasService } from '../../../core/services/seo-paginas.service';
 import { SeoService } from '../../../core/services/seo.service';
 import { STATES } from '../../../core/constants/states';
-import { PageHeroComponent, HeroTile } from '../../../shared/components/page-hero/page-hero.component';
+import { PageHeroComponent } from '../../../shared/components/page-hero/page-hero.component';
 import { HubBreadcrumb } from '../../../shared/components/hub-lista/hub-lista.component';
 import { HubPonteComponent } from '../../../shared/components/hub-ponte/hub-ponte.component';
+import {
+  BuscaLocalService, CidadeBusca, IgrejaBusca, ResultadoBusca,
+} from '../../../core/services/busca-local.service';
+import { cidades, estados, paroquias } from '../../../shared/utils/plural.utils';
 
 const SITE = 'https://buscamissa.com.br';
 /** Cap do bloco "Capitais e principais cidades" — vitrine, não substitui o índice completo. */
@@ -61,10 +68,37 @@ export class CidadesComponent implements OnInit, OnDestroy {
   private _metricas = inject(MetricasService);
   private _cdr = inject(ChangeDetectorRef);
   private _destroyRef = inject(DestroyRef);
+  private _buscaLocal = inject(BuscaLocalService);
+  private _router = inject(Router);
+  private _ehBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   isLoading = true;
-  busca = '';
   estados: EstadoItem[] = [];
+
+  // ── Busca do hero ────────────────────────────────────────────────────────
+  // Autocomplete, NÃO filtro do índice lá embaixo. Antes, este mesmo campo
+  // filtrava o acordeão que fica a duas telas de distância: no mobile, digitar
+  // "Curitiba" não mudava nada dentro da viewport e a busca parecia quebrada.
+  // Mesma gramática de `/missas/:uf`, que já resolveu isso.
+  buscaHero = '';
+  resultado: ResultadoBusca = { cidades: [], igrejas: [] };
+  mostrarSugestoes = false;
+
+  /** Caixa da busca — referência para detectar clique FORA dela. */
+  @ViewChild('caixaBusca') private caixaBusca?: ElementRef<HTMLElement>;
+
+  /** Cidades no formato da busca, montadas uma vez por carga. */
+  private cidadesParaBusca: CidadeBusca[] = [];
+
+  /** O índice já foi pedido? Guarda de "no máximo um fetch por sessão da página". */
+  private indicePedido = false;
+
+  /**
+   * `carregarIndice()` já respondeu (com índice ou com falha). Antes disso, zero
+   * resultado NÃO significa "não existe" — significa "as igrejas ainda não
+   * chegaram", e anunciar "não encontramos nada" ali seria mentira por um instante.
+   */
+  private indiceResolvido = false;
   /** Vitrine acima do índice completo — capitais e cidades com mais paróquias. */
   principaisCidades: CidadeDestaque[] = [];
 
@@ -76,12 +110,14 @@ export class CidadesComponent implements OnInit, OnDestroy {
   /** `\n` vira quebra de linha (o hero usa `white-space: pre-line`). */
   readonly TITULO_HERO = 'Horários de Missa\npor';
 
-  /** Ordem e ícone únicos entre os hubs: cidades → paróquias → estados. */
-  tiles: HeroTile[] = [
-    { icone: 'pi pi-map-marker', numero: 0, rotulo: 'cidades' },
-    { icone: 'pi pi-building', numero: 0, rotulo: 'paróquias' },
-    { icone: 'pi pi-map', numero: 0, rotulo: 'estados' },
-  ];
+  /**
+   * Prova de cobertura em uma linha. Eram três tiles numéricos logo abaixo da
+   * busca: ~90px de altura, não acionáveis, e num índice NACIONAL os números são
+   * abstratos ("1.026 cidades" não ajuda ninguém a decidir para onde ir). No
+   * mobile eles empurravam a vitrine de cidades para fora da primeira dobra.
+   * Vazio até a carga terminar — hero sem número é melhor que hero com zeros.
+   */
+  cobertura = '';
 
   /**
    * `getEstados()` falhou. Distingue "não carregou" de "a busca não achou": sem isso a
@@ -103,20 +139,6 @@ export class CidadesComponent implements OnInit, OnDestroy {
     return this.estados.reduce((s, e) => s + e.cidades.length, 0);
   }
 
-  get estadosFiltrados(): EstadoItem[] {
-    const q = this.normalizar(this.busca);
-    if (!q) return this.estados;
-    return this.estados
-      .map(e => ({
-        ...e,
-        expandido: true,
-        // Busca já é uma lista curta e intencional — o cap de "ver mais" não
-        // deveria esconder o resultado que a pessoa acabou de procurar.
-        verTodas: true,
-        cidades: e.cidades.filter(c => this.normalizar(c.nome).includes(q)),
-      }))
-      .filter(e => this.normalizar(e.nome).includes(q) || e.cidades.length > 0);
-  }
 
   ngOnInit(): void {
     this._metricas.registrarVisualizacaoPagina(PaginaMetrica.Cidades);
@@ -151,7 +173,7 @@ export class CidadesComponent implements OnInit, OnDestroy {
         error: () => {
           this.isLoading = false;
           this.semDados = true;
-          this.tiles = [];
+          this.cobertura = '';
           this._cdr.markForCheck();
         },
       });
@@ -161,7 +183,7 @@ export class CidadesComponent implements OnInit, OnDestroy {
     if (!lista.length) {
       this.isLoading = false;
       this.semDados = true;
-      this.tiles = [];
+      this.cobertura = '';
       this._cdr.markForCheck();
       return;
     }
@@ -181,6 +203,17 @@ export class CidadesComponent implements OnInit, OnDestroy {
       }))
       .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
 
+    // Cidades no formato da busca. Vêm do MESMO payload do índice acima — a busca
+    // por cidade não depende do `busca-index.json` e responde já na primeira tecla.
+    this.cidadesParaBusca = lista.flatMap((e) =>
+      (e.cidades ?? []).map((c) => ({
+        nome: c.cidade,
+        uf: e.uf.toLowerCase(),
+        cidadeSlug: c.cidadeSlug,
+        totalParoquias: c.totalParoquias,
+      })),
+    );
+
     this.principaisCidades = lista
       .flatMap((e) => (e.cidades ?? []).map((c) => ({
         nome: c.cidade,
@@ -194,22 +227,137 @@ export class CidadesComponent implements OnInit, OnDestroy {
     this.totalParoquias = lista.reduce((s, e) => s + (e.totalParoquias ?? 0), 0);
     this.isLoading = false;
     this.semDados = false;
-    this.montarTiles(lista.length);
+    this.montarCobertura(lista.length);
     this.aplicarJsonLd();
     this._cdr.markForCheck();
   }
 
-  /**
-   * Sempre um ARRAY NOVO: `PageHeroComponent` é OnPush e só re-renderiza quando a
-   * referência do input muda — mutar `tiles` no lugar não repintaria nada.
-   */
-  private montarTiles(totalEstados: number): void {
-    this.tiles = [
-      { icone: 'pi pi-map-marker', numero: this.totalCidades, rotulo: 'cidades' },
-      { icone: 'pi pi-building', numero: this.totalParoquias, rotulo: 'paróquias' },
-      { icone: 'pi pi-map', numero: totalEstados, rotulo: 'estados' },
-    ];
+  /** "388 cidades · 2.143 paróquias · 12 estados" — separador de meio-ponto e
+      milhar em pt-BR, para o número ser lido de relance e não soletrado. */
+  private montarCobertura(totalEstados: number): void {
+    const n = (v: number) => v.toLocaleString('pt-BR');
+    this.cobertura =
+      `${n(this.totalCidades)} ${cidades(this.totalCidades).split(' ')[1]} · ` +
+      `${n(this.totalParoquias)} ${paroquias(this.totalParoquias).split(' ')[1]} · ` +
+      `${n(totalEstados)} ${estados(totalEstados).split(' ')[1]}`;
   }
+
+  // ============================ busca do hero ============================
+
+  aoDigitar(): void {
+    this.garantirIndice();
+    this.recalcular();
+    this.mostrarSugestoes = !!this.buscaHero.trim();
+  }
+
+  /**
+   * O índice começa a baixar já no foco, antes da primeira tecla: são ~380 KB, e
+   * pedi-los só na primeira tecla faria o grupo "Igrejas" aparecer com atraso
+   * visível. `garantirIndice()` é idempotente, então foco + digitação continuam
+   * sendo UM request.
+   */
+  aoFocar(): void {
+    this.garantirIndice();
+    if (this.buscaHero.trim()) {
+      this.recalcular();
+      this.mostrarSugestoes = true;
+    }
+  }
+
+  /**
+   * Fecha SEM limpar o texto: quem aperta Escape ou toca fora quer tirar a lista
+   * da frente, não perder o que digitou. Focar de novo reabre (ver `aoFocar`).
+   */
+  fecharSugestoes(): void {
+    this.mostrarSugestoes = false;
+  }
+
+  /** Enter vai para o primeiro resultado — e só existe quando há um. */
+  aoConfirmar(): void {
+    const cidade = this.resultado.cidades[0];
+    if (cidade) {
+      this.irPara(['/missas', cidade.uf, cidade.cidadeSlug]);
+      return;
+    }
+    const igreja = this.resultado.igrejas[0];
+    if (igreja) {
+      this.irPara(['/paroquia', igreja.uf, igreja.cidadeSlug, igreja.slug]);
+    }
+  }
+
+  /** "1 paróquia" / "14 paróquias" — ver shared/utils/plural.utils. */
+  readonly rotuloParoquias = paroquias;
+
+  linkCidade(c: CidadeBusca): string[] {
+    return ['/missas', c.uf, c.cidadeSlug];
+  }
+
+  /** URL canônica da paróquia. Slugs sempre do backend — nunca gerados aqui. */
+  linkIgreja(i: IgrejaBusca): string[] {
+    return ['/paroquia', i.uf, i.cidadeSlug, i.slug];
+  }
+
+  get semResultados(): boolean {
+    return (
+      this.indiceResolvido &&
+      !this.resultado.cidades.length &&
+      !this.resultado.igrejas.length
+    );
+  }
+
+  /**
+   * Enquanto o índice não respondeu e nada casou, não há o que mostrar: o painel
+   * fica fechado em vez de piscar "não encontramos nada" e se desdizer meio
+   * segundo depois, quando as igrejas chegam.
+   */
+  get temAlgoParaMostrar(): boolean {
+    return (
+      this.resultado.cidades.length > 0 ||
+      this.resultado.igrejas.length > 0 ||
+      this.indiceResolvido
+    );
+  }
+
+  /**
+   * Clique fora fecha. `document:click` em vez de `blur` no input porque `blur`
+   * dispara ANTES do clique numa sugestão e engoliria a navegação.
+   */
+  @HostListener('document:click', ['$event'])
+  aoClicarNoDocumento(evento: MouseEvent): void {
+    if (!this._ehBrowser || !this.mostrarSugestoes) return;
+    const caixa = this.caixaBusca?.nativeElement;
+    if (caixa && !caixa.contains(evento.target as Node)) {
+      this.mostrarSugestoes = false;
+      this._cdr.markForCheck();
+    }
+  }
+
+  private irPara(rota: string[]): void {
+    this.mostrarSugestoes = false;
+    this._router.navigate(rota);
+  }
+
+  private recalcular(): void {
+    this.resultado = this._buscaLocal.buscar(this.buscaHero, this.cidadesParaBusca);
+  }
+
+  /** Um download por sessão da página — ver `BuscaLocalService`. */
+  private garantirIndice(): void {
+    if (this.indicePedido || !this._ehBrowser) return;
+    this.indicePedido = true;
+    this._buscaLocal
+      .carregarIndice()
+      .pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe(() => {
+        this.indiceResolvido = true;
+        // Recalcula porque o texto quase sempre já foi digitado enquanto o índice
+        // vinha pela rede: sem isto o grupo "Igrejas" só apareceria na tecla seguinte.
+        this.recalcular();
+        this._cdr.markForCheck();
+      });
+  }
+
+  // ============================ índice por estado ============================
 
   toggleEstado(e: EstadoItem): void { e.expandido = !e.expandido; }
 
@@ -232,9 +380,6 @@ export class CidadesComponent implements OnInit, OnDestroy {
     return this.estadoCores[sigla] ?? 'badge--default';
   }
 
-  normalizar(s: string): string {
-    return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
-  }
 
   private aplicarSeo(): void {
     this._seo.update({

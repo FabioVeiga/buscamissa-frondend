@@ -11,7 +11,22 @@ $muted: #6b7280;
 .ph-hero {
   position: relative;
   background: $creme;
+  /* `hidden` é a guarda contra scroll lateral (a faixa sangra de borda a borda).
+     O efeito colateral é vertical: ele também recorta o que sai por BAIXO — e o
+     autocomplete de /cidades e /missas/:uf é um painel absoluto ancorado no campo
+     de busca, que no mobile passa da faixa creme e era cortado no meio da segunda
+     sugestão. `overflow: clip` recorta sem criar contexto de rolagem, então o
+     eixo Y pode continuar `visible`; com `hidden` isso é impossível (o CSS
+     converte o outro eixo para `auto`).
+     Em navegador sem `clip` (Safari < 16) fica o comportamento antigo: o painel
+     recorta na borda do hero. Degrada, não quebra — a primeira sugestão continua
+     visível — e é preferível a remover a guarda de scroll lateral para todos. */
   overflow: hidden;
+
+  @supports (overflow: clip) {
+    overflow-x: clip;
+    overflow-y: visible;
+  }
   padding: 1.5rem 0 2.5rem;
   margin-bottom: 2.75rem;
   /* Sangra de borda a borda porque `.card:has(.ph-hero)` remove o limite de
@@ -88,6 +103,22 @@ $muted: #6b7280;
   /* No mobile o hero disputa a primeira dobra com a busca: 1.25rem mantém a
      separação legível e devolve alguns px para a ação primária. */
   @media (max-width: 640px) { margin-bottom: 1.25rem; }
+}
+
+/* COBERTURA EM LINHA — alternativa aos tiles nos índices nacionais.
+   Discreta de propósito: é prova de cobertura, não chamada para ação. Fica no
+   mesmo lugar dos tiles e ocupa uma altura de linha em vez de ~90px, devolvendo
+   a dobra do mobile para o conteúdo que a pessoa veio procurar. */
+.ph-hero__cobertura {
+  margin: 1.25rem 0 0;
+  font-size: 0.875rem;
+  color: $muted;
+  line-height: 1.5;
+  /* `·` é separador, não hífen: sem isto a linha pode quebrar logo depois dele e
+     abrir a próxima com um ponto órfão. */
+  text-wrap: pretty;
+
+  @media (max-width: 640px) { margin-top: 1rem; font-size: 0.8125rem; }
 }
 
 /* STAT TILES — cards brancos com borda.

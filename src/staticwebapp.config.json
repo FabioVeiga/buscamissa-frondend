@@ -11,6 +11,7 @@
       "/*.webmanifest",
       "/*.html",
       "/*.map",
+      "/*.json",
       "/*.xml",
       "/*.txt"
     ]

@@ -39,7 +39,11 @@
       <p class="ph-hero__hint">{{ hint }}</p>
     }
 
-    @if (tiles.length) {
+    <!-- Cobertura em linha: alternativa aos tiles, não um acréscimo. Ver
+         `coberturaTexto` no componente. -->
+    @if (coberturaTexto) {
+      <p class="ph-hero__cobertura">{{ coberturaTexto }}</p>
+    } @else if (tiles.length) {
       <div class="ph-hero__tiles">
         @for (t of tiles; track t.rotulo) {
           <div class="ph-tile">
