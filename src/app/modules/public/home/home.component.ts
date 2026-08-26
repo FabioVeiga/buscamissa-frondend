@@ -1,6 +1,7 @@
 import { Component, DestroyRef, inject, NgZone, PLATFORM_ID } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { finalize } from "rxjs/operators";
+import { firstValueFrom } from "rxjs";
 import { CommonModule, DatePipe, isPlatformBrowser } from "@angular/common";
 import {
   FormGroup,
@@ -39,6 +40,7 @@ import { HomeExplorarComponent } from "./sections/home-explorar/home-explorar.co
 import { DIAS_INTENCAO } from "../../../core/constants/dias-intencao";
 import { HomeMissasMapaComponent } from "./sections/home-missas-mapa/home-missas-mapa.component";
 import { linkParoquia } from "../../../shared/utils/church-link.utils";
+import { SeoPaginasService } from "../../../core/services/seo-paginas.service";
 import { SeoService } from "../../../core/services/seo.service";
 import { MetricasService } from "../../../core/services/metricas.service";
 
@@ -82,6 +84,7 @@ export class HomeComponent {
   private _redesSociais = inject(RedesSociaisService);
   private _geo = inject(GeolocationService);
   private _seo = inject(SeoService);
+  private _seoPaginas = inject(SeoPaginasService);
   private _metricas = inject(MetricasService);
   tiposRedeSocial: TipoRedeSocial[] = [];
 
@@ -791,33 +794,88 @@ export class HomeComponent {
     }));
   }
 
+  /**
+   * Cidades por UF com o `cidadeSlug` REAL do backend (`GET /v2/seo/estados`, a mesma
+   * fonte de `/cidades`, `/estados` e do autocomplete de `missa-agora`).
+   *
+   * Só é buscada no caminho da geolocalização — nunca no load da home — e fica em cache
+   * porque `_reverseGeocode()` roda de novo no CTA "Encontrar missas perto de mim".
+   * Falha de rede vira mapa vazio: sem slug a gente não navega (ver `_reverseGeocode`).
+   */
+  private _cidadesPorUf?: Promise<Map<string, { nome: string; slug: string }[]>>;
+
+  private _carregarCidadesPorUf(): Promise<Map<string, { nome: string; slug: string }[]>> {
+    this._cidadesPorUf ??= firstValueFrom(this._seoPaginas.getEstados())
+      .then((res: unknown) => {
+        const lista: any[] = Array.isArray(res) ? res : ((res as any)?.data ?? []);
+        const mapa = new Map<string, { nome: string; slug: string }[]>();
+        lista.filter((e) => e?.uf).forEach((e) => {
+          mapa.set(
+            String(e.uf).toUpperCase(),
+            (e.cidades ?? []).map((c: any) => ({ nome: c.cidade, slug: c.cidadeSlug })),
+          );
+        });
+        return mapa;
+      })
+      .catch(() => new Map<string, { nome: string; slug: string }[]>());
+    return this._cidadesPorUf;
+  }
+
+  /**
+   * UF a partir da resposta do Nominatim.
+   *
+   * Prefere o código ISO 3166-2 (`BR-PR`), que é inequívoco. O fallback por nome faz
+   * match EXATO antes de tentar substring: "Paraná" normalizado ("parana") CONTÉM
+   * "Pará" ("para"), e como Pará vem antes na lista, a busca por substring devolvia PA
+   * para quem estava no Paraná — a home simplesmente nunca detectava a cidade lá.
+   */
+  private _resolverUf(addr: any): string | null {
+    const iso = String(addr?.['ISO3166-2-lvl4'] ?? '');
+    const daIso = iso.startsWith('BR-') ? iso.slice(3).toUpperCase() : '';
+    if (STATES.some(s => s.sigla === daIso)) return daIso;
+
+    const nomeEstado = this._norm(addr?.state ?? '');
+    if (!nomeEstado) return null;
+    const exato = STATES.find(s => this._norm(s.nome) === nomeEstado);
+    if (exato) return exato.sigla;
+    const parcial = STATES.find(s =>
+      nomeEstado.includes(this._norm(s.nome)) || this._norm(s.nome).includes(nomeEstado)
+    );
+    return parcial?.sigla ?? null;
+  }
+
+  /**
+   * Resolve a cidade do usuário a partir das coordenadas.
+   *
+   * O slug vem do BACKEND, nunca de um `slugify()` no cliente. O slug real não é
+   * derivável do nome: além do apóstrofo ("São João do Pau d'Alho" → `sao-joao-do-pau-d-alho`,
+   * não `...-dalho`), há cidades cujo slug é de um distrito ou bairro ("Guaranésia" →
+   * `santa-cruz-da-prata-distrito-de-guaranesia`). Como `/missas/*` está fora do
+   * `navigationFallback` do `staticwebapp.config.json`, errar o slug é 404 de verdade,
+   * não shell CSR — por isso, sem slug conhecido, preferimos não navegar.
+   */
   private _reverseGeocode(lat: number, lng: number): void {
-    this._geo.reverseGeocode(lat, lng)
-      .then((addr) => {
+    Promise.all([this._geo.reverseGeocode(lat, lng), this._carregarCidadesPorUf()])
+      .then(([addr, cidadesPorUf]) => {
         if (!addr) { this.geoStatus = 'error'; return; }
         const nomeCidade = addr.city || addr.town || addr.village || addr.municipality || '';
-        const nomeEstado = addr.state || '';
-        const estado = STATES.find(s =>
-          this._norm(nomeEstado).includes(this._norm(s.nome)) ||
-          this._norm(s.nome).includes(this._norm(nomeEstado))
-        );
-        if (!estado || !nomeCidade) { this.geoStatus = 'error'; return; }
-
-        const uf = estado.sigla;
-        const cidadesDoEstado = this.fullAddressData[uf] ? Object.keys(this.fullAddressData[uf]) : [];
-        const match = cidadesDoEstado.find(c => this._norm(c) === this._norm(nomeCidade));
+        const uf = this._resolverUf(addr);
+        if (!uf || !nomeCidade) { this.geoStatus = 'error'; return; }
+        // Só cidades que têm página gerada — o índice de `/v2/seo/estados` é o mesmo
+        // conjunto que o prerender publica, então nenhum link daqui aponta para o vazio.
+        const cidadesDoEstado = cidadesPorUf.get(uf) ?? [];
+        const match = cidadesDoEstado.find(c => this._norm(c.nome) === this._norm(nomeCidade));
 
         if (!match) { this.geoStatus = 'error'; return; }
 
-        const slug = this._slugify(match);
-        this.cidadeDetectada = { nome: match, uf, slug };
+        this.cidadeDetectada = { nome: match.nome, uf, slug: match.slug };
 
         const outras = cidadesDoEstado
-          .filter(c => this._norm(c) !== this._norm(match))
+          .filter(c => this._norm(c.nome) !== this._norm(match.nome))
           .slice(0, 7)
-          .map(c => ({ nome: c, uf, slug: this._slugify(c) }));
+          .map(c => ({ nome: c.nome, uf, slug: c.slug }));
 
-        this.cidadesGrid = [{ nome: match, uf, slug }, ...outras];
+        this.cidadesGrid = [{ nome: match.nome, uf, slug: match.slug }, ...outras];
         this.geoStatus = 'found';
       })
       .catch(() => { this.geoStatus = 'error'; });
@@ -849,10 +907,6 @@ export class HomeComponent {
 
   private _norm(s: string): string {
     return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
-  }
-
-  private _slugify(s: string): string {
-    return this._norm(s).replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
   }
 
   private _restoreFromQueryParams(): void {
