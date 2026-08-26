@@ -13,7 +13,13 @@ $muted: #6b7280;
 // (que traz o próprio container idêntico).
 .wrap {
   max-width: 72rem;
-  margin: 0 auto;
+  /* `margin-inline`, não o atalho `margin: 0 auto`: o atalho também escreve
+     margin-top/bottom: 0, e com a especificidade do seletor de componente
+     (`.wrap[_ngcontent-…]` = 0,2,0) ele vencia as utilitárias `mt-*` (0,1,0)
+     aplicadas no template. O respiro entre as seções virava 0 — o card "Missa
+     de hoje" encostava no título seguinte. Aqui a caixa só se centraliza; quem
+     manda no espaçamento vertical é quem usa. */
+  margin-inline: auto;
   padding: 0 1.5rem;
 }
 

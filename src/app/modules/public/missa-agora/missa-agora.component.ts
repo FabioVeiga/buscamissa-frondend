@@ -4,12 +4,14 @@ import { RouterModule, Router } from "@angular/router";
 import { FormsModule } from "@angular/forms";
 import { ChurchesService } from "../../../core/services/churches.service";
 import { SeoService } from "../../../core/services/seo.service";
+import { SeoPaginasService } from "../../../core/services/seo-paginas.service";
 import { AnalyticsService } from "../../../core/services/analytics.service";
 import { FavoritesService } from "../../../core/services/favorites.service";
 import { MassTimeCardComponent } from "../../../shared/components/mass-time-card/mass-time-card.component";
 import { MassCardData } from "../../../shared/models/mass-card.model";
 import { Mass } from "../../../core/interfaces/church.interface";
 import { getMissaAgoraUrgency, getCountdownLabel } from "../../../shared/utils/mass-time.utils";
+import { normalizarTexto } from "../../../shared/utils/busca.utils";
 import { CIDADES_POPULARES_MISSA_AGORA } from "../../../core/constants/cidades-populares";
 import { GeolocationService } from "../../../core/services/geolocation.service";
 import { MetricasService, PaginaMetrica } from "../../../core/services/metricas.service";
@@ -17,6 +19,12 @@ import { MessageService } from "primeng/api";
 import { PrimeNgModule } from "../../../shared/primeng.module";
 
 type GeoStatus = 'idle' | 'loading' | 'found' | 'denied' | 'error';
+
+/** Formato de item de `/v2/seo/estados` — mesmo bulk que alimenta `/cidades` e `/estados`. */
+interface EstadoBulk {
+  uf: string;
+  cidades?: Array<{ cidadeSlug: string; cidade: string }>;
+}
 
 @Component({
   selector: "app-missa-agora",
@@ -29,6 +37,7 @@ type GeoStatus = 'idle' | 'loading' | 'found' | 'denied' | 'error';
 export class MissaAgoraComponent implements OnInit, OnDestroy {
   private _church = inject(ChurchesService);
   private _seo = inject(SeoService);
+  private _seoPaginas = inject(SeoPaginasService);
   private _router = inject(Router);
   private _analytics = inject(AnalyticsService);
   private _toast = inject(MessageService);
@@ -232,16 +241,30 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
     this._toast.add({ severity: 'warn', summary: 'Local não encontrado', detail });
   }
 
-  /** Carrega a lista de cidades só no primeiro focus do campo (não pesa o load da página).
-   *  Se a lista crescer significativamente, substituir por autocomplete remoto. */
+  /**
+   * Carrega a lista de cidades só no primeiro focus do campo (não pesa o load da página).
+   * Se a lista crescer significativamente, substituir por autocomplete remoto.
+   *
+   * Fonte: `GET /v2/seo/estados` — a MESMA que `/cidades` e `/estados` usam, já com o
+   * `cidadeSlug` REAL do backend. Antes vinha de `addressRange()`, que só devolve nomes,
+   * e o slug era gerado no cliente por um `_slugify()` que apagava o apóstrofo em vez de
+   * convertê-lo em separador: "Itapejara d'Oeste" virava `itapejara-doeste` e o link
+   * `/missas/pr/itapejara-doeste` dava 404 de verdade (`/missas/*` está fora do
+   * navigationFallback do staticwebapp.config.json, então nem cai no CSR).
+   */
   onCidadeFocus(): void {
     if (this._todasCidades || this._carregandoCidades) return;
     this._carregandoCidades = true;
-    this._church.addressRange().subscribe({
-      next: ({ data }: any) => {
-        this._todasCidades = Object.entries(data ?? {}).flatMap(([uf, cities]: [string, any]) =>
-          Object.keys(cities).map(nome => ({ nome, uf: uf.toLowerCase(), slug: this._slugify(nome) }))
-        );
+    this._seoPaginas.getEstados().subscribe({
+      next: (res: unknown) => {
+        const lista: EstadoBulk[] = Array.isArray(res) ? res : ((res as any)?.data ?? []);
+        this._todasCidades = lista
+          .filter(e => e?.uf)
+          .flatMap(e => (e.cidades ?? []).map(c => ({
+            nome: c.cidade,
+            uf: e.uf.toLowerCase(),
+            slug: c.cidadeSlug,
+          })));
         this._carregandoCidades = false;
         this.onCidadeInput();
       },
@@ -251,13 +274,13 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
 
   /** Sugestões só a partir de 3 caracteres (estilo Google), máx. 8 */
   onCidadeInput(): void {
-    const q = this._normalizar(this.cidadeQuery);
+    const q = normalizarTexto(this.cidadeQuery);
     if (q.length < 3 || !this._todasCidades) {
       this.cidadeSugestoes = [];
       return;
     }
     this.cidadeSugestoes = this._todasCidades
-      .filter(c => this._normalizar(c.nome).includes(q))
+      .filter(c => normalizarTexto(c.nome).includes(q))
       .slice(0, 8);
   }
 
@@ -267,14 +290,6 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
     this.irParaCidade(c);
   }
 
-  private _slugify(s: string): string {
-    return s.normalize('NFD').replace(/[̀-ͯ]/g, '')
-      .toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-  }
-
-  private _normalizar(s: string): string {
-    return (s ?? '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
-  }
 
   getUrgency(card: MassCardData) {
     if (card.mass.diaSemana == null) return null;

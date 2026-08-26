@@ -30,7 +30,17 @@ const LIMIAR = 0.02; // 2%
 // 'missas' cobre também os hubs de Estado (/missas/{uf}, Fase 3). Os `missa-{dia}`
 // são as landings/hubs/folhas da árvore de intenção (Fase 3), uma pasta por dia.
 const DIAS_INTENCAO = ['domingo', 'segunda-feira', 'terca-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sabado'];
-const SECOES = ['missas', 'paroquia', 'home', ...DIAS_INTENCAO.map((d) => `missa-${d}`)];
+
+/**
+ * Hubs de descoberta. Só `/cidades` chega a assar o marcador de erro — `/estados`
+ * degrada para a lista estática de UFs e `/dias` não consome API. Entram os três
+ * mesmo assim porque a checagem é barata e porque a página que HOJE não tem estado
+ * de erro pode ganhar um amanhã, e ninguém lembraria de voltar aqui. O risco real
+ * dos três é a PÁGINA SUMIR, coberto pela checagem de presença mais abaixo.
+ */
+const HUBS = ['cidades', 'estados', 'dias'];
+
+const SECOES = ['missas', 'paroquia', 'home', ...HUBS, ...DIAS_INTENCAO.map((d) => `missa-${d}`)];
 
 /** Acha dist/<app>/browser, varrendo os apps sob dist/. */
 function acharBrowserDir(base) {
@@ -110,6 +120,52 @@ if (browserDir) {
     } else {
       console.log('[guard-rail] raiz (index.html): OK.');
     }
+  }
+}
+
+// ── Guard-rail de PRESENÇA dos hubs ────────────────────────────────────────
+//
+// `/cidades`, `/estados` e `/dias` são UMA página cada, então cobertura proporcional
+// não diz nada sobre elas — ou existe, ou não existe. E a ausência é silenciosa: ao
+// contrário de `/missas/*` e `/paroquia/*`, estas rotas continuam no
+// `navigationFallback`, então uma página faltante NÃO vira 404 chamativo. O proxy
+// responde 200 com o HTML da HOME, e o Google recebe `/cidades` como mais uma cópia
+// da home com canonical=/home — o mesmo estrago de 2026-08-13, sem nenhum sinal
+// vermelho no build.
+//
+// São também as três páginas que concentram a linkagem interna para os hubs de
+// estado e para as landings de dia: perder uma corta a trilha de crawl inteira.
+for (const hub of HUBS) {
+  const dir = acharPastaSecao(distBase, hub);
+  const arquivo = dir ? join(dir, 'index.html') : null;
+  if (arquivo && existsSync(arquivo)) {
+    console.log(`[presença] "/${hub}": OK.`);
+    continue;
+  }
+  algumFalhou = true;
+  console.error(`\n❌ [presença] "/${hub}" NÃO foi prerenderizada — index.html ausente do dist.`);
+  console.error('   A rota segue no navigationFallback, então isso não vira 404: o proxy devolve');
+  console.error('   200 com o HTML da HOME e o Google indexa uma duplicata com canonical=/home.');
+  console.error('   Verifique se a rota continua no app.routes.ts e se o prerender a alcançou.');
+}
+
+// `/estados` degrada para uma lista ESTÁTICA das 27 UFs quando a API falha (ver
+// `aplicarFallbackEstatico` em estados.component.ts). Isso não aciona o marcador de
+// erro — a página parece perfeita — mas assa links para UFs que podem não ter hub
+// `/missas/{uf}` no dist, e sem os totais de cada estado. Comparar a contagem de
+// links com o que o cache prometeu é o que distingue "lista real" de "fallback".
+const estadosDoCache = lerCache('estados.json');
+const dirEstados = acharPastaSecao(distBase, 'estados');
+if (estadosDoCache && dirEstados) {
+  const html = readFileSync(join(dirEstados, 'index.html'), 'utf-8');
+  const links = new Set([...html.matchAll(/href="\/missas\/([a-z]{2})"/g)].map((m) => m[1]));
+  const esperadas = new Set(estadosDoCache.filter((e) => e?.uf).map((e) => e.uf.toLowerCase()));
+  console.log(`[estados] UFs linkadas: ${links.size} | esperadas pelo cache: ${esperadas.size}`);
+  if (links.size !== esperadas.size) {
+    algumFalhou = true;
+    console.error(`\n❌ [estados] a página linka ${links.size} UFs, mas o cache prometeu ${esperadas.size}.`);
+    console.error('   Sintoma típico do fallback estático das 27 UFs: a página assa bonita, sem');
+    console.error('   marcador de erro, mas com links para estados que não têm hub no dist.');
   }
 }
 

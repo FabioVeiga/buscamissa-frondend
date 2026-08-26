@@ -45,6 +45,9 @@ ajuda/*
 # Sitemap gerado em build — não versionar
 /public/sitemap.xml
 
+# Índice de busca gerado em build (reduzido do bulk de paróquias) — não versionar
+/public/busca-index.json
+
 # Claude Code — tooling e skills locais (não versionar, não vai para prod)
 .claude/
 

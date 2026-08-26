@@ -2,9 +2,8 @@
   [breadcrumb]="breadcrumb"
   [titulo]="TITULO_HERO"
   tituloDestaque="Estado"
-  subtitulo="Explore as igrejas e horários de missa em cada estado do Brasil."
-  [tiles]="tiles"
-  [tilesCarregando]="carregando"
+  subtitulo="Escolha o seu estado e veja as cidades."
+  [coberturaTexto]="cobertura"
 >
   <div class="busca" hero-busca>
     <i class="pi pi-search" aria-hidden="true"></i>
@@ -58,12 +57,11 @@
     Sem isto, a página mostra 12 de 27 estados e o silêncio lê como "site
     incompleto". Só entram UFs com paróquia cadastrada (mesma regra que decide
     quais /missas/:uf existem) — a página não está faltando dado, está sendo
-    honesta sobre o que o BuscaMissa já cobre.
+    honesta sobre o que o BuscaMissa já cobre. Uma linha basta para isso: duas
+    frases explicando a ausência soavam defensivas e roubavam atenção da lista,
+    que é o que a pessoa veio usar.
   -->
-  <p class="sec-sub">
-    Estes são os estados que já têm paróquias cadastradas no BuscaMissa. Conforme
-    novas cidades entram na plataforma, mais estados aparecem aqui.
-  </p>
+  <p class="sec-sub">Estados que já têm igrejas cadastradas.</p>
 </div>
 
 <app-hub-lista icone="pi pi-map-marker" [itens]="itensVisiveis" />

@@ -7,9 +7,12 @@ import { STATES } from '../../../core/constants/states';
 import { SeoPaginasService } from '../../../core/services/seo-paginas.service';
 import { SeoService } from '../../../core/services/seo.service';
 import { HubListaComponent, HubBreadcrumb, HubItem } from '../../../shared/components/hub-lista/hub-lista.component';
-import { PageHeroComponent, HeroTile } from '../../../shared/components/page-hero/page-hero.component';
+import { PageHeroComponent } from '../../../shared/components/page-hero/page-hero.component';
 import { HubPonteComponent } from '../../../shared/components/hub-ponte/hub-ponte.component';
-import { metaParoquiasCidades } from '../../../shared/utils/plural.utils';
+import {
+  cidades as rotuloCidades, estados as rotuloEstados, metaParoquiasCidades,
+  paroquias as rotuloParoquias,
+} from '../../../shared/utils/plural.utils';
 
 const SITE = 'https://buscamissa.com.br';
 
@@ -56,7 +59,8 @@ export class EstadosComponent implements OnInit, OnDestroy {
   itens: HubItem[] = [];
   /** O que o hub-lista renderiza — igual a `itens` enquanto não há filtro. */
   itensVisiveis: HubItem[] = [];
-  tiles: HeroTile[] = [];
+  /** Prova de cobertura em uma linha — ver `coberturaTexto` no PageHeroComponent. */
+  cobertura = '';
   carregando = true;
   busca = '';
   private estados: EstadoResumo[] = [];
@@ -121,12 +125,14 @@ export class EstadosComponent implements OnInit, OnDestroy {
     // Somas do payload que já foi carregado — nenhuma requisição a mais.
     const paroquias = estados.reduce((s, e) => s + (e.totalParoquias ?? 0), 0);
     const cidades = estados.reduce((s, e) => s + (e.totalCidades ?? 0), 0);
-    this.tiles = [
-      // Ordem e ícone únicos entre os hubs: cidades → paróquias → estados.
-      { icone: 'pi pi-map-marker', numero: cidades, rotulo: 'cidades' },
-      { icone: 'pi pi-building', numero: paroquias, rotulo: 'paróquias' },
-      { icone: 'pi pi-map', numero: estados.length, rotulo: 'estados' },
-    ];
+    // Uma linha em vez de três tiles: mesma razão de /cidades — num índice
+    // nacional o número é abstrato e não vale a dobra do mobile. Ver
+    // `coberturaTexto` no PageHeroComponent.
+    const n = (v: number) => v.toLocaleString('pt-BR');
+    this.cobertura =
+      `${n(cidades)} ${rotuloCidades(cidades).split(' ')[1]} · ` +
+      `${n(paroquias)} ${rotuloParoquias(paroquias).split(' ')[1]} · ` +
+      `${n(estados.length)} ${rotuloEstados(estados.length).split(' ')[1]}`;
     this.carregando = false;
 
     this.aplicarJsonLd();
@@ -142,9 +148,9 @@ export class EstadosComponent implements OnInit, OnDestroy {
     }));
     this.itens = this.estados.map((e) => ({ nome: e.estado, link: ['/missas', e.uf] }));
     this.itensVisiveis = this.itens;
-    // Sem tiles: neste caminho os totais são 0 (a lista estática não os tem), e
-    // "0 paróquias" numa página indexada é pior que não mostrar número nenhum.
-    this.tiles = [];
+    // Sem cobertura: neste caminho os totais são 0 (a lista estática não os tem),
+    // e "0 paróquias" numa página indexada é pior que não mostrar número nenhum.
+    this.cobertura = '';
     this.carregando = false;
     this.aplicarJsonLd();
     this._cdr.markForCheck();

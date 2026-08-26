@@ -76,4 +76,19 @@ export class PageHeroComponent {
 
   /** Linha de ajuda abaixo da busca. Só aparece se houver texto. */
   @Input() hint?: string;
+
+  /**
+   * Prova de cobertura em UMA linha (ex.: "1.026 cidades · 4.840 paróquias"),
+   * alternativa aos `tiles`. Quando presente, substitui a faixa de tiles.
+   *
+   * Existe porque nos índices NACIONAIS (`/cidades`, `/estados`) os números são
+   * abstratos: não são acionáveis, não ajudam a decidir nada, e três caixas de
+   * ~90px logo abaixo da busca empurravam o conteúdo real para fora da dobra no
+   * mobile. Uma linha de texto entrega a mesma prova social pelo preço de uma
+   * altura de linha.
+   *
+   * Os tiles continuam existindo e são a escolha certa onde o número é CONCRETO —
+   * em `/missas/:uf` ele fala do estado que a pessoa acabou de escolher.
+   */
+  @Input() coberturaTexto?: string;
 }

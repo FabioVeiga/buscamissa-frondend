@@ -2,20 +2,86 @@
   [breadcrumb]="breadcrumb"
   [titulo]="TITULO_HERO"
   tituloDestaque="Cidade"
-  subtitulo="Encontre horários de missas em sua cidade."
-  [tiles]="tiles"
-  [tilesCarregando]="isLoading"
-  hint="Digite o nome da cidade ou do estado."
+  subtitulo="Encontre uma missa perto de você."
+  [coberturaTexto]="cobertura"
+  hint="Digite o nome da cidade ou da igreja."
 >
-  <!-- Ação primária ANTES dos números: a busca é o que o usuário veio fazer aqui. -->
-  <div class="busca" hero-busca>
-    <i class="pi pi-search" aria-hidden="true"></i>
-    <input
-      type="search"
-      [(ngModel)]="busca"
-      placeholder="Buscar por cidade ou estado..."
-      aria-label="Buscar cidade"
-      autocomplete="off">
+  <!--
+    Ação primária ANTES dos números: a busca é o que o usuário veio fazer aqui.
+
+    Autocomplete, não filtro: as sugestões abrem COLADAS no campo, dentro da
+    primeira dobra. Antes este campo filtrava o acordeão que fica duas telas
+    abaixo — no mobile, digitar não mudava nada na viewport.
+  -->
+  <div class="busca-hero" hero-busca #caixaBusca>
+    <div class="busca">
+      <i class="pi pi-search" aria-hidden="true"></i>
+      <input
+        type="search"
+        [(ngModel)]="buscaHero"
+        (ngModelChange)="aoDigitar()"
+        (focus)="aoFocar()"
+        (keydown.escape)="fecharSugestoes()"
+        (keydown.enter)="aoConfirmar()"
+        placeholder="Buscar por cidade ou igreja..."
+        aria-label="Buscar por cidade ou igreja"
+        autocomplete="off"
+        role="combobox"
+        aria-controls="sugestoes-busca"
+        [attr.aria-expanded]="mostrarSugestoes && temAlgoParaMostrar">
+    </div>
+
+    @if (mostrarSugestoes && temAlgoParaMostrar) {
+      <div class="sugestoes" id="sugestoes-busca" role="listbox"
+           aria-label="Sugestões de cidades e igrejas">
+
+        <!-- Cidades primeiro: é a intenção mais comum e o resultado mais largo
+             (uma cidade leva a todas as igrejas dela). -->
+        @if (resultado.cidades.length) {
+          <p class="sugestoes__grupo" id="grupo-cidades">Cidades</p>
+          <ul role="group" aria-labelledby="grupo-cidades">
+            @for (c of resultado.cidades; track c.uf + '/' + c.cidadeSlug) {
+              <li>
+                <a [routerLink]="linkCidade(c)" role="option" [attr.aria-selected]="false"
+                   (click)="fecharSugestoes()">
+                  <i class="pi pi-map-marker" aria-hidden="true"></i>
+                  <span class="sugestoes__nome">{{ c.nome }}</span>
+                  <span class="sugestoes__meta">{{ c.uf | uppercase }} · {{ rotuloParoquias(c.totalParoquias) }}</span>
+                </a>
+              </li>
+            }
+          </ul>
+        }
+
+        <!-- Igreja SEMPRE mostra "Cidade — UF" embaixo; cidade nunca mostra cidade
+             embaixo. É o que impede confundir "São José" (a cidade) com
+             "Paróquia São José" (a igreja). -->
+        @if (resultado.igrejas.length) {
+          <p class="sugestoes__grupo" id="grupo-igrejas">Igrejas</p>
+          <ul role="group" aria-labelledby="grupo-igrejas">
+            @for (i of resultado.igrejas; track i.uf + '/' + i.cidadeSlug + '/' + i.slug) {
+              <li>
+                <a [routerLink]="linkIgreja(i)" role="option" [attr.aria-selected]="false"
+                   class="sugestoes__igreja" (click)="fecharSugestoes()">
+                  <i class="pi pi-building" aria-hidden="true"></i>
+                  <span class="sugestoes__texto">
+                    <span class="sugestoes__nome">{{ i.nome }}</span>
+                    <span class="sugestoes__local">{{ i.cidade }} — {{ i.uf | uppercase }}</span>
+                  </span>
+                </a>
+              </li>
+            }
+          </ul>
+        }
+
+        @if (semResultados) {
+          <p class="sugestoes__vazio">
+            Não encontramos nada para "{{ buscaHero }}".<br>
+            Tente o nome da cidade ou da igreja.
+          </p>
+        }
+      </div>
+    }
   </div>
 
   <!--
@@ -81,14 +147,14 @@
             <i class="pi pi-building sec-titulo__ico" aria-hidden="true"></i>
             Capitais e principais cidades
           </h2>
-          <p class="sec-sub">Cidades com mais paróquias cadastradas em todo o Brasil.</p>
+          <p class="sec-sub">As cidades com mais igrejas cadastradas.</p>
 
           <div class="destaque-grid">
             @for (c of principaisCidades; track c.uf + '/' + c.slug) {
               <a class="destaque" [routerLink]="['/missas', c.uf, c.slug]">
                 <i class="pi pi-map-marker destaque__ico" aria-hidden="true"></i>
                 <span class="destaque__nome">{{ c.nome }}</span>
-                <span class="destaque__meta">{{ c.totalParoquias }} paróquias</span>
+                <span class="destaque__meta">{{ rotuloParoquias(c.totalParoquias) }}</span>
               </a>
             }
           </div>
@@ -99,19 +165,12 @@
       <section class="mt-10">
         <h2 class="sec-titulo">
           <i class="pi pi-th-large sec-titulo__ico" aria-hidden="true"></i>
-          Todas as cidades por estado
+          Escolha uma cidade
         </h2>
-        <p class="sec-sub">Escolha o estado para ver todas as cidades com paróquias cadastradas.</p>
-
-        @if (estadosFiltrados.length === 0) {
-          <p class="text-center py-10 text-gray-400">
-            <i class="pi pi-search text-3xl mb-3 block"></i>
-            Nenhuma cidade encontrada para "{{ busca }}"
-          </p>
-        }
+        <p class="sec-sub">Abra o estado para ver as cidades.</p>
 
         <div class="flex flex-col gap-2">
-          @for (e of estadosFiltrados; track e.sigla) {
+          @for (e of estados; track e.sigla) {
             <div class="estado-card">
 
               <!-- Cabeçalho do estado -->

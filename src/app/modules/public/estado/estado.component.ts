@@ -20,6 +20,7 @@ import { DIAS_INTENCAO } from '../../../core/constants/dias-intencao';
 import { preposicaoDe, nomeDoEstadoComArtigo } from '../../../core/constants/states';
 import { PageHeroComponent, HeroTile } from '../../../shared/components/page-hero/page-hero.component';
 import { HubBreadcrumb } from '../../../shared/components/hub-lista/hub-lista.component';
+import { normalizarTexto } from '../../../shared/utils/busca.utils';
 
 const SITE = 'https://buscamissa.com.br';
 
@@ -257,12 +258,6 @@ export class EstadoComponent implements OnInit, OnDestroy {
     this.mostrarTodas = false;
   }
 
-  private static normalizar(s: string): string {
-    return (s ?? '')
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .toLowerCase();
-  }
 
   /**
    * Funde cidades que compartilham o mesmo slug.
@@ -295,7 +290,7 @@ export class EstadoComponent implements OnInit, OnDestroy {
   /** Pré-computa chave de busca, letra, destaques, grupos A–Z e faixa de letras. */
   private indexarCidades(brutas: CidadeResumo[]): void {
     this.cidades = EstadoComponent.fundirPorSlug(brutas).map((c) => {
-      const chave = EstadoComponent.normalizar(c.cidade);
+      const chave = normalizarTexto(c.cidade);
       return { ...c, chave, letra: (chave.charAt(0) || '#').toUpperCase() };
     });
 
@@ -357,7 +352,7 @@ export class EstadoComponent implements OnInit, OnDestroy {
 
   /** Filtro do painel: só aqui há recálculo, e apenas quando o texto muda. */
   aoFiltrar(): void {
-    const q = EstadoComponent.normalizar(this.busca.trim());
+    const q = normalizarTexto(this.busca.trim());
     this.grupos = q
       ? this.agrupar(this.cidades.filter((c) => c.chave.includes(q)))
       : this.gruposCompletos;
@@ -365,7 +360,7 @@ export class EstadoComponent implements OnInit, OnDestroy {
 
   /** Autocomplete do hero: sugere cidades, não filtra o índice lá embaixo. */
   aoDigitarNoHero(): void {
-    const q = EstadoComponent.normalizar(this.buscaHero.trim());
+    const q = normalizarTexto(this.buscaHero.trim());
     this.sugestoes = q
       ? this.cidades.filter((c) => c.chave.includes(q)).slice(0, EstadoComponent.MAX_SUGESTOES)
       : [];
