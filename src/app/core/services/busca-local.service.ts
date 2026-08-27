@@ -25,9 +25,35 @@ export interface IgrejaBusca {
   bairro?: string;
 }
 
+/** Recorte opcional das sugestões pelo contexto já escolhido pelo usuário. */
+export interface EscopoBusca {
+  /** Sigla da UF, em qualquer caixa. */
+  uf?: string | null;
+  /** Nome da cidade (não o slug) — é o que o formulário da home tem em mãos. */
+  cidade?: string | null;
+}
+
 export interface ResultadoBusca {
   cidades: CidadeBusca[];
   igrejas: IgrejaBusca[];
+}
+
+/**
+ * Resultado da busca POR NOME da home. Tipo separado de `ResultadoBusca` de
+ * propósito: `/cidades` não deve mudar de forma nem de comportamento por causa
+ * de uma funcionalidade que é da home.
+ */
+export interface ResultadoIgrejas {
+  igrejas: IgrejaBusca[];
+  /**
+   * Quantas casaram ANTES do corte em `CAP_IGREJAS`.
+   *
+   * `igrejas.length` não responde "quantas existem": com o corte em 6, "sao
+   * francisco" devolve 6 de 183 e quem só olha o array conclui que há 6. Duas
+   * decisões dependem deste número — avisar que a lista está cortada, e saber se
+   * o resultado é REALMENTE único antes de navegar por conta do usuário.
+   */
+  total: number;
 }
 
 /** Formato compacto de `public/busca-index.json` (ver scripts/gerar-indice-busca.mjs). */
@@ -48,11 +74,10 @@ interface IgrejaIndexada extends IgrejaBusca {
    * escopo desta mudança. Incluir bairro aqui alteraria o que aquela página casa.
    */
   chave: string;
-  /**
-   * Bairro normalizado, guardado à parte justamente para NÃO entrar em `chave`.
-   * Quem quiser casar por bairro testa este campo separadamente.
-   */
+  /** Bairro normalizado, testado à parte pela busca da home (ver `buscarIgrejas`). */
   chaveBairro: string;
+  /** Só o nome — base da ordenação por relevância da home (ver `_pontuar`). */
+  chaveNome: string;
 }
 
 const CAP_CIDADES = 5;
@@ -106,8 +131,10 @@ export class BuscaLocalService {
   /**
    * Busca síncrona de CIDADE + IGREJA — o caminho de `/cidades`.
    *
-   * Casa por nome + cidade + UF. **Sem bairro**, mesmo agora que o índice o traz:
-   * incluí-lo aqui mudaria o que esta página casa, e `/cidades` está em produção.
+   * Comportamento preservado byte a byte: casa por nome + cidade + UF (sem bairro),
+   * sem ordenação por relevância, corte em `CAP_IGREJAS`. A busca por nome da home
+   * é outra coisa e mora em `buscarIgrejas()`; misturar as duas mudaria uma página
+   * de produção que não é escopo desta alteração.
    */
   buscar(consulta: string, cidades: CidadeBusca[]): ResultadoBusca {
     const tokens = tokensDeBusca(consulta);
@@ -123,9 +150,96 @@ export class BuscaLocalService {
     const igrejasCasadas = this._igrejas
       .filter((i) => casaTokens(i.chave, tokens))
       .slice(0, CAP_IGREJAS)
-      .map(({ chave, chaveBairro, ...igreja }) => igreja);
+      .map(({ chave, chaveBairro, chaveNome, ...igreja }) => igreja);
 
     return { cidades: cidadesCasadas, igrejas: igrejasCasadas };
+  }
+
+  /**
+   * Busca por NOME DE IGREJA — o campo do hero da home. Só igrejas, nunca cidades.
+   *
+   * Três diferenças em relação a `buscar()`, todas exigidas por aquele campo e
+   * NENHUMA aplicada a `/cidades`:
+   *
+   *  1. **bairro entra no casamento**, para "achiropita bela vista" funcionar;
+   *  2. **escopo por UF/cidade**, para respeitar o que já foi escolhido no formulário;
+   *  3. **ordenação por relevância de nome** — sem ela, digitar "ach" devolvia seis
+   *     paróquias de *Cachoeira* (casadas pelo bairro e pela cidade) e a Achiropita,
+   *     que é o que a pessoa foi procurar, ficava fora do corte de 6.
+   */
+  buscarIgrejas(consulta: string, escopo?: EscopoBusca): ResultadoIgrejas {
+    const tokens = tokensDeBusca(consulta);
+    if (!tokens.length) return { igrejas: [], total: 0 };
+
+    const ufEscopo = escopo?.uf ? normalizarTexto(escopo.uf) : null;
+    const cidadeEscopo = escopo?.cidade ? normalizarTexto(escopo.cidade) : null;
+
+    const todasCasadas = this._igrejas.filter((i) => {
+      if (ufEscopo && normalizarTexto(i.uf) !== ufEscopo) return false;
+      if (cidadeEscopo && normalizarTexto(i.cidade) !== cidadeEscopo) return false;
+      return this._casaComBairro(i, tokens);
+    });
+
+    // `sort` é estável em JS: dentro de cada faixa a ordem do índice se mantém.
+    const alvo = normalizarTexto(consulta);
+    const ordenadas = todasCasadas
+      .map((igreja) => ({ igreja, peso: this._pontuar(igreja, alvo, tokens) }))
+      .sort((a, b) => a.peso - b.peso)
+      .map(({ igreja }) => igreja);
+
+    return {
+      igrejas: ordenadas
+        .slice(0, CAP_IGREJAS)
+        .map(({ chave, chaveBairro, chaveNome, ...igreja }) => igreja),
+      total: todasCasadas.length,
+    };
+  }
+
+  /**
+   * Cada token precisa estar na chave OU no bairro.
+   *
+   * Testar as duas partes separadamente equivale a testar a concatenação — tokens
+   * nunca contêm espaço, então nenhum deles poderia cruzar a emenda — e evita
+   * montar uma string nova por igreja a cada tecla.
+   */
+  private _casaComBairro(igreja: IgrejaIndexada, tokens: string[]): boolean {
+    return tokens.every((t) => igreja.chave.includes(t) || igreja.chaveBairro.includes(t));
+  }
+
+  /**
+   * Menor é melhor. Quatro faixas, da mais para a menos literal:
+   * 0 o nome É a consulta · 1 o nome começa com ela · 2 todos os tokens estão no
+   * nome · 3 só casou por bairro/cidade/UF.
+   */
+  private _pontuar(igreja: IgrejaIndexada, alvo: string, tokens: string[]): number {
+    if (igreja.chaveNome === alvo) return 0;
+    if (igreja.chaveNome.startsWith(alvo)) return 1;
+    if (casaTokens(igreja.chaveNome, tokens)) return 2;
+    return 3;
+  }
+
+  /**
+   * Paróquias cujo nome é EXATAMENTE a consulta (ignorando acento, caixa e
+   * pontuação), dentro do escopo. Serve à decisão de navegar sozinho: "achiropita"
+   * pode casar várias linhas por substring e ainda assim ter um único nome exato.
+   *
+   * Devolve a lista inteira, não a primeira: dois nomes idênticos em cidades
+   * diferentes continuam ambíguos e quem chama precisa saber disso.
+   */
+  correspondenciasExatas(consulta: string, escopo?: EscopoBusca): IgrejaBusca[] {
+    const alvo = normalizarTexto(consulta);
+    if (!alvo) return [];
+
+    const ufEscopo = escopo?.uf ? normalizarTexto(escopo.uf) : null;
+    const cidadeEscopo = escopo?.cidade ? normalizarTexto(escopo.cidade) : null;
+
+    return this._igrejas
+      .filter((i) => {
+        if (ufEscopo && normalizarTexto(i.uf) !== ufEscopo) return false;
+        if (cidadeEscopo && normalizarTexto(i.cidade) !== cidadeEscopo) return false;
+        return i.chaveNome === alvo;
+      })
+      .map(({ chave, chaveBairro, chaveNome, ...igreja }) => igreja);
   }
 
   /** Índice já materializado, para o caminho síncrono de `buscar()`. */
@@ -186,6 +300,7 @@ export class BuscaLocalService {
         // Bairro fica FORA daqui — ver o comentário em `IgrejaIndexada.chave`.
         chave: normalizarTexto(`${nome} ${nomeCidade} ${uf}`),
         chaveBairro: normalizarTexto(bairro ?? ''),
+        chaveNome: normalizarTexto(nome),
       });
     }
 
