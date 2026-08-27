@@ -21,6 +21,8 @@ export interface IgrejaBusca {
   uf: string;
   cidadeSlug: string;
   slug: string;
+  /** Ausente em paróquias sem bairro cadastrado e em índices gerados antes da tabela `b`. */
+  bairro?: string;
 }
 
 export interface ResultadoBusca {
@@ -32,13 +34,25 @@ export interface ResultadoBusca {
 interface IndiceBruto {
   /** [cidade, uf, cidadeSlug] */
   c: [string, string, string][];
-  /** [nome, índice em `c`, slug] */
-  i: [string, number, string][];
+  /** Tabela de bairros deduplicada. Ausente em índices anteriores à sua introdução. */
+  b?: string[];
+  /** [nome, índice em `c`, slug, índice em `b` (-1 = sem bairro)] */
+  i: [string, number, string, number?][];
 }
 
 /** Igreja com o texto de busca já normalizado — normalizar dentro do laço, a cada tecla, custaria caro. */
 interface IgrejaIndexada extends IgrejaBusca {
+  /**
+   * Nome + cidade + UF. **Não inclui bairro**, e isso é deliberado: é a chave que
+   * `buscar()` usa, e `buscar()` serve `/cidades`, que está em produção e não é
+   * escopo desta mudança. Incluir bairro aqui alteraria o que aquela página casa.
+   */
   chave: string;
+  /**
+   * Bairro normalizado, guardado à parte justamente para NÃO entrar em `chave`.
+   * Quem quiser casar por bairro testa este campo separadamente.
+   */
+  chaveBairro: string;
 }
 
 const CAP_CIDADES = 5;
@@ -90,8 +104,10 @@ export class BuscaLocalService {
   }
 
   /**
-   * Busca síncrona. `cidades` é sempre o que o componente já tem em mãos; as igrejas
-   * saem do índice se ele já tiver chegado, e de lista vazia caso contrário.
+   * Busca síncrona de CIDADE + IGREJA — o caminho de `/cidades`.
+   *
+   * Casa por nome + cidade + UF. **Sem bairro**, mesmo agora que o índice o traz:
+   * incluí-lo aqui mudaria o que esta página casa, e `/cidades` está em produção.
    */
   buscar(consulta: string, cidades: CidadeBusca[]): ResultadoBusca {
     const tokens = tokensDeBusca(consulta);
@@ -107,7 +123,7 @@ export class BuscaLocalService {
     const igrejasCasadas = this._igrejas
       .filter((i) => casaTokens(i.chave, tokens))
       .slice(0, CAP_IGREJAS)
-      .map(({ chave, ...igreja }) => igreja);
+      .map(({ chave, chaveBairro, ...igreja }) => igreja);
 
     return { cidades: cidadesCasadas, igrejas: igrejasCasadas };
   }
@@ -147,20 +163,29 @@ export class BuscaLocalService {
       throw new Error('formato inesperado');
     }
 
+    // `b` ausente = índice gerado antes da tabela de bairros. Tolerado de propósito:
+    // um deploy do frontend sem rebuildar o índice degrada a linha (fica sem o
+    // complemento de bairro) em vez de quebrar a busca inteira.
+    const tabelaBairros = Array.isArray(bruto.b) ? bruto.b : [];
+
     const igrejas: IgrejaIndexada[] = [];
-    for (const [nome, iCidade, slug] of bruto.i) {
+    for (const [nome, iCidade, slug, iBairro] of bruto.i) {
       const cidade = bruto.c[iCidade];
       if (!cidade || !nome || !slug) continue;
       const [nomeCidade, uf, cidadeSlug] = cidade;
+      const bairro = typeof iBairro === 'number' && iBairro >= 0 ? tabelaBairros[iBairro] : undefined;
       igrejas.push({
         nome,
         cidade: nomeCidade,
         uf,
         cidadeSlug,
         slug,
+        bairro,
         // Cidade e UF entram na chave para que "Curitiba Nossa Senhora" funcione:
         // um token casa o nome da igreja, o outro casa a cidade dela.
+        // Bairro fica FORA daqui — ver o comentário em `IgrejaIndexada.chave`.
         chave: normalizarTexto(`${nome} ${nomeCidade} ${uf}`),
+        chaveBairro: normalizarTexto(bairro ?? ''),
       });
     }
 

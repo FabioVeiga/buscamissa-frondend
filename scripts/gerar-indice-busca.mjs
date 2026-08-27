@@ -14,7 +14,18 @@
  * cada paróquia, o mesmo conteúdo passaria de 380 KB para ~480 KB.
  *
  *   { "c": [[cidade, uf, cidadeSlug], ...],
- *     "i": [[nome, indiceDaCidade, slug], ...] }
+ *     "b": [bairro, ...],
+ *     "i": [[nome, indiceDaCidade, slug, indiceDoBairro], ...] }
+ *
+ * O bairro entra pelo mesmo motivo da cidade: sem ele, "Paróquia São José" na
+ * mesma cidade aparece duas vezes idêntica na lista e não há como escolher. E
+ * entra como TABELA deduplicada, não como string repetida em cada paróquia —
+ * bairro repete muito mais que cidade (uma cidade tem dezenas de paróquias no
+ * mesmo bairro), então inline custaria ~70 KB em prod contra ~15 KB assim.
+ *
+ * `indiceDoBairro` é -1 quando a paróquia não tem bairro cadastrado. Bairro é
+ * OPCIONAL: faltar não pode tirar a paróquia do índice, só deixa a linha sem o
+ * complemento.
  *
  * Best-effort de propósito: sem o cache, avisa e sai 0. A busca de CIDADES não
  * depende deste arquivo (vem do payload que a página já carrega), então a
@@ -43,6 +54,22 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
 const ENTRADA = join(ROOT, '.prerender-cache', 'paroquias.json');
 const SAIDA = join(ROOT, 'public', 'busca-index.json');
+
+/**
+ * Chave de deduplicação de bairro. Espelha `normalizarTexto` de
+ * `src/app/shared/utils/busca.utils.ts` — não dá para importar o .ts aqui, mas as
+ * duas precisam concordar, senão "Vila Nova" e "vila nova" viram dois bairros.
+ * Serve só como CHAVE; o texto exibido é sempre a primeira grafia original.
+ */
+function normalizar(valor) {
+  return String(valor ?? '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')  // faixa escapada de propósito (combining marks)
+    .toLowerCase()
+    .replace(/['’`\-.]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
 
 /** `--api=<base>` → base da API de onde buscar o bulk. Ausente = ler o cache. */
 function lerApiDoArgumento() {
@@ -93,8 +120,13 @@ function gerar(paroquias, origem) {
   // distintas num registro só e mandaria a pessoa para o estado errado.
   const cidades = [];
   const indicePorChave = new Map();
+  // Bairro é deduplicado por texto normalizado (case/acento), mas o que vai para o
+  // arquivo é a PRIMEIRA grafia vista — "Bela Vista" e não "bela vista".
+  const bairros = [];
+  const indiceBairroPorChave = new Map();
   const igrejas = [];
   let semSlug = 0;
+  let semBairro = 0;
 
   for (const p of paroquias) {
     const slug = p?.slug;
@@ -117,19 +149,37 @@ function gerar(paroquias, origem) {
       cidades.push([p.igreja?.endereco?.localidade ?? cidadeSlug, uf, cidadeSlug]);
     }
 
-    igrejas.push([nome, iCidade, slug]);
+    const bairro = String(p?.igreja?.endereco?.bairro ?? '').trim();
+    let iBairro = -1;
+    if (bairro) {
+      const chaveBairro = normalizar(bairro);
+      iBairro = indiceBairroPorChave.get(chaveBairro) ?? -1;
+      if (iBairro === -1) {
+        iBairro = bairros.length;
+        indiceBairroPorChave.set(chaveBairro, iBairro);
+        bairros.push(bairro);
+      }
+    } else {
+      semBairro++;
+    }
+
+    igrejas.push([nome, iCidade, slug, iBairro]);
   }
 
   mkdirSync(dirname(SAIDA), { recursive: true });
-  const json = JSON.stringify({ c: cidades, i: igrejas });
+  const json = JSON.stringify({ c: cidades, b: bairros, i: igrejas });
   writeFileSync(SAIDA, json);
 
   const kb = (json.length / 1024).toFixed(0);
   const descartadas = semSlug ? ` (${semSlug} sem slug/cidade, fora do índice)` : '';
   console.log(
-    `[indice-busca] ${igrejas.length} igrejas em ${cidades.length} cidades → ` +
+    `[indice-busca] ${igrejas.length} igrejas em ${cidades.length} cidades, ` +
+    `${bairros.length} bairros → ` +
     `public/busca-index.json (${kb} KB)${descartadas}.`,
   );
+  if (semBairro) {
+    console.log(`[indice-busca] ${semBairro} igrejas sem bairro cadastrado (entram sem o complemento).`);
+  }
   console.log(`[indice-busca] origem: ${origem}`);
 }
 
