@@ -51,9 +51,10 @@
         <form [formGroup]="form" class="search-form">
           <div class="search-form__row">
             <p-iftalabel class="search-form__field">
-              <p-select [options]="statesList" (onChange)="onStateChange($event)" [filter]="true" [filterBy]="'label'"
+              <p-select #ufSelect [options]="statesList" (onChange)="onStateChange($event)" [filter]="true" [filterBy]="'label'"
                         [showClear]="!!form.get('Uf')?.value" formControlName="Uf" placeholder="Selecione"
-                        class="w-full" appendTo="body" [loading]="isLoadingAddress" id="Uf"></p-select>
+                        class="w-full" appendTo="body" [loading]="isLoadingAddress" id="Uf"
+                        [attr.aria-invalid]="!!erroFormulario || null"></p-select>
               <label for="Uf">Estado *</label>
             </p-iftalabel>
 
@@ -91,11 +92,15 @@
             </p-iftalabel>
 
             <button type="button" class="btn-primary search-form__submit"
-                    [disabled]="form.invalid || isLoading" (click)="onBuscarClick()">
+                    [disabled]="isLoading" (click)="onBuscarClick()">
               <i class="pi" [ngClass]="isLoading ? 'pi-spin pi-spinner' : 'pi-search'"></i>
               Buscar missas
             </button>
           </div>
+
+          <p class="search-form__erro" *ngIf="erroFormulario" role="alert">
+            <i class="pi pi-exclamation-circle"></i> {{ erroFormulario }}
+          </p>
         </form>
       </div>
 

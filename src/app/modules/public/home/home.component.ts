@@ -1,16 +1,16 @@
-import { Component, DestroyRef, inject, NgZone, PLATFORM_ID } from "@angular/core";
+import { Component, DestroyRef, inject, NgZone, PLATFORM_ID, ViewChild } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { finalize } from "rxjs/operators";
 import { firstValueFrom } from "rxjs";
 import { CommonModule, DatePipe, isPlatformBrowser } from "@angular/common";
 import {
   FormGroup,
-  Validators,
   ReactiveFormsModule,
   FormBuilder,
 } from "@angular/forms";
 import { ChurchesService } from "../../../core/services/churches.service";
 import { MessageService } from "primeng/api";
+import { Select } from "primeng/select";
 import { WEEK_DAYS } from "../../../core/constants/weekdays";
 import { PrimeNgModule } from "../../../shared/primeng.module";
 import {
@@ -319,6 +319,13 @@ export class HomeComponent {
   /** Raio (km) da busca por localização */
   raioCep = 5;
 
+  /** Erro de preenchimento do formulário, mostrado inline sob os campos. */
+  erroFormulario: string | null = null;
+
+  /** Select de Estado — para devolver o foco quando o usuário busca sem escolher um. */
+  @ViewChild('ufSelect') private _ufSelect?: Select;
+
+
   /** Estatísticas (números reais via getInfo, com fallback) */
   stats = { igrejas: 2000, horarios: 9100, cidades: 213, estados: 26 };
 
@@ -338,6 +345,7 @@ export class HomeComponent {
     this._router.navigate([], { queryParams: {}, replaceUrl: true });
     this.churchInfo = [];
     this.showNoChurchCard = false;
+    this.erroFormulario = null;
   }
 
   toggleMaisFiltros(): void {
@@ -444,7 +452,10 @@ export class HomeComponent {
     }
 
     this.form = this._fb.group({
-      Uf: [null, Validators.required],
+      // Sem `Validators.required` em `Uf` de propósito: com ele o formulário nasce
+      // inválido e o botão principal nasce desabilitado, sem dizer o que falta.
+      // A exigência de estado é cobrada em `onBuscarClick()`, com mensagem e foco.
+      Uf: [null],
       Localidade: [null],
       Bairro: [null],
       DiaDaSemana: [null],
@@ -466,6 +477,7 @@ export class HomeComponent {
       if (!params['uf']) {
         this.churchInfo = [];
         this.showNoChurchCard = false;
+        this.erroFormulario = null;
         this.form.reset();
       }
     });
@@ -951,6 +963,8 @@ export class HomeComponent {
 
   public onStateChange(event: any): void {
     this.selectedState = event.value;
+    // Escolher o estado é a correção do erro — a mensagem some junto.
+    if (this.selectedState) this.erroFormulario = null;
     if (this.selectedState) {
       // Guarda: se o addressRange falhou, fullAddressData é undefined — não pode
       // derrubar o fluxo (a busca da URL ainda precisa rodar e mostrar o erro dela)
@@ -1014,14 +1028,36 @@ export class HomeComponent {
     };
   }
 
-  /** Clique no botão "Buscar": na home navega p/ /buscar; em /buscar refaz inline */
+  /**
+   * Clique no botão "Buscar": na home navega p/ /buscar; em /buscar refaz inline.
+   *
+   * O botão NÃO nasce mais desabilitado. Antes era `[disabled]="form.invalid"` com
+   * `Uf` obrigatório, mas pintado como primário cheio (laranja 100%, opacidade 1,
+   * cursor pointer): clicar não fazia nada e não dizia por quê. O requisito é
+   * cobrado AQUI, com mensagem e foco — errar e ser corrigido ensina, botão inerte
+   * não.
+   */
   public onBuscarClick(): void {
-    if (this.form.invalid) return;
+    if (this.isLoading) return;
+
+    if (!this.form.get('Uf')?.value) {
+      this._exigirEstado();
+      return;
+    }
+
+    this.erroFormulario = null;
     if (this.resultsMode) {
       this.searchFilter();
     } else {
       this.submitBusca();
     }
+  }
+
+  /** Mensagem + foco quando falta o estado, que é o único filtro que a API exige. */
+  private _exigirEstado(): void {
+    this.erroFormulario = 'Escolha um estado para buscar.';
+    this.form.get('Uf')?.markAsTouched();
+    this._ufSelect?.focus();
   }
 
   /** Navega para a página de resultados com os filtros como query params */
@@ -1033,7 +1069,9 @@ export class HomeComponent {
   }
 
   public searchFilter(resetPage = true): void {
-    if (this.isLoading || this.form.invalid) return;
+    // `Uf` é `[Required]` no backend — sem ele a chamada volta 400. A validação de
+    // formulário saiu do `Validators` para o clique, então o guard checa o campo.
+    if (this.isLoading || !this.form.get('Uf')?.value) return;
 
     if (resetPage) this.pageIndex = 1;
 
