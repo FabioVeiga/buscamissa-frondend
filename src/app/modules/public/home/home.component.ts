@@ -363,6 +363,13 @@ export class HomeComponent {
   /** O índice resolveu SEM dados: rede caiu, 404, ou HTML no lugar do JSON. */
   indiceIndisponivel = false;
 
+  /**
+   * Há uma consulta vinda da URL esperando o índice chegar para ser resolvida.
+   * A decisão (navegar ou não) depende de saber quantas paróquias casaram, e isso
+   * só se sabe depois do download.
+   */
+  private _resolverAposIndice = false;
+
   /** Estatísticas (números reais via getInfo, com fallback) */
   stats = { igrejas: 2000, horarios: 9100, cidades: 213, estados: 26 };
 
@@ -514,7 +521,10 @@ export class HomeComponent {
     // Usa a key 'uf' (minúscula) — a mesma gravada por searchFilter — senão o form
     // seria resetado a cada busca/paginação, deixando-o inválido e travando a paginação.
     this._route.queryParams.pipe(takeUntilDestroyed(this._destroyRef)).subscribe(params => {
-      if (!params['uf']) {
+      // `nome` na guarda porque `/buscar?nome=catedral` é uma busca legítima, sem
+      // UF: é o alvo declarado pelo SearchAction do JSON-LD. Sem isto o valor era
+      // restaurado da URL e apagado no mesmo tick pelo `form.reset()` abaixo.
+      if (!params['uf'] && !params['nome']) {
         this.churchInfo = [];
         this.showNoChurchCard = false;
         this.erroFormulario = null;
@@ -550,7 +560,9 @@ export class HomeComponent {
         "@type": "SearchAction",
         target: {
           "@type": "EntryPoint",
-          urlTemplate: `${base}/buscar?busca={search_term_string}`,
+          // `nome`, não `busca`: o app nunca leu um param chamado `busca`, então
+          // este alvo levava a uma página de busca vazia desde sempre.
+          urlTemplate: `${base}/buscar?nome={search_term_string}`,
         },
         "query-input": "required name=search_term_string",
       },
@@ -963,7 +975,14 @@ export class HomeComponent {
 
   private _restoreFromQueryParams(): void {
     const p = this._route.snapshot.queryParams;
-    if (!p['uf']) return;
+
+    // Sem UF não existe busca de API: `buscar-por-filtro` exige `Uf`. Mas com
+    // `nome` ainda existe o índice local — e é exatamente essa a URL que o
+    // SearchAction declara ao Google.
+    if (!p['uf']) {
+      if (p['nome']) this._restaurarBuscaPorNome(String(p['nome']));
+      return;
+    }
 
     // Restaura UF e popula cidades
     this.form.get('Uf')?.setValue(p['uf']);
@@ -1000,6 +1019,28 @@ export class HomeComponent {
     }
 
     this.searchFilter(false);
+  }
+
+  /**
+   * `/buscar?nome=...` sem UF — a URL que o `SearchAction` do JSON-LD declara.
+   *
+   * Reproduz o que acontece quando a pessoa digita no campo: índice sob demanda,
+   * os mesmos estados de lista e a MESMA regra de ambiguidade. Nenhuma chamada de
+   * API, porque sem `Uf` não há o que chamar.
+   */
+  private _restaurarBuscaPorNome(nome: string): void {
+    this.form.get('Nome')?.setValue(nome);
+    this.painelAberto = true;
+
+    // O índice pode já estar em memória (voltar para cá dentro da mesma sessão).
+    if (this.indiceResolvido) {
+      this._recalcularSugestoes();
+      this._resolverPorNome();
+      return;
+    }
+
+    this._resolverAposIndice = true;
+    this.garantirIndiceIgrejas();
   }
 
   public onStateChange(event: any): void {
@@ -1103,6 +1144,12 @@ export class HomeComponent {
         this.indiceIndisponivel = !temIndice;
         // O usuário pode ter digitado enquanto o índice vinha: recalcula.
         this._recalcularSugestoes();
+
+        // Consulta que veio da URL: agora dá para decidir se navega.
+        if (this._resolverAposIndice) {
+          this._resolverAposIndice = false;
+          this._resolverPorNome();
+        }
       });
   }
 
