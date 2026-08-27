@@ -269,11 +269,17 @@ $texto-2: #6b7280;
   &:hover { color: $laranja; background: #fff9f4; }
   &--ativa { color: $laranja; border-bottom-color: $laranja; }
 
+  // `font-size: 0` escondia os rótulos aqui e deixava duas lupas/alfinetes sem
+  // legenda e sem aria-label — some justamente "Buscar perto de mim", que é o
+  // caminho de um toque. Com duas abas os dois rótulos cabem inteiros em 375px.
+  //
+  // `px` e não `rem`: a raiz do app é 14px, então `0.78rem` renderizava 10,9px,
+  // pequeno demais para um rótulo que é o único sinal do que a aba faz.
   @media (max-width: 480px) {
-    font-size: 0;
-    gap: 0;
-    padding: 0.85rem 0.25rem;
-    .pi { font-size: 1.15rem; }
+    font-size: 12px;
+    gap: 0.3rem;
+    padding: 0.85rem 0.35rem;
+    .pi { font-size: 12px; }
   }
 }
 
