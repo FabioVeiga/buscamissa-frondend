@@ -1,3 +1,5 @@
+@use '../../../shared/styles/sugestoes' as *;
+
 // ── Tokens ────────────────────────────────────────────────────────────────────
 $laranja: #bc5d10;
 $laranja-hover: #a34f0c;
@@ -359,6 +361,12 @@ $texto-2: #6b7280;
   // alvo mínimo de toque de 44px (WCAG 2.5.5). Era o menor clicável do formulário
   // sendo o mais importante dele.
   &__submit { flex: 1 1 150px; min-width: 150px; min-height: 48px; }
+
+  // O campo de nome ocupa a linha inteira: é texto livre, e a lista de sugestões
+  // ancora nele. Espremido entre os selects, o painel ficaria mais estreito que os
+  // nomes que precisa mostrar.
+  &__nome-wrap { position: relative; }
+  &__field--nome ::ng-deep input { width: 100%; }
 
   // Cobra o estado que a API exige, no lugar do botão inerte que não dizia nada.
   &__erro {

@@ -75,6 +75,66 @@
             </p-iftalabel>
           </div>
 
+          <!-- Nome da igreja: refina a busca acima (vai como `Nome` para a API) e,
+               ao mesmo tempo, é o atalho direto para a paróquia — a lista abaixo sai
+               do índice estático, único jeito de achar por nome no Brasil inteiro. -->
+          <div class="search-form__nome-wrap">
+            <p-iftalabel class="search-form__field search-form__field--nome">
+              <input pInputText type="text" id="Nome" formControlName="Nome" class="w-full"
+                     placeholder="Digite o nome da igreja ou paróquia"
+                     autocomplete="off" role="combobox" aria-controls="sugestoes-igreja"
+                     [attr.aria-expanded]="mostrarSugestoes"
+                     [attr.aria-activedescendant]="sugestaoAtiva >= 0 ? 'sugestao-igreja-' + sugestaoAtiva : null"
+                     (input)="onNomeInput()"
+                     (focus)="garantirIndiceIgrejas()"
+                     (keydown.arrowdown)="$event.preventDefault(); moverSugestao(1)"
+                     (keydown.arrowup)="$event.preventDefault(); moverSugestao(-1)"
+                     (keydown.escape)="limparSugestoes()"
+                     (keydown.enter)="$event.preventDefault(); onEnterNome()" />
+              <label for="Nome">Nome da igreja</label>
+            </p-iftalabel>
+
+            <div class="sugestoes sugestoes--inline" id="sugestoes-igreja" *ngIf="mostrarSugestoes">
+              <p class="sugestoes__grupo" id="grupo-igrejas">Qual igreja você procura?</p>
+
+              <ul role="listbox" aria-labelledby="grupo-igrejas" *ngIf="sugestoesIgrejas.length">
+                <li *ngFor="let i of sugestoesIgrejas; let idx = index">
+                  <a [routerLink]="linkIgrejaSugerida(i)" class="sugestoes__igreja"
+                     [id]="'sugestao-igreja-' + idx" role="option"
+                     [class.sugestoes__igreja--ativa]="sugestaoAtiva === idx"
+                     [attr.aria-selected]="sugestaoAtiva === idx"
+                     (click)="limparSugestoes()">
+                    <i class="pi pi-building" aria-hidden="true"></i>
+                    <span class="sugestoes__texto">
+                      <span class="sugestoes__nome">{{ i.nome }}</span>
+                      <span class="sugestoes__local">
+                        <ng-container *ngIf="i.bairro">{{ i.bairro }} · </ng-container>{{ i.cidade }} — {{ i.uf | uppercase }}
+                      </span>
+                    </span>
+                  </a>
+                </li>
+              </ul>
+
+              <p class="sugestoes__mais" *ngIf="sugestoesCortadas">
+                Mostrando {{ sugestoesIgrejas.length }} de {{ totalSugestoes }} — refine o nome ou escolha um estado.
+              </p>
+
+              <p class="sugestoes__vazio" *ngIf="carregandoSugestoes">
+                Carregando a lista de igrejas…
+              </p>
+
+              <p class="sugestoes__vazio" *ngIf="buscaSemResultado">
+                Não encontramos nenhuma igreja com esse nome.<br>
+                Tente só o nome principal, ou busque por estado e cidade.
+              </p>
+
+              <p class="sugestoes__vazio" *ngIf="indiceIndisponivel">
+                Não foi possível carregar a lista de igrejas agora.<br>
+                Busque por estado e cidade.
+              </p>
+            </div>
+          </div>
+
           <div class="search-form__advanced">
             <p-iftalabel class="search-form__field">
               <p-select [options]="weakDays" [filter]="true" filterBy="weakDays" optionLabel="nome" optionValue="id"
