@@ -14,6 +14,7 @@ import { RedesSociaisService } from '../../../core/services/redes-sociais.servic
 import { GeolocationService } from '../../../core/services/geolocation.service';
 import { SeoService } from '../../../core/services/seo.service';
 import { MetricasService } from '../../../core/services/metricas.service';
+import { SeoPaginasService } from '../../../core/services/seo-paginas.service';
 import { BuscaLocalService, IgrejaBusca } from '../../../core/services/busca-local.service';
 
 /**
@@ -74,6 +75,11 @@ describe('HomeComponent — /buscar?nome= sem UF', () => {
         { provide: GeolocationService, useValue: jasmine.createSpyObj('GeolocationService', ['obterPosicaoAtual', 'reverseGeocode', 'consultarCep']) },
         { provide: SeoService, useValue: jasmine.createSpyObj('SeoService', ['update', 'setJsonLd', 'removeJsonLd']) },
         { provide: MetricasService, useValue: jasmine.createSpyObj('MetricasService', ['registrarVisualizacaoHome', 'registrarVisualizacaoPagina']) },
+        // Dependência que a home ganhou em 1d43291 (cidadeSlug real vindo de
+        // `/v2/seo/estados`). Só é usada no caminho da geolocalização, que estes
+        // testes não exercitam — sem o stub, o serviço real puxa `HttpClient` e o
+        // TestBed quebra por NullInjector.
+        { provide: SeoPaginasService, useValue: { getEstados: () => of([]) } },
       ],
     });
 
