@@ -36,7 +36,6 @@ import { HomeComoFuncionaComponent } from "./sections/home-como-funciona/home-co
 import { HomeFavoritosComponent } from "./sections/home-favoritos/home-favoritos.component";
 import { HomeCidadesComponent } from "./sections/home-cidades/home-cidades.component";
 import { HomeChipsComponent, ChipLink, ChipDestaque } from "./sections/home-chips/home-chips.component";
-import { HomeExplorarComponent } from "./sections/home-explorar/home-explorar.component";
 import { DIAS_INTENCAO } from "../../../core/constants/dias-intencao";
 import { HomeMissasMapaComponent } from "./sections/home-missas-mapa/home-missas-mapa.component";
 import { linkParoquia } from "../../../shared/utils/church-link.utils";
@@ -66,7 +65,6 @@ interface AddressData {
     HomeCidadesComponent,
     HomeMissasMapaComponent,
     HomeChipsComponent,
-    HomeExplorarComponent,
   ],
   providers: [MessageService, DatePipe],
   templateUrl: "./home.component.html",
@@ -264,8 +262,26 @@ export class HomeComponent {
 
   /** Cards de próximas missas */
   proximasMissasCards: MassCardData[] = [];
-  isLoadingProximas = false;
-  tituloProximasMissas = 'Missas acontecendo hoje';
+  // Nasce `true` de propósito: `_loadProximasMissas()` é browser-only, então com
+  // `false` o servidor assava o estado VAZIO ("Nenhuma missa encontrada") no HTML
+  // prerenderizado da home — a primeira coisa abaixo do hero desde que a seção subiu,
+  // e uma frase negativa entregue ao Google. Com `true` o server assa o skeleton e o
+  // cliente nasce no mesmo estado (sem mismatch); o vazio só aparece após a resposta.
+  isLoadingProximas = true;
+  // "agora", não "hoje": a janela da API é de 2 horas (`Horas = 2` em churches.service).
+  tituloProximasMissas = 'Missas acontecendo agora';
+
+  /**
+   * De onde as distâncias são medidas. Sem coordenadas do usuário, a API cai no
+   * fallback de São Paulo (ProximasMissasService: -23.5505/-46.6333, raio 30km) e
+   * devolve distâncias a partir do centro de SP — número errado para quem está fora.
+   * `null` no servidor: o rótulo é browser-only para não vazar "São Paulo" para o
+   * HTML prerenderizado da home nem causar mismatch de hidratação.
+   */
+  get origemDistancia(): 'usuario' | 'referencia' | null {
+    if (!this._isBrowser) return null;
+    return this._userLat != null && this._userLng != null ? 'usuario' : 'referencia';
+  }
 
   // Sprint 3B — Minhas Paróquias (múltiplas)
   paroquiasFavoritas: IgrejaFavorita[] = [];
@@ -702,7 +718,14 @@ export class HomeComponent {
             scoreConfianca: item.missa?.scoreConfianca,
             statusConfianca: item.missa?.statusConfianca,
           } as Mass,
-          distanceMeters: item.distanciaKm != null ? item.distanciaKm * 1000 : undefined,
+          // Só há distância quando a busca levou as coordenadas do usuário. Sem elas
+          // a API mede do centro de São Paulo, e "a 20 m" seria mentira para quem
+          // está em qualquer outro lugar — melhor chip nenhum (DistanceChipComponent
+          // não renderiza nada com `meters` nulo).
+          distanceMeters:
+            lat != null && lng != null && item.distanciaKm != null
+              ? item.distanciaKm * 1000
+              : undefined,
           latitude: item.latitude,
           longitude: item.longitude,
         }));

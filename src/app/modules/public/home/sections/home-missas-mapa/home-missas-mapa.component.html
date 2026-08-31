@@ -8,6 +8,25 @@
       <a routerLink="/missa-agora" class="sec-header__link">Ver todas</a>
     </div>
 
+    <!-- Rótulo de referência: sem ele a lista (e as distâncias) de São Paulo passam
+         por "perto de você" para o Brasil inteiro. O slot existe sempre — inclusive
+         no prerender, onde `origem` é null — para o texto não empurrar os cards ao
+         hidratar (CLS logo abaixo do hero, onde o LCP é medido). -->
+    <div class="missas-origem-slot">
+      <p class="missas-origem" *ngIf="origem === 'usuario'">
+        <i class="pi pi-map-marker" aria-hidden="true"></i>
+        Perto de você<ng-container *ngIf="localidadeUsuario"> · {{ localidadeUsuario }}</ng-container>
+      </p>
+      <p class="missas-origem missas-origem--referencia" *ngIf="origem === 'referencia'">
+        <i class="pi pi-info-circle" aria-hidden="true"></i>
+        Mostrando <strong>São Paulo</strong> como referência.
+        <button type="button" class="missas-origem__btn" (click)="pedirLocalizacao.emit()">
+          Ative sua localização
+        </button>
+        para ver missas perto de você.
+      </p>
+    </div>
+
     <!-- Skeleton: reserva o espaço final dos cards durante o carregamento (evita CLS) -->
     <div *ngIf="isLoading" class="missas-grid" aria-hidden="true">
       <div class="missa-skeleton" *ngFor="let s of skeletons"></div>
