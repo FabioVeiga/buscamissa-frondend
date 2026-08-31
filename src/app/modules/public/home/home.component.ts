@@ -185,12 +185,25 @@ export class HomeComponent {
   }
 
   // Memo: evita realocar o array a cada ciclo de CD (relevante p/ filhos OnPush — 3.L)
+  //
+  // A invalidação compara a IDENTIDADE de `proximasMissasCards`, não um resumo dele.
+  // A chave anterior era `quickFilter|length|churchId[0]`, que descreve a FORMA da
+  // lista e não o conteúdo: recarregar com o mesmo tamanho e a mesma primeira igreja
+  // devolvia os cards antigos. Isso ficou visível quando a distância passou a existir
+  // só com geolocalização — carga sem geo (São Paulo, sem distância) → o usuário
+  // concede a localização → mesma lista de SP, agora com `distanceMeters` — e o chip
+  // de distância nunca aparecia. `_loadProximasMissas()` sempre atribui um array novo
+  // (é o resultado de um `.map()`), então a comparação por referência é exata.
   private _proximasFiltradasCache: MassCardData[] = [];
-  private _proximasFiltradasKey = '';
+  private _proximasFiltradasFonte: MassCardData[] | null = null;
+  private _proximasFiltradasQuickFilter: typeof this.quickFilter | undefined;
   get proximasFiltradas(): MassCardData[] {
-    const key = `${this.quickFilter ?? ''}|${this.proximasMissasCards.length}|${this.proximasMissasCards[0]?.churchId ?? ''}`;
-    if (key !== this._proximasFiltradasKey) {
-      this._proximasFiltradasKey = key;
+    if (
+      this.proximasMissasCards !== this._proximasFiltradasFonte ||
+      this.quickFilter !== this._proximasFiltradasQuickFilter
+    ) {
+      this._proximasFiltradasFonte = this.proximasMissasCards;
+      this._proximasFiltradasQuickFilter = this.quickFilter;
       this._proximasFiltradasCache = this._aplicarQuickFilterCards(this.proximasMissasCards);
     }
     return this._proximasFiltradasCache;
