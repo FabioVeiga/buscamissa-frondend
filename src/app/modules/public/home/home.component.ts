@@ -262,8 +262,14 @@ export class HomeComponent {
 
   /** Cards de próximas missas */
   proximasMissasCards: MassCardData[] = [];
-  isLoadingProximas = false;
-  tituloProximasMissas = 'Missas acontecendo hoje';
+  // Nasce `true` de propósito: `_loadProximasMissas()` é browser-only, então com
+  // `false` o servidor assava o estado VAZIO ("Nenhuma missa encontrada") no HTML
+  // prerenderizado da home — a primeira coisa abaixo do hero desde que a seção subiu,
+  // e uma frase negativa entregue ao Google. Com `true` o server assa o skeleton e o
+  // cliente nasce no mesmo estado (sem mismatch); o vazio só aparece após a resposta.
+  isLoadingProximas = true;
+  // "agora", não "hoje": a janela da API é de 2 horas (`Horas = 2` em churches.service).
+  tituloProximasMissas = 'Missas acontecendo agora';
   // Sprint 3B — Minhas Paróquias (múltiplas)
   paroquiasFavoritas: IgrejaFavorita[] = [];
 
