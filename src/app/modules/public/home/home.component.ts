@@ -270,6 +270,19 @@ export class HomeComponent {
   isLoadingProximas = true;
   // "agora", não "hoje": a janela da API é de 2 horas (`Horas = 2` em churches.service).
   tituloProximasMissas = 'Missas acontecendo agora';
+
+  /**
+   * De onde as distâncias são medidas. Sem coordenadas do usuário, a API cai no
+   * fallback de São Paulo (ProximasMissasService: -23.5505/-46.6333, raio 30km) e
+   * devolve distâncias a partir do centro de SP — número errado para quem está fora.
+   * `null` no servidor: o rótulo é browser-only para não vazar "São Paulo" para o
+   * HTML prerenderizado da home nem causar mismatch de hidratação.
+   */
+  get origemDistancia(): 'usuario' | 'referencia' | null {
+    if (!this._isBrowser) return null;
+    return this._userLat != null && this._userLng != null ? 'usuario' : 'referencia';
+  }
+
   // Sprint 3B — Minhas Paróquias (múltiplas)
   paroquiasFavoritas: IgrejaFavorita[] = [];
 
@@ -705,7 +718,14 @@ export class HomeComponent {
             scoreConfianca: item.missa?.scoreConfianca,
             statusConfianca: item.missa?.statusConfianca,
           } as Mass,
-          distanceMeters: item.distanciaKm != null ? item.distanciaKm * 1000 : undefined,
+          // Só há distância quando a busca levou as coordenadas do usuário. Sem elas
+          // a API mede do centro de São Paulo, e "a 20 m" seria mentira para quem
+          // está em qualquer outro lugar — melhor chip nenhum (DistanceChipComponent
+          // não renderiza nada com `meters` nulo).
+          distanceMeters:
+            lat != null && lng != null && item.distanciaKm != null
+              ? item.distanciaKm * 1000
+              : undefined,
           latitude: item.latitude,
           longitude: item.longitude,
         }));

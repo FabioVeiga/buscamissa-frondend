@@ -30,10 +30,23 @@ export class HomeMissasMapaComponent {
   @Input() favoritasIds: number[] = [];
   @Input() cidadeNome = '';
   @Input() cidadeUf = '';
+  /**
+   * De onde as distâncias/os resultados são medidos, para dizer isso na tela:
+   * `'usuario'` = geolocalização concedida; `'referencia'` = sem permissão, e a API
+   * caiu no fallback de São Paulo. `null` no servidor — o rótulo é browser-only.
+   */
+  @Input() origem: 'usuario' | 'referencia' | null = null;
+
+  /** Pedido explícito de geolocalização a partir do rótulo de referência. */
+  @Output() pedirLocalizacao = new EventEmitter<void>();
 
   @Output() cardClick = new EventEmitter<MassCardData>();
   @Output() navigateClick = new EventEmitter<MassCardData>();
   @Output() favoriteClick = new EventEmitter<MassCardData>();
+
+  get localidadeUsuario(): string {
+    return this.cidadeNome ? `${this.cidadeNome}${this.cidadeUf ? '/' + this.cidadeUf.toUpperCase() : ''}` : '';
+  }
 
   /** Placeholders do skeleton (reserva espaço enquanto carrega — evita CLS). */
   readonly skeletons = [0, 1, 2, 3];

@@ -209,6 +209,8 @@
     [favoritasIds]="favoritasIds"
     [cidadeNome]="cidadeDetectada?.nome || ''"
     [cidadeUf]="cidadeDetectada?.uf || ''"
+    [origem]="origemDistancia"
+    (pedirLocalizacao)="usarMinhaLocalizacao()"
     (cardClick)="onCardClick($event)"
     (navigateClick)="onNavigateClick($event)"
     (favoriteClick)="onFavoriteClick($event)"

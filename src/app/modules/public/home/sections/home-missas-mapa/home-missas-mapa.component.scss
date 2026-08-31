@@ -17,6 +17,40 @@
   }
 }
 
+// ── Rótulo de origem das distâncias ──
+// min-height fixo: o rótulo só existe no browser, e sem a reserva ele empurraria
+// os cards para baixo na hidratação.
+.missas-origem-slot {
+  min-height: 1.75rem;
+  margin: -0.5rem 0 0.75rem;
+}
+
+.missas-origem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: 0.85rem;
+  color: $texto-2;
+
+  i { color: $laranja; font-size: 0.85rem; }
+
+  &--referencia strong { font-weight: 600; color: $texto; }
+
+  &__btn {
+    background: none;
+    border: none;
+    padding: 0;
+    font: inherit;
+    font-weight: 600;
+    color: $laranja;
+    cursor: pointer;
+    text-decoration: underline;
+    &:hover { color: $laranja-hover; }
+  }
+}
+
 .missas-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
