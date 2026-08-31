@@ -36,7 +36,6 @@ import { HomeComoFuncionaComponent } from "./sections/home-como-funciona/home-co
 import { HomeFavoritosComponent } from "./sections/home-favoritos/home-favoritos.component";
 import { HomeCidadesComponent } from "./sections/home-cidades/home-cidades.component";
 import { HomeChipsComponent, ChipLink, ChipDestaque } from "./sections/home-chips/home-chips.component";
-import { HomeExplorarComponent } from "./sections/home-explorar/home-explorar.component";
 import { DIAS_INTENCAO } from "../../../core/constants/dias-intencao";
 import { HomeMissasMapaComponent } from "./sections/home-missas-mapa/home-missas-mapa.component";
 import { linkParoquia } from "../../../shared/utils/church-link.utils";
@@ -66,7 +65,6 @@ interface AddressData {
     HomeCidadesComponent,
     HomeMissasMapaComponent,
     HomeChipsComponent,
-    HomeExplorarComponent,
   ],
   providers: [MessageService, DatePipe],
   templateUrl: "./home.component.html",
@@ -266,7 +264,6 @@ export class HomeComponent {
   proximasMissasCards: MassCardData[] = [];
   isLoadingProximas = false;
   tituloProximasMissas = 'Missas acontecendo hoje';
-
   // Sprint 3B — Minhas Paróquias (múltiplas)
   paroquiasFavoritas: IgrejaFavorita[] = [];
 

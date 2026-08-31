@@ -11,22 +11,11 @@
 
   <div class="hero__inner">
 
-    <!-- Título à esquerda + card de cadastro à direita (sobre a imagem) -->
-    <div class="hero__top" *ngIf="!resultsMode">
-      <div class="hero__text">
-        <h1 class="hero__titulo">Encontre uma missa<br><span class="hero__titulo-destaque">perto de você.</span></h1>
-        <p class="hero__emocional">Onde você estiver, sempre haverá<br>uma comunidade esperando por você.</p>
-        <p class="hero__colaborativo">Também é possível cadastrar gratuitamente uma igreja e ajudar a manter os horários atualizados.</p>
-      </div>
-
-      <div class="hero__card-igreja">
-        <span class="hero__card-icon"><i class="pi pi-home"></i></span>
-        <div class="hero__card-body">
-          <p class="hero__card-titulo">Sua igreja ainda não está aqui?</p>
-          <p class="hero__card-desc">Cadastre gratuitamente e ajude mais pessoas a encontrarem sua comunidade.</p>
-        </div>
-        <a routerLink="/nova" class="btn-primary hero__card-btn">Cadastrar igreja</a>
-      </div>
+    <!-- Título sobre a imagem. O card "Cadastrar igreja" que ficava à direita saiu
+         na Etapa 2: disputava atenção com a busca e no mobile já era display:none. -->
+    <div class="hero__text" *ngIf="!resultsMode">
+      <h1 class="hero__titulo">Encontre uma missa<br><span class="hero__titulo-destaque">perto de você.</span></h1>
+      <p class="hero__emocional">Onde você estiver, sempre haverá<br>uma comunidade esperando por você.</p>
     </div>
 
     <p class="hero__subtitulo--results" *ngIf="resultsMode && searchTab === 'cidade'">Refine os filtros ou explore os resultados abaixo.</p>
@@ -210,16 +199,6 @@
     <h1 class="resultados-header__titulo">Resultados da busca</h1>
   </div>
 
-  <!-- ══ ESTATÍSTICAS ══ -->
-  <app-home-stats *ngIf="!resultsMode" [stats]="stats" />
-
-  <!-- ══ ENCONTRE DO SEU JEITO (cidade / estado / dia) ══ -->
-  <!-- SEM @defer: é o ponto de entrada indexável para os hubs e substitui os 27
-       chips de estado que saíram daqui. Precisa entrar no HTML do prerender. -->
-  @if (!resultsMode) {
-    <app-home-explorar />
-  }
-
   <!-- ══ MISSAS + MAPA ══ -->
   <app-home-missas-mapa
     *ngIf="!resultsMode"
@@ -235,24 +214,8 @@
     (favoriteClick)="onFavoriteClick($event)"
   />
 
-  <!-- ══ COMO FUNCIONA + NÃO ENCONTROU ══ -->
-  <!-- SEM @defer: um bloco que o servidor assa como @placeholder nunca é acionado
-       na hidratação (a seção ficava invisível em produção). É markup estático e
-       leve, então renderiza direto. -->
-  @if (!resultsMode) {
-    <app-home-como-funciona />
-  }
-
-  <!-- ══ SEUS FAVORITOS ══ -->
-  <!-- Client-only: _loadFavorita() lê o localStorage no ngOnInit, então o servidor
-       assaria o estado vazio e o cliente a lista cheia — mismatch de hidratação.
-       O guard mantém o bloco fora do prerender em vez de usar @defer. -->
-  @if (!resultsMode && _isBrowser) {
-    <app-home-favoritos
-      [favoritas]="paroquiasFavoritas"
-      (remover)="removerFavorita($event)"
-    />
-  }
+  <!-- ══ ESTATÍSTICAS ══ -->
+  <app-home-stats *ngIf="!resultsMode" [stats]="stats" />
 
   <!-- ══ CIDADES POPULARES ══ -->
   <!-- SEM @defer (mesmo motivo do "Como funciona"): sem geo, `cidadesExibidas` é a
@@ -268,8 +231,8 @@
 
   <!-- ══ MISSAS POR DIA DA SEMANA (ponto de entrada — indexável) ══ -->
   <!-- SEM @defer: precisa entrar no HTML do prerender p/ descoberta/SEO.
-       A lista completa de estados saiu daqui: vive em /estados, no bloco
-       "Encontre do seu jeito" (acima), no menu Explorar e no footer. -->
+       A lista completa de estados saiu daqui: vive em /estados, alcançável
+       pelo menu Explorar do header, pelo footer e pelo "Ver todos os dias". -->
   @if (!resultsMode) {
     <app-home-chips
       titulo="Missas por dia da semana"
@@ -278,6 +241,27 @@
       [itens]="chipsDias"
       [verTodosLink]="['/dias']"
       verTodosLabel="Ver todos os dias"
+    />
+  }
+
+  <!-- ══ COMO FUNCIONA + NÃO ENCONTROU ══ -->
+  <!-- SEM @defer: um bloco que o servidor assa como @placeholder nunca é acionado
+       na hidratação (a seção ficava invisível em produção). É markup estático e
+       leve, então renderiza direto. -->
+  @if (!resultsMode) {
+    <app-home-como-funciona />
+  }
+
+  <!-- ══ SEUS FAVORITOS ══ -->
+  <!-- Client-only: _loadFavorita() lê o localStorage no ngOnInit, então o servidor
+       assaria o estado vazio e o cliente a lista cheia — mismatch de hidratação.
+       O guard mantém o bloco fora do prerender em vez de usar @defer.
+       Sem favoritos a seção inteira some: o estado vazio ocupava 437px no mobile
+       para quem nunca favoritou nada. -->
+  @if (!resultsMode && _isBrowser && paroquiasFavoritas.length) {
+    <app-home-favoritos
+      [favoritas]="paroquiasFavoritas"
+      (remover)="removerFavorita($event)"
     />
   }
 
