@@ -1,0 +1,100 @@
+// Painel de sugestões da busca (cidade e/ou igreja).
+//
+// Mora aqui pela mesma razão de `_hero-busca.scss`: o markup da lista pertence à
+// PÁGINA (cada uma decide o que sugere e para onde navega), então só o SCSS da
+// página alcança aqueles elementos com a encapsulação emulada. Este partial é a
+// gramática visual comum — extraída de `/cidades`, que é a versão mais completa.
+//
+// Uso: `@use '../../../shared/styles/sugestoes' as *;` no topo do SCSS da página.
+//
+// VARIANTE `--inline`: por padrão o painel flutua ancorado ao campo (`absolute`),
+// que é o comportamento de `/cidades` e `/missas/:uf`. Na home isso não serve — o
+// `.search-card` tem `overflow: hidden` e recortaria o painel — então lá a lista
+// entra no fluxo, dentro do próprio cartão de busca.
+
+$sg-laranja-vivo: #e2761b;
+$sg-creme: #fdf6f0;
+$sg-borda: #e5e7eb;
+$sg-texto: #374151;
+$sg-muted: #6b7280;
+
+.sugestoes {
+  position: absolute; z-index: 5; top: calc(100% + 0.35rem); left: 0; right: 0;
+  margin: 0; padding: 0.3rem;
+  background: #fff; border: 1px solid $sg-borda; border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, .10);
+  // Teto pensado para 375x667 com o teclado aberto: o painel rola por dentro em
+  // vez de empurrar a página, para que o primeiro resultado NUNCA exija rolar a
+  // tela. `min()` com vh porque em telas baixas 19rem já passaria da área útil.
+  max-height: min(19rem, 46vh);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+
+  ul { list-style: none; margin: 0; padding: 0; }
+  li + li { border-top: 1px solid #f3f4f6; }
+
+  a {
+    display: flex; align-items: center; gap: 0.6rem;
+    padding: 0.6rem 0.7rem; border-radius: 8px;
+    text-decoration: none; color: $sg-texto;
+  }
+  a:hover, a:focus-visible { background: $sg-creme; }
+  i { color: $sg-laranja-vivo; font-size: 0.9rem; flex: 0 0 auto; }
+
+  &__nome { font-weight: 600; }
+
+  // Rótulo do grupo: minúsculo e discreto de propósito. Ele responde "o que é esta
+  // linha", que é a única dúvida real do painel — não é um cabeçalho de seção e
+  // não deve competir com os resultados.
+  &__grupo {
+    margin: 0.35rem 0 0.15rem; padding: 0 0.7rem;
+    font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.06em;
+    text-transform: uppercase; color: $sg-muted;
+  }
+  ul + &__grupo { margin-top: 0.5rem; border-top: 1px solid #f3f4f6; padding-top: 0.5rem; }
+
+  // CIDADE: nome à esquerda, UF + total à direita, uma linha só.
+  &__meta {
+    margin-left: auto; color: $sg-muted; font-size: 0.8125rem; white-space: nowrap;
+    padding-left: 0.5rem;
+  }
+
+  // IGREJA: duas linhas. O local embaixo do nome é o que impede confundir
+  // "São José" (a cidade) com "Paróquia São José" (a igreja) — e, quando há
+  // bairro, é o que separa duas homônimas na mesma cidade.
+  &__igreja { align-items: flex-start; }
+  &__igreja i { margin-top: 0.15rem; }
+  // Item percorrido pelo teclado. O foco real fica no campo (padrão combobox com
+  // `aria-activedescendant`), então quem está no teclado precisa VER onde está —
+  // sem isso as setas não dariam sinal nenhum.
+  &__igreja--ativa { background: $sg-creme; box-shadow: inset 2px 0 0 $sg-laranja-vivo; }
+  &__texto { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+  &__local { color: $sg-muted; font-size: 0.8125rem; }
+
+  &__vazio {
+    margin: 0; padding: 0.9rem 0.7rem;
+    color: $sg-muted; font-size: 0.875rem; line-height: 1.45; text-align: center;
+  }
+
+  // Rodapé de "há mais que isto". Sem ele, uma lista cortada em 6 se passa por
+  // lista completa e quem não vê a sua conclui que ela não existe.
+  //
+  // `sticky`: com 6 resultados a lista já passa do teto e rola por dentro, o que
+  // empurrava justamente este aviso para fora da vista — o recado sobre a lista
+  // estar cortada não pode depender de rolar a lista cortada.
+  &__mais {
+    position: sticky; bottom: 0;
+    margin: 0; padding: 0.55rem 0.7rem 0.45rem;
+    border-top: 1px solid #f3f4f6;
+    background: #fff;
+    color: $sg-muted; font-size: 0.78rem; text-align: center;
+  }
+
+  // Dentro de um cartão com `overflow: hidden`, flutuar não é opção.
+  &--inline {
+    position: static;
+    margin-top: 0.5rem;
+    box-shadow: none;
+    max-height: min(17rem, 42vh);
+  }
+}

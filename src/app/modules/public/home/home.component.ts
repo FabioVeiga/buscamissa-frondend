@@ -1,15 +1,16 @@
-import { Component, DestroyRef, inject, NgZone, PLATFORM_ID } from "@angular/core";
+import { Component, DestroyRef, inject, NgZone, PLATFORM_ID, ViewChild } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { finalize } from "rxjs/operators";
+import { firstValueFrom } from "rxjs";
 import { CommonModule, DatePipe, isPlatformBrowser } from "@angular/common";
 import {
   FormGroup,
-  Validators,
   ReactiveFormsModule,
   FormBuilder,
 } from "@angular/forms";
 import { ChurchesService } from "../../../core/services/churches.service";
 import { MessageService } from "primeng/api";
+import { Select } from "primeng/select";
 import { WEEK_DAYS } from "../../../core/constants/weekdays";
 import { PrimeNgModule } from "../../../shared/primeng.module";
 import {
@@ -39,8 +40,10 @@ import { HomeExplorarComponent } from "./sections/home-explorar/home-explorar.co
 import { DIAS_INTENCAO } from "../../../core/constants/dias-intencao";
 import { HomeMissasMapaComponent } from "./sections/home-missas-mapa/home-missas-mapa.component";
 import { linkParoquia } from "../../../shared/utils/church-link.utils";
+import { SeoPaginasService } from "../../../core/services/seo-paginas.service";
 import { SeoService } from "../../../core/services/seo.service";
 import { MetricasService } from "../../../core/services/metricas.service";
+import { BuscaLocalService, IgrejaBusca } from "../../../core/services/busca-local.service";
 
 interface AddressData {
   [uf: string]: {
@@ -82,7 +85,9 @@ export class HomeComponent {
   private _redesSociais = inject(RedesSociaisService);
   private _geo = inject(GeolocationService);
   private _seo = inject(SeoService);
+  private _seoPaginas = inject(SeoPaginasService);
   private _metricas = inject(MetricasService);
+  private _buscaLocal = inject(BuscaLocalService);
   tiposRedeSocial: TipoRedeSocial[] = [];
 
   /** Status da geolocalização */
@@ -316,6 +321,55 @@ export class HomeComponent {
   /** Raio (km) da busca por localização */
   raioCep = 5;
 
+  /** Erro de preenchimento do formulário, mostrado inline sob os campos. */
+  erroFormulario: string | null = null;
+
+  /** Select de Estado — para devolver o foco quando o usuário busca sem escolher um. */
+  @ViewChild('ufSelect') private _ufSelect?: Select;
+
+  /** ── Busca por NOME de igreja (índice estático local) ────────────────────────
+   *
+   * Não existe endpoint que ache paróquia por nome no Brasil inteiro
+   * (`buscar-por-filtro` exige `Uf`), então o autocomplete vem do índice que o
+   * prebuild gera — o mesmo já usado em `/cidades`. Nenhuma API nova.
+   *
+   * Os dois caminhos convivem no MESMO campo: a lista é o atalho direto para a
+   * paróquia (nacional, ou recortada pelo estado/cidade já escolhidos), e o valor
+   * digitado também viaja como `Nome` na busca filtrada quando há estado. */
+
+  /** Consulta abaixo disto não sugere nada — 1 ou 2 letras casariam meia base. */
+  private static readonly MIN_CONSULTA = 3;
+
+  sugestoesIgrejas: IgrejaBusca[] = [];
+  /** Total de paróquias que casaram, antes do corte da lista. */
+  totalSugestoes = 0;
+  /** Índice do item com foco de teclado; -1 = foco no campo. */
+  sugestaoAtiva = -1;
+
+  /**
+   * O painel abre porque o usuário está PROCURANDO, não porque o campo tem texto.
+   *
+   * A diferença aparece ao chegar em `/buscar?nome=catedral`: o valor é restaurado
+   * da URL sem ninguém digitar, e o índice — que só é pedido no foco do campo —
+   * nunca foi baixado. Sem esta flag o painel abria sozinho e ficava preso em
+   * "Carregando a lista de igrejas…", esperando um download que ninguém pediu.
+   */
+  painelAberto = false;
+
+  /** Já pedimos o índice nesta sessão? (o serviço é idempotente, isto evita ruído) */
+  private _indicePedido = false;
+  /** O índice chegou (com dados ou vazio) — é o que distingue "carregando" de "não achei". */
+  indiceResolvido = false;
+  /** O índice resolveu SEM dados: rede caiu, 404, ou HTML no lugar do JSON. */
+  indiceIndisponivel = false;
+
+  /**
+   * Há uma consulta vinda da URL esperando o índice chegar para ser resolvida.
+   * A decisão (navegar ou não) depende de saber quantas paróquias casaram, e isso
+   * só se sabe depois do download.
+   */
+  private _resolverAposIndice = false;
+
   /** Estatísticas (números reais via getInfo, com fallback) */
   stats = { igrejas: 2000, horarios: 9100, cidades: 213, estados: 26 };
 
@@ -335,6 +389,9 @@ export class HomeComponent {
     this._router.navigate([], { queryParams: {}, replaceUrl: true });
     this.churchInfo = [];
     this.showNoChurchCard = false;
+    this.erroFormulario = null;
+    this.form?.get('Nome')?.setValue(null);
+    this.limparSugestoes();
   }
 
   toggleMaisFiltros(): void {
@@ -441,9 +498,13 @@ export class HomeComponent {
     }
 
     this.form = this._fb.group({
-      Uf: [null, Validators.required],
+      // Sem `Validators.required` em `Uf` de propósito: com ele o formulário nasce
+      // inválido e o botão principal nasce desabilitado, sem dizer o que falta.
+      // A exigência de estado é cobrada em `onBuscarClick()`, com mensagem e foco.
+      Uf: [null],
       Localidade: [null],
       Bairro: [null],
+      Nome: [null],
       DiaDaSemana: [null],
       Horario: [null],
       HorarioFim: [null],
@@ -460,9 +521,13 @@ export class HomeComponent {
     // Usa a key 'uf' (minúscula) — a mesma gravada por searchFilter — senão o form
     // seria resetado a cada busca/paginação, deixando-o inválido e travando a paginação.
     this._route.queryParams.pipe(takeUntilDestroyed(this._destroyRef)).subscribe(params => {
-      if (!params['uf']) {
+      // `nome` na guarda porque `/buscar?nome=catedral` é uma busca legítima, sem
+      // UF: é o alvo declarado pelo SearchAction do JSON-LD. Sem isto o valor era
+      // restaurado da URL e apagado no mesmo tick pelo `form.reset()` abaixo.
+      if (!params['uf'] && !params['nome']) {
         this.churchInfo = [];
         this.showNoChurchCard = false;
+        this.erroFormulario = null;
         this.form.reset();
       }
     });
@@ -495,7 +560,9 @@ export class HomeComponent {
         "@type": "SearchAction",
         target: {
           "@type": "EntryPoint",
-          urlTemplate: `${base}/buscar?busca={search_term_string}`,
+          // `nome`, não `busca`: o app nunca leu um param chamado `busca`, então
+          // este alvo levava a uma página de busca vazia desde sempre.
+          urlTemplate: `${base}/buscar?nome={search_term_string}`,
         },
         "query-input": "required name=search_term_string",
       },
@@ -791,33 +858,88 @@ export class HomeComponent {
     }));
   }
 
+  /**
+   * Cidades por UF com o `cidadeSlug` REAL do backend (`GET /v2/seo/estados`, a mesma
+   * fonte de `/cidades`, `/estados` e do autocomplete de `missa-agora`).
+   *
+   * Só é buscada no caminho da geolocalização — nunca no load da home — e fica em cache
+   * porque `_reverseGeocode()` roda de novo no CTA "Encontrar missas perto de mim".
+   * Falha de rede vira mapa vazio: sem slug a gente não navega (ver `_reverseGeocode`).
+   */
+  private _cidadesPorUf?: Promise<Map<string, { nome: string; slug: string }[]>>;
+
+  private _carregarCidadesPorUf(): Promise<Map<string, { nome: string; slug: string }[]>> {
+    this._cidadesPorUf ??= firstValueFrom(this._seoPaginas.getEstados())
+      .then((res: unknown) => {
+        const lista: any[] = Array.isArray(res) ? res : ((res as any)?.data ?? []);
+        const mapa = new Map<string, { nome: string; slug: string }[]>();
+        lista.filter((e) => e?.uf).forEach((e) => {
+          mapa.set(
+            String(e.uf).toUpperCase(),
+            (e.cidades ?? []).map((c: any) => ({ nome: c.cidade, slug: c.cidadeSlug })),
+          );
+        });
+        return mapa;
+      })
+      .catch(() => new Map<string, { nome: string; slug: string }[]>());
+    return this._cidadesPorUf;
+  }
+
+  /**
+   * UF a partir da resposta do Nominatim.
+   *
+   * Prefere o código ISO 3166-2 (`BR-PR`), que é inequívoco. O fallback por nome faz
+   * match EXATO antes de tentar substring: "Paraná" normalizado ("parana") CONTÉM
+   * "Pará" ("para"), e como Pará vem antes na lista, a busca por substring devolvia PA
+   * para quem estava no Paraná — a home simplesmente nunca detectava a cidade lá.
+   */
+  private _resolverUf(addr: any): string | null {
+    const iso = String(addr?.['ISO3166-2-lvl4'] ?? '');
+    const daIso = iso.startsWith('BR-') ? iso.slice(3).toUpperCase() : '';
+    if (STATES.some(s => s.sigla === daIso)) return daIso;
+
+    const nomeEstado = this._norm(addr?.state ?? '');
+    if (!nomeEstado) return null;
+    const exato = STATES.find(s => this._norm(s.nome) === nomeEstado);
+    if (exato) return exato.sigla;
+    const parcial = STATES.find(s =>
+      nomeEstado.includes(this._norm(s.nome)) || this._norm(s.nome).includes(nomeEstado)
+    );
+    return parcial?.sigla ?? null;
+  }
+
+  /**
+   * Resolve a cidade do usuário a partir das coordenadas.
+   *
+   * O slug vem do BACKEND, nunca de um `slugify()` no cliente. O slug real não é
+   * derivável do nome: além do apóstrofo ("São João do Pau d'Alho" → `sao-joao-do-pau-d-alho`,
+   * não `...-dalho`), há cidades cujo slug é de um distrito ou bairro ("Guaranésia" →
+   * `santa-cruz-da-prata-distrito-de-guaranesia`). Como `/missas/*` está fora do
+   * `navigationFallback` do `staticwebapp.config.json`, errar o slug é 404 de verdade,
+   * não shell CSR — por isso, sem slug conhecido, preferimos não navegar.
+   */
   private _reverseGeocode(lat: number, lng: number): void {
-    this._geo.reverseGeocode(lat, lng)
-      .then((addr) => {
+    Promise.all([this._geo.reverseGeocode(lat, lng), this._carregarCidadesPorUf()])
+      .then(([addr, cidadesPorUf]) => {
         if (!addr) { this.geoStatus = 'error'; return; }
         const nomeCidade = addr.city || addr.town || addr.village || addr.municipality || '';
-        const nomeEstado = addr.state || '';
-        const estado = STATES.find(s =>
-          this._norm(nomeEstado).includes(this._norm(s.nome)) ||
-          this._norm(s.nome).includes(this._norm(nomeEstado))
-        );
-        if (!estado || !nomeCidade) { this.geoStatus = 'error'; return; }
-
-        const uf = estado.sigla;
-        const cidadesDoEstado = this.fullAddressData[uf] ? Object.keys(this.fullAddressData[uf]) : [];
-        const match = cidadesDoEstado.find(c => this._norm(c) === this._norm(nomeCidade));
+        const uf = this._resolverUf(addr);
+        if (!uf || !nomeCidade) { this.geoStatus = 'error'; return; }
+        // Só cidades que têm página gerada — o índice de `/v2/seo/estados` é o mesmo
+        // conjunto que o prerender publica, então nenhum link daqui aponta para o vazio.
+        const cidadesDoEstado = cidadesPorUf.get(uf) ?? [];
+        const match = cidadesDoEstado.find(c => this._norm(c.nome) === this._norm(nomeCidade));
 
         if (!match) { this.geoStatus = 'error'; return; }
 
-        const slug = this._slugify(match);
-        this.cidadeDetectada = { nome: match, uf, slug };
+        this.cidadeDetectada = { nome: match.nome, uf, slug: match.slug };
 
         const outras = cidadesDoEstado
-          .filter(c => this._norm(c) !== this._norm(match))
+          .filter(c => this._norm(c.nome) !== this._norm(match.nome))
           .slice(0, 7)
-          .map(c => ({ nome: c, uf, slug: this._slugify(c) }));
+          .map(c => ({ nome: c.nome, uf, slug: c.slug }));
 
-        this.cidadesGrid = [{ nome: match, uf, slug }, ...outras];
+        this.cidadesGrid = [{ nome: match.nome, uf, slug: match.slug }, ...outras];
         this.geoStatus = 'found';
       })
       .catch(() => { this.geoStatus = 'error'; });
@@ -851,13 +973,16 @@ export class HomeComponent {
     return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
   }
 
-  private _slugify(s: string): string {
-    return this._norm(s).replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-  }
-
   private _restoreFromQueryParams(): void {
     const p = this._route.snapshot.queryParams;
-    if (!p['uf']) return;
+
+    // Sem UF não existe busca de API: `buscar-por-filtro` exige `Uf`. Mas com
+    // `nome` ainda existe o índice local — e é exatamente essa a URL que o
+    // SearchAction declara ao Google.
+    if (!p['uf']) {
+      if (p['nome']) this._restaurarBuscaPorNome(String(p['nome']));
+      return;
+    }
 
     // Restaura UF e popula cidades
     this.form.get('Uf')?.setValue(p['uf']);
@@ -869,6 +994,7 @@ export class HomeComponent {
     }
 
     if (p['bairro']) this.form.get('Bairro')?.setValue(p['bairro']);
+    if (p['nome']) this.form.get('Nome')?.setValue(p['nome']);
     if (p['dia'] != null) this.form.get('DiaDaSemana')?.setValue(Number(p['dia']));
     if (p['horario']) {
       const [h, m] = p['horario'].split(':').map(Number);
@@ -895,8 +1021,32 @@ export class HomeComponent {
     this.searchFilter(false);
   }
 
+  /**
+   * `/buscar?nome=...` sem UF — a URL que o `SearchAction` do JSON-LD declara.
+   *
+   * Reproduz o que acontece quando a pessoa digita no campo: índice sob demanda,
+   * os mesmos estados de lista e a MESMA regra de ambiguidade. Nenhuma chamada de
+   * API, porque sem `Uf` não há o que chamar.
+   */
+  private _restaurarBuscaPorNome(nome: string): void {
+    this.form.get('Nome')?.setValue(nome);
+    this.painelAberto = true;
+
+    // O índice pode já estar em memória (voltar para cá dentro da mesma sessão).
+    if (this.indiceResolvido) {
+      this._recalcularSugestoes();
+      this._resolverPorNome();
+      return;
+    }
+
+    this._resolverAposIndice = true;
+    this.garantirIndiceIgrejas();
+  }
+
   public onStateChange(event: any): void {
     this.selectedState = event.value;
+    // Escolher o estado é a correção do erro — a mensagem some junto.
+    if (this.selectedState) this.erroFormulario = null;
     if (this.selectedState) {
       // Guarda: se o addressRange falhou, fullAddressData é undefined — não pode
       // derrubar o fluxo (a busca da URL ainda precisa rodar e mostrar o erro dela)
@@ -934,6 +1084,7 @@ export class HomeComponent {
     uf: string | null;
     cidade: string | null;
     bairro: string | null;
+    nome: string | null;
     dia: number | null;
     horario: string | null;
     horarioFim: string | null;
@@ -942,6 +1093,7 @@ export class HomeComponent {
     const uf = this.form.get("Uf")?.value;
     const localidade = this.form.get("Localidade")?.value;
     const bairro = this.form.get("Bairro")?.value;
+    const nome = String(this.form.get("Nome")?.value ?? '').trim();
     const diaDaSemana = this.form.get("DiaDaSemana")?.value;
     const horarioRaw = this.form.value.Horario;
     const horario = horarioRaw ? (typeof horarioRaw === 'string' ? horarioRaw : this._datePipe.transform(horarioRaw, 'HH:mm')) : null;
@@ -953,6 +1105,7 @@ export class HomeComponent {
       uf: uf ?? null,
       cidade: localidade ?? null,
       bairro: bairro ?? null,
+      nome: nome || null,
       dia: diaDaSemana ?? null,
       horario: horario ?? null,
       horarioFim: horarioFim ?? null,
@@ -960,14 +1113,234 @@ export class HomeComponent {
     };
   }
 
-  /** Clique no botão "Buscar": na home navega p/ /buscar; em /buscar refaz inline */
-  public onBuscarClick(): void {
-    if (this.form.invalid) return;
-    if (this.resultsMode) {
-      this.searchFilter();
-    } else {
-      this.submitBusca();
+  // ── Autocomplete de nome de igreja ──────────────────────────────────────────
+
+  /** Escopo atual das sugestões: o que o usuário já escolheu no formulário. */
+  private get _escopoBusca() {
+    return {
+      uf: this.form?.get('Uf')?.value ?? null,
+      cidade: this.form?.get('Localidade')?.value ?? null,
+    };
+  }
+
+  private get _consultaNome(): string {
+    return String(this.form?.get('Nome')?.value ?? '').trim();
+  }
+
+  /**
+   * Baixa o índice no FOCO do campo, não no load da página. Quem nunca usa a busca
+   * por nome não paga o download — e quem usa já os tem quando termina
+   * de digitar as três primeiras letras.
+   */
+  garantirIndiceIgrejas(): void {
+    if (this._indicePedido || !this._isBrowser) return;
+    this._indicePedido = true;
+
+    this._buscaLocal
+      .carregarIndice()
+      .pipe(takeUntilDestroyed(this._destroyRef))
+      .subscribe((temIndice) => {
+        this.indiceResolvido = true;
+        this.indiceIndisponivel = !temIndice;
+        // O usuário pode ter digitado enquanto o índice vinha: recalcula.
+        this._recalcularSugestoes();
+
+        // Consulta que veio da URL: agora dá para decidir se navega.
+        if (this._resolverAposIndice) {
+          this._resolverAposIndice = false;
+          this._resolverPorNome();
+        }
+      });
+  }
+
+  onNomeInput(): void {
+    this.erroFormulario = null;
+    this.sugestaoAtiva = -1;
+    this.painelAberto = true;
+    this.garantirIndiceIgrejas();
+    this._recalcularSugestoes();
+  }
+
+  private _recalcularSugestoes(): void {
+    const consulta = this._consultaNome;
+    if (consulta.length < HomeComponent.MIN_CONSULTA) {
+      this.sugestoesIgrejas = [];
+      this.totalSugestoes = 0;
+      return;
     }
+    // `buscarIgrejas` e não `buscar`: só igrejas, com bairro e escopo. `buscar()`
+    // é o caminho de `/cidades` e continua intocado.
+    const r = this._buscaLocal.buscarIgrejas(consulta, this._escopoBusca);
+    this.sugestoesIgrejas = r.igrejas;
+    this.totalSugestoes = r.total;
+  }
+
+  /** Mostrar o painel? Só com consulta útil e algo a dizer. */
+  get mostrarSugestoes(): boolean {
+    return (
+      this.painelAberto &&
+      this._consultaNome.length >= HomeComponent.MIN_CONSULTA &&
+      (this.sugestoesIgrejas.length > 0 || !this.indiceResolvido || this.indiceIndisponivel || this.buscaSemResultado)
+    );
+  }
+
+  /** Índice já respondeu, tem dados, e mesmo assim nada casou. */
+  get buscaSemResultado(): boolean {
+    return (
+      this.indiceResolvido &&
+      !this.indiceIndisponivel &&
+      this._consultaNome.length >= HomeComponent.MIN_CONSULTA &&
+      this.sugestoesIgrejas.length === 0
+    );
+  }
+
+  /** Carregando: o índice ainda não chegou e já há o que buscar com ele. */
+  get carregandoSugestoes(): boolean {
+    return !this.indiceResolvido && this._consultaNome.length >= HomeComponent.MIN_CONSULTA;
+  }
+
+  /** A lista está cortada — quantas ficaram de fora importa para não enganar. */
+  get sugestoesCortadas(): boolean {
+    return this.totalSugestoes > this.sugestoesIgrejas.length;
+  }
+
+  /**
+   * Enter no campo de nome. Com um item percorrido pelo teclado, abre esse item;
+   * sem item ativo, faz exatamente o que o botão faz — inclusive a recusa de
+   * escolher sozinho quando o nome é ambíguo.
+   */
+  onEnterNome(): void {
+    if (this.sugestaoAtiva >= 0 && this.sugestoesIgrejas[this.sugestaoAtiva]) {
+      this.abrirSugestao(this.sugestoesIgrejas[this.sugestaoAtiva]);
+      return;
+    }
+    this.onBuscarClick();
+  }
+
+  linkIgrejaSugerida(i: IgrejaBusca): string[] {
+    // Slugs sempre os do backend, nunca gerados aqui. Mesma montagem de /cidades.
+    return ['/paroquia', i.uf, i.cidadeSlug, i.slug];
+  }
+
+  abrirSugestao(i: IgrejaBusca): void {
+    this.limparSugestoes();
+    this._router.navigate(this.linkIgrejaSugerida(i));
+  }
+
+  limparSugestoes(): void {
+    this.sugestoesIgrejas = [];
+    this.totalSugestoes = 0;
+    this.sugestaoAtiva = -1;
+    this.painelAberto = false;
+  }
+
+  /** Seta para baixo/cima percorre a lista; -1 devolve o foco ao campo. */
+  moverSugestao(delta: number): void {
+    if (!this.sugestoesIgrejas.length) return;
+    const ultimo = this.sugestoesIgrejas.length - 1;
+    const proximo = this.sugestaoAtiva + delta;
+    this.sugestaoAtiva = proximo < 0 ? -1 : Math.min(proximo, ultimo);
+  }
+
+  // ── Ação principal ──────────────────────────────────────────────────────────
+
+  /**
+   * Clique no botão "Buscar" (e Enter no formulário) — os dois fazem o mesmo.
+   *
+   * O botão NÃO nasce mais desabilitado. Antes era `[disabled]="form.invalid"` com
+   * `Uf` obrigatório, mas pintado como primário cheio (laranja 100%, opacidade 1,
+   * cursor pointer): clicar não fazia nada e não dizia por quê. O requisito é
+   * cobrado AQUI, com mensagem e foco — errar e ser corrigido ensina, botão inerte
+   * não.
+   *
+   * Com estado: busca filtrada normal, agora levando `Nome` junto.
+   * Sem estado, só com nome: o índice local resolve — mas SÓ navega sozinho quando
+   * o destino é inequívoco (ver `_resolverPorNome`).
+   */
+  public onBuscarClick(): void {
+    if (this.isLoading) return;
+
+    if (this.form.get('Uf')?.value) {
+      this.erroFormulario = null;
+      this.limparSugestoes();
+      if (this.resultsMode) {
+        this.searchFilter();
+      } else {
+        this.submitBusca();
+      }
+      return;
+    }
+
+    if (this._consultaNome.length >= HomeComponent.MIN_CONSULTA) {
+      this._resolverPorNome();
+      return;
+    }
+
+    this._exigirEstado();
+  }
+
+  /**
+   * Caminho "só o nome, sem estado".
+   *
+   * A regra que importa: **não escolher pelo usuário quando há mais de um destino.**
+   * "São Francisco" casa dezenas de paróquias em cidades diferentes; abrir a
+   * primeira o levaria em silêncio para a igreja errada, sem que ele percebesse que
+   * houve uma escolha. Navegar direto só quando o destino é único — ou quando um
+   * único nome bate EXATAMENTE com o que ele digitou.
+   */
+  private _resolverPorNome(): void {
+    // Pode ser a primeira interação com o campo (valor veio da URL): garante o
+    // índice e recalcula antes de decidir qualquer coisa.
+    this.painelAberto = true;
+    this.garantirIndiceIgrejas();
+    this._recalcularSugestoes();
+
+    if (this.carregandoSugestoes) {
+      this.erroFormulario = 'Carregando a lista de igrejas. Tente de novo em um instante.';
+      return;
+    }
+
+    if (this.indiceIndisponivel) {
+      this.erroFormulario = 'A busca por nome está indisponível agora. Escolha um estado para buscar.';
+      return;
+    }
+
+    if (this.totalSugestoes === 0) {
+      this.erroFormulario = 'Não encontramos essa igreja. Escolha um estado para buscar pelos horários.';
+      return;
+    }
+
+    this.erroFormulario = null;
+    this._analytics.searchStarted();
+
+    if (this.totalSugestoes === 1) {
+      this.abrirSugestao(this.sugestoesIgrejas[0]);
+      return;
+    }
+
+    const exatas = this._buscaLocal.correspondenciasExatas(this._consultaNome, this._escopoBusca);
+    if (exatas.length === 1) {
+      this.abrirSugestao(exatas[0]);
+      return;
+    }
+
+    // Ambíguo: a lista já está na tela; leva o foco para ela e deixa a escolha
+    // com quem sabe qual é a igreja certa.
+    //
+    // E DIZ isso. Destacar um item em silêncio depois de um clique é o mesmo
+    // defeito do botão desabilitado que esta etapa remove: a pessoa age e nada
+    // explica o que aconteceu.
+    this.sugestaoAtiva = 0;
+    this.erroFormulario =
+      `Encontramos ${this.totalSugestoes} igrejas com esse nome. ` +
+      `Escolha uma na lista ou informe o estado.`;
+  }
+
+  /** Mensagem + foco quando falta o estado, que é o único filtro que a API exige. */
+  private _exigirEstado(): void {
+    this.erroFormulario = 'Escolha um estado ou digite o nome da igreja.';
+    this.form.get('Uf')?.markAsTouched();
+    this._ufSelect?.focus();
   }
 
   /** Navega para a página de resultados com os filtros como query params */
@@ -979,7 +1352,9 @@ export class HomeComponent {
   }
 
   public searchFilter(resetPage = true): void {
-    if (this.isLoading || this.form.invalid) return;
+    // `Uf` é `[Required]` no backend — sem ele a chamada volta 400. A validação de
+    // formulário saiu do `Validators` para o clique, então o guard checa o campo.
+    if (this.isLoading || !this.form.get('Uf')?.value) return;
 
     if (resetPage) this.pageIndex = 1;
 
@@ -998,6 +1373,7 @@ export class HomeComponent {
       Uf: params.uf!,
       Localidade: params.cidade || undefined,
       Bairro: params.bairro || undefined,
+      Nome: params.nome || undefined,
       DiaDaSemana: params.dia || undefined,
       Horario: params.horario || undefined,
       HorarioFim: params.horarioFim || undefined,

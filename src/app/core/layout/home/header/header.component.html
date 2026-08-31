@@ -36,9 +36,11 @@
             <i class="pi pi-calendar" aria-hidden="true"></i>
             <span><strong>Por dia da semana</strong><small>Encontre missas por dia</small></span>
           </a>
-          <!-- "Por igreja" fica de fora até existir busca por nome na UI: o endpoint
-               buscar-por-filtro aceita `Nome`, mas /buscar não tem campo de nome nem
-               lê query param de texto — o item levaria a uma busca por UF/cidade. -->
+          <!-- "Por igreja" continua fora do menu, mas a razão mudou: a busca por nome
+               agora existe (campo "Nome da igreja" no hero da home e em /cidades, com
+               query param `nome`). O que falta é um DESTINO próprio — um item aqui
+               levaria a /buscar sem nome digitado, que é a busca por UF/cidade de
+               sempre. Reavaliar se/quando existir uma página de busca por nome. -->
         </div>
       </div>
 

@@ -1,3 +1,5 @@
+@use '../../../shared/styles/sugestoes' as *;
+
 // ── Tokens ────────────────────────────────────────────────────────────────────
 $laranja: #bc5d10;
 $laranja-hover: #a34f0c;
@@ -269,11 +271,17 @@ $texto-2: #6b7280;
   &:hover { color: $laranja; background: #fff9f4; }
   &--ativa { color: $laranja; border-bottom-color: $laranja; }
 
+  // `font-size: 0` escondia os rótulos aqui e deixava duas lupas/alfinetes sem
+  // legenda e sem aria-label — some justamente "Buscar perto de mim", que é o
+  // caminho de um toque. Com duas abas os dois rótulos cabem inteiros em 375px.
+  //
+  // `px` e não `rem`: a raiz do app é 14px, então `0.78rem` renderizava 10,9px,
+  // pequeno demais para um rótulo que é o único sinal do que a aba faz.
   @media (max-width: 480px) {
-    font-size: 0;
-    gap: 0;
-    padding: 0.85rem 0.25rem;
-    .pi { font-size: 1.15rem; }
+    font-size: 12px;
+    gap: 0.3rem;
+    padding: 0.85rem 0.35rem;
+    .pi { font-size: 12px; }
   }
 }
 
@@ -348,7 +356,24 @@ $texto-2: #6b7280;
     }
   }
   &__advanced { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: stretch; }
-  &__submit { flex: 1 1 150px; min-width: 150px; }
+
+  // 48px: o CTA media 36,75px — menor que os selects de 47px ao lado e abaixo do
+  // alvo mínimo de toque de 44px (WCAG 2.5.5). Era o menor clicável do formulário
+  // sendo o mais importante dele.
+  &__submit { flex: 1 1 150px; min-width: 150px; min-height: 48px; }
+
+  // O campo de nome ocupa a linha inteira: é texto livre, e a lista de sugestões
+  // ancora nele. Espremido entre os selects, o painel ficaria mais estreito que os
+  // nomes que precisa mostrar.
+  &__nome-wrap { position: relative; }
+  &__field--nome ::ng-deep input { width: 100%; }
+
+  // Cobra o estado que a API exige, no lugar do botão inerte que não dizia nada.
+  &__erro {
+    display: flex; align-items: center; gap: 0.4rem;
+    margin: 0; font-size: 0.8rem; color: #b45309;
+    .pi { font-size: 0.85rem; }
+  }
 
   @media (max-width: 560px) {
     &__row, &__advanced { flex-direction: column; }

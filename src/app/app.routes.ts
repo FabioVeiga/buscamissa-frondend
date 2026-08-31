@@ -58,6 +58,18 @@ export const routes: Routes = [
           resultsMode: true,
           title: 'Resultados da busca | BuscaMissa',
           description: 'Resultados da busca de missas e igrejas católicas por estado, cidade e bairro.',
+          // Resultado de busca não é página de conteúdo, e o filtro por NOME tornou
+          // o espaço de URLs praticamente infinito: `?uf=SP&nome=a`, `&nome=ab`,
+          // `&nome=abc`... cada variação é uma URL distinta com conteúdo quase igual.
+          // Numa base que já sofre com duplicate/canonical no Search Console, isso
+          // é combustível. O material indexável são os hubs pré-renderizados
+          // (/cidades, /estados, /missas/:uf, /paroquia/...), que seguem intactos.
+          //
+          // Nada depende de /buscar estar indexada: não está no sitemap, nenhum
+          // link interno aponta para ela (só `router.navigate` após o submit), e o
+          // SearchAction do JSON-LD precisa que a URL FUNCIONE, não que seja
+          // indexada.
+          noindex: true,
         },
         loadComponent: () =>
           import("./modules/public/home/home.component").then(
