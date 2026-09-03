@@ -35,8 +35,7 @@ import { HomeStatsComponent } from "./sections/home-stats/home-stats.component";
 import { HomeComoFuncionaComponent } from "./sections/home-como-funciona/home-como-funciona.component";
 import { HomeFavoritosComponent } from "./sections/home-favoritos/home-favoritos.component";
 import { HomeCidadesComponent } from "./sections/home-cidades/home-cidades.component";
-import { HomeChipsComponent, ChipLink, ChipDestaque } from "./sections/home-chips/home-chips.component";
-import { DIAS_INTENCAO } from "../../../core/constants/dias-intencao";
+import { ChipDestaque } from "./sections/home-chips/home-chips.component";
 import { HomeMissasMapaComponent } from "./sections/home-missas-mapa/home-missas-mapa.component";
 import { linkParoquia } from "../../../shared/utils/church-link.utils";
 import { SeoPaginasService } from "../../../core/services/seo-paginas.service";
@@ -64,7 +63,6 @@ interface AddressData {
     HomeFavoritosComponent,
     HomeCidadesComponent,
     HomeMissasMapaComponent,
-    HomeChipsComponent,
   ],
   providers: [MessageService, DatePipe],
   templateUrl: "./home.component.html",
@@ -112,12 +110,6 @@ export class HomeComponent {
    * "Sua cidade", que vem do `_reverseGeocode` e funciona.
    */
   readonly cidadesExibidas = CIDADES_POPULARES;
-
-  /** Ponto de entrada "Missas por dia da semana" (chips + link p/ o hub /dias). */
-  readonly chipsDias: ChipLink[] = DIAS_INTENCAO.map((d) => ({
-    label: d.nome,
-    link: ['/missa-' + d.slug],
-  }));
 
   /** Estado detectado (derivado da mesma geo da cidade) — card "Seu estado". */
   get estadoDetectado(): ChipDestaque | null {
