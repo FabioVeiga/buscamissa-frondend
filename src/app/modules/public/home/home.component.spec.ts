@@ -172,3 +172,189 @@ describe('HomeComponent — /buscar?nome= sem UF', () => {
     expect(busca.carregarIndice).not.toHaveBeenCalled();
   });
 });
+
+/**
+ * Sem coordenadas do usuário, `ProximasMissasService` cai no fallback de São Paulo
+ * (-23.5505/-46.6333) e devolve `distanciaKm` medido do centro de SP. Exibir isso
+ * como "a 20 m" é errado para quem está em qualquer outro lugar — então a home só
+ * propaga distância quando a busca levou as coordenadas.
+ */
+describe('HomeComponent — origem das distâncias', () => {
+  let churches: jasmine.SpyObj<ChurchesService>;
+
+  const itemApi = {
+    igrejaId: 7,
+    nome: 'Paróquia Teste',
+    slug: 'paroquia-teste',
+    uf: 'SP',
+    cidadeSlug: 'sao-paulo',
+    bairro: 'Sé',
+    missa: { id: 1, diaSemana: 0, horario: '19:00' },
+    distanciaKm: 1.6,
+    latitude: -23.55,
+    longitude: -46.63,
+  };
+
+  function montar(platform: 'browser' | 'server'): HomeComponent {
+    churches = jasmine.createSpyObj<ChurchesService>('ChurchesService', [
+      'addressRange', 'searchByFilters', 'getInfo', 'proximasMissas', 'cidadesProximas',
+    ]);
+    churches.proximasMissas.and.returnValue(of({ data: [itemApi] } as any));
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        FormBuilder,
+        DatePipe,
+        { provide: PLATFORM_ID, useValue: platform },
+        { provide: Router, useValue: jasmine.createSpyObj<Router>('Router', ['navigate']) },
+        { provide: ChurchesService, useValue: churches },
+        { provide: BuscaLocalService, useValue: jasmine.createSpyObj('BuscaLocalService', ['carregarIndice', 'buscarIgrejas', 'correspondenciasExatas']) },
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParams: {}, data: {} }, queryParams: of({}), data: of({}) } },
+        { provide: MessageService, useValue: jasmine.createSpyObj('MessageService', ['add']) },
+        { provide: AnalyticsService, useValue: jasmine.createSpyObj('AnalyticsService', ['searchStarted', 'trackEvent']) },
+        { provide: FavoritesService, useValue: { favoritos$: of([]), listar: () => [], ehFavorita: () => false } },
+        { provide: RedesSociaisService, useValue: { obterTipos: () => of([]) } },
+        { provide: GeolocationService, useValue: jasmine.createSpyObj('GeolocationService', ['obterPosicaoAtual', 'reverseGeocode', 'consultarCep']) },
+        { provide: SeoService, useValue: jasmine.createSpyObj('SeoService', ['update', 'setJsonLd', 'removeJsonLd']) },
+        { provide: MetricasService, useValue: jasmine.createSpyObj('MetricasService', ['registrarVisualizacaoHome', 'registrarVisualizacaoPagina']) },
+        { provide: SeoPaginasService, useValue: { getEstados: () => of([]) } },
+      ],
+    });
+    // Sem `ngOnInit`: o que está sob teste é a decisão do mapeamento, não o ciclo
+    // de vida (que dispararia geolocalização de verdade no headless).
+    return TestBed.runInInjectionContext(() => new HomeComponent());
+  }
+
+  it('nasce carregando, para o prerender não assar "nenhuma missa encontrada"', () => {
+    expect(montar('server').isLoadingProximas).toBeTrue();
+  });
+
+  it('NÃO expõe distância quando a busca foi feita sem coordenadas', () => {
+    const c = montar('browser');
+    (c as any)._loadProximasMissas();
+
+    expect(churches.proximasMissas).toHaveBeenCalledWith(undefined, undefined, 10);
+    expect(c.proximasMissasCards[0].distanceMeters).toBeUndefined();
+  });
+
+  it('expõe a distância quando a busca levou as coordenadas do usuário', () => {
+    const c = montar('browser');
+    (c as any)._loadProximasMissas(-23.5, -46.6);
+
+    expect(c.proximasMissasCards[0].distanceMeters).toBe(1600);
+  });
+
+  it('rotula a origem: "referencia" sem geo, "usuario" com geo, null no servidor', () => {
+    const c = montar('browser');
+    expect(c.origemDistancia).toBe('referencia');
+
+    (c as any)._userLat = -23.5;
+    (c as any)._userLng = -46.6;
+    expect(c.origemDistancia).toBe('usuario');
+
+    expect(montar('server').origemDistancia).toBeNull();
+  });
+});
+
+/**
+ * `proximasFiltradas` memoiza o array que vai para os filhos OnPush. A chave antiga
+ * (`quickFilter|length|churchId[0]`) descrevia a FORMA da lista, não o conteúdo: uma
+ * recarga com o mesmo tamanho e a mesma primeira igreja devolvia os cards antigos.
+ *
+ * Isso ficou visível quando a distância passou a existir só com geolocalização — que é
+ * exatamente a sequência abaixo, e o caso mais comum, já que o fallback da API também
+ * é São Paulo. Verificado em dados reais: com 1 card da mesma igreja o chip nunca
+ * aparecia; com a lista mudando de 1 para 2 cards, aparecia.
+ */
+describe('HomeComponent — cache de proximasFiltradas', () => {
+  let churches: jasmine.SpyObj<ChurchesService>;
+
+  /** Mesma igreja nas duas cargas: é o que fazia a chave antiga não invalidar. */
+  const itemApi = {
+    igrejaId: 66,
+    nome: 'Paróquia Santa Generosa',
+    slug: 'paroquia-santa-generosa',
+    uf: 'SP',
+    cidadeSlug: 'sao-paulo',
+    bairro: 'Paraíso',
+    missa: { id: 547, diaSemana: 1, horario: '10:00:00' },
+    distanciaKm: 2.86,
+    latitude: -23.5748,
+    longitude: -46.6422,
+  };
+
+  function montar(): HomeComponent {
+    churches = jasmine.createSpyObj<ChurchesService>('ChurchesService', [
+      'addressRange', 'searchByFilters', 'getInfo', 'proximasMissas', 'cidadesProximas',
+    ]);
+    churches.proximasMissas.and.returnValue(of({ data: [itemApi] } as any));
+
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      providers: [
+        FormBuilder,
+        DatePipe,
+        { provide: PLATFORM_ID, useValue: 'browser' },
+        { provide: Router, useValue: jasmine.createSpyObj<Router>('Router', ['navigate']) },
+        { provide: ChurchesService, useValue: churches },
+        { provide: BuscaLocalService, useValue: jasmine.createSpyObj('BuscaLocalService', ['carregarIndice', 'buscarIgrejas', 'correspondenciasExatas']) },
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParams: {}, data: {} }, queryParams: of({}), data: of({}) } },
+        { provide: MessageService, useValue: jasmine.createSpyObj('MessageService', ['add']) },
+        { provide: AnalyticsService, useValue: jasmine.createSpyObj('AnalyticsService', ['searchStarted', 'trackEvent']) },
+        { provide: FavoritesService, useValue: { favoritos$: of([]), listar: () => [], ehFavorita: () => false } },
+        { provide: RedesSociaisService, useValue: { obterTipos: () => of([]) } },
+        { provide: GeolocationService, useValue: jasmine.createSpyObj('GeolocationService', ['obterPosicaoAtual', 'reverseGeocode', 'consultarCep']) },
+        { provide: SeoService, useValue: jasmine.createSpyObj('SeoService', ['update', 'setJsonLd', 'removeJsonLd']) },
+        { provide: MetricasService, useValue: jasmine.createSpyObj('MetricasService', ['registrarVisualizacaoHome', 'registrarVisualizacaoPagina']) },
+        { provide: SeoPaginasService, useValue: { getEstados: () => of([]) } },
+      ],
+    });
+    return TestBed.runInInjectionContext(() => new HomeComponent());
+  }
+
+  it('propaga a distância para os cards exibidos quando a localização é concedida', () => {
+    const c = montar();
+
+    // 1. Primeira carga, sem localização: a API mede do centro de SP, então a home
+    //    não propaga distância nenhuma.
+    (c as any)._loadProximasMissas();
+    expect(c.proximasFiltradas.length).toBe(1);
+    expect(c.proximasFiltradas[0].distanceMeters).toBeUndefined();
+
+    // 2. Segunda carga, com localização: MESMA quantidade e MESMA primeira igreja —
+    //    a forma da lista não mudou, só o conteúdo.
+    (c as any)._loadProximasMissas(-23.5505, -46.6333);
+    expect(c.proximasMissasCards.length).toBe(1);
+    expect(c.proximasMissasCards[0].churchId).toBe(66);
+
+    // 3. O que chega ao template precisa ter a distância — era aqui que o cache
+    //    devolvia o card antigo e o chip nunca aparecia.
+    expect(c.proximasFiltradas[0].distanceMeters).toBe(2860);
+  });
+
+  it('mantém a mesma referência enquanto nada muda — o memo continua valendo', () => {
+    const c = montar();
+    (c as any)._loadProximasMissas(-23.5505, -46.6333);
+
+    const primeira = c.proximasFiltradas;
+
+    expect(c.proximasFiltradas).toBe(primeira);
+    expect(c.proximasFiltradas).toBe(primeira);
+  });
+
+  it('reage ao quickFilter sem depender de uma nova carga', () => {
+    const c = montar();
+    (c as any)._loadProximasMissas(-23.5505, -46.6333);
+    const semFiltro = c.proximasFiltradas;
+
+    c.quickFilter = 'noite'; // a missa é às 10h — o filtro tem que esvaziar a lista
+    const comFiltro = c.proximasFiltradas;
+
+    expect(comFiltro).not.toBe(semFiltro);
+    expect(comFiltro.length).toBe(0);
+
+    c.quickFilter = null;
+    expect(c.proximasFiltradas.length).toBe(1);
+  });
+});

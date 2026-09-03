@@ -17,17 +17,17 @@ interface EixoItem {
  * Ponte entre os hubs de descoberta (`/cidades`, `/estados`, `/dias`) — resolve o
  * problema de arquitetura da auditoria do Explorar: os três eixos eram becos sem
  * saída, só conectados pelo menu do header. Sem `/explorar` como quarta página
- * (decisão consciente: seria um nível de navegação a mais, uma URL a mais para
- * indexar e uma duplicata da seção "Encontre do seu jeito" da home) — a ligação
+ * (decisão consciente: seria um nível de navegação a mais e uma URL a mais para
+ * indexar) — a ligação
  * cruzada acontece aqui, no fim de cada hub.
  *
  * É PRESENTACIONAL de propósito, como `PageHeroComponent`/`HubListaComponent`:
  * sem HTTP, sem lógica de página. O mapa dos 3 eixos é uma ÚNICA constante aqui
  * dentro — cada página só informa `eixoAtual`, que o componente esconde da lista.
  * Rótulos e ícones são os MESMOS do dropdown "Explorar" do header
- * (`header.component.html`) e da seção "Encontre do seu jeito" da home
- * (`home-explorar.component.html`): é o mesmo mapa mental em três lugares, não
- * uma quarta variação.
+ * (`header.component.html`): é o mesmo mapa mental em dois lugares, não uma
+ * terceira variação. (A seção "Encontre do seu jeito" da home era a terceira
+ * cópia; saiu na Etapa 2 da home — ocupava 923px no mobile repetindo o menu.)
  */
 @Component({
   selector: 'app-hub-ponte',
