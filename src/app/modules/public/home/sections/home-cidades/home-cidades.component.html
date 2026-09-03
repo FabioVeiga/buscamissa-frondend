@@ -8,7 +8,7 @@
   </div>
 
   <!-- Wrapper com min-height reservado para evitar CLS quando geo resolve -->
-  <div class="cidades-chips__geo-wrap">
+  <div class="cidades-chips__geo-wrap" [class.cidades-chips__geo-wrap--vazio]="geoFalhou">
     <a *ngIf="geoEncontrada && cidadeDetectada"
        [routerLink]="['/missas', cidadeDetectada!.uf.toLowerCase(), cidadeDetectada!.slug]"
        class="cidade-destaque">

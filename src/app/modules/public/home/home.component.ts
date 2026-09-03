@@ -35,8 +35,7 @@ import { HomeStatsComponent } from "./sections/home-stats/home-stats.component";
 import { HomeComoFuncionaComponent } from "./sections/home-como-funciona/home-como-funciona.component";
 import { HomeFavoritosComponent } from "./sections/home-favoritos/home-favoritos.component";
 import { HomeCidadesComponent } from "./sections/home-cidades/home-cidades.component";
-import { HomeChipsComponent, ChipLink, ChipDestaque } from "./sections/home-chips/home-chips.component";
-import { DIAS_INTENCAO } from "../../../core/constants/dias-intencao";
+import { ChipDestaque } from "./sections/home-chips/home-chips.component";
 import { HomeMissasMapaComponent } from "./sections/home-missas-mapa/home-missas-mapa.component";
 import { linkParoquia } from "../../../shared/utils/church-link.utils";
 import { SeoPaginasService } from "../../../core/services/seo-paginas.service";
@@ -64,7 +63,6 @@ interface AddressData {
     HomeFavoritosComponent,
     HomeCidadesComponent,
     HomeMissasMapaComponent,
-    HomeChipsComponent,
   ],
   providers: [MessageService, DatePipe],
   templateUrl: "./home.component.html",
@@ -94,17 +92,24 @@ export class HomeComponent {
   /** Cidade detectada por geoloc */
   cidadeDetectada: { nome: string; uf: string; slug: string } | null = null;
 
-  /** Cidades vizinhas (por geoloc) */
-  cidadesGrid: { nome: string; uf: string; slug: string }[] = [];
-
-  /** Cidades populares — exibidas quando sem geoloc */
-  readonly cidadesFallback = CIDADES_POPULARES;
-
-  /** Ponto de entrada "Missas por dia da semana" (chips + link p/ o hub /dias). */
-  readonly chipsDias: ChipLink[] = DIAS_INTENCAO.map((d) => ({
-    label: d.nome,
-    link: ['/missa-' + d.slug],
-  }));
+  /**
+   * Cidades da seção "Cidades populares" — sempre a lista curada.
+   *
+   * Havia uma substituição por geolocalização que não entregava o que prometia:
+   * `_loadCidadesProximas()` derivava as cidades do endpoint de MISSAS NAS
+   * PRÓXIMAS 2 HORAS, então (a) pedia `RaioKm=100`, que a API rejeita com 400
+   * (`[Range(0.1, 50)]`), e (b) mesmo com um raio válido devolvia lista vazia
+   * fora do horário de missa. Com ela sempre vazia, sobrava o fallback montado
+   * no `_reverseGeocode`: as 7 primeiras cidades do estado em ordem ALFABÉTICA.
+   * Quem concedia a localização em São José dos Campos lia, sob o título
+   * "Cidades populares": Adolfo, Alumínio, Anhumas, Aparecida, Araçariguama…
+   *
+   * Ordenar por proximidade real exige coordenada por cidade, que não existe nem
+   * no índice estático nem na API — é trabalho à parte. Até lá a lista curada é
+   * melhor do que uma lista alfabética, e a personalização continua no card
+   * "Sua cidade", que vem do `_reverseGeocode` e funciona.
+   */
+  readonly cidadesExibidas = CIDADES_POPULARES;
 
   /** Estado detectado (derivado da mesma geo da cidade) — card "Seu estado". */
   get estadoDetectado(): ChipDestaque | null {
@@ -113,18 +118,6 @@ export class HomeComponent {
     const est = STATES.find((e) => e.sigla.toLowerCase() === uf.toLowerCase());
     if (!est) return null;
     return { rotulo: 'Seu estado', nome: est.nome, link: ['/missas', est.sigla.toLowerCase()] };
-  }
-
-  get cidadesExibidas() {
-    return this.geoStatus === 'found' && this.cidadesGrid.length
-      ? this.cidadesGrid
-      : this.cidadesFallback;
-  }
-
-  get tituloCidades() {
-    return this.geoStatus === 'found' && this.cidadeDetectada
-      ? 'Cidades próximas de você'
-      : 'Missas por cidade';
   }
 
   get urgencyBadgeText(): string | null {
@@ -455,7 +448,6 @@ export class HomeComponent {
     this.raioCep = km;
     if (this._userLat != null && this._userLng != null) {
       this._loadProximasMissas(this._userLat, this._userLng, km);
-      this._loadCidadesProximas(this._userLat, this._userLng);
     }
   }
 
@@ -672,7 +664,6 @@ export class HomeComponent {
         this._reverseGeocode(pos.coords.latitude, pos.coords.longitude);
         this.tituloProximasMissas = 'Próximas missas perto de você';
         this._loadProximasMissas(pos.coords.latitude, pos.coords.longitude);
-        this._loadCidadesProximas(pos.coords.latitude, pos.coords.longitude);
         this.geoStatus = 'found';
       },
       () => { this.geoStatus = 'denied'; }
@@ -969,40 +960,9 @@ export class HomeComponent {
         if (!match) { this.geoStatus = 'error'; return; }
 
         this.cidadeDetectada = { nome: match.nome, uf, slug: match.slug };
-
-        const outras = cidadesDoEstado
-          .filter(c => this._norm(c.nome) !== this._norm(match.nome))
-          .slice(0, 7)
-          .map(c => ({ nome: c.nome, uf, slug: c.slug }));
-
-        this.cidadesGrid = [{ nome: match.nome, uf, slug: match.slug }, ...outras];
         this.geoStatus = 'found';
       })
       .catch(() => { this.geoStatus = 'error'; });
-  }
-
-  private _loadCidadesProximas(lat: number, lng: number): void {
-    this._churchService.cidadesProximas(lat, lng).subscribe({
-      next: (res: any) => {
-        const items: any[] = res?.data ?? res ?? [];
-        const cidadesMapa = new Map<string, any>();
-        items.forEach((item: any) => {
-          const key = `${item.uf}_${item.cidadeSlug}`;
-          if (!cidadesMapa.has(key)) {
-            cidadesMapa.set(key, {
-              nome: item.localidade || item.nome,
-              uf: item.uf?.toUpperCase(),
-              slug: item.cidadeSlug
-            });
-          }
-        });
-        const cidades = Array.from(cidadesMapa.values()).slice(0, 8);
-        if (cidades.length) {
-          this.cidadesGrid = cidades;
-        }
-      },
-      error: () => { /* silencioso — mantém fallback */ }
-    });
   }
 
   private _norm(s: string): string {

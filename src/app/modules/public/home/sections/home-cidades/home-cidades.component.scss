@@ -2,12 +2,26 @@
 
 // ── EXPLORE POR CIDADE ──
 .cidades-chips {
-  margin-top: 1.5rem;
+  // O ritmo vertical entre as seções da home é de 2rem, dado pelo `margin-bottom`
+  // de cada uma. Esta seção só tinha `margin-top`, então "Missas por dia da semana"
+  // encostava na seção seguinte: o título "Como funciona" subia para a mesma linha
+  // dos chips de dia. Usada por home-cidades E home-chips (styleUrls compartilhado),
+  // então as duas passam a respeitar o mesmo ritmo.
+  margin-bottom: 2rem;
 
   // Reserva altura para o card de cidade detectada (evita CLS quando geo resolve)
   &__geo-wrap {
     min-height: 4rem; // altura do .cidade-destaque
     margin-bottom: 1rem;
+
+    // Quando o pedido de localização JÁ FALHOU o card nunca vai chegar, e a reserva
+    // vira um buraco de 56px entre o título e os chips. Só aqui ela é dispensada —
+    // enquanto o pedido está pendente a altura continua reservada, senão o card
+    // empurraria os chips ao chegar.
+    &--vazio {
+      min-height: 0;
+      margin-bottom: 0;
+    }
   }
 
   &__lista {

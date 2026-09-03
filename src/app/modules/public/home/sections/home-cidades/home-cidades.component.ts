@@ -17,4 +17,11 @@ export class HomeCidadesComponent {
   @Input() cidadeDetectada: CidadePopular | null = null;
   /** true quando a geolocalização resolveu (mostra o destaque e pula a 1ª da lista) */
   @Input() geoEncontrada = false;
+  /**
+   * true quando a geolocalização já falhou (negada ou sem cidade resolvida). Só então
+   * o slot do card "Sua cidade" colapsa: enquanto o pedido está PENDENTE a altura
+   * segue reservada, senão o card empurraria os chips ao chegar — que é justamente
+   * o CLS que a reserva existe para evitar.
+   */
+  @Input() geoFalhou = false;
 }

@@ -228,21 +228,7 @@
       [cidades]="cidadesExibidas"
       [cidadeDetectada]="cidadeDetectada"
       [geoEncontrada]="geoStatus === 'found'"
-    />
-  }
-
-  <!-- ══ MISSAS POR DIA DA SEMANA (ponto de entrada — indexável) ══ -->
-  <!-- SEM @defer: precisa entrar no HTML do prerender p/ descoberta/SEO.
-       A lista completa de estados saiu daqui: vive em /estados, alcançável
-       pelo menu Explorar do header, pelo footer e pelo "Ver todos os dias". -->
-  @if (!resultsMode) {
-    <app-home-chips
-      titulo="Missas por dia da semana"
-      subtitulo="Encontre horários de missa para qualquer dia da semana."
-      icone="pi pi-calendar"
-      [itens]="chipsDias"
-      [verTodosLink]="['/dias']"
-      verTodosLabel="Ver todos os dias"
+      [geoFalhou]="geoStatus === 'denied' || geoStatus === 'error'"
     />
   }
 
