@@ -13,6 +13,15 @@
   &__geo-wrap {
     min-height: 4rem; // altura do .cidade-destaque
     margin-bottom: 1rem;
+
+    // Quando o pedido de localização JÁ FALHOU o card nunca vai chegar, e a reserva
+    // vira um buraco de 56px entre o título e os chips. Só aqui ela é dispensada —
+    // enquanto o pedido está pendente a altura continua reservada, senão o card
+    // empurraria os chips ao chegar.
+    &--vazio {
+      min-height: 0;
+      margin-bottom: 0;
+    }
   }
 
   &__lista {
