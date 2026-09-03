@@ -16,6 +16,7 @@ import { SeoService } from '../../../core/services/seo.service';
 import { MetricasService } from '../../../core/services/metricas.service';
 import { SeoPaginasService } from '../../../core/services/seo-paginas.service';
 import { BuscaLocalService, IgrejaBusca } from '../../../core/services/busca-local.service';
+import { CIDADES_POPULARES } from '../../../core/constants/cidades-populares';
 
 /**
  * Cobre só o caminho `/buscar?nome=...` SEM UF — a URL que o `SearchAction` do
@@ -243,6 +244,17 @@ describe('HomeComponent — origem das distâncias', () => {
     (c as any)._loadProximasMissas(-23.5, -46.6);
 
     expect(c.proximasMissasCards[0].distanceMeters).toBe(1600);
+  });
+
+  it('mantém as cidades curadas mesmo com a geolocalização concedida', () => {
+    const c = montar('browser');
+
+    // O `geoStatus` costumava trocar a lista pelas 7 primeiras cidades do estado em
+    // ordem ALFABÉTICA ("Adolfo, Alumínio, Anhumas…" sob o título "Cidades populares").
+    (c as any).geoStatus = 'found';
+    (c as any).cidadeDetectada = { nome: 'São José dos Campos', uf: 'SP', slug: 'sao-jose-dos-campos' };
+
+    expect(c.cidadesExibidas).toBe(CIDADES_POPULARES);
   });
 
   it('rotula a origem: "referencia" sem geo, "usuario" com geo, null no servidor', () => {
