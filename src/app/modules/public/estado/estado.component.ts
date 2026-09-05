@@ -142,7 +142,12 @@ export class EstadoComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this._route.paramMap.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((pm) => {
-      this.uf = (pm.get('uf') ?? '').toLowerCase();
+      const uf = (pm.get('uf') ?? '').toLowerCase();
+      // Trocar de UF REUSA o componente. Zera o índice da anterior: sem isto o guard
+      // de `carregar()` veria "já tem conteúdo" e manteria as cidades do estado
+      // errado sob o novo hero.
+      if (uf !== this.uf) this.grupos = [];
+      this.uf = uf;
       this.carregar();
     });
   }
@@ -181,8 +186,17 @@ export class EstadoComponent implements OnInit, OnDestroy {
 
   // ============================ carga ============================
 
+  /** Há algo renderizável na tela agora? Decide se o skeleton pode entrar. */
+  private temConteudo(): boolean {
+    return this.grupos.length > 0;
+  }
+
   private carregar(): void {
-    this.isLoading = true;
+    // Skeleton SÓ quando não há nada para mostrar. Aqui o skeleton e o conteúdo são
+    // ramos do MESMO `@if`, então ligar isLoading na hidratação apagava o hub inteiro
+    // (hero + destaques + índice A–Z) vindo do prerender e o recriava depois da
+    // revalidação — o par de layout shifts (~0,55 + ~0,55) medido na auditoria.
+    if (!this.temConteudo()) this.isLoading = true;
     this.erroCarregar = false;
     this.naoEncontrado = false;
     this.resetarBusca();
@@ -191,6 +205,8 @@ export class EstadoComponent implements OnInit, OnDestroy {
       .getEstado(this.uf)
       .pipe(
         takeUntilDestroyed(this._destroyRef),
+        // Rede de segurança: cobre o complete sem nenhuma emissão. O desligamento
+        // que importa é o do `next` — este só roda ao FIM da revalidação.
         finalize(() => {
           this.isLoading = false;
           this._cdr.markForCheck();
@@ -198,9 +214,16 @@ export class EstadoComponent implements OnInit, OnDestroy {
       )
       .subscribe({
         next: (data: any) => {
+          // Encerra o loading na PRIMEIRA emissão. Com cache do TransferState ela é
+          // síncrona, no mesmo tick em que isLoading foi ligado — a detecção de
+          // mudanças só roda depois, então o skeleton nunca chega a ser pintado.
+          this.isLoading = false;
           if (!data) {
+            // Revalidação que volta vazia não pode apagar o hub já renderizado.
+            if (this.temConteudo()) return void this._cdr.markForCheck();
             this.naoEncontrado = true;
             this.aplicarSeoNaoEncontrado();
+            this._cdr.markForCheck();
             return;
           }
           this.estadoNome = data.estado ?? '';
@@ -216,6 +239,10 @@ export class EstadoComponent implements OnInit, OnDestroy {
           this._cdr.markForCheck();
         },
         error: (err) => {
+          // `erroCarregar`/`naoEncontrado` são ramos do MESMO `@if` do conteúdo, então
+          // marcá-los apagaria o hub já renderizado. Uma revalidação que falha não
+          // pode fazer isso; sem conteúdo, o comportamento é o de sempre.
+          if (this.temConteudo()) return void this._cdr.markForCheck();
           if (err?.status === 404) {
             this.naoEncontrado = true;
             this.aplicarSeoNaoEncontrado();
@@ -224,6 +251,7 @@ export class EstadoComponent implements OnInit, OnDestroy {
             // válida e estar apenas indisponível no momento.
             this.erroCarregar = true;
           }
+          this._cdr.markForCheck();
         },
       });
   }
