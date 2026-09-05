@@ -69,12 +69,15 @@
     flex-wrap: wrap;
   }
 
-  &__bairro {
-    &::after {
-      content: '·';
-      margin-left: 8px;
-    }
-  }
+  // O separador era um `::after` incondicional do bairro. Desde que a distância deixou de
+  // aparecer sem geolocalização, o card exibia "Pinheiros ·" com o ponto pendurado. Agora
+  // é um elemento próprio no template, renderizado só quando há distância — e não um
+  // pseudo-elemento sobre o `.distance-chip`, que pertence a outro componente e não é
+  // alcançável daqui por causa do encapsulamento de estilo.
+  //
+  // O espaçamento não muda: antes era `margin-left: 8px` (antes do ponto) + o `gap: 8px`
+  // do flex (depois); agora é o mesmo `gap` dos dois lados. O separador não precisa de
+  // regra própria — herda cor e tamanho de `&__location`.
 
   &__actions {
     display: flex;

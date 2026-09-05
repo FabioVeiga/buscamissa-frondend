@@ -22,6 +22,9 @@
 
     <div class="mass-time-card__location">
       <span class="mass-time-card__bairro">{{ data.bairro }}</span>
+      @if (data.distanceMeters != null) {
+        <span class="mass-time-card__separador" aria-hidden="true">·</span>
+      }
       <app-distance-chip [meters]="data.distanceMeters" />
     </div>
   </a>
