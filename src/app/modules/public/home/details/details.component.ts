@@ -82,6 +82,8 @@ export class DetailsComponent implements OnInit {
   naoEncontrada = false;
   /** Última requisição (cold observable do HttpClient) — reusada pelo retry */
   private _reqAtual: import("rxjs").Observable<any> | null = null;
+  /** Identidade da paróquia já carregada — detecta troca de rota com componente reusado. */
+  private _chaveCarregada: string | null = null;
 
   // Favorito
   isFavorita = false;
@@ -126,6 +128,15 @@ export class DetailsComponent implements OnInit {
       const cidade = params["cidade"];
       const slug = params["slug"];
       this.nomeUnico = params["nomeUnico"] ?? null;
+
+      // Trocar de paróquia REUSA o componente. Zera o dado da anterior: sem isto o
+      // guard de `carregar()` veria "já tem conteúdo" e manteria a paróquia errada
+      // na tela enquanto a nova carrega.
+      const chave = uf && cidade && slug ? `${uf}/${cidade}/${slug}` : (this.nomeUnico ?? "");
+      if (chave !== this._chaveCarregada) {
+        this._chaveCarregada = chave;
+        this.churchInfo = null;
+      }
 
       if (uf && cidade && slug) {
         // Rota canônica nova: /paroquia/:uf/:cidade/:slug
@@ -200,9 +211,18 @@ export class DetailsComponent implements OnInit {
     if (this._reqAtual) this.carregar(this._reqAtual);
   }
 
+  /** Há algo renderizável na tela agora? Decide se o skeleton pode entrar. */
+  private temConteudo(): boolean {
+    return !!this.churchInfo;
+  }
+
   private carregar(req: import("rxjs").Observable<any>): void {
     this._reqAtual = req;
-    this.isLoading = true;
+    // Skeleton SÓ quando não há nada para mostrar. Na hidratação de uma página
+    // prerenderizada o TransferState já traz a paróquia, e ligar isLoading aqui
+    // destruiria a página inteira vinda do HTML para recriá-la depois da
+    // revalidação — era o par de layout shifts (~0,47 + ~0,47) medido na auditoria.
+    if (!this.temConteudo()) this.isLoading = true;
     this.erroCarregar = false;
     this.naoEncontrada = false;
     // SWR: com o interceptor de TransferState, `next` roda 2x (cache prerenderizado,
@@ -210,9 +230,15 @@ export class DetailsComponent implements OnInit {
     // (analytics/métricas/selo) só podem rodar na 1ª emissão.
     let primeira = true;
     req.pipe(
+      // Rede de segurança: cobre o complete sem nenhuma emissão. O desligamento que
+      // importa é o do `next` — este `finalize` só roda ao FIM da revalidação.
       finalize(() => { this.isLoading = false; })
     ).subscribe({
       next: (response: any) => {
+        // Encerra o loading na PRIMEIRA emissão. Com cache do TransferState ela é
+        // síncrona, no mesmo tick em que isLoading foi ligado — a detecção de
+        // mudanças só roda depois, então o skeleton nunca chega a ser pintado.
+        this.isLoading = false;
         const igreja = response?.data?.igreja ?? response?.data;
         const seo = response?.data?.seo;
 
@@ -282,6 +308,10 @@ export class DetailsComponent implements OnInit {
         // Falha transitória (rede/5xx) continua sendo erro com retry, NUNCA noindex:
         // uma indisponibilidade momentânea não pode desindexar paróquia válida.
         // Mesmo critério já aplicado em city/estado/intencao.
+        //
+        // E uma REVALIDAÇÃO que falha não pode derrubar a paróquia que já está na
+        // tela: sem conteúdo, o comportamento é o de sempre; com conteúdo, mantém.
+        if (this.temConteudo()) return;
         if (err?.status === 404) this.marcarNaoEncontrada();
         else this.erroCarregar = true;
       },
