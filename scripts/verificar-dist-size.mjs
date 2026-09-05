@@ -44,22 +44,55 @@ const ROOT = join(__dirname, '..');
 // Juntos economizam ~5,2 KB/página ≈ 30 MB em prod, levando a projeção a ~181 MB.
 const LIMITE_MB = 220;
 const LIMITE_BYTES = LIMITE_MB * 1024 * 1024;
-// Teto de ARQUIVOS — o guard que mais importa, e o que estava errado.
+// Teto da DISTRIBUIÇÃO — o guard que mais importa.
 //
 // 15.000 era a cota oficial do SWA. O limite REAL é operacional e muito menor: o Azure
-// faz polling por 300 s na distribuição de conteúdo e desiste, e o gatilho é a contagem
-// de arquivos (relatos da comunidade apontam ~3.000). Evidência própria, em master:
+// faz polling por 300 s na distribuição de conteúdo e desiste. O gatilho é a contagem
+// de arquivos, mas o que de fato estoura é o TEMPO — então é o tempo que este guard
+// mede, com a contagem servindo de proxy.
 //
-//   3.311 arquivos → deploy OK                                        (12/08)
-//   6.050 arquivos → "Failure during content distribution" @ 298,8 s  (14/08)
+// Medições próprias, em master ("Finished Upload" → "Deployment Complete" nos logs do
+// Actions):
 //
-// O build de 6.050 passou neste guard com 15.000 e mesmo assim não publicou — o guard
-// dava confiança falsa. 3.400 fica logo acima da faixa provada boa, para barrar o
-// crescimento ANTES do deploy falhar em vez de depois.
+//   3.276 arquivos →  95 s  · deploy OK                                (31/08)
+//   3.276 arquivos →  93 s  · deploy OK                                (02/09)
+//   6.050 arquivos → 298,8 s · "Failure during content distribution"   (14/08)
 //
-// Se este guard estourar, o caminho NÃO é aumentá-lo: é reduzir o teto de páginas
-// (MAX_PAROQUIAS_PRERENDER em app.routes.server.ts) ou reavaliar a plataforma.
-const MAX_FILES = 3400;
+// Inclinação entre os pontos conhecidos: (298,8 − 94) / (6.050 − 3.276) ≈ 0,074 s por
+// arquivo. O modelo reproduz o incidente — prevê o estouro dos 300 s em ~6.070 arquivos,
+// e a falha real veio em 6.050 —, então serve para projetar.
+//
+// O teto anterior era 3.400 ARQUIVOS, escolhido "logo acima da faixa provada boa"
+// quando só se sabia "3.311 deu certo, 6.050 falhou". Era precaução sem medida de tempo:
+// 3.425 arquivos, que o barraram em 02/09, projetam ~105 s — um terço do orçamento.
+//
+// TETO_DISTRIBUICAO_S = 200 s deixa 100 s de margem contra o timeout de 300 s, o que
+// absorve um Azure bem mais lento que o medido. Pelo modelo, 200 s equivalem a ~4.700
+// arquivos; MAX_FILES = 4.200 fica abaixo disso de propósito, para o teto de arquivos
+// barrar primeiro e a decisão de crescer voltar a passar por uma medição nova.
+//
+// ATENÇÃO ao subir estes números: só com medição nova, do tempo real de distribuição nos
+// logs do Actions. Nunca "para caber" — reduzir o escopo de prerender de cidades ou
+// cortar paróquias só para passar aqui é pior que o problema: sem arquivo, o SWA cai no
+// fallback e o proxy devolve 200 com o HTML da HOME, e o Google indexa duplicata. Hoje
+// já são ~2.900 das 4.837 paróquias nessa situação (MAX_PAROQUIAS_PRERENDER = 1900).
+// Se a projeção passar do teto de tempo, a saída é avaliar o SWA Standard.
+const SEGUNDOS_POR_ARQUIVO = 0.074;
+const TETO_DISTRIBUICAO_S = 200;
+// Rede de segurança contra geração em massa acidental (um getPrerenderParams sem filtro),
+// independente da estimativa de tempo. 4.200 arquivos projetam ~162 s — 81% do teto.
+const MAX_FILES = 4200;
+
+/**
+ * Tempo estimado de distribuição. Ancorado na medição de 31/08 e 02/09 (3.276 arquivos
+ * → 94 s de média) e extrapolado pela inclinação observada, em vez de multiplicar a
+ * contagem crua — o deploy tem um custo fixo que a multiplicação simples ignoraria.
+ */
+const ARQUIVOS_ANCORA = 3276;
+const SEGUNDOS_ANCORA = 94;
+function estimarDistribuicao(arquivos) {
+  return SEGUNDOS_ANCORA + (arquivos - ARQUIVOS_ANCORA) * SEGUNDOS_POR_ARQUIVO;
+}
 
 /** Acha dist/<app>/browser varrendo os apps sob dist/. */
 function acharBrowserDir(base) {
@@ -101,7 +134,10 @@ if (!browserDir) {
 const { bytes, arquivos } = medir(browserDir);
 const mb = (bytes / (1024 * 1024)).toFixed(1);
 
-console.log(`[dist-size] dist browser: ${mb} MB | ${arquivos} arquivos | limites: ${LIMITE_MB} MB / ${MAX_FILES} arquivos`);
+const distribuicaoS = Math.round(estimarDistribuicao(arquivos));
+
+console.log(`[dist-size] dist browser: ${mb} MB | ${arquivos} arquivos | distribuição estimada: ~${distribuicaoS}s`);
+console.log(`[dist-size] limites: ${LIMITE_MB} MB / ${TETO_DISTRIBUICAO_S}s de distribuição / ${MAX_FILES} arquivos`);
 
 let falhou = false;
 
@@ -110,6 +146,15 @@ if (bytes > LIMITE_BYTES) {
   console.error(`\n❌ [dist-size] ${mb} MB excede o limite de ${LIMITE_MB} MB.`);
   console.error('   O Azure SWA (Free) rejeita > 250 MB. Reduza páginas prerenderizadas, revise');
   console.error('   o dedupe de CSS (dedupe-prerender-css.mjs) ou considere o plano Standard.');
+}
+
+if (distribuicaoS > TETO_DISTRIBUICAO_S) {
+  falhou = true;
+  console.error(`\n❌ [dist-size] distribuição estimada em ~${distribuicaoS}s excede o teto de ${TETO_DISTRIBUICAO_S}s.`);
+  console.error(`   ${arquivos} arquivos x ${SEGUNDOS_POR_ARQUIVO}s, ancorado em ${ARQUIVOS_ANCORA} arquivos = ${SEGUNDOS_ANCORA}s (medido em master).`);
+  console.error('   O Azure desiste da distribuição em 300s e o deploy falha SEM erro de build.');
+  console.error('   NÃO reduza o escopo de prerender só para passar aqui: sem arquivo, a rota cai');
+  console.error('   no fallback e o proxy devolve 200 com o HTML da home. Avalie o SWA Standard.');
 }
 
 if (arquivos > MAX_FILES) {
