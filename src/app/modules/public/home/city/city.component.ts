@@ -12,7 +12,7 @@ import { getNextOccurrenceMinutes } from "../../../../shared/utils/mass-time.uti
 import { AnalyticsService } from "../../../../core/services/analytics.service";
 import { FavoritesService } from "../../../../core/services/favorites.service";
 import { ClarityService } from "../../../../core/services/clarity.service";
-import { MetricasService } from "../../../../core/services/metricas.service";
+import { MetricasService, PaginaMetrica } from "../../../../core/services/metricas.service";
 import { CityMapComponent, MapChurch } from "../../../../shared/components/city-map/city-map.component";
 import { DIAS, PERIODOS } from "./city.constants";
 import { CityFiltrosComponent, Ordenacao, QuickFilter } from "./sections/city-filtros/city-filtros.component";
@@ -105,6 +105,7 @@ export class CityComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this._metricas.registrarVisualizacaoPagina(PaginaMetrica.Cidade);
     this._route.params.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((params) => {
       // Trocar de cidade numa navegação client-side REUSA o componente, que ainda
       // tem as igrejas da cidade anterior. Zera antes de carregar: sem isto o guard

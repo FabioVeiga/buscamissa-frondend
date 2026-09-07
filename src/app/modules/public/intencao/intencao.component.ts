@@ -7,6 +7,7 @@ import { finalize } from 'rxjs/operators';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SeoPaginasService } from '../../../core/services/seo-paginas.service';
 import { SeoService } from '../../../core/services/seo.service';
+import { MetricasService, PaginaMetrica } from '../../../core/services/metricas.service';
 import { DIAS_INTENCAO } from '../../../core/constants/dias-intencao';
 
 const SITE = 'https://buscamissa.com.br';
@@ -41,6 +42,7 @@ export class IntencaoComponent implements OnInit {
   private _seo = inject(SeoService);
   private _api = inject(SeoPaginasService);
   private _destroyRef = inject(DestroyRef);
+  private _metricas = inject(MetricasService);
 
   isLoading = false;
   erroCarregar = false;
@@ -71,6 +73,7 @@ export class IntencaoComponent implements OnInit {
   private _chaveCarregada: string | null = null;
 
   ngOnInit(): void {
+    this._metricas.registrarVisualizacaoPagina(PaginaMetrica.IntencaoDia);
     combineLatest([this._route.data, this._route.paramMap])
       .pipe(takeUntilDestroyed(this._destroyRef))
       .subscribe(([data, pm]) => {
