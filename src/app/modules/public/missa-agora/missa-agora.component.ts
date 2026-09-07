@@ -1,5 +1,5 @@
-import { Component, inject, OnInit, OnDestroy } from "@angular/core";
-import { CommonModule } from "@angular/common";
+import { Component, inject, OnInit, OnDestroy, NgZone, PLATFORM_ID } from "@angular/core";
+import { CommonModule, isPlatformBrowser } from "@angular/common";
 import { RouterModule, Router } from "@angular/router";
 import { FormsModule } from "@angular/forms";
 import { ChurchesService } from "../../../core/services/churches.service";
@@ -44,6 +44,8 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
   private _favorites = inject(FavoritesService);
   private _geo = inject(GeolocationService);
   private _metricas = inject(MetricasService);
+  private _ngZone = inject(NgZone);
+  private readonly _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   geoStatus: GeoStatus = 'idle';
   permissaoNegadaPeloBrowser = false;
@@ -54,7 +56,7 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
   cidadeDetectadaUf: string | null = null;
   horaAtual = '';
   cidadesProximas: { nome: string; uf: string; slug: string }[] = [];
-  private _clockInterval: any;
+  private _clockInterval?: ReturnType<typeof setInterval>;
 
   // ── Busca por CEP ──
   cepBusca = '';
@@ -98,17 +100,52 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
       canonical: 'https://buscamissa.com.br/missa-agora',
     });
     this._atualizarHora();
-    this._clockInterval = setInterval(() => this._atualizarHora(), 30000);
-    this._pedirGeolocalizacao();
+
+    // O relógio só existe no BROWSER, e fora da zona do Angular. Os dois guards são
+    // necessários por motivos diferentes, e esta página passou a ser prerenderizada
+    // (app.routes.server.ts) justamente por causa deles:
+    //
+    //  - No prerender (server): um setInterval recorrente deixa o Angular sem
+    //    estabilizar, e o render da rota estoura o timeout — derrubando o build.
+    //  - No browser dentro da zona: o mesmo timer mantém ApplicationRef.isStable()
+    //    em false para sempre, a hidratação nunca conclui (NG0506) e todo @defer da
+    //    página congela no @placeholder.
+    //
+    // Mesmo padrão já aplicado em CountdownChipComponent. Só reentramos na zona
+    // quando o texto do relógio realmente muda — no máximo 1x por minuto, e não a
+    // cada 30 s.
+    if (this._isBrowser) {
+      this._clockInterval = this._ngZone.runOutsideAngular(() =>
+        setInterval(() => {
+          const nova = this._formatarHora(new Date());
+          if (nova !== this.horaAtual) this._ngZone.run(() => (this.horaAtual = nova));
+        }, 30000)
+      );
+    }
+
+    // Geolocalização é pedida só no BROWSER. No server a Promise do
+    // GeolocationService rejeita (não há `navigator`), o catch levava geoStatus a
+    // 'denied' e o HTML prerenderizado era assado afirmando "Não foi possível
+    // acessar sua localização" — um erro que nunca aconteceu, logo abaixo do h1 e
+    // como primeira frase de conteúdo que o Googlebot lê.
+    //
+    // Sem a chamada, o estado assado é o 'idle' ("Encontre as missas mais próximas
+    // de onde você está"), que é o convite correto para quem chega pela busca. O
+    // browser pede a localização normalmente ao hidratar — nada muda para o usuário.
+    if (this._isBrowser) this._pedirGeolocalizacao();
   }
 
   ngOnDestroy(): void {
-    clearInterval(this._clockInterval);
+    if (this._clockInterval !== undefined) clearInterval(this._clockInterval);
+  }
+
+  /** Fonte única do formato do relógio — usada no 1º render e pelo timer do browser. */
+  private _formatarHora(d: Date): string {
+    return d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   }
 
   private _atualizarHora(): void {
-    const agora = new Date();
-    this.horaAtual = agora.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    this.horaAtual = this._formatarHora(new Date());
   }
 
   private _pedirGeolocalizacao(): void {
