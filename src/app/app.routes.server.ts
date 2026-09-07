@@ -7,6 +7,10 @@ import { environment } from '../environments/environment';
 // type-checker não tem declaração — o esbuild do build server o empacota normalmente.
 // @ts-expect-error — módulo JS sem tipos; contrato garantido pelo próprio helper.
 import { buscarRotasSeo, normalizarBaseUrl } from '../../scripts/lib/seo-routes.mjs';
+// Fonte única da SELEÇÃO de paróquias prerenderizadas, compartilhada com
+// scripts/gerar-sitemap.mjs (que a usa para filtrar o sitemap pela cobertura real).
+// @ts-expect-error — módulo JS sem tipos; contrato garantido pelo próprio helper.
+import { paroquiasDoDisco } from '../../scripts/lib/selecionar-paroquias-prerender.mjs';
 
 /**
  * Migração SSR/SSG (Auditoria2), em fases sobre `outputMode: static`:
@@ -33,167 +37,11 @@ import { buscarRotasSeo, normalizarBaseUrl } from '../../scripts/lib/seo-routes.
  */
 
 /**
- * Teto de páginas de paróquia prerenderizadas.
- *
- * NÃO é uma escolha editorial — é orçamento de arquivos. O Azure SWA faz polling por
- * 300 s na distribuição de conteúdo e desiste; o gatilho é a CONTAGEM DE ARQUIVOS, não
- * o tamanho. Evidência de produção:
- *
- *   3.311 arquivos → deploy OK   (12/08)
- *   6.050 arquivos → "Failure during content distribution" aos 298,8 s   (14/08)
- *
- * A cota oficial do SWA (15.000 arquivos / 250 MB) não descreve esse limite — o build
- * de 6.050 estava dentro dela e ainda assim não publicou.
- *
- * Orçamento: 118 não-HTML + 13 estáticas + 1 (404.html) + 26 estados + 987 cidades
- * + 189 intenção = 1.334 fixos. Com 1.900 paróquias → 3.234 arquivos, DENTRO da faixa
- * já provada. 2.000 daria 3.334, que cabe no guard mas sai do território conhecido —
- * subir só depois de um deploy verde, de forma controlada.
+ * MAX_PAROQUIAS_PRERENDER, CEPS_COM_CITACAO_EXTERNA e paroquiasDoDisco() moraram
+ * aqui até 2026-09-07 — extraídos para scripts/lib/selecionar-paroquias-prerender.mjs
+ * (mesmo algoritmo, mesmo resultado) para serem reaproveitados por
+ * scripts/gerar-sitemap.mjs, que filtra o sitemap pela cobertura real de prerender.
  */
-const MAX_PAROQUIAS_PRERENDER = 1900;
-
-/**
- * Paróquias que entram no prerender por CITAÇÃO EXTERNA, não por ranking de qualidade.
- *
- * Estes CEPs estão cadastrados como "site" na ficha do Google Business Profile da
- * própria paróquia, no formato `buscamissa.com.br/detalhes/{CEP}`. Verificado ficha a
- * ficha no Google Maps em 2026-09-07: de 16 URLs `/detalhes/{cep}` indexadas, 12 foram
- * confirmadas apontando para cá (as outras 4 não puderam ser isoladas na busca).
- *
- * Por que isso importa para o prerender: `/detalhes/{cep}` é um redirect client-side de
- * template vazio, não está no sitemap e não é linkada de lugar nenhum do site. O Google
- * só a conhece pela ficha — e a rankeia em posição média 3,1, contra 7,9 da
- * `/paroquia/...` da MESMA igreja. Nos 8 casos em que as duas URLs aparecem no Search
- * Console, a legada vence em 8 de 8 (5x mais impressões, ~4,8 posições acima).
- *
- * O destino canônico dessas 16 estava quase todo fora do prerender: só 2 tinham HTML.
- * As outras 14 caíam no `navigationFallback` (index.csr.html: 200, título genérico, sem
- * canonical, zero palavras). Ou seja, o melhor sinal de busca do site apontava para uma
- * casca vazia. Estas 21.076 impressões/mês são o ativo que esta lista protege.
- *
- * A chave é o CEP e não o slug de propósito: o CEP é o que está na ficha do Maps e não
- * muda quando alguém renomeia a paróquia — um slug renomeado quebraria a lista em
- * silêncio. Nenhum destes 16 CEPs colide com outra paróquia no cache (7,1% da base
- * colide; estes não). Se algum passar a colidir, `paroquiasDoDisco` inclui todas as
- * paróquias daquele CEP — o custo é 1 página a mais, não um erro.
- *
- * NÃO é uma exceção ao teto: entram ANTES do "resto por qualidade" e o
- * `.slice(MAX_PAROQUIAS_PRERENDER)` continua valendo, então o total de arquivos não
- * muda. As 14 novas deslocam as 14 últimas do resto (medido: `conf=2` com 6-7 missas,
- * 13 delas sem nenhuma impressão no Search Console). Página deslocada não vira 404:
- * `/paroquia/*` está no `navigationFallback` e degrada para shell CSR.
- */
-const CEPS_COM_CITACAO_EXTERNA = [
-  '02839070', // Santos Apóstolos, São Paulo
-  '02810000', // Nossa Senhora das Dores, São Paulo
-  '12240540', // Capela Nossa Senhora Aparecida, São José dos Campos
-  '11730000', // Nossa Senhora Aparecida, Mongaguá
-  '12233401', // Comunidade Imaculado Coração de Maria, São José dos Campos
-  '02982170', // Santa Teresinha do Menino Jesus, São Paulo
-  '02927000', // Bom Jesus dos Passos, São Paulo
-  '02967000', // São Judas Tadeu, São Paulo
-  '04187070', // São Bernardo de Claraval, São Paulo
-  '12224000', // Capela São Francisco de Assis, São José dos Campos
-  '13210580', // São Pedro Apóstolo, Jundiaí
-  '02942070', // Nossa Senhora do Retiro, São Paulo
-  '02674030', // Santa Cruz, São Paulo
-  '02755000', // Santa Luzia, São Paulo
-  '12050543', // Comunidade Santa Isabel, Taubaté
-  '02856110', // Sagrada Família, São Paulo
-];
-
-/** Normaliza CEP para 8 dígitos, como está em CEPS_COM_CITACAO_EXTERNA. */
-function normalizarCep(cep: string | undefined): string {
-  return (cep ?? '').replace(/\D/g, '');
-}
-
-/** Ranking de qualidade: confiança desc → nº de missas desc → alteração asc (estável). */
-function porQualidade(a: ParoquiaCache, b: ParoquiaCache): number {
-  return (
-    (b.igreja?.statusConfianca ?? 0) - (a.igreja?.statusConfianca ?? 0) ||
-    (b.igreja?.missas?.length ?? 0) - (a.igreja?.missas?.length ?? 0) ||
-    String(a.igreja?.alteracao ?? '').localeCompare(String(b.igreja?.alteracao ?? ''))
-  );
-}
-
-interface ParoquiaCache {
-  uf: string;
-  cidadeSlug: string;
-  slug: string;
-  igreja?: {
-    missas?: unknown[];
-    statusConfianca?: number;
-    alteracao?: string;
-    endereco?: { cep?: string };
-  };
-}
-
-/**
- * Escolhe QUAIS paróquias entram no prerender, dentro do teto acima.
- *
- * Duas fases, e a ordem importa:
- *
- *  1. PISO DE DESCOBERTA — a melhor paróquia de CADA cidade. Cobre 100% das 802
- *     cidades, garantindo que toda página de cidade tenha profundidade real em HTML
- *     abaixo dela. É por essa hierarquia (estado → cidade → paróquia) que o Google
- *     desce, então uma cidade sem nenhuma paróquia assada é um galho morto.
- *  2. RESTO POR QUALIDADE — preenche o que sobra pelo ranking acima.
- *
- * Por que não ordenar só por qualidade: medido contra os dados reais de produção, o
- * ranking global puro dava fome geográfica. O RS ficava com 17 de 177 paróquias (9,6%)
- * e AL com 1 de 8, só porque a base desses estados tem confiança mais baixa — enquanto
- * SP levava 36% de todo o orçamento. Com o piso por cidade o RS sobe para 24%, a
- * cobertura de cidades vai de 71% para 100%, e ainda assim 96,8% das selecionadas têm
- * confiança Média/Alta. Round-robin por UF foi descartado por trocar isso por SP em
- * 9,6%, que é pior negócio.
- *
- * Determinístico: as chaves de cidade são ordenadas antes do corte, então dois builds
- * do mesmo cache selecionam exatamente o mesmo conjunto.
- *
- * Retorna null se o cache não existe (ex.: build:dev sem prebuild) → o caller cai no
- * fallback. Em staging/prod o cache é obrigatório (ver baixar-bulk-prerender.mjs).
- */
-function paroquiasDoDisco(): Array<{ uf: string; cidade: string; slug: string }> | null {
-  const arquivo = join(process.cwd(), '.prerender-cache', 'paroquias.json');
-  if (!existsSync(arquivo)) return null;
-  const lista = JSON.parse(readFileSync(arquivo, 'utf-8')) as ParoquiaCache[];
-
-  // Paróquia sem NENHUM horário não entra: a página não tem o conteúdo que promete.
-  // Ela segue em CSR e o details.component aplica `noindex` após a hidratação.
-  const elegiveis = lista.filter(
-    (p) => p?.uf && p?.cidadeSlug && p?.slug && (p.igreja?.missas?.length ?? 0) > 0,
-  );
-
-  // Fase 1 — melhor de cada cidade.
-  const melhorPorCidade = new Map<string, ParoquiaCache>();
-  for (const p of elegiveis) {
-    const chave = `${p.uf}/${p.cidadeSlug}`;
-    const atual = melhorPorCidade.get(chave);
-    if (!atual || porQualidade(p, atual) < 0) melhorPorCidade.set(chave, p);
-  }
-  const piso = [...melhorPorCidade.keys()].sort().map((k) => melhorPorCidade.get(k)!);
-
-  // Fase 1.5 — citação externa (ver CEPS_COM_CITACAO_EXTERNA).
-  //
-  // Vem DEPOIS do piso de propósito: o piso é o invariante mais forte (toda cidade com
-  // profundidade real em HTML) e não pode ser furado por esta lista se a base crescer.
-  // Hoje sobra folga de sobra — piso = 900 cidades contra o teto de 1.900 —, então a
-  // ordem entre os dois é indiferente na prática; ela existe para o dia em que não for.
-  const noPiso = new Set(piso);
-  const porCitacao = elegiveis.filter(
-    (p) =>
-      !noPiso.has(p) &&
-      CEPS_COM_CITACAO_EXTERNA.includes(normalizarCep(p.igreja?.endereco?.cep)),
-  );
-
-  // Fase 2 — resto por qualidade.
-  const jaEscolhidas = new Set([...piso, ...porCitacao]);
-  const resto = elegiveis.filter((p) => !jaEscolhidas.has(p)).sort(porQualidade);
-
-  return [...piso, ...porCitacao, ...resto]
-    .slice(0, MAX_PAROQUIAS_PRERENDER)
-    .map((p) => ({ uf: p.uf, cidade: p.cidadeSlug, slug: p.slug }));
-}
 
 // --- Fase 3 SEO: Estado + árvore de Intenção -------------------------------
 
