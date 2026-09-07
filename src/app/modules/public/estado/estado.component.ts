@@ -16,6 +16,7 @@ import { finalize } from 'rxjs/operators';
 import { SkeletonModule } from 'primeng/skeleton';
 import { SeoPaginasService } from '../../../core/services/seo-paginas.service';
 import { SeoService } from '../../../core/services/seo.service';
+import { MetricasService, PaginaMetrica } from '../../../core/services/metricas.service';
 import { DIAS_INTENCAO } from '../../../core/constants/dias-intencao';
 import { preposicaoDe, nomeDoEstadoComArtigo } from '../../../core/constants/states';
 import { PageHeroComponent, HeroTile } from '../../../shared/components/page-hero/page-hero.component';
@@ -69,6 +70,7 @@ export class EstadoComponent implements OnInit, OnDestroy {
   private _router = inject(Router);
   private _seo = inject(SeoService);
   private _api = inject(SeoPaginasService);
+  private _metricas = inject(MetricasService);
   private _destroyRef = inject(DestroyRef);
   private _cdr = inject(ChangeDetectorRef);
   private _doc = inject(DOCUMENT);
@@ -141,6 +143,7 @@ export class EstadoComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this._metricas.registrarVisualizacaoPagina(PaginaMetrica.Estado);
     this._route.paramMap.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((pm) => {
       const uf = (pm.get('uf') ?? '').toLowerCase();
       // Trocar de UF REUSA o componente. Zera o índice da anterior: sem isto o guard

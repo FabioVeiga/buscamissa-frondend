@@ -16,6 +16,9 @@ export enum PaginaMetrica {
   MinhasIgrejas = 4,
   GuiaResponsavel = 5,
   Entrar = 6,
+  Estado = 7,
+  Cidade = 8,
+  IntencaoDia = 9,
 }
 
 @Injectable({ providedIn: 'root' })
