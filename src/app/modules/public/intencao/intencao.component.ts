@@ -67,6 +67,9 @@ export class IntencaoComponent implements OnInit {
   cidadeNome = '';
   paroquias: any[] = [];
 
+  /** Identidade (dia/uf/cidade) já carregada — detecta troca de rota com componente reusado. */
+  private _chaveCarregada: string | null = null;
+
   ngOnInit(): void {
     combineLatest([this._route.data, this._route.paramMap])
       .pipe(takeUntilDestroyed(this._destroyRef))
@@ -75,12 +78,37 @@ export class IntencaoComponent implements OnInit {
         this.uf = (pm.get('uf') ?? '').toLowerCase();
         this.cidadeSlug = (pm.get('cidade') ?? '').toLowerCase();
         this.nivel = this.cidadeSlug ? 'cidade' : this.uf ? 'uf' : 'nacional';
+
+        // Trocar de dia/UF/cidade REUSA o componente. Zera os dados do nível
+        // anterior: sem isto o guard de `carregar()` veria "já tem conteúdo" e
+        // manteria a lista errada sob o novo título.
+        const chave = `${this.dia}/${this.uf}/${this.cidadeSlug}`;
+        if (chave !== this._chaveCarregada) {
+          this._chaveCarregada = chave;
+          this.estados = [];
+          this.cidades = [];
+          this.paroquias = [];
+        }
         this.carregar();
       });
   }
 
+  /** Há algo renderizável na tela agora? Decide se o skeleton pode entrar. */
+  private temConteudo(): boolean {
+    if (this.nivel === 'cidade') return this.paroquias.length > 0;
+    if (this.nivel === 'uf') return this.cidades.length > 0;
+    return this.estados.length > 0;
+  }
+
   carregar(): void {
-    this.isLoading = true;
+    // Skeleton SÓ quando não há nada para mostrar. Aqui o skeleton e o conteúdo são
+    // ramos do MESMO `@if`, então ligar isLoading na hidratação apagava o hub inteiro
+    // vindo do prerender e o recriava depois da revalidação.
+    //
+    // A folha `/missa-{dia}/{uf}/{cidade}` é RenderMode.Client e NÃO tem
+    // TransferState: lá não há conteúdo na 1ª carga e o skeleton continua aparecendo,
+    // como deve.
+    if (!this.temConteudo()) this.isLoading = true;
     this.erroCarregar = false;
     this.naoEncontrado = false;
 
@@ -91,10 +119,14 @@ export class IntencaoComponent implements OnInit {
   private carregarCidade(): void {
     this._api
       .getIntencaoCidade(this.dia, this.uf, this.cidadeSlug)
+      // O `finalize` é rede de segurança (complete sem emissão); o desligamento que
+      // importa é o do `next`, porque este só roda ao FIM da revalidação.
       .pipe(takeUntilDestroyed(this._destroyRef), finalize(() => (this.isLoading = false)))
       .subscribe({
         next: (data: any) => {
-          if (!data) return void this.marcarNaoEncontrado();
+          // Encerra o loading na PRIMEIRA emissão (com cache, síncrona).
+          this.isLoading = false;
+          if (!data) return void this.semDados();
           this.cidadeNome = data.cidade ?? '';
           this.paroquias = data.paroquias ?? [];
           this.aplicarSeo(data.seo);
@@ -111,10 +143,14 @@ export class IntencaoComponent implements OnInit {
   private carregarHub(): void {
     this._api
       .getArvoreDia(this.dia, this.nivel === 'uf' ? this.uf : undefined)
+      // O `finalize` é rede de segurança (complete sem emissão); o desligamento que
+      // importa é o do `next`, porque este só roda ao FIM da revalidação.
       .pipe(takeUntilDestroyed(this._destroyRef), finalize(() => (this.isLoading = false)))
       .subscribe({
         next: (arvore: any) => {
-          if (!arvore?.estados) return void this.marcarNaoEncontrado();
+          // Encerra o loading na PRIMEIRA emissão (com cache, síncrona).
+          this.isLoading = false;
+          if (!arvore?.estados) return void this.semDados();
           if (this.nivel === 'nacional') {
             this.estados = arvore.estados.map((e: any) => ({ uf: e.uf, estado: e.estado }));
             this.aplicarSeo(arvore.seo);
@@ -125,7 +161,7 @@ export class IntencaoComponent implements OnInit {
             );
           } else {
             const estado = arvore.estados.find((e: any) => e.uf?.toLowerCase() === this.uf);
-            if (!estado) return void this.marcarNaoEncontrado();
+            if (!estado) return void this.semDados();
             this.estadoNome = estado.estado ?? '';
             this.cidades = estado.cidades ?? [];
             this.aplicarSeo(estado.seo);
@@ -140,7 +176,19 @@ export class IntencaoComponent implements OnInit {
       });
   }
 
+  /**
+   * Resposta vazia. `naoEncontrado` é ramo do MESMO `@if` do conteúdo, então marcá-lo
+   * apagaria um hub já renderizado — uma revalidação que volta vazia não pode fazer
+   * isso. Sem conteúdo, é o comportamento de sempre.
+   */
+  private semDados(): void {
+    if (this.temConteudo()) return;
+    this.marcarNaoEncontrado();
+  }
+
   private tratarErro(err: any): void {
+    // Revalidação que falha não derruba o conteúdo já na tela (mesmo motivo de semDados).
+    if (this.temConteudo()) return;
     if (err?.status === 404) this.marcarNaoEncontrado();
     // Falha transitória (rede/500) NÃO vira noindex: a página pode ser válida e
     // estar apenas indisponível no momento.

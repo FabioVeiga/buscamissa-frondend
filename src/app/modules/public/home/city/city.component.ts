@@ -106,6 +106,14 @@ export class CityComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this._route.params.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((params) => {
+      // Trocar de cidade numa navegação client-side REUSA o componente, que ainda
+      // tem as igrejas da cidade anterior. Zera antes de carregar: sem isto o guard
+      // de `carregar()` veria "já tem conteúdo" e manteria a lista errada sob o
+      // novo H1. Só a mudança de identidade zera — mudar filtro (queryParams) não.
+      if (params["uf"] !== this.uf || params["cidade"] !== this.cidade) {
+        this.igrejas = [];
+        this.igrejasFiltradas = [];
+      }
       this.uf = params["uf"];
       this.cidade = params["cidade"];
       this.cidadeNome = this.cidade
@@ -124,8 +132,17 @@ export class CityComponent implements OnInit, OnDestroy {
     this._loadFavorita();
   }
 
+  /** Há algo renderizável na tela agora? Decide se o skeleton pode entrar. */
+  private temConteudo(): boolean {
+    return this.igrejas.length > 0;
+  }
+
   carregar(): void {
-    this.isLoading = true;
+    // Skeleton SÓ quando não há nada para mostrar. Na hidratação de uma página
+    // prerenderizada o TransferState já traz as igrejas, e ligar isLoading aqui
+    // destruiria os cards vindos do HTML para recriá-los depois da revalidação —
+    // era o par de layout shifts (~0,38 + ~0,39) que o Search Console reportava.
+    if (!this.temConteudo()) this.isLoading = true;
     this.naoEncontrado = false;
     this.erroCarregar = false;
     // SWR: com o interceptor de TransferState, `next` roda 2x (cache prerenderizado,
@@ -133,9 +150,15 @@ export class CityComponent implements OnInit, OnDestroy {
     // os efeitos ÚNICOS (analytics/marca de busca/evento de "sem resultado") só na 1ª.
     let primeira = true;
     this._church.getByCidade(this.uf, this.cidade).pipe(
+      // Rede de segurança: cobre o complete sem nenhuma emissão. O desligamento que
+      // importa é o do `next` — este `finalize` só roda ao FIM da revalidação.
       finalize(() => { this.isLoading = false; })
     ).subscribe({
       next: (response: any) => {
+        // Encerra o loading na PRIMEIRA emissão. Com cache do TransferState ela é
+        // síncrona, no mesmo tick em que isLoading foi ligado — a detecção de
+        // mudanças só roda depois, então o skeleton nunca chega a ser pintado.
+        this.isLoading = false;
         const data = response?.data;
         this.igrejas = data?.igrejas ?? [];
         this.cidadeNome = data?.cidade ?? this.cidade;
@@ -191,8 +214,11 @@ export class CityComponent implements OnInit, OnDestroy {
         }
       },
       error: () => {
-        // Erro de rede/API ≠ "cidade sem paróquias": estado próprio com retry
-        this.erroCarregar = true;
+        // Erro de rede/API ≠ "cidade sem paróquias": estado próprio com retry.
+        // Mas uma REVALIDAÇÃO que falha não pode inserir o aviso por cima de uma
+        // lista que já está na tela — isso empurraria FAQ e links internos para
+        // baixo. Sem conteúdo, o aviso é o comportamento correto de sempre.
+        if (!this.temConteudo()) this.erroCarregar = true;
         this._seo.update({ title: `Missas em ${this.cidade}/${this.uf?.toUpperCase()} | BuscaMissa` });
       },
     });

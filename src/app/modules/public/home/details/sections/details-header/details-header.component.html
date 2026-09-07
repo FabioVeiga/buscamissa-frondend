@@ -2,10 +2,17 @@
 
   <!-- Thumbnail -->
   <div class="church-thumb shrink-0">
+    <!-- Esta foto É o elemento LCP da página de paróquia (medido: prod mobile,
+         LCP 5.012ms). Com `loading="lazy"` o preload scanner a ignorava e ela só
+         era descoberta em t=1.652ms, depois de CSS e layout — 1,4s de atraso puro.
+         É a ÚNICA <img> da subárvore de details e fica sempre no topo, então
+         priorizá-la não tira prioridade de nenhuma outra imagem.
+         Sem width/height de propósito: o contêiner já reserva a caixa nos dois
+         breakpoints (a proporção inverte entre eles) e a imagem contribui 0 de CLS. -->
     <img *ngIf="igreja.imagemUrl && !fotoQuebrou"
       [src]="igreja.imagemUrl" [alt]="igreja.nome"
       (error)="fotoQuebrou = true"
-      loading="lazy"
+      fetchpriority="high"
       class="w-full h-full object-cover">
     <app-church-placeholder *ngIf="!igreja.imagemUrl || fotoQuebrou" [showLabel]="false" />
   </div>
