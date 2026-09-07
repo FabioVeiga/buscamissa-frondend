@@ -284,9 +284,16 @@ for (const [secao, contar] of Object.entries(esperadoPorSecao)) {
 //
 // Aqui a exigência é nominal e binária: as 16 existem, ou o build para.
 //
-// ⚠️ Espelha CEPS_COM_CITACAO_EXTERNA de src/app/app.routes.server.ts. Ao mudar lá,
-// mudar aqui — é de propósito que sejam duas listas: se divergirem, este guard falha
-// e a divergência aparece no build em vez de virar página fantasma.
+// ⚠️ Espelha CEPS_COM_CITACAO_EXTERNA de src/app/app.routes.server.ts, e a proteção
+// que isso dá é de MÃO ÚNICA — vale saber qual:
+//
+//   - CEP que existe AQUI mas some de app.routes.server.ts → a página deixa de ser
+//     gerada, este guard não a encontra e o build para. Protegido.
+//   - CEP NOVO adicionado em app.routes.server.ts e esquecido aqui → nada falha. A
+//     página é gerada normalmente, só não fica protegida contra remoção futura.
+//
+// Ou seja: adicionar um CEP nesta lista é passo manual obrigatório ao adicionar um
+// CEP lá. Nenhuma verificação automática cobre essa direção hoje.
 const CEPS_COM_CITACAO_EXTERNA = [
   '02839070', '02810000', '12240540', '11730000', '12233401', '02982170',
   '02927000', '02967000', '04187070', '12224000', '13210580', '02942070',
@@ -300,8 +307,18 @@ if (paroquiasCache && browserDir) {
   const naoResolvidos = [];
 
   for (const cep of CEPS_COM_CITACAO_EXTERNA) {
+    // Replica EXATAMENTE a elegibilidade de paroquiasDoDisco (uf + cidadeSlug + slug +
+    // ≥1 missa). Sem o critério de missa, uma paróquia protegida que perde o último
+    // horário viraria "destino sem HTML" e abortaria o build — quando na verdade o
+    // prerender a excluiu de propósito, porque a página não teria o conteúdo que
+    // promete. Esse estado é legítimo e vira aviso em `naoResolvidos`, não falha.
     const alvos = paroquiasCache.filter(
-      (p) => p?.uf && p?.cidadeSlug && p?.slug && normalizarCep(p?.igreja?.endereco?.cep) === cep,
+      (p) =>
+        p?.uf &&
+        p?.cidadeSlug &&
+        p?.slug &&
+        (p?.igreja?.missas?.length ?? 0) > 0 &&
+        normalizarCep(p?.igreja?.endereco?.cep) === cep,
     );
     if (alvos.length === 0) {
       naoResolvidos.push(cep);
@@ -314,8 +331,12 @@ if (paroquiasCache && browserDir) {
   }
 
   algoVerificado = true;
+  // Conta por CEP DISTINTO: um CEP com mais de uma paróquia (7,1% da base colide,
+  // nenhum destes 16 hoje) empurra várias rotas para `faltando`, e subtrair o
+  // comprimento da lista faria o número mentir — podendo até ficar negativo.
+  const cepsComFalha = new Set(faltando.map((f) => f.split(' → ')[0])).size;
   console.log(
-    `[citação externa] ${CEPS_COM_CITACAO_EXTERNA.length - faltando.length - naoResolvidos.length}/${CEPS_COM_CITACAO_EXTERNA.length} destinos canônicos prerenderizados.`,
+    `[citação externa] ${CEPS_COM_CITACAO_EXTERNA.length - cepsComFalha - naoResolvidos.length}/${CEPS_COM_CITACAO_EXTERNA.length} destinos canônicos prerenderizados.`,
   );
 
   // CEP que sumiu do cache: a paróquia foi removida, teve o CEP corrigido, ou ficou
