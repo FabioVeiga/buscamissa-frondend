@@ -1,4 +1,22 @@
 {
+  "routes": [
+    { "route": "/detalhes/02839070", "redirect": "/paroquia/sp/sao-paulo/paroquia-santos-apostolos", "statusCode": 301 },
+    { "route": "/detalhes/02810000", "redirect": "/paroquia/sp/sao-paulo/paroquia-nossa-senhora-das-dores", "statusCode": 301 },
+    { "route": "/detalhes/12240540", "redirect": "/paroquia/sp/sao-jose-dos-campos/capela-nossa-senhora-aparecida", "statusCode": 301 },
+    { "route": "/detalhes/11730000", "redirect": "/paroquia/sp/mongagua/paroquia-nossa-senhora-aparecida", "statusCode": 301 },
+    { "route": "/detalhes/12233401", "redirect": "/paroquia/sp/sao-jose-dos-campos/comunidade-imaculado-coracao-de-maria", "statusCode": 301 },
+    { "route": "/detalhes/02982170", "redirect": "/paroquia/sp/sao-paulo/paroquia-santa-teresinha-do-menino-jesus", "statusCode": 301 },
+    { "route": "/detalhes/02927000", "redirect": "/paroquia/sp/sao-paulo/paroquia-bom-jesus-dos-passos", "statusCode": 301 },
+    { "route": "/detalhes/02967000", "redirect": "/paroquia/sp/sao-paulo/paroquia-sao-judas-tadeu-2", "statusCode": 301 },
+    { "route": "/detalhes/04187070", "redirect": "/paroquia/sp/sao-paulo/paroquia-sao-bernardo-de-claraval", "statusCode": 301 },
+    { "route": "/detalhes/12224000", "redirect": "/paroquia/sp/sao-jose-dos-campos/capela-sao-francisco-de-assis", "statusCode": 301 },
+    { "route": "/detalhes/13210580", "redirect": "/paroquia/sp/jundiai/paroquia-sao-pedro-apostolo", "statusCode": 301 },
+    { "route": "/detalhes/02942070", "redirect": "/paroquia/sp/sao-paulo/paroquia-nossa-senhora-do-retiro", "statusCode": 301 },
+    { "route": "/detalhes/02674030", "redirect": "/paroquia/sp/sao-paulo/paroquia-santa-cruz", "statusCode": 301 },
+    { "route": "/detalhes/02755000", "redirect": "/paroquia/sp/sao-paulo/paroquia-santa-luzia", "statusCode": 301 },
+    { "route": "/detalhes/12050543", "redirect": "/paroquia/sp/taubate/comunidade-santa-isabel", "statusCode": 301 },
+    { "route": "/detalhes/02856110", "redirect": "/paroquia/sp/sao-paulo/paroquia-sagrada-familia", "statusCode": 301 }
+  ],
   "navigationFallback": {
     "rewrite": "/index.csr.html",
     "exclude": [
