@@ -153,6 +153,74 @@ for (const hub of HUBS) {
   console.error('   Verifique se a rota continua no app.routes.ts e se o prerender a alcançou.');
 }
 
+// ── Landing de INTENÇÃO: `/missa-agora` ────────────────────────────────────
+//
+// Primeira landing de intenção prerenderizada (ver app.routes.server.ts). A
+// verificação aqui é NOMINAL e mais estrita que a dos hubs, por dois motivos:
+//
+//  1. A rota é UMA página só — cobertura proporcional não diz nada sobre ela.
+//  2. O que a torna valiosa é o CONTEÚDO assado, não a existência do arquivo. Ela
+//     tem um histórico de fragilidade específico: um `setInterval` sem guard no
+//     componente impedia o Angular de estabilizar e derrubava o prerender. Se
+//     alguém reintroduzir um timer sem guard, o sintoma NÃO é um erro chamativo —
+//     é a página voltar a cair no navigationFallback e o Google receber de novo o
+//     `index.csr.html` de ~5,7 KB, com title genérico e sem canonical.
+//
+// Por isso conferimos o miolo de SEO campo a campo, e não só a presença do arquivo.
+const MISSA_AGORA_MINIMO_PALAVRAS = 120;
+const dirMissaAgora = acharPastaSecao(distBase, 'missa-agora');
+const arqMissaAgora = dirMissaAgora ? join(dirMissaAgora, 'index.html') : null;
+
+if (!arqMissaAgora || !existsSync(arqMissaAgora)) {
+  algumFalhou = true;
+  console.error('\n❌ [intenção] "/missa-agora" NÃO foi prerenderizada — index.html ausente do dist.');
+  console.error('   A rota segue no navigationFallback: isso não vira 404, o Google recebe o shell');
+  console.error('   CSR (~5,7 KB, title genérico, sem canonical, sem h1) e a landing perde o valor.');
+  console.error('   Verifique o RenderMode.Prerender em src/app/app.routes.server.ts e se algum');
+  console.error('   timer sem guard de browser voltou ao missa-agora.component.ts.');
+} else {
+  const html = readFileSync(arqMissaAgora, 'utf-8');
+
+  // Texto visível: tira script/style antes de contar, senão o gtag/Clarity inline
+  // do index.html sozinho já passaria de qualquer limiar.
+  const corpo = html.includes('<body') ? html.slice(html.indexOf('<body')) : html;
+  const texto = corpo
+    .replace(/<script[\s\S]*?<\/script>/g, ' ')
+    .replace(/<style[\s\S]*?<\/style>/g, ' ')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+  const palavras = texto ? texto.split(' ').length : 0;
+
+  const titulo = html.match(/<title>([^<]*)<\/title>/)?.[1] ?? '';
+  const canonical = html.match(/rel="canonical"\s+href="([^"]*)"/)?.[1] ?? '';
+  const temH1 = /<h1[\s>]/.test(html);
+
+  const falhas = [];
+  // Title genérico = o shell venceu. É o sinal mais barato de regressão.
+  if (!titulo || titulo === 'BuscaMissa | Encontre ou cadastre missas') {
+    falhas.push(`<title> ausente ou genérico do shell: "${titulo}"`);
+  }
+  if (canonical !== 'https://buscamissa.com.br/missa-agora') {
+    falhas.push(`canonical errado ou ausente: "${canonical}"`);
+  }
+  if (!temH1) falhas.push('<h1> ausente');
+  if (palavras < MISSA_AGORA_MINIMO_PALAVRAS) {
+    falhas.push(`só ${palavras} palavras de texto visível (mínimo ${MISSA_AGORA_MINIMO_PALAVRAS})`);
+  }
+
+  algoVerificado = true;
+  if (falhas.length === 0) {
+    console.log(`[intenção] "/missa-agora": OK — title, canonical, h1 e ${palavras} palavras.`);
+  } else {
+    algumFalhou = true;
+    console.error('\n❌ [intenção] "/missa-agora" foi gerada, mas sem o conteúdo que a torna útil:');
+    for (const f of falhas) console.error(`     - ${f}`);
+    console.error('   Uma landing de intenção sem title/canonical/h1 próprios não se distingue do');
+    console.error('   shell CSR para o Google — o arquivo existir não basta.');
+  }
+}
+
 // `/estados` degrada para uma lista ESTÁTICA das 27 UFs quando a API falha (ver
 // `aplicarFallbackEstatico` em estados.component.ts). Isso não aciona o marcador de
 // erro — a página parece perfeita — mas assa links para UFs que podem não ter hub
