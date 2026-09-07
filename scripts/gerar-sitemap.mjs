@@ -104,6 +104,43 @@ function filtrarParoquiasSemHtml(xml) {
   return { xml: xmlFiltrado, removidas, semCache: false };
 }
 
+/**
+ * Landings de INTENÇÃO que existem só no frontend e o `SitemapController` não conhece.
+ *
+ * `/missa-agora` é uma rota fixa do Angular, prerenderizada em todo build
+ * (app.routes.server.ts) — o backend não tem como saber disso, porque a decisão de
+ * prerender vive inteiramente aqui. É o mesmo motivo pelo qual o filtro de paróquias
+ * acima também mora no frontend.
+ *
+ * Por que ela entra no sitemap: é a primeira landing de intenção assada, e intenção
+ * converte 1,69× melhor que busca por nome de igreja (medido no Search Console,
+ * 3 meses). Sem estar no sitemap, dependeria só de link interno para ser descoberta.
+ *
+ * Por que é seguro adicionar sem checar o dist: este script roda no PREBUILD, quando o
+ * dist ainda não existe. A garantia vem do postbuild — `verificar-prerender.mjs` tem um
+ * guard nominal que ABORTA o build se `/missa-agora` não for gerada, ou se vier sem
+ * title/canonical/h1/conteúdo. Ou seja: ou a página está boa no artefato, ou não há
+ * artefato para publicar. O sitemap nunca chega a anunciar uma URL que não existe.
+ *
+ * `lastmod` é omitido de propósito: o conteúdo é gerado em tempo real no cliente, então
+ * não há uma data de alteração honesta a declarar. Prioridade 0.8 = nível dos hubs de
+ * descoberta (`/cidades`, `/estados`, `/dias`), abaixo dos hubs geográficos (0.9).
+ */
+function adicionarLandingsDeIntencao(xml, baseUrl) {
+  const loc = `${baseUrl}/missa-agora`;
+  if (xml.includes(`<loc>${loc}</loc>`)) return { xml, adicionadas: 0 };
+
+  const bloco =
+    `  <url>\n` +
+    `    <loc>${loc}</loc>\n` +
+    `    <changefreq>daily</changefreq>\n` +
+    `    <priority>0.8</priority>\n` +
+    `  </url>\n`;
+
+  if (!xml.includes('</urlset>')) return { xml, adicionadas: 0 };
+  return { xml: xml.replace('</urlset>', `${bloco}</urlset>`), adicionadas: 1 };
+}
+
 async function main() {
   const base = lerApiUrl();
   const url = `${base}/sitemap.xml`;
@@ -117,7 +154,14 @@ async function main() {
     if (!xmlBruto.includes('<urlset')) throw new Error('resposta não parece um sitemap XML válido');
 
     const totalBruto = (xmlBruto.match(/<loc>/g) ?? []).length;
-    const { xml, removidas, semCache } = filtrarParoquiasSemHtml(xmlBruto);
+    const { xml: xmlFiltrado, removidas, semCache } = filtrarParoquiasSemHtml(xmlBruto);
+
+    // Base do XML (não hardcoded): staging e prod usam hosts diferentes, e o
+    // SitemapController já resolveu isso via FrontendBaseUrl. Reaproveitamos a mesma.
+    const baseUrl = (xmlFiltrado.match(/<loc>(https?:\/\/[^/]+)/)?.[1] ?? '').replace(/\/$/, '');
+    const { xml, adicionadas } = baseUrl
+      ? adicionarLandingsDeIntencao(xmlFiltrado, baseUrl)
+      : { xml: xmlFiltrado, adicionadas: 0 };
 
     mkdirSync(join(ROOT, 'public'), { recursive: true });
     writeFileSync(join(ROOT, 'public', 'sitemap.xml'), xml, 'utf-8');
@@ -129,6 +173,7 @@ async function main() {
     } else {
       console.log(`[sitemap-estatico] filtro de cobertura: ${removidas} URL(s) de paróquia sem HTML removida(s), ${total} restantes.`);
     }
+    if (adicionadas) console.log(`[sitemap-estatico] landing de intenção adicionada: ${baseUrl}/missa-agora.`);
   } catch (err) {
     console.warn(`[sitemap-estatico] falha ao buscar ${url} (${err?.message ?? err}) — build segue sem regenerar o sitemap.`);
   } finally {

@@ -211,6 +211,25 @@ export const serverRoutes: ServerRoute[] = [
   // pro dia explícito (Brasil tem 4 fusos). Segue CSR.
   { path: 'missa-hoje', renderMode: RenderMode.Client },
 
+  // `/missa-agora` — primeira landing de INTENÇÃO prerenderizada.
+  //
+  // Por quê: medido no Search Console (1.000 queries, filtro /paroquia/, 3 meses),
+  // busca por INTENÇÃO ("missa perto de mim", "horário de missa") converte a 3,02%
+  // de CTR contra 1,79% de busca por NOME de igreja — 1,69× melhor, mesmo em posição
+  // pior. Nome de igreja disputa com o Knowledge Panel do Google; intenção não.
+  //
+  // O conteúdo indexável JÁ existia no template (h1, subtítulo, cidades, FAQ) e
+  // nunca chegava ao crawler: sem esta linha a rota caía no '**' → CSR → o Google
+  // recebia o mesmo index.csr.html de 5.685 bytes, sem canonical, sem h1.
+  //
+  // O que o SERVER assa é o estado neutro ("Usar minha localização"), porque
+  // GeolocationService rejeita sem `navigator` e metricas/favorites têm guard de
+  // browser. Nada de geolocalização, mapa ou busca muda: o browser hidrata por cima
+  // e faz o upgrade. Pré-requisito que tornou isto possível: o relógio do
+  // missa-agora.component passou a rodar só no browser e fora da zona — um
+  // setInterval sem guard derrubaria este prerender no build.
+  { path: 'missa-agora', renderMode: RenderMode.Prerender },
+
   // Fase 3 — HOME (página de maior tráfego e pior CWV). Sem :param → sem
   // getPrerenderParams. A home guarda navigator/document/geo com isPlatformBrowser
   // (o server assa o estado default estável; o browser faz o upgrade ao hidratar).
