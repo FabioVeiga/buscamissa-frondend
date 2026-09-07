@@ -305,6 +305,8 @@ if (paroquiasCache && browserDir) {
   const normalizarCep = (cep) => String(cep ?? '').replace(/\D/g, '');
   const faltando = [];
   const naoResolvidos = [];
+  /** cep → rotas canônicas resolvidas ('/paroquia/uf/cidade/slug'), para o check de redirect. */
+  const rotasPorCep = new Map();
 
   for (const cep of CEPS_COM_CITACAO_EXTERNA) {
     // Replica EXATAMENTE a elegibilidade de paroquiasDoDisco (uf + cidadeSlug + slug +
@@ -326,6 +328,7 @@ if (paroquiasCache && browserDir) {
     }
     for (const p of alvos) {
       const rota = `paroquia/${p.uf.toLowerCase()}/${p.cidadeSlug}/${p.slug}`;
+      rotasPorCep.set(cep, [...(rotasPorCep.get(cep) ?? []), `/${rota}`]);
       if (!existsSync(join(browserDir, rota, 'index.html'))) faltando.push(`${cep} → /${rota}`);
     }
   }
@@ -355,6 +358,61 @@ if (paroquiasCache && browserDir) {
     console.error('   Estas paróquias têm a ficha do Google Maps apontando para o BuscaMissa e');
     console.error('   rankeiam em posição ~3. Sem o HTML, o tráfego cai no shell CSR sem canonical.');
     console.error('   Verifique CEPS_COM_CITACAO_EXTERNA em src/app/app.routes.server.ts.');
+  }
+
+  // ── 301 de /detalhes/{cep} → destino canônico ───────────────────────────────
+  //
+  // As 16 regras vivem à mão em src/staticwebapp.config.json, e é de propósito: um
+  // 301 fica cacheado no browser de forma quase permanente, então gerar a lista em
+  // build — com um fetch que pode degradar, como degradou em 12/08 — daria ao build
+  // autoridade para publicar redirect errado E permanente. O preço da lista estática
+  // é sair de sincronia em silêncio quando alguém renomeia um slug, e é exatamente
+  // esse buraco que este bloco fecha.
+  //
+  // Lemos a config do DIST, não do src: assim o guard prova de quebra que o arquivo
+  // chegou ao artefato que vai ser publicado.
+  const caminhoConfig = join(browserDir, 'staticwebapp.config.json');
+  if (!existsSync(caminhoConfig)) {
+    algumFalhou = true;
+    console.error('\n❌ [redirect 301] staticwebapp.config.json não está no dist.');
+    console.error('   Sem ele o SWA perde routes, navigationFallback e globalHeaders de uma vez.');
+    console.error('   Verifique o bloco "assets" de angular.json.');
+  } else {
+    const config = JSON.parse(readFileSync(caminhoConfig, 'utf8'));
+    const PREFIXO = '/detalhes/';
+    const regras = (config.routes ?? []).filter((r) => String(r.route ?? '').startsWith(PREFIXO));
+    const cepDaRegra = (r) => String(r.route).slice(PREFIXO.length);
+
+    const esperados = new Set(CEPS_COM_CITACAO_EXTERNA);
+    const declarados = new Set(regras.map(cepDaRegra));
+    const ausentes = [...esperados].filter((c) => !declarados.has(c));
+    const sobrando = [...declarados].filter((c) => !esperados.has(c));
+    const semStatus301 = regras.filter((r) => r.statusCode !== 301);
+    const destinoErrado = [];
+
+    for (const r of regras) {
+      const rotas = rotasPorCep.get(cepDaRegra(r));
+      // CEP sem paróquia elegível já virou aviso acima. Aqui não há verdade contra a
+      // qual comparar o destino, então não inventamos uma falha.
+      if (!rotas) continue;
+      if (!rotas.includes(r.redirect)) {
+        destinoErrado.push(`${r.route} → ${r.redirect} (esperado: ${rotas.join(' ou ')})`);
+      }
+    }
+
+    algoVerificado = true;
+    console.log(`[redirect 301] ${regras.length}/${CEPS_COM_CITACAO_EXTERNA.length} regras no artefato final.`);
+
+    if (ausentes.length || sobrando.length || semStatus301.length || destinoErrado.length) {
+      algumFalhou = true;
+      console.error('\n❌ [redirect 301] regras de /detalhes divergentes em staticwebapp.config.json:');
+      for (const c of ausentes) console.error(`     FALTA a regra de /detalhes/${c}`);
+      for (const c of sobrando) console.error(`     SOBRA /detalhes/${c} — não está em CEPS_COM_CITACAO_EXTERNA`);
+      for (const r of semStatus301) console.error(`     ${r.route} tem statusCode ${r.statusCode ?? '(ausente → vira 302)'}, e precisa ser 301`);
+      for (const d of destinoErrado) console.error(`     DESTINO ERRADO: ${d}`);
+      console.error('   Um 301 é cacheado pelo browser de forma quase permanente: destino errado');
+      console.error('   aqui é caro de desfazer depois. Corrija src/staticwebapp.config.json.');
+    }
   }
 }
 
