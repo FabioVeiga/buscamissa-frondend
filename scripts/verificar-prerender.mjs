@@ -273,6 +273,70 @@ for (const [secao, contar] of Object.entries(esperadoPorSecao)) {
   }
 }
 
+// --- Paróquias com citação externa (ficha do Google Business Profile) ---------
+//
+// A checagem de cobertura acima é ESTATÍSTICA: aceita 90% e não olha QUAIS páginas
+// saíram. Para estas 16 isso não basta. Elas entram no prerender por um motivo que o
+// ranking de qualidade não enxerga — a ficha do Maps da paróquia aponta para
+// `buscamissa.com.br/detalhes/{CEP}`, e o destino canônico precisa existir em HTML.
+// 14 das 16 NÃO passavam pelo ranking (conf 0 ou 2 com poucas missas), então basta
+// alguém mexer no critério de seleção para elas caírem fora outra vez, em silêncio.
+//
+// Aqui a exigência é nominal e binária: as 16 existem, ou o build para.
+//
+// ⚠️ Espelha CEPS_COM_CITACAO_EXTERNA de src/app/app.routes.server.ts. Ao mudar lá,
+// mudar aqui — é de propósito que sejam duas listas: se divergirem, este guard falha
+// e a divergência aparece no build em vez de virar página fantasma.
+const CEPS_COM_CITACAO_EXTERNA = [
+  '02839070', '02810000', '12240540', '11730000', '12233401', '02982170',
+  '02927000', '02967000', '04187070', '12224000', '13210580', '02942070',
+  '02674030', '02755000', '12050543', '02856110',
+];
+
+const paroquiasCache = lerCache('paroquias.json');
+if (paroquiasCache && browserDir) {
+  const normalizarCep = (cep) => String(cep ?? '').replace(/\D/g, '');
+  const faltando = [];
+  const naoResolvidos = [];
+
+  for (const cep of CEPS_COM_CITACAO_EXTERNA) {
+    const alvos = paroquiasCache.filter(
+      (p) => p?.uf && p?.cidadeSlug && p?.slug && normalizarCep(p?.igreja?.endereco?.cep) === cep,
+    );
+    if (alvos.length === 0) {
+      naoResolvidos.push(cep);
+      continue;
+    }
+    for (const p of alvos) {
+      const rota = `paroquia/${p.uf.toLowerCase()}/${p.cidadeSlug}/${p.slug}`;
+      if (!existsSync(join(browserDir, rota, 'index.html'))) faltando.push(`${cep} → /${rota}`);
+    }
+  }
+
+  algoVerificado = true;
+  console.log(
+    `[citação externa] ${CEPS_COM_CITACAO_EXTERNA.length - faltando.length - naoResolvidos.length}/${CEPS_COM_CITACAO_EXTERNA.length} destinos canônicos prerenderizados.`,
+  );
+
+  // CEP que sumiu do cache: a paróquia foi removida, teve o CEP corrigido, ou ficou
+  // sem missa (e aí é inelegível por design). Não barra o build — mas precisa ser
+  // visto, porque a ficha do Maps continua apontando para a URL correspondente.
+  if (naoResolvidos.length > 0) {
+    console.warn(`⚠️  [citação externa] ${naoResolvidos.length} CEP(s) sem paróquia elegível no cache: ${naoResolvidos.join(', ')}`);
+    console.warn('   A ficha do Google Maps dessas paróquias segue apontando para /detalhes/{cep}.');
+    console.warn('   Confirme se a paróquia saiu da base ou apenas ficou sem horário cadastrado.');
+  }
+
+  if (faltando.length > 0) {
+    algumFalhou = true;
+    console.error(`\n❌ [citação externa] ${faltando.length} destino(s) canônico(s) SEM HTML:`);
+    for (const f of faltando) console.error(`     ${f}`);
+    console.error('   Estas paróquias têm a ficha do Google Maps apontando para o BuscaMissa e');
+    console.error('   rankeiam em posição ~3. Sem o HTML, o tráfego cai no shell CSR sem canonical.');
+    console.error('   Verifique CEPS_COM_CITACAO_EXTERNA em src/app/app.routes.server.ts.');
+  }
+}
+
 if (algumFalhou) {
   console.error('\n   Build abortado para não publicar páginas de erro indexáveis.\n');
   process.exit(1);
