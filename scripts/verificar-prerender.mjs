@@ -1,6 +1,10 @@
 import { readdirSync, readFileSync, statSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import {
+  MAX_PAROQUIAS_PRERENDER,
+  CEPS_COM_CITACAO_EXTERNA,
+} from './lib/selecionar-paroquias-prerender.mjs';
 
 /**
  * Guard-rail do prerender (Auditoria2 / Fases 2, 2.5 e 3). Roda no postbuild, depois
@@ -189,9 +193,6 @@ if (estadosDoCache && dirEstados) {
 // tem que barrar o deploy, não liberá-lo.
 const COBERTURA_MINIMA = 0.9;
 
-/** Espelha MAX_PAROQUIAS_PRERENDER de src/app/app.routes.server.ts. */
-const MAX_PAROQUIAS_PRERENDER = 1900;
-
 /** Espelha exatamente o universo de app.routes.server.ts (paroquiasDoDisco/cidadesDoDisco). */
 const esperadoPorSecao = {
   missas: () => {
@@ -205,13 +206,12 @@ const esperadoPorSecao = {
     return cidades.filter((c) => c?.uf && c?.cidadeSlug).length
       + estados.filter((e) => e?.uf).length;
   },
-  // Paróquias ELEGÍVEIS (com horário), limitadas pelo mesmo teto de
-  // app.routes.server.ts. Espelhamos só a CONTAGEM, não o algoritmo de seleção: o teto
-  // é determinístico, então basta `min(elegíveis, teto)` para saber quantas páginas
-  // deveriam existir — e assim não há um segundo lugar com o critério de ranking, que
-  // poderia divergir em silêncio do original.
-  //
-  // ⚠️ Se MAX_PAROQUIAS_PRERENDER mudar em app.routes.server.ts, mudar aqui também.
+  // Paróquias ELEGÍVEIS (com horário), limitadas pelo mesmo teto — importado de
+  // selecionar-paroquias-prerender.mjs, não mais copiado à mão. Contamos só a
+  // CONTAGEM, não repetimos o algoritmo de seleção: o teto é determinístico, então
+  // basta `min(elegíveis, teto)` para saber quantas páginas deveriam existir — e
+  // assim não há um segundo lugar com o critério de ranking, que poderia divergir em
+  // silêncio do original.
   paroquia: () => {
     const lista = lerCache('paroquias.json');
     if (!lista) return null;
@@ -284,21 +284,11 @@ for (const [secao, contar] of Object.entries(esperadoPorSecao)) {
 //
 // Aqui a exigência é nominal e binária: as 16 existem, ou o build para.
 //
-// ⚠️ Espelha CEPS_COM_CITACAO_EXTERNA de src/app/app.routes.server.ts, e a proteção
-// que isso dá é de MÃO ÚNICA — vale saber qual:
-//
-//   - CEP que existe AQUI mas some de app.routes.server.ts → a página deixa de ser
-//     gerada, este guard não a encontra e o build para. Protegido.
-//   - CEP NOVO adicionado em app.routes.server.ts e esquecido aqui → nada falha. A
-//     página é gerada normalmente, só não fica protegida contra remoção futura.
-//
-// Ou seja: adicionar um CEP nesta lista é passo manual obrigatório ao adicionar um
-// CEP lá. Nenhuma verificação automática cobre essa direção hoje.
-const CEPS_COM_CITACAO_EXTERNA = [
-  '02839070', '02810000', '12240540', '11730000', '12233401', '02982170',
-  '02927000', '02967000', '04187070', '12224000', '13210580', '02942070',
-  '02674030', '02755000', '12050543', '02856110',
-];
+// CEPS_COM_CITACAO_EXTERNA agora vem de selecionar-paroquias-prerender.mjs — antes
+// era copiado à mão aqui e a proteção contra divergência era de MÃO ÚNICA: um CEP
+// removido lá derrubava o build (protegido), mas um CEP novo adicionado lá e
+// esquecido aqui não falhava (só ficava desprotegido). Com o import, as duas listas
+// são a mesma lista — não há mais direção em que possam divergir.
 
 const paroquiasCache = lerCache('paroquias.json');
 if (paroquiasCache && browserDir) {
