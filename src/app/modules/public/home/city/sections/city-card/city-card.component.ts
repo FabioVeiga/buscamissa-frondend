@@ -1,9 +1,9 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, PLATFORM_ID, inject } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ConfidenceBadgeComponent } from '../../../../../../shared/components/confidence-badge/confidence-badge.component';
 import { ChurchPlaceholderComponent } from '../../../../../../shared/components/church-placeholder/church-placeholder.component';
-import { getNextOccurrenceMinutes, formatMassTime, getCountdownLabel } from '../../../../../../shared/utils/mass-time.utils';
+import { getNextOccurrenceMinutes, formatMassTime, getCountdownLabel, getDiaLabel } from '../../../../../../shared/utils/mass-time.utils';
 import { distanciaMetrosAte } from '../../../../../../shared/utils/distance.utils';
 import { linkParoquia as buildLinkParoquia } from '../../../../../../shared/utils/church-link.utils';
 
@@ -35,6 +35,13 @@ export class CityCardComponent {
 
   imagemQuebrada = false;
 
+  /**
+   * Falso no prerender. Separa a informação temporal ESTÁVEL (que o server assa e o
+   * Google indexa) da RELATIVA (que só faz sentido contra o relógio de quem está
+   * lendo). Ver getDiaLabel em mass-time.utils.ts.
+   */
+  private readonly _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
   get linkParoquia(): string[] {
     // Rota canônica com fallback para /igrejas/:nomeUnico quando falta slug (fix da dev, PR #73)
     return buildLinkParoquia({
@@ -62,23 +69,30 @@ export class CityCardComponent {
     return formatMassTime(horario);
   }
 
+  /**
+   * Sempre false no prerender: o chip de contagem regressiva é o conteúdo mais
+   * perecível do card — "Começa em 2h30" gravado num arquivo estático está errado
+   * um minuto depois. Já foi indexado assim (snippets de /missas/df/sao-sebastiao e
+   * /missas/sp/votorantim exibiam "19h30 Hoje Começa em 2h30" em 2026-09-09).
+   *
+   * Aqui, diferente do rótulo do dia, o elemento realmente não existe no server e
+   * nasce na hidratação. É seguro: a coluna de horário ocupa ~39 px num card de
+   * ~345 px, então inserir o chip não muda a altura do card e não desloca layout.
+   */
   ehUrgente(m: any): boolean {
-    return getNextOccurrenceMinutes(m.diaSemana, m.horario) <= 180;
+    return this._isBrowser && getNextOccurrenceMinutes(m.diaSemana, m.horario) <= 180;
   }
 
   countdownLabel(m: any): string {
-    return getCountdownLabel(m.diaSemana, m.horario);
+    return this._isBrowser ? getCountdownLabel(m.diaSemana, m.horario) : '';
   }
 
+  /**
+   * "Hoje"/"Amanhã" só no browser; no prerender, o nome do dia. O elemento
+   * `.city-card__dia` do template é o MESMO nos dois casos — muda só o texto.
+   */
   diaLabelRelativo(m: any): string {
-    const min = getNextOccurrenceMinutes(m.diaSemana, m.horario);
-    const alvo = new Date(Date.now() + min * 60_000);
-    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
-    const dAlvo = new Date(alvo); dAlvo.setHours(0, 0, 0, 0);
-    const diff = Math.round((dAlvo.getTime() - hoje.getTime()) / 86_400_000);
-    if (diff === 0) return 'Hoje';
-    if (diff === 1) return 'Amanhã';
-    return ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][m.diaSemana] ?? '';
+    return getDiaLabel(m.diaSemana, m.horario, this._isBrowser);
   }
 
   onFavoritar(event: MouseEvent): void {

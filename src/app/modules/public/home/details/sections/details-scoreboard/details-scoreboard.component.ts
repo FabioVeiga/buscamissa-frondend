@@ -1,8 +1,13 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, PLATFORM_ID, inject } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Mass } from '../../../../church/models/church.model';
 import { CountdownChipComponent } from '../../../../../../shared/components/countdown-chip/countdown-chip.component';
-import { getNextOccurrenceMinutes, formatMassTime } from '../../../../../../shared/utils/mass-time.utils';
+import {
+  getNextOccurrenceMinutes,
+  formatMassTime,
+  getDiaLabel,
+  getProximaMissaData,
+} from '../../../../../../shared/utils/mass-time.utils';
 
 /** Scoreboard "Próxima missa" da página da paróquia (extraído do DetailsComponent — auditoria 2.x). */
 @Component({
@@ -18,41 +23,43 @@ export class DetailsScoreboardComponent {
 
   @Output() verTodas = new EventEmitter<void>();
 
+  /** Falso no prerender: separa informação temporal estável da relativa. */
+  private readonly _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
   /** Minutos até a próxima missa */
   private get minutosProximaMissa(): number | null {
     const pm = this.proximaMissa;
     return pm ? getNextOccurrenceMinutes(pm.diaSemana!, pm.horario) : null;
   }
 
-  /** Só mostra o contador regressivo quando cria urgência real (até 3h) — evita redundância com o dia */
+  /**
+   * Só mostra o contador quando cria urgência real (até 3h) — e nunca no prerender:
+   * "Começa em 2h30" gravado em arquivo estático vence no minuto seguinte.
+   */
   get mostrarContador(): boolean {
+    if (!this._isBrowser) return false;
     const min = this.minutosProximaMissa;
     return min !== null && min <= 180;
   }
 
-  /** Rótulo curto do dia da próxima missa: "Hoje" / "Amanhã" / "Sábado" */
+  /** Rótulo do dia: nome do dia no prerender, "Hoje"/"Amanhã" depois de hidratar. */
   get proximaMissaDiaLabel(): string {
     const pm = this.proximaMissa;
     if (!pm) return '';
-    const min = getNextOccurrenceMinutes(pm.diaSemana!, pm.horario);
-    const alvo = new Date(Date.now() + min * 60_000);
-
-    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
-    const dAlvo = new Date(alvo); dAlvo.setHours(0, 0, 0, 0);
-    const diff = Math.round((dAlvo.getTime() - hoje.getTime()) / 86_400_000);
-
-    if (diff === 0) return 'Hoje';
-    if (diff === 1) return 'Amanhã';
-    return ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'][pm.diaSemana!] ?? '';
+    return getDiaLabel(pm.diaSemana!, pm.horario, this._isBrowser);
   }
 
-  /** Data completa da próxima ocorrência: "quinta-feira, 15 de maio" */
+  /**
+   * "quinta-feira, 15 de maio" no browser; só "quinta-feira" no prerender.
+   *
+   * Era o pior caso do congelamento: uma data por extenso é afirmativa e
+   * falsificável. Em 2026-09-09 o Google exibia "terça-feira, 8 de setembro" como
+   * próxima missa de uma paróquia — a data do build anterior, de ontem.
+   */
   get proximaMissaData(): string {
     const pm = this.proximaMissa;
     if (!pm) return '';
-    const min = getNextOccurrenceMinutes(pm.diaSemana!, pm.horario);
-    const data = new Date(Date.now() + min * 60_000);
-    return data.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long' });
+    return getProximaMissaData(pm.diaSemana!, pm.horario, this._isBrowser);
   }
 
   formatarHorario(horario: string): string {
