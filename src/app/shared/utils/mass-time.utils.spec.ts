@@ -3,6 +3,9 @@ import {
   formatDistance,
   getNextOccurrenceMinutes,
   getMissaAgoraUrgency,
+  getCountdownLabel,
+  getDiaLabel,
+  getProximaMissaData,
 } from './mass-time.utils';
 
 describe('mass-time.utils', () => {
@@ -172,6 +175,90 @@ describe('mass-time.utils', () => {
         expect(noFusoDoRenderizador).toBe(16);
         expect(noFusoDoRenderizador).not.toBe(136); // o correto no fuso do Acre
       });
+    });
+  });
+
+  // ── Estável x relativo: o que pode ser assado no prerender ──────────────────
+  //
+  // `relativo` é o parâmetro que separa o que o server pode gravar no HTML do que
+  // só faz sentido contra o relógio de quem lê. Com `false` (prerender) o resultado
+  // tem de ser invariante à data: o mesmo arquivo fica no ar de 1 a 4 dias.
+  describe('getDiaLabel / getProximaMissaData', () => {
+    // quarta-feira, 07/01/2026, 10h00.
+    const AGORA = new Date(2026, 0, 7, 10, 0, 0);
+    const QUA = 3;
+    const QUI = 4;
+    const SAB = 6;
+
+    beforeEach(() => {
+      jasmine.clock().install();
+      jasmine.clock().mockDate(AGORA);
+    });
+    afterEach(() => jasmine.clock().uninstall());
+
+    it('prerender: missa de hoje sai como nome do dia, nunca "Hoje"', () => {
+      expect(getDiaLabel(QUA, '12:00', false)).toBe('Quarta');
+    });
+
+    it('prerender: missa de amanhã sai como nome do dia, nunca "Amanhã"', () => {
+      expect(getDiaLabel(QUI, '07:00', false)).toBe('Quinta');
+    });
+
+    it('browser: missa de hoje vira "Hoje"', () => {
+      expect(getDiaLabel(QUA, '12:00', true)).toBe('Hoje');
+    });
+
+    it('browser: missa de amanhã vira "Amanhã"', () => {
+      expect(getDiaLabel(QUI, '07:00', true)).toBe('Amanhã');
+    });
+
+    it('browser: missa de outro dia mantém o nome do dia', () => {
+      expect(getDiaLabel(SAB, '19:00', true)).toBe('Sábado');
+    });
+
+    it('o rótulo do prerender não muda quando o relógio anda', () => {
+      const antes = getDiaLabel(QUI, '07:00', false);
+      jasmine.clock().mockDate(new Date(2026, 0, 10, 23, 0, 0)); // 3 dias depois
+      expect(getDiaLabel(QUI, '07:00', false)).toBe(antes);
+    });
+
+    it('prerender: data sai só com o dia por extenso, sem "N de mês" que vence', () => {
+      const data = getProximaMissaData(QUI, '07:00', false);
+      expect(data).toBe('quinta-feira');
+      expect(data).not.toMatch(/\d/);
+    });
+
+    it('browser: data sai completa', () => {
+      expect(getProximaMissaData(QUI, '07:00', true)).toBe('quinta-feira, 8 de janeiro');
+    });
+
+    it('a data do prerender não muda quando o relógio anda', () => {
+      const antes = getProximaMissaData(QUI, '07:00', false);
+      jasmine.clock().mockDate(new Date(2026, 0, 10, 23, 0, 0));
+      expect(getProximaMissaData(QUI, '07:00', false)).toBe(antes);
+    });
+  });
+
+  describe('getCountdownLabel', () => {
+    const AGORA = new Date(2026, 0, 7, 10, 0, 0);
+    const QUA = 3;
+
+    beforeEach(() => {
+      jasmine.clock().install();
+      jasmine.clock().mockDate(AGORA);
+    });
+    afterEach(() => jasmine.clock().uninstall());
+
+    it('conta em minutos abaixo de 1h', () => {
+      expect(getCountdownLabel(QUA, '10:25')).toBe('Começa em 25 min');
+    });
+
+    it('conta em horas dentro da janela de 3h', () => {
+      expect(getCountdownLabel(QUA, '12:00')).toBe('Começa em 2h');
+    });
+
+    it('fora da janela vira rótulo de dia, não contador', () => {
+      expect(getCountdownLabel(QUA, '14:00')).toBe('Hoje às 14h');
     });
   });
 });
