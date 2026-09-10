@@ -482,12 +482,59 @@ export class CityComponent implements OnInit, OnDestroy {
     });
   }
 
+  /**
+   * FAQ da página de cidade. O texto daqui NÃO é decorativo: ele é o snippet que o
+   * Google exibe na consulta principal. Medido em 2026-09-10, para "missa em
+   * campinas", o resultado do BuscaMissa aparecia como "Que horas é a missa hoje em
+   * Campinas? Consulte nesta página os horários de missa das 49 paróquia(s) de
+   * Campinas/SP, organizados por dia da semana."
+   *
+   * Por isso cada resposta precisa descrever o que a página REALMENTE entrega. As
+   * três afirmações anteriores divergiam do comportamento real:
+   *
+   *  1. "organizados por dia da semana" — a página não agrupa por dia em nenhuma
+   *     das 1.187 cidades. Ela lista uma paróquia por card, com UM horário (a
+   *     próxima missa), rotulado com o dia. Quem agrupa por dia é /dias e a árvore
+   *     /missa-{dia}, não esta página.
+   *  2. "das N paróquia(s)" — 780 cidades (66%) têm exatamente uma paróquia e o
+   *     texto saía como "das 1 paróquia(s)", inclusive no snippet.
+   *  3. "Sim. Diversas paróquias ... celebram missas aos domingos" — 323 cidades
+   *     (27%) não têm NENHUMA missa de domingo cadastrada, e a resposta afirmava
+   *     que sim assim mesmo.
+   *
+   * Os números vêm do bulk de prerender e são estáveis o bastante para a decisão;
+   * o que o código faz é derivar cada frase do dado da própria cidade, para que
+   * nenhuma delas volte a ser uma afirmação fixa que a página não cumpre.
+   */
   private montarFaqs(): void {
     const local = `${this.cidadeNome}/${this.uf.toUpperCase()}`;
+    const total = this.igrejas.length;
+    const uma = total === 1;
+
+    const comDomingo = this.igrejas.filter((ig) =>
+      ig.missas?.some((m: any) => m.diaSemana === 0)
+    ).length;
+
     this.faqs = [
-      { pergunta: `Que horas é a missa hoje em ${this.cidadeNome}?`, resposta: `Consulte nesta página os horários de missa das ${this.igrejas.length} paróquia(s) de ${local}, organizados por dia da semana.` },
-      { pergunta: `Tem missa de domingo em ${this.cidadeNome}?`, resposta: `Sim. Diversas paróquias de ${local} celebram missas aos domingos. Veja a lista e os horários abaixo.` },
-      { pergunta: `Como encontrar uma igreja católica perto de mim em ${this.cidadeNome}?`, resposta: `Listamos todas as paróquias e comunidades católicas de ${local} com endereço e horários atualizados pela comunidade.` },
+      {
+        pergunta: `Que horas é a missa hoje em ${this.cidadeNome}?`,
+        resposta: uma
+          ? `Veja abaixo a próxima missa da paróquia cadastrada em ${local}, com o dia e o horário.`
+          : `Veja abaixo a próxima missa de cada uma das ${total} paróquias de ${local}, com o dia e o horário. Use os filtros para ver as missas de um dia específico.`,
+      },
+      {
+        pergunta: `Tem missa de domingo em ${this.cidadeNome}?`,
+        resposta:
+          comDomingo === 0
+            ? `Ainda não há missa de domingo cadastrada em ${local}. Veja abaixo os horários que já temos e ajude a completar as informações.`
+            : comDomingo === 1
+              ? `Sim. 1 paróquia de ${local} tem missa de domingo. Veja o horário na lista abaixo.`
+              : `Sim. ${comDomingo} paróquias de ${local} têm missa de domingo. Veja os horários na lista abaixo.`,
+      },
+      {
+        pergunta: `Como encontrar uma igreja católica perto de mim em ${this.cidadeNome}?`,
+        resposta: `Nesta página estão as paróquias e comunidades católicas de ${local} já cadastradas, com endereço e horários mantidos pela comunidade.`,
+      },
     ];
   }
 
