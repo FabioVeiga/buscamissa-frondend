@@ -23,6 +23,7 @@ import { AuthService } from "../../../../../core/services/auth.service";
 import { RedesSociaisService, TipoRedeSocial } from "../../../../../core/services/redes-sociais.service";
 import { LoggerService } from "../../../../../core/services/logger.service";
 import { linkParoquia } from "../../../../../shared/utils/church-link.utils";
+import { sanitizarNumeroEndereco } from "../../../../../shared/utils/endereco.utils";
 
 @Component({
   selector: "app-church-registration-page",
@@ -296,7 +297,7 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
         uf: formData.uf,
         estado: formData.estado,
         regiao: formData.regiao,
-        numero: formData.numero,
+        numero: sanitizarNumeroEndereco(formData.numero),
       },
       contato: {
         ddd: telefoneLimpo.substring(0, 2),

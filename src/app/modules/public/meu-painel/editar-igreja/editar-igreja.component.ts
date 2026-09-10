@@ -18,6 +18,7 @@ import { ChurchesService } from "../../../../core/services/churches.service";
 import { LoggerService } from "../../../../core/services/logger.service";
 import { MetricasIgreja, Circunscricao, CapelaComunidade, CircunscricaoOpcao, CapelaOrfa, MinhaSolicitacaoVinculo } from "../../../../core/interfaces/responsavel.interface";
 import { STATES } from "../../../../core/constants/states";
+import { sanitizarNumeroEndereco } from "../../../../shared/utils/endereco.utils";
 
 const REDES = [
   { tipo: 1, nome: "Facebook" },
@@ -602,7 +603,7 @@ export class EditarIgrejaComponent implements OnInit {
           bairro: v.endereco.bairro || null,
           localidade: v.endereco.localidade,
           uf: v.endereco.uf,
-          numero: v.endereco.numero || 0,
+          numero: parseInt(sanitizarNumeroEndereco(v.endereco.numero), 10),
           latitude: this._latitude,
           longitude: this._longitude,
         },
