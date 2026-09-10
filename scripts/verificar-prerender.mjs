@@ -474,6 +474,120 @@ if (paroquiasCache && browserDir) {
   }
 }
 
+// ── Guard-rail de CONTEÚDO TEMPORAL RELATIVO ───────────────────────────────
+//
+// O prerender assa arquivo estático que fica no ar de 1 a 4 dias (não há rebuild
+// agendado). Qualquer rótulo calculado contra `Date.now()` no build nasce com prazo
+// de validade e envelhece calado. Já aconteceu em produção: em 2026-09-09 o Google
+// exibia "Próxima missa 18h30 Terça, terça-feira, 8 de setembro" para uma paróquia
+// de Brasília (data do build anterior, vencida) e "19h30 Hoje Começa em 2h30" para
+// duas cidades — um contador regressivo dentro do índice de busca.
+//
+// POR QUE NÃO É UM grep POR "Hoje"/"Amanhã" NO HTML INTEIRO
+// --------------------------------------------------------
+// Seria frágil nos dois sentidos. Falso positivo: "Hoje" e "Amanhã" são rótulos
+// LEGÍTIMOS dos botões de filtro da página de cidade, que devem continuar no HTML.
+// Falso negativo: um rótulo novo ("Daqui a pouco") passaria batido.
+//
+// Então o guard mira ELEMENTOS, identificados pela classe que os componentes
+// emitem, e verifica o conteúdo de cada um:
+//
+//   .city-card__dia        (city-card)          → só nome de dia, nunca relativo
+//   .city-card__dia--hoje  (city-card)          → a classe modificadora só existe
+//                                                 quando o rótulo virou "Hoje"
+//   .scoreboard-day        (details-scoreboard) → só nome de dia
+//   .scoreboard-data       (details-scoreboard) → só o dia por extenso, sem "N de mês"
+//   .city-card__countdown  (city-card)          → não pode existir no prerender
+//   .countdown-chip        (countdown-chip)     → não pode existir no prerender
+//   .hoje-pill             (details-horarios)   → não pode existir no prerender
+//
+// Se um componente novo introduzir outro rótulo relativo, ele precisa entrar aqui.
+// É deliberado: a lista é o contrato explícito do que pode ser assado.
+const SECOES_TEMPORAIS = ['missas', 'paroquia'];
+
+/** Conteúdo dos elementos que carregam a classe informada. */
+function conteudoPorClasse(html, classe) {
+  const re = new RegExp(
+    `<[a-z]+[^>]*class="[^"]*${classe.replace(/[-]/g, '\\-')}[^"]*"[^>]*>([\\s\\S]*?)<\\/[a-z]+>`,
+    'gi'
+  );
+  const out = [];
+  let m;
+  while ((m = re.exec(html)) !== null) {
+    out.push(m[1].replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim());
+  }
+  return out;
+}
+
+/** O elemento existe no HTML? (para os que não podem ser prerenderizados) */
+function temClasse(html, classe) {
+  return new RegExp(`class="[^"]*${classe.replace(/[-]/g, '\\-')}[^"]*"`, 'i').test(html);
+}
+
+const RELATIVO = /\b(hoje|amanhã)\b/i;
+// Forma exata do toLocaleDateString('pt-BR', { weekday, day, month }): o dia por
+// extenso é estável e pode ficar; ", 10 de setembro" é a parte que vence.
+const DATA_ABSOLUTA = /,\s*\d{1,2}\s+de\s+[a-zç]+/i;
+
+const REGRAS_CONTEUDO = [
+  { classe: 'city-card__dia', proibido: RELATIVO, o_que: 'rótulo relativo no dia do card' },
+  { classe: 'scoreboard-day', proibido: RELATIVO, o_que: 'rótulo relativo no dia da paróquia' },
+  { classe: 'scoreboard-data', proibido: DATA_ABSOLUTA, o_que: 'data absoluta que vence' },
+];
+const REGRAS_PRESENCA = [
+  { classe: 'city-card__dia--hoje', o_que: 'destaque "hoje" resolvido no build' },
+  { classe: 'city-card__countdown', o_que: 'contador regressivo do card' },
+  { classe: 'countdown-chip', o_que: 'chip de contagem regressiva' },
+  { classe: 'hoje-pill', o_que: 'pílula HOJE da grade semanal' },
+];
+
+const achadosTemporais = [];
+let htmlsVerificados = 0;
+
+for (const secao of SECOES_TEMPORAIS) {
+  const dir = acharPastaSecao(distBase, secao);
+  if (!dir) continue;
+  for (const f of listarIndexHtml(dir)) {
+    const html = readFileSync(f, 'utf-8');
+    htmlsVerificados++;
+    const url = f.replace(dir, secao).replace('/index.html', '');
+
+    for (const r of REGRAS_CONTEUDO) {
+      for (const texto of conteudoPorClasse(html, r.classe)) {
+        if (r.proibido.test(texto)) {
+          if (achadosTemporais.length < 10) {
+            achadosTemporais.push(`${url} → .${r.classe} = "${texto}" (${r.o_que})`);
+          }
+        }
+      }
+    }
+    for (const r of REGRAS_PRESENCA) {
+      if (temClasse(html, r.classe)) {
+        if (achadosTemporais.length < 10) {
+          achadosTemporais.push(`${url} → .${r.classe} presente (${r.o_que})`);
+        }
+      }
+    }
+  }
+}
+
+if (htmlsVerificados) {
+  algoVerificado = true;
+  console.log(
+    `[temporal] ${htmlsVerificados} página(s) de cidade/paróquia verificadas | rótulos relativos congelados: ${achadosTemporais.length}`
+  );
+}
+
+if (achadosTemporais.length) {
+  algumFalhou = true;
+  console.error('\n❌ [temporal] conteúdo relativo ao instante do BUILD no HTML prerenderizado:');
+  for (const a of achadosTemporais) console.error(`     ${a}`);
+  console.error('   Esse texto congela no arquivo e envelhece até o próximo deploy — já foi');
+  console.error('   indexado assim pelo Google. Calcule o rótulo relativo só no browser');
+  console.error('   (isPlatformBrowser), mantendo o MESMO elemento no template.');
+  console.error('   Ver getDiaLabel/getProximaMissaData em src/app/shared/utils/mass-time.utils.ts.');
+}
+
 if (algumFalhou) {
   console.error('\n   Build abortado para não publicar páginas de erro indexáveis.\n');
   process.exit(1);
