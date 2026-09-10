@@ -14,6 +14,22 @@ jobs:
     if: github.event_name == 'push' || (github.event_name == 'pull_request' && github.event.action != 'closed')
     runs-on: ubuntu-latest
     name: Build and Deploy Job
+    # O runner do GitHub roda em UTC. O prerender assa HTML estático a partir de
+    # `getNextOccurrenceMinutes()`, que usa `getDay()`/`setHours()` — ambos LOCAIS ao
+    # processo. Em UTC o build classificava como "já passou" toda missa das próximas
+    # 3 horas em horário de Brasília e a empurrava para a semana seguinte (erro medido
+    # de ~9.900 min). Caso real: build às 18h44 BRT marcava a missa das 19h00 como
+    # estando a 6,9 dias.
+    #
+    # `TZ` definida aqui é herdada pelos processos filhos E pelos worker threads em
+    # que o Angular prerenderiza as rotas (verificado). America/Sao_Paulo não tem
+    # horário de verão desde 2019, então o offset é -3h o ano inteiro.
+    #
+    # Limitação conhecida e ACEITA: igrejas em UTC-4 (MS, MT, AM, RR) e UTC-5 (AC)
+    # continuam avaliadas no fuso de Brasília — 5,9% da base. É o mesmo erro que o
+    # navegador delas já comete. Fuso por igreja é trabalho separado.
+    env:
+      TZ: America/Sao_Paulo
     steps:
       - uses: actions/checkout@v3
         with:
