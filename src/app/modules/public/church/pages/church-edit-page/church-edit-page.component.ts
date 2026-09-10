@@ -23,6 +23,7 @@ import { PrimeNgModule } from "../../../../../shared/primeng.module";
 import { ChurchesService } from "../../../../../core/services/churches.service";
 import { ClarityService } from "../../../../../core/services/clarity.service";
 import { LoggerService } from "../../../../../core/services/logger.service";
+import { sanitizarNumeroEndereco } from "../../../../../shared/utils/endereco.utils";
 
 @Component({
   selector: "app-church-edit-page",
@@ -190,7 +191,7 @@ export class ChurchEditPageComponent implements OnInit {
         uf: formData.uf,
         estado: formData.estado,
         regiao: formData.regiao,
-        numero: formData.numero,
+        numero: sanitizarNumeroEndereco(formData.numero),
       },
     };
     return payload;
