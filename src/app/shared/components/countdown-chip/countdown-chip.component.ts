@@ -1,4 +1,4 @@
-import { Component, Input, NgZone, OnChanges, OnDestroy, OnInit, PLATFORM_ID, inject } from '@angular/core';
+import { ChangeDetectorRef, Component, Input, NgZone, OnChanges, OnDestroy, OnInit, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { getCountdownLabel } from '../../utils/mass-time.utils';
 
@@ -17,6 +17,7 @@ export class CountdownChipComponent implements OnInit, OnChanges, OnDestroy {
   private intervalId?: ReturnType<typeof setInterval>;
   private _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private _ngZone = inject(NgZone);
+  private _cdr = inject(ChangeDetectorRef);
 
   ngOnInit(): void {
     this.updateLabel();
@@ -34,7 +35,26 @@ export class CountdownChipComponent implements OnInit, OnChanges, OnDestroy {
       this.intervalId = this._ngZone.runOutsideAngular(() =>
         setInterval(() => {
           const novo = getCountdownLabel(this.diaSemana, this.horario);
-          if (novo !== this.label) this._ngZone.run(() => (this.label = novo));
+          if (novo !== this.label) {
+            this._ngZone.run(() => {
+              this.label = novo;
+              // `ngZone.run()` agenda o tick, mas não decide QUEM será verificado.
+              // Este chip é usado dentro de componentes OnPush (details-scoreboard,
+              // mass-time-card), e um ancestral OnPush que não está sujo faz o
+              // ApplicationRef.tick() pular a subárvore inteira — o `label` mudava
+              // e o DOM continuava com o texto anterior.
+              //
+              // Medido no staging em 2026-09-10: um setInterval de 60s registrado
+              // à mão no mesmo contexto disparou às 07:48:35 e 07:49:35, e o chip
+              // permaneceu em "Começa em 16 min" por 6 minutos. Não era
+              // estrangulamento de aba oculta — o timer rodava, a view é que não
+              // era verificada.
+              //
+              // markForCheck() marca este componente e todos os ancestrais até a
+              // raiz, então o tick que o `run()` dispara passa por aqui.
+              this._cdr.markForCheck();
+            });
+          }
         }, 60_000)
       );
     }
