@@ -15,10 +15,10 @@
           <app-countdown-chip [diaSemana]="proximaMissa.diaSemana!" [horario]="proximaMissa.horario" />
         </div>
       </div>
-      <span class="text-sm text-gray-500 capitalize hidden sm:block self-center">{{ proximaMissaData }}</span>
+      <span class="scoreboard-data text-sm text-gray-500 capitalize hidden sm:block self-center">{{ proximaMissaData }}</span>
     </div>
     <div class="flex items-center justify-between mt-3 pt-3 border-t border-orange-200/60">
-      <span class="text-sm text-gray-500 capitalize sm:hidden">{{ proximaMissaData }}</span>
+      <span class="scoreboard-data text-sm text-gray-500 capitalize sm:hidden">{{ proximaMissaData }}</span>
       <button (click)="verTodas.emit()"
         class="flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg bg-white/70 hover:bg-white transition-colors ml-auto"
         style="color: #bc5d10;">

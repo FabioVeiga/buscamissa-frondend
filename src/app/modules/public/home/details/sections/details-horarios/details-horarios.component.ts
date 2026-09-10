@@ -1,5 +1,5 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, PLATFORM_ID, inject } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { Mass } from '../../../../church/models/church.model';
 import { formatMassTime } from '../../../../../../shared/utils/mass-time.utils';
@@ -34,8 +34,17 @@ export class DetailsHorariosComponent {
     }));
   }
 
+  /** Falso no prerender: separa informação temporal estável da relativa. */
+  private readonly _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+
+  /**
+   * Pílula "HOJE" na grade semanal. Nunca no prerender: qual dia é "hoje" depende do
+   * relógio de quem lê, e o arquivo estático fica no ar por dias. A grade em si —
+   * dia da semana e horários — é estável e continua toda no HTML indexável; só o
+   * destaque relativo nasce na hidratação.
+   */
   isHoje(diaSemana: number): boolean {
-    return new Date().getDay() === diaSemana;
+    return this._isBrowser && new Date().getDay() === diaSemana;
   }
 
   formatarHorario(horario: string): string {

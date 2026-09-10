@@ -22,8 +22,7 @@ export class CountdownChipComponent implements OnInit, OnChanges, OnDestroy {
     this.updateLabel();
     // No prerender (server) NÃO agendamos o setInterval: um timer pendente impede
     // o Angular de estabilizar e o render da rota estoura o timeout (derrubando o
-    // build). O label estático já foi calculado; a contagem regressiva viva só faz
-    // sentido no browser e hidrata lá.
+    // build).
     //
     // No browser o timer roda FORA da zona pelo mesmo motivo, com outro sintoma:
     // dentro da zona, um setInterval recorrente mantém ApplicationRef.isStable()
@@ -51,7 +50,20 @@ export class CountdownChipComponent implements OnInit, OnChanges, OnDestroy {
     }
   }
 
+  /**
+   * O guard de browser aqui é o ponto do arquivo: antes, `updateLabel()` rodava
+   * INCONDICIONALMENTE no `ngOnInit`, então o valor inicial era calculado no
+   * prerender e gravado no HTML estático. O guard de `_isBrowser` protegia só o
+   * `setInterval`, não o primeiro cálculo — e era daí que saíam os contadores
+   * congelados que chegaram ao índice do Google ("19h30 Hoje Começa em 2h30" nos
+   * snippets de /missas/df/sao-sebastiao e /missas/sp/votorantim, 2026-09-09).
+   *
+   * Com `label` vazio no server, o `@if (label)` do template não renderiza o chip.
+   * Ele nasce na hidratação, já com o valor certo, e o timer o mantém vivo.
+   */
   private updateLabel(): void {
-    this.label = getCountdownLabel(this.diaSemana, this.horario);
+    this.label = this._isBrowser
+      ? getCountdownLabel(this.diaSemana, this.horario)
+      : '';
   }
 }
