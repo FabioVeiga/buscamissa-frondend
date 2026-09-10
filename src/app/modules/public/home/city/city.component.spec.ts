@@ -151,3 +151,103 @@ describe('CityComponent — skeleton não pode substituir conteúdo já renderiz
     expect(cards()).toBe(0);
   });
 });
+
+/**
+ * A FAQ da página de cidade é o texto que o Google exibe como snippet na consulta
+ * principal — medido em 2026-09-10 para "missa em campinas". Estes testes travam o
+ * contrato de que cada resposta descreve o que a página REALMENTE entrega.
+ *
+ * As três afirmações anteriores divergiam do comportamento real: a página nunca
+ * agrupou por dia da semana, 66% das cidades saíam como "das 1 paróquia(s)", e 27%
+ * afirmavam ter missa de domingo sem ter nenhuma cadastrada.
+ */
+describe('CityComponent — a FAQ tem de descrever o que a página entrega', () => {
+  let fixture: ComponentFixture<CityComponent>;
+  let c: CityComponent;
+
+  const igreja = (id: number, nome: string, dias: number[]) => ({
+    id,
+    nome,
+    imagemUrl: null,
+    endereco: { bairro: 'Centro', latitude: -7.11, longitude: -34.87 },
+    missas: dias.map((d, i) => ({ id: id * 10 + i, diaSemana: d, horario: '19:00:00' })),
+  });
+
+  const montar = (igrejas: any[]) => {
+    TestBed.resetTestingModule();
+    TestBed.configureTestingModule({
+      imports: [CityComponent],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideNoopAnimations(),
+        provideRouter([]),
+        { provide: PLATFORM_ID, useValue: 'browser' },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            params: of({ uf: 'sp', cidade: 'campinas' }),
+            queryParams: of({}),
+            snapshot: { params: { uf: 'sp', cidade: 'campinas' }, queryParams: {}, data: {} },
+          },
+        },
+        {
+          provide: ChurchesService,
+          useValue: { getByCidade: () => of({ data: { cidade: 'Campinas', igrejas, seo: {} } }) },
+        },
+      ],
+    });
+    fixture = TestBed.createComponent(CityComponent);
+    c = fixture.componentInstance;
+    fixture.detectChanges();
+  };
+
+  const respostas = () => c.faqs.map((f) => f.resposta).join(' | ');
+
+  it('não promete agrupamento por dia da semana, que a página não faz', () => {
+    montar([igreja(1, 'Catedral', [0, 3]), igreja(2, 'Santa Rita', [0])]);
+    expect(respostas()).not.toContain('organizados por dia da semana');
+  });
+
+  it('usa singular quando a cidade tem uma só paróquia', () => {
+    montar([igreja(1, 'Matriz', [0])]);
+    const r = respostas();
+    expect(r).not.toContain('1 paróquia(s)');
+    expect(r).not.toContain('Diversas paróquias');
+    expect(c.faqs[0].resposta).toContain('da paróquia cadastrada');
+  });
+
+  it('usa plural com a contagem real quando há várias', () => {
+    montar([igreja(1, 'Catedral', [0]), igreja(2, 'Santa Rita', [0]), igreja(3, 'São José', [3])]);
+    expect(c.faqs[0].resposta).toContain('cada uma das 3 paróquias');
+  });
+
+  it('conta as paróquias que realmente têm missa de domingo', () => {
+    montar([igreja(1, 'Catedral', [0, 3]), igreja(2, 'Santa Rita', [0]), igreja(3, 'São José', [5])]);
+    expect(c.faqs[1].resposta).toContain('2 paróquias');
+    expect(c.faqs[1].resposta).toContain('missa de domingo');
+  });
+
+  it('não afirma que há missa de domingo quando não há nenhuma', () => {
+    // 27% das cidades caem neste caso e a resposta anterior dizia "Sim" mesmo assim.
+    montar([igreja(1, 'Matriz', [3]), igreja(2, 'São José', [5])]);
+    expect(c.faqs[1].resposta).not.toContain('Sim');
+    expect(c.faqs[1].resposta).toContain('Ainda não há missa de domingo');
+  });
+
+  it('não afirma listar TODAS as paróquias da cidade', () => {
+    // A base é mantida pela comunidade e é incompleta: São Paulo tem 156 paróquias
+    // sem nenhum horário cadastrado.
+    montar([igreja(1, 'Matriz', [0])]);
+    expect(respostas()).not.toContain('todas as paróquias');
+  });
+
+  it('a FAQ vai para o JSON-LD com o mesmo texto exibido', () => {
+    montar([igreja(1, 'Matriz', [0])]);
+    const ld = document.querySelector('script[type="application/ld+json"]#faq')
+      ?? [...document.querySelectorAll('script[type="application/ld+json"]')]
+           .find((s) => (s.textContent || '').includes('FAQPage'));
+    expect(ld).withContext('o bloco FAQPage precisa existir').toBeTruthy();
+    expect(ld!.textContent).toContain(c.faqs[0].resposta);
+  });
+});
