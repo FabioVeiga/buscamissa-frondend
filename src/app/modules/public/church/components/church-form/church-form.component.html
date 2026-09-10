@@ -35,9 +35,9 @@
         />
       </div>
       <div class="field col-12 md:col-2">
-        <label for="numero">Número*</label>&nbsp;<i
+        <label for="numero">Número</label>&nbsp;<i
         class="pi pi-info-circle text-blue-500 cursor-pointer"
-        pTooltip="Se não houver número, informar 0."
+        pTooltip="Deixe em branco se não houver número."
         tooltipPosition="top"
       ></i>
         <input
@@ -51,7 +51,7 @@
           class="p-error block"
           *ngIf="form.get('numero')?.invalid && form.get('numero')?.touched"
         >
-          Número é obrigatório.
+          Número muito longo.
         </small>
       </div>
       <div class="field col-12 md:col-4">

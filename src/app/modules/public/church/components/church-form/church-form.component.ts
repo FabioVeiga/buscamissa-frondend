@@ -228,7 +228,7 @@ export class ChurchFormComponent implements OnInit, OnChanges {
       nomeParoco: ["", Validators.maxLength(150)],
       cep: ["", [Validators.required, Validators.pattern(/^\d{5}-?\d{3}$/)]], // CEP é sempre obrigatório inicialmente
       endereco: [{ value: "", disabled: true }], // Habilitado por padrão
-      numero: ["", [Validators.required, Validators.maxLength(20)]],
+      numero: ["", [Validators.maxLength(20)]],
       complemento: ["", Validators.maxLength(100)],
       bairro: [{ value: "", disabled: true }],
       cidade: [{ value: "", disabled: true }],
