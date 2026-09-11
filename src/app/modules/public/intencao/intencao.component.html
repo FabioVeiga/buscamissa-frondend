@@ -74,7 +74,7 @@
     @if (nivel === 'cidade') {
       <header class="intencao__head">
         <h1>Missa de {{ rotulo }} em {{ cidadeNome }}</h1>
-        <p>{{ paroquias.length }} paróquia(s) com missa de {{ rotulo }}.</p>
+        <p>{{ rotuloTotalParoquias }} com missa de {{ rotulo }}.</p>
       </header>
       <ul class="paroquias" role="list">
         @for (p of paroquias; track p.id) {
