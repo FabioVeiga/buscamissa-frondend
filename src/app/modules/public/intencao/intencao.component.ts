@@ -9,6 +9,7 @@ import { SeoPaginasService } from '../../../core/services/seo-paginas.service';
 import { SeoService } from '../../../core/services/seo.service';
 import { MetricasService, PaginaMetrica } from '../../../core/services/metricas.service';
 import { DIAS_INTENCAO } from '../../../core/constants/dias-intencao';
+import { paroquias as rotuloParoquias } from '../../../shared/utils/plural.utils';
 
 const SITE = 'https://buscamissa.com.br';
 
@@ -68,6 +69,19 @@ export class IntencaoComponent implements OnInit {
   cidades: { cidadeSlug: string; cidade: string; paroquias?: unknown[] }[] = [];
   cidadeNome = '';
   paroquias: any[] = [];
+
+  /**
+   * "1 paróquia" / "2 paróquias" / "0 paróquias" para o subtítulo da folha de
+   * cidade. O template não alcança a função importada — o Angular resolve nomes
+   * contra a instância —, então o getter é a ponte, como em estados.component.ts.
+   *
+   * O alias evita colidir com a propriedade `paroquias` acima. O valor sai de um
+   * `.length`, idêntico no servidor e no navegador: não há aqui a dependência de
+   * relógio que obrigou a separar estável de relativo nos cards de missa.
+   */
+  get rotuloTotalParoquias(): string {
+    return rotuloParoquias(this.paroquias.length);
+  }
 
   /** Identidade (dia/uf/cidade) já carregada — detecta troca de rota com componente reusado. */
   private _chaveCarregada: string | null = null;
