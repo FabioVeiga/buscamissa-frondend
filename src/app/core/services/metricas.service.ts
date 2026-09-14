@@ -19,6 +19,23 @@ export enum PaginaMetrica {
   Estado = 7,
   Cidade = 8,
   IntencaoDia = 9,
+  Estados = 10,
+  Dias = 11,
+  MissaHoje = 12,
+  NovaIgreja = 13,
+  EditarIgreja = 14,
+  CepRedirect = 15,
+  EnviarCodigo = 16,
+  ValidarCodigo = 17,
+  Anuncios = 18,
+  Contribuir = 19,
+  Solicitar = 20,
+  MeuPainel = 21,
+  EditarIgrejaPainel = 22,
+  Cookies = 23,
+  Privacidade = 24,
+  Termos = 25,
+  NaoEncontrado = 26,
 }
 
 @Injectable({ providedIn: 'root' })

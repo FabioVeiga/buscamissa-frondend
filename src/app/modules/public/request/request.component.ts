@@ -11,6 +11,7 @@ import { RequestService } from "../../../core/services/request.service";
 import { NgIf } from "@angular/common";
 import { MessageService } from "primeng/api";
 import { LoggerService } from "../../../core/services/logger.service";
+import { MetricasService, PaginaMetrica } from "../../../core/services/metricas.service";
 
 @Component({
   selector: "app-request",
@@ -24,11 +25,13 @@ export class RequestComponent implements OnInit {
   private _message = inject(MessageService);
   private _fb = inject(FormBuilder);
   private _logger = inject(LoggerService);
+  private _metricas = inject(MetricasService);
   public isLoading = false;
   public form!: FormGroup;
   public tipos: any[] = [];
 
   ngOnInit(): void {
+    this._metricas.registrarVisualizacaoPagina(PaginaMetrica.Solicitar);
     this.initForm();
     this.getSubject();
   }

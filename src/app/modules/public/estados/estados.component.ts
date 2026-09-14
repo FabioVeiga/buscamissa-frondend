@@ -9,6 +9,7 @@ import { SeoService } from '../../../core/services/seo.service';
 import { HubListaComponent, HubBreadcrumb, HubItem } from '../../../shared/components/hub-lista/hub-lista.component';
 import { PageHeroComponent } from '../../../shared/components/page-hero/page-hero.component';
 import { HubPonteComponent } from '../../../shared/components/hub-ponte/hub-ponte.component';
+import { MetricasService, PaginaMetrica } from '../../../core/services/metricas.service';
 import {
   cidades as rotuloCidades, estados as rotuloEstados, metaParoquiasCidades,
   paroquias as rotuloParoquias,
@@ -47,6 +48,7 @@ export class EstadosComponent implements OnInit, OnDestroy {
   private _api = inject(SeoPaginasService);
   private _cdr = inject(ChangeDetectorRef);
   private _destroyRef = inject(DestroyRef);
+  private _metricas = inject(MetricasService);
 
   readonly breadcrumb: HubBreadcrumb[] = [
     { label: 'Início', link: ['/home'] },
@@ -85,6 +87,7 @@ export class EstadosComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this._metricas.registrarVisualizacaoPagina(PaginaMetrica.Estados);
     this.aplicarSeo();
 
     this._api
