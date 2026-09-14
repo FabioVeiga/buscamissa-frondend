@@ -151,6 +151,7 @@ export class EstadoComponent implements OnInit, OnDestroy {
       // errado sob o novo hero.
       if (uf !== this.uf) this.grupos = [];
       this.uf = uf;
+      if (uf) this._metricas.registrarVisualizacaoEstado(uf);
       this.carregar();
     });
   }

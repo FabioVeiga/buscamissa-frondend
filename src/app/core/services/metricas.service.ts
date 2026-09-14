@@ -103,6 +103,42 @@ export class MetricasService {
     localStorage.setItem(chave, String(agora));
   }
 
+  // Dedupe por UF — cada estado conta independente (30 min de janela por sigla).
+  registrarVisualizacaoEstado(uf: string): void {
+    if (!this._isBrowser) return;
+    const ufNormalizada = uf.toUpperCase();
+    const chave = `estado_${ufNormalizada}_ultima_visualizacao`;
+    const agora = Date.now();
+    const ultimaVisualizacao = Number(localStorage.getItem(chave) ?? 0);
+
+    if (agora - ultimaVisualizacao < JANELA_VISUALIZACAO_MS) return;
+
+    this.http
+      .post('v2/metricas/visualizacao-estado', { uf: ufNormalizada })
+      .subscribe({
+        error: (err) => this.logger.logError(err, 'metrica:visualizacao-estado'),
+      });
+    localStorage.setItem(chave, String(agora));
+  }
+
+  // Dedupe por UF+cidade — mesma janela de 30 min, chave própria por cidade.
+  registrarVisualizacaoCidade(uf: string, cidadeSlug: string, cidadeNome?: string): void {
+    if (!this._isBrowser) return;
+    const ufNormalizada = uf.toUpperCase();
+    const chave = `cidade_${ufNormalizada}_${cidadeSlug}_ultima_visualizacao`;
+    const agora = Date.now();
+    const ultimaVisualizacao = Number(localStorage.getItem(chave) ?? 0);
+
+    if (agora - ultimaVisualizacao < JANELA_VISUALIZACAO_MS) return;
+
+    this.http
+      .post('v2/metricas/visualizacao-cidade', { uf: ufNormalizada, cidadeSlug, cidadeNome })
+      .subscribe({
+        error: (err) => this.logger.logError(err, 'metrica:visualizacao-cidade'),
+      });
+    localStorage.setItem(chave, String(agora));
+  }
+
   registrarCliqueRota(igrejaId: number): void {
     this.enviar('clique-rota', igrejaId);
   }

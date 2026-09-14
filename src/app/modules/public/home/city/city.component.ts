@@ -121,6 +121,9 @@ export class CityComponent implements OnInit, OnDestroy {
         .split('-')
         .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
         .join(' ');
+      if (this.uf && this.cidade) {
+        this._metricas.registrarVisualizacaoCidade(this.uf, this.cidade, this.cidadeNome);
+      }
 
       this._route.queryParams.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((qp) => {
         this.diaAtivo = this.parseDiaSlug(qp["dia"]);
