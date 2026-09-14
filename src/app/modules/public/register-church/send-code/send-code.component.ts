@@ -13,6 +13,7 @@ import { MessageService } from "primeng/api";
 import { PrimeNgModule } from "../../../../shared/primeng.module";
 import { LoadingComponent } from "../../../../core/components/loading/loading.component";
 import { LoggerService } from "../../../../core/services/logger.service";
+import { MetricasService, PaginaMetrica } from "../../../../core/services/metricas.service";
 
 @Component({
   selector: "app-send-code",
@@ -35,6 +36,7 @@ export class SendCodeComponent implements OnInit {
   private _toast = inject(MessageService);
   private _clarity = inject(ClarityService);
   private _logger = inject(LoggerService);
+  private _metricas = inject(MetricasService);
 
   isLoading = false;
   controleId!: number;
@@ -43,6 +45,7 @@ export class SendCodeComponent implements OnInit {
   showTermosModal = false;
 
   ngOnInit(): void {
+    this._metricas.registrarVisualizacaoPagina(PaginaMetrica.EnviarCodigo);
     this.controleId = Number(this._route.snapshot.paramMap.get("controleId"));
     this._clarity.track('contrib_tela_identificacao');
     this.form = this._fb.group({

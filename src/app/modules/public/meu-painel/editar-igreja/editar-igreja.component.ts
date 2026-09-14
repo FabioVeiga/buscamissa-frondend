@@ -19,6 +19,7 @@ import { LoggerService } from "../../../../core/services/logger.service";
 import { MetricasIgreja, Circunscricao, CapelaComunidade, CircunscricaoOpcao, CapelaOrfa, MinhaSolicitacaoVinculo } from "../../../../core/interfaces/responsavel.interface";
 import { STATES } from "../../../../core/constants/states";
 import { sanitizarNumeroEndereco } from "../../../../shared/utils/endereco.utils";
+import { MetricasService, PaginaMetrica } from "../../../../core/services/metricas.service";
 
 const REDES = [
   { tipo: 1, nome: "Facebook" },
@@ -66,6 +67,7 @@ export class EditarIgrejaComponent implements OnInit {
   private _churches = inject(ChurchesService);
   private _message = inject(MessageService);
   private _logger = inject(LoggerService);
+  private _metricas = inject(MetricasService);
 
   readonly redes = REDES;
   readonly dias = DIAS;
@@ -151,6 +153,7 @@ export class EditarIgrejaComponent implements OnInit {
       this._router.navigate(["/entrar"]);
       return;
     }
+    this._metricas.registrarVisualizacaoPagina(PaginaMetrica.EditarIgrejaPainel);
     this.igrejaId = Number(this._route.snapshot.paramMap.get("igrejaId"));
     this.form = this._fb.group({
       contato: this._fb.group({

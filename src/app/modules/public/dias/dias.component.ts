@@ -6,6 +6,7 @@ import { SeoService } from '../../../core/services/seo.service';
 import { HubListaComponent, HubBreadcrumb, HubItem } from '../../../shared/components/hub-lista/hub-lista.component';
 import { PageHeroComponent, HeroTile } from '../../../shared/components/page-hero/page-hero.component';
 import { HubPonteComponent } from '../../../shared/components/hub-ponte/hub-ponte.component';
+import { MetricasService, PaginaMetrica } from '../../../core/services/metricas.service';
 
 const SITE = 'https://buscamissa.com.br';
 
@@ -35,6 +36,7 @@ const SITE = 'https://buscamissa.com.br';
 })
 export class DiasComponent implements OnInit, OnDestroy {
   private _seo = inject(SeoService);
+  private _metricas = inject(MetricasService);
 
   readonly breadcrumb: HubBreadcrumb[] = [
     { label: 'Início', link: ['/home'] },
@@ -62,6 +64,7 @@ export class DiasComponent implements OnInit, OnDestroy {
   }));
 
   ngOnInit(): void {
+    this._metricas.registrarVisualizacaoPagina(PaginaMetrica.Dias);
     this.aplicarSeo();
     this.aplicarJsonLd();
   }

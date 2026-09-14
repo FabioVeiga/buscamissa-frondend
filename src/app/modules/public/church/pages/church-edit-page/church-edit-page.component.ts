@@ -23,6 +23,7 @@ import { PrimeNgModule } from "../../../../../shared/primeng.module";
 import { ChurchesService } from "../../../../../core/services/churches.service";
 import { ClarityService } from "../../../../../core/services/clarity.service";
 import { LoggerService } from "../../../../../core/services/logger.service";
+import { MetricasService, PaginaMetrica } from "../../../../../core/services/metricas.service";
 import { sanitizarNumeroEndereco } from "../../../../../shared/utils/endereco.utils";
 
 @Component({
@@ -43,6 +44,7 @@ export class ChurchEditPageComponent implements OnInit {
   public router = inject(Router);
   private _clarity = inject(ClarityService);
   private logger = inject(LoggerService);
+  private _metricas = inject(MetricasService);
 
   isLoading = false;
   isSaving = false;
@@ -63,6 +65,7 @@ export class ChurchEditPageComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    this._metricas.registrarVisualizacaoPagina(PaginaMetrica.EditarIgreja);
     this._clarity.track('contrib_form_aberto');
     this.churchDataForForm$ = this.route.params.pipe(
       tap((params) => {

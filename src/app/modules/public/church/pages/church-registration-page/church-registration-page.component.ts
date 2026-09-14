@@ -5,6 +5,7 @@ import {
   ChangeDetectorRef,
   ViewChild,
   AfterViewInit,
+  OnInit,
 } from "@angular/core";
 import { Router, RouterLink, ActivatedRoute } from "@angular/router";
 import { CommonModule, DatePipe } from "@angular/common";
@@ -22,6 +23,7 @@ import { ClarityService } from "../../../../../core/services/clarity.service";
 import { AuthService } from "../../../../../core/services/auth.service";
 import { RedesSociaisService, TipoRedeSocial } from "../../../../../core/services/redes-sociais.service";
 import { LoggerService } from "../../../../../core/services/logger.service";
+import { MetricasService, PaginaMetrica } from "../../../../../core/services/metricas.service";
 import { linkParoquia } from "../../../../../shared/utils/church-link.utils";
 import { sanitizarNumeroEndereco } from "../../../../../shared/utils/endereco.utils";
 
@@ -33,10 +35,11 @@ import { sanitizarNumeroEndereco } from "../../../../../shared/utils/endereco.ut
   templateUrl: "./church-registration-page.component.html",
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ChurchRegistrationPageComponent implements AfterViewInit {
+export class ChurchRegistrationPageComponent implements OnInit, AfterViewInit {
   @ViewChild(ChurchFormComponent) churchFormComponent!: ChurchFormComponent;
 
   private churchService = inject(ChurchesService);
+  private _metricas = inject(MetricasService);
   private router = inject(Router);
   private activatedRoute = inject(ActivatedRoute);
   private messageService = inject(MessageService);
@@ -71,6 +74,10 @@ export class ChurchRegistrationPageComponent implements AfterViewInit {
   // criação para o backend não bloquear a igreja só por já existir outra no CEP
   // (várias igrejas legitimamente compartilham o mesmo CEP).
   private cepDuplicataConfirmada = false;
+
+  ngOnInit(): void {
+    this._metricas.registrarVisualizacaoPagina(PaginaMetrica.NovaIgreja);
+  }
 
   ngAfterViewInit(): void {
     this.redesSociaisService.obterTipos().subscribe((tipos) => (this.tiposRedeSocial = tipos));

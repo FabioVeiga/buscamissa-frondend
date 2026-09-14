@@ -19,6 +19,23 @@ export enum PaginaMetrica {
   Estado = 7,
   Cidade = 8,
   IntencaoDia = 9,
+  Estados = 10,
+  Dias = 11,
+  MissaHoje = 12,
+  NovaIgreja = 13,
+  EditarIgreja = 14,
+  CepRedirect = 15,
+  EnviarCodigo = 16,
+  ValidarCodigo = 17,
+  Anuncios = 18,
+  Contribuir = 19,
+  Solicitar = 20,
+  MeuPainel = 21,
+  EditarIgrejaPainel = 22,
+  Cookies = 23,
+  Privacidade = 24,
+  Termos = 25,
+  NaoEncontrado = 26,
 }
 
 @Injectable({ providedIn: 'root' })
@@ -82,6 +99,42 @@ export class MetricasService {
       .post('v2/metricas/visualizacao-pagina', { pagina })
       .subscribe({
         error: (err) => this.logger.logError(err, 'metrica:visualizacao-pagina'),
+      });
+    localStorage.setItem(chave, String(agora));
+  }
+
+  // Dedupe por UF — cada estado conta independente (30 min de janela por sigla).
+  registrarVisualizacaoEstado(uf: string): void {
+    if (!this._isBrowser) return;
+    const ufNormalizada = uf.toUpperCase();
+    const chave = `estado_${ufNormalizada}_ultima_visualizacao`;
+    const agora = Date.now();
+    const ultimaVisualizacao = Number(localStorage.getItem(chave) ?? 0);
+
+    if (agora - ultimaVisualizacao < JANELA_VISUALIZACAO_MS) return;
+
+    this.http
+      .post('v2/metricas/visualizacao-estado', { uf: ufNormalizada })
+      .subscribe({
+        error: (err) => this.logger.logError(err, 'metrica:visualizacao-estado'),
+      });
+    localStorage.setItem(chave, String(agora));
+  }
+
+  // Dedupe por UF+cidade — mesma janela de 30 min, chave própria por cidade.
+  registrarVisualizacaoCidade(uf: string, cidadeSlug: string, cidadeNome?: string): void {
+    if (!this._isBrowser) return;
+    const ufNormalizada = uf.toUpperCase();
+    const chave = `cidade_${ufNormalizada}_${cidadeSlug}_ultima_visualizacao`;
+    const agora = Date.now();
+    const ultimaVisualizacao = Number(localStorage.getItem(chave) ?? 0);
+
+    if (agora - ultimaVisualizacao < JANELA_VISUALIZACAO_MS) return;
+
+    this.http
+      .post('v2/metricas/visualizacao-cidade', { uf: ufNormalizada, cidadeSlug, cidadeNome })
+      .subscribe({
+        error: (err) => this.logger.logError(err, 'metrica:visualizacao-cidade'),
       });
     localStorage.setItem(chave, String(agora));
   }
