@@ -10,6 +10,7 @@ import { NotificacaoService } from "../../../core/services/notificacao.service";
 import { LoggerService } from "../../../core/services/logger.service";
 import { MinhaResponsabilidade } from "../../../core/interfaces/responsavel.interface";
 import { NotificacaoParaResponsavel } from "../../../core/interfaces/notificacao.interface";
+import { MetricasService, PaginaMetrica } from "../../../core/services/metricas.service";
 
 /**
  * Painel do Responsável Verificado: igrejas sob gestão do usuário logado
@@ -28,6 +29,7 @@ export class MeuPainelComponent implements OnInit {
   private _notificacoes = inject(NotificacaoService);
   private _router = inject(Router);
   private _logger = inject(LoggerService);
+  private _metricas = inject(MetricasService);
 
   isLoading = true;
   erroCarregar = false;
@@ -46,6 +48,7 @@ export class MeuPainelComponent implements OnInit {
       this._router.navigate(["/entrar"]);
       return;
     }
+    this._metricas.registrarVisualizacaoPagina(PaginaMetrica.MeuPainel);
     this.carregar();
     this._notificacoes.listar().subscribe({
       next: (lista) => (this.notificacoes = lista.filter((n) => !n.lida)),

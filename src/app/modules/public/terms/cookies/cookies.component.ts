@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { PrimeNgModule } from '../../../../shared/primeng.module';
+import { MetricasService, PaginaMetrica } from '../../../../core/services/metricas.service';
 
 @Component({
   selector: 'app-cookies',
@@ -7,6 +8,10 @@ import { PrimeNgModule } from '../../../../shared/primeng.module';
   templateUrl: './cookies.component.html',
   styleUrl: './cookies.component.scss'
 })
-export class CookiesComponent {
+export class CookiesComponent implements OnInit {
+  private _metricas = inject(MetricasService);
 
+  ngOnInit(): void {
+    this._metricas.registrarVisualizacaoPagina(PaginaMetrica.Cookies);
+  }
 }

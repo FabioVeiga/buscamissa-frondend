@@ -14,6 +14,7 @@ import { ActivatedRoute, Router } from "@angular/router";
 import { PrimeNgModule } from "../../../../shared/primeng.module";
 import { LoadingComponent } from "../../../../core/components/loading/loading.component";
 import { MessageService } from "primeng/api";
+import { MetricasService, PaginaMetrica } from "../../../../core/services/metricas.service";
 
 @Component({
   selector: "app-validate-code",
@@ -36,6 +37,7 @@ export class ValidateCodeComponent {
   private _service = inject(ChurchesService);
   private _toast = inject(MessageService);
   private _clarity = inject(ClarityService);
+  private _metricas = inject(MetricasService);
 
   isLoading = false;
   form: FormGroup;
@@ -62,6 +64,7 @@ export class ValidateCodeComponent {
   }
 
   ngOnInit(): void {
+    this._metricas.registrarVisualizacaoPagina(PaginaMetrica.ValidarCodigo);
     this._route.queryParams.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((params) => {
       this.email = params["email"];
       this.controleId = params["controleId"];
