@@ -1,6 +1,7 @@
 import { Component, inject, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import {
+  AbstractControl,
   FormArray,
   FormBuilder,
   FormGroup,
@@ -493,6 +494,20 @@ export class EditarIgrejaComponent implements OnInit {
 
   removerSessao(i: number): void {
     this.sessoes.removeAt(i);
+  }
+
+  /**
+   * Completa hora com 1 dígito ("8:01") para o formato HH:mm ("08:01") que o
+   * Validators.pattern e o backend exigem. Sem isso, "8:01" ficava marcado
+   * como inválido mesmo sendo um horário válido — só faltava o zero à esquerda.
+   */
+  normalizarHorario(control: AbstractControl | null): void {
+    const valor: string = control?.value ?? "";
+    const match = /^(\d{1,2}):(\d{2})$/.exec(valor.trim());
+    if (!match) return;
+
+    const horaNormalizada = `${match[1].padStart(2, "0")}:${match[2]}`;
+    if (horaNormalizada !== valor) control?.setValue(horaNormalizada);
   }
 
   /** Consulta o CEP no back (igual /nova): preenche logradouro/bairro e trava cidade/UF. */

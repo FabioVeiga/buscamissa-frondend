@@ -305,6 +305,7 @@
           <p-select formControlName="diaSemana" [options]="dias" optionLabel="nome" optionValue="valor"
                     styleClass="w-full" appendTo="body"></p-select>
           <input pInputText formControlName="horario" placeholder="HH:mm" maxlength="5" class="input-hora"
+                 (blur)="normalizarHorario(missas.at(i).get('horario'))"
                  [class.ng-invalid-visual]="missas.at(i).get('horario')?.invalid && missas.at(i).get('horario')?.touched" />
           <input pInputText formControlName="observacao" placeholder="Observação (opcional)" maxlength="255" />
           <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm"
@@ -329,9 +330,11 @@
           <p-select formControlName="diaSemana" [options]="dias" optionLabel="nome" optionValue="valor"
                     styleClass="w-full" appendTo="body"></p-select>
           <input pInputText formControlName="horarioInicio" placeholder="09:00" maxlength="5" class="input-hora"
+                 (blur)="normalizarHorario(sessoes.at(i).get('horarioInicio'))"
                  [class.ng-invalid-visual]="sessoes.at(i).get('horarioInicio')?.invalid && sessoes.at(i).get('horarioInicio')?.touched" />
           <span class="ate">às</span>
           <input pInputText formControlName="horarioFim" placeholder="17:00" maxlength="5" class="input-hora"
+                 (blur)="normalizarHorario(sessoes.at(i).get('horarioFim'))"
                  [class.ng-invalid-visual]="sessoes.at(i).get('horarioFim')?.invalid && sessoes.at(i).get('horarioFim')?.touched" />
           <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm"
                   (click)="removerSessao(i)" aria-label="Remover sessão"></button>
