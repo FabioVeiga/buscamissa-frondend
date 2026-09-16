@@ -94,10 +94,13 @@
 
     <!-- DEFINIR SENHA -->
     <ng-container *ngIf="modo === 'definir-senha'">
-      <p>
+      <p *ngIf="!mostrarDesafio">
         Digite o código de 6 dígitos que enviamos para
         <strong>{{ formSolicitar.value.email || "seu e-mail" }}</strong> e
         escolha sua nova senha.
+      </p>
+      <p *ngIf="mostrarDesafio">
+        Responda a pergunta abaixo e escolha sua nova senha.
       </p>
       <form [formGroup]="formDefinir" (ngSubmit)="definirSenha()">
         <div class="p-fluid">
@@ -113,7 +116,7 @@
               <label htmlFor="emailDefinir">E-mail</label>
             </p-iftalabel>
           </div>
-          <div class="field">
+          <div class="field" *ngIf="!mostrarDesafio">
             <p-iftalabel>
               <input
                 pInputText
@@ -128,6 +131,23 @@
               class="p-error block"
               *ngIf="formDefinir.controls['codigo'].invalid && formDefinir.controls['codigo'].touched"
               >Informe o código de 6 dígitos recebido por e-mail.</small
+            >
+          </div>
+          <div class="field" *ngIf="mostrarDesafio">
+            <p-iftalabel>
+              <input
+                pInputText
+                id="resposta"
+                type="number"
+                formControlName="resposta"
+                inputmode="numeric"
+              />
+              <label htmlFor="resposta">{{ perguntaDesafio || "Resposta" }}</label>
+            </p-iftalabel>
+            <small
+              class="p-error block"
+              *ngIf="formDefinir.controls['resposta'].invalid && formDefinir.controls['resposta'].touched"
+              >Informe a resposta da pergunta.</small
             >
           </div>
           <div class="field">
@@ -155,7 +175,7 @@
         </div>
       </form>
       <div class="links">
-        <a (click)="trocarModo('solicitar-codigo')">Reenviar código</a>
+        <a (click)="trocarModo('solicitar-codigo')">{{ mostrarDesafio ? "Tentar novamente" : "Reenviar código" }}</a>
         <a (click)="trocarModo('login')">Voltar para o login</a>
       </div>
     </ng-container>

@@ -4,7 +4,9 @@ import { isPlatformBrowser } from "@angular/common";
 import { BehaviorSubject, Observable, map, tap } from "rxjs";
 import {
   AuthResponse,
+  DefinirSenhaPorDesafioRequest,
   DefinirSenhaRequest,
+  DesafioSenhaRequest,
   SolicitarCodigoSenhaRequest,
 } from "../interfaces/user.interface";
 
@@ -49,6 +51,20 @@ export class AuthService {
   definirSenha(request: DefinirSenhaRequest): Observable<string> {
     return this.http
       .post<{ data: { mensagemTela: string } }>("v1/auth/definir-senha", request)
+      .pipe(map((r) => r.data.mensagemTela));
+  }
+
+  // Alternativa ao código por e-mail (FT auth-senha-sem-email) — 404 quando
+  // desligada (sem provedor de e-mail configurado, liga automaticamente).
+  obterDesafioSenha(request: DesafioSenhaRequest): Observable<string> {
+    return this.http
+      .post<{ data: { pergunta: string } }>("v1/auth/desafio-senha", request)
+      .pipe(map((r) => r.data.pergunta));
+  }
+
+  definirSenhaPorDesafio(request: DefinirSenhaPorDesafioRequest): Observable<string> {
+    return this.http
+      .post<{ data: { mensagemTela: string } }>("v1/auth/definir-senha-desafio", request)
       .pipe(map((r) => r.data.mensagemTela));
   }
 
