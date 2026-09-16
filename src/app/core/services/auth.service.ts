@@ -5,9 +5,15 @@ import { BehaviorSubject, Observable, map, tap } from "rxjs";
 import {
   AuthResponse,
   DefinirSenhaPorDesafioRequest,
+  DefinirSenhaPorPerguntaRequest,
   DefinirSenhaRequest,
   DesafioSenhaRequest,
+  MinhaPerguntaSegurancaResponse,
+  PerguntaSegurancaItem,
+  PerguntaSegurancaRequest,
   SolicitarCodigoSenhaRequest,
+  TrocarPerguntaSegurancaRequest,
+  TrocarSenhaRequest,
 } from "../interfaces/user.interface";
 
 const STORAGE_KEY = "bm_sessao";
@@ -65,6 +71,46 @@ export class AuthService {
   definirSenhaPorDesafio(request: DefinirSenhaPorDesafioRequest): Observable<string> {
     return this.http
       .post<{ data: { mensagemTela: string } }>("v1/auth/definir-senha-desafio", request)
+      .pipe(map((r) => r.data.mensagemTela));
+  }
+
+  obterCatalogoPerguntasSeguranca(): Observable<PerguntaSegurancaItem[]> {
+    return this.http
+      .get<{ data: PerguntaSegurancaItem[] }>("v1/auth/catalogo-perguntas-seguranca")
+      .pipe(map((r) => r.data));
+  }
+
+  // Retorna a pergunta pessoal cadastrada; 404 se o usuário ainda não tem uma
+  // (aí o fluxo cai pro desafio matemático de bootstrap).
+  obterPerguntaSeguranca(request: PerguntaSegurancaRequest): Observable<string> {
+    return this.http
+      .post<{ data: { pergunta: string } }>("v1/auth/pergunta-seguranca", request)
+      .pipe(map((r) => r.data.pergunta));
+  }
+
+  definirSenhaPorPergunta(request: DefinirSenhaPorPerguntaRequest): Observable<string> {
+    return this.http
+      .post<{ data: { mensagemTela: string } }>("v1/auth/definir-senha-pergunta", request)
+      .pipe(map((r) => r.data.mensagemTela));
+  }
+
+  // ---- Conta (usuário logado) ----
+
+  obterMinhaPerguntaSeguranca(): Observable<MinhaPerguntaSegurancaResponse> {
+    return this.http
+      .get<{ data: MinhaPerguntaSegurancaResponse }>("v1/auth/minha-pergunta-seguranca")
+      .pipe(map((r) => r.data));
+  }
+
+  trocarSenha(request: TrocarSenhaRequest): Observable<string> {
+    return this.http
+      .post<{ data: { mensagemTela: string } }>("v1/auth/trocar-senha", request)
+      .pipe(map((r) => r.data.mensagemTela));
+  }
+
+  trocarPerguntaSeguranca(request: TrocarPerguntaSegurancaRequest): Observable<string> {
+    return this.http
+      .post<{ data: { mensagemTela: string } }>("v1/auth/trocar-pergunta-seguranca", request)
       .pipe(map((r) => r.data.mensagemTela));
   }
 

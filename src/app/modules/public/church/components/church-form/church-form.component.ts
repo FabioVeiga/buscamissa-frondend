@@ -26,6 +26,7 @@ import { ChurchFormData, Mass } from "../../models/church.model";
 import { MessageService } from "primeng/api";
 import { RedesSociaisService, TipoRedeSocial } from "../../../../../core/services/redes-sociais.service";
 import { LoggerService } from "../../../../../core/services/logger.service";
+import { emailEstritoValidator } from "../../../../../core/misc/email.validator";
 
 interface TypeChurchOption {
   name: string;
@@ -237,7 +238,7 @@ export class ChurchFormComponent implements OnInit, OnChanges {
       regiao: [{ value: "", disabled: true }], // Manter Região se a API precisar
       telefone: ["", Validators.pattern(/^[\d\s()+-]{8,20}$/)],
       whatsapp: ["", Validators.pattern(/^[\d\s()+-]{8,20}$/)],
-      emailContato: ["", [Validators.email, Validators.maxLength(120)]],
+      emailContato: ["", [Validators.email, emailEstritoValidator(), Validators.maxLength(120)]],
       missas: this.fb.array([], Validators.required), // Pelo menos uma missa?
       imagem: [""], // Armazena base64
     });

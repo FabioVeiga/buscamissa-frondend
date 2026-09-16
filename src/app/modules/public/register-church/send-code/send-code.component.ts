@@ -14,6 +14,7 @@ import { PrimeNgModule } from "../../../../shared/primeng.module";
 import { LoadingComponent } from "../../../../core/components/loading/loading.component";
 import { LoggerService } from "../../../../core/services/logger.service";
 import { MetricasService, PaginaMetrica } from "../../../../core/services/metricas.service";
+import { emailEstritoValidator } from "../../../../core/misc/email.validator";
 
 @Component({
   selector: "app-send-code",
@@ -50,7 +51,7 @@ export class SendCodeComponent implements OnInit {
     this._clarity.track('contrib_tela_identificacao');
     this.form = this._fb.group({
       nome: ["", Validators.required],
-      email: ["", [Validators.required, Validators.email]],
+      email: ["", [Validators.required, Validators.email, emailEstritoValidator()]],
       aceitarTermo: [false, Validators.requiredTrue],
       aceitarPromocao: [false],
     });
