@@ -20,6 +20,7 @@ import { MetricasIgreja, Circunscricao, CapelaComunidade, CircunscricaoOpcao, Ca
 import { STATES } from "../../../../core/constants/states";
 import { sanitizarNumeroEndereco } from "../../../../shared/utils/endereco.utils";
 import { MetricasService, PaginaMetrica } from "../../../../core/services/metricas.service";
+import { emailEstritoValidator } from "../../../../core/misc/email.validator";
 
 const REDES = [
   { tipo: 1, nome: "Facebook" },
@@ -162,7 +163,7 @@ export class EditarIgrejaComponent implements OnInit {
         dddWhatsApp: [""],
         telefoneWhatsApp: [""],
         website: [""],
-        emailContato: ["", [Validators.email]],
+        emailContato: ["", [Validators.email, emailEstritoValidator()]],
       }),
       redesSociais: this._fb.array([]),
       missas: this._fb.array([]),

@@ -14,6 +14,7 @@ import { AuthService } from "../../../core/services/auth.service";
 import { LoggerService } from "../../../core/services/logger.service";
 import { MetricasService, PaginaMetrica } from "../../../core/services/metricas.service";
 import { PerguntaSegurancaItem } from "../../../core/interfaces/user.interface";
+import { emailEstritoValidator } from "../../../core/misc/email.validator";
 
 type Modo = "login" | "solicitar-codigo" | "definir-senha";
 
@@ -62,11 +63,11 @@ export class EntrarComponent implements OnInit {
     // Forms antes do redirect: o template renderiza uma vez mesmo quando
     // vamos navegar embora — sem os forms criados isso estoura NG01052.
     this.formLogin = this._fb.group({
-      email: ["", [Validators.required, Validators.email]],
+      email: ["", [Validators.required, Validators.email, emailEstritoValidator()]],
       senha: ["", Validators.required],
     });
     this.formSolicitar = this._fb.group({
-      email: ["", [Validators.required, Validators.email]],
+      email: ["", [Validators.required, Validators.email, emailEstritoValidator()]],
       nome: [""],
     });
     this.formDefinir = this._fb.group({

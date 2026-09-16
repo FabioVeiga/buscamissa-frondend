@@ -61,6 +61,25 @@ export interface DefinirSenhaPorPerguntaRequest {
   novaSenha: string;
 }
 
+// ---- Conta (usuário logado) — espelha MinhaPerguntaSegurancaResponse/
+// TrocarSenhaRequest/TrocarPerguntaSegurancaRequest do api-public.
+
+export interface MinhaPerguntaSegurancaResponse {
+  perguntaSegurancaId: number | null;
+  pergunta: string | null;
+}
+
+export interface TrocarSenhaRequest {
+  senhaAtual: string;
+  novaSenha: string;
+}
+
+export interface TrocarPerguntaSegurancaRequest {
+  senhaAtual: string;
+  perguntaSegurancaId: number;
+  resposta: string;
+}
+
 export interface AuthResponse {
   id: number;
   nome: string;

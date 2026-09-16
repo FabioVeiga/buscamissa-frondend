@@ -8,9 +8,12 @@ import {
   DefinirSenhaPorPerguntaRequest,
   DefinirSenhaRequest,
   DesafioSenhaRequest,
+  MinhaPerguntaSegurancaResponse,
   PerguntaSegurancaItem,
   PerguntaSegurancaRequest,
   SolicitarCodigoSenhaRequest,
+  TrocarPerguntaSegurancaRequest,
+  TrocarSenhaRequest,
 } from "../interfaces/user.interface";
 
 const STORAGE_KEY = "bm_sessao";
@@ -88,6 +91,26 @@ export class AuthService {
   definirSenhaPorPergunta(request: DefinirSenhaPorPerguntaRequest): Observable<string> {
     return this.http
       .post<{ data: { mensagemTela: string } }>("v1/auth/definir-senha-pergunta", request)
+      .pipe(map((r) => r.data.mensagemTela));
+  }
+
+  // ---- Conta (usuário logado) ----
+
+  obterMinhaPerguntaSeguranca(): Observable<MinhaPerguntaSegurancaResponse> {
+    return this.http
+      .get<{ data: MinhaPerguntaSegurancaResponse }>("v1/auth/minha-pergunta-seguranca")
+      .pipe(map((r) => r.data));
+  }
+
+  trocarSenha(request: TrocarSenhaRequest): Observable<string> {
+    return this.http
+      .post<{ data: { mensagemTela: string } }>("v1/auth/trocar-senha", request)
+      .pipe(map((r) => r.data.mensagemTela));
+  }
+
+  trocarPerguntaSeguranca(request: TrocarPerguntaSegurancaRequest): Observable<string> {
+    return this.http
+      .post<{ data: { mensagemTela: string } }>("v1/auth/trocar-pergunta-seguranca", request)
       .pipe(map((r) => r.data.mensagemTela));
   }
 
