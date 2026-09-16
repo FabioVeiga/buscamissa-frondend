@@ -42,6 +42,12 @@ export class EntrarComponent implements OnInit {
   public formSolicitar!: FormGroup;
   public formDefinir!: FormGroup;
 
+  /** Alternativa ao código por e-mail (FT auth-senha-sem-email) — decidida
+   * pelo backend a cada tentativa, nunca fixa no build (mesmo padrão de
+   * validate-code.component.ts no cadastro de igreja). */
+  public mostrarDesafio = false;
+  public perguntaDesafio = "";
+
   ngOnInit(): void {
     this._metricas.registrarVisualizacaoPagina(PaginaMetrica.Entrar);
     // Forms antes do redirect: o template renderiza uma vez mesmo quando
@@ -56,6 +62,7 @@ export class EntrarComponent implements OnInit {
     });
     this.formDefinir = this._fb.group({
       codigo: [null, [Validators.required, Validators.min(100000), Validators.max(999999)]],
+      resposta: [null, Validators.required],
       novaSenha: ["", [Validators.required, Validators.minLength(8)]],
     });
 
@@ -97,12 +104,42 @@ export class EntrarComponent implements OnInit {
     });
   }
 
+  // Sempre tenta o desafio matemático primeiro; se o backend responder que ele
+  // não está habilitado (FT auth-senha-sem-email OFF e provedor de e-mail
+  // configurado), cai pro fluxo tradicional de código por e-mail. Decisão 100%
+  // do backend a cada chamada — nada fixo no build do frontend.
   solicitarCodigo(): void {
     if (this.formSolicitar.invalid) {
       this.formSolicitar.markAllAsTouched();
       return;
     }
     this.isLoading = true;
+    this._auth.obterDesafioSenha(this.formSolicitar.value).subscribe({
+      next: (pergunta) => {
+        this.mostrarDesafio = true;
+        this.perguntaDesafio = pergunta;
+        this.formDefinir.reset();
+        this.modo = "definir-senha";
+        this.isLoading = false;
+      },
+      error: (error) => {
+        if (error?.status === 404) {
+          this.mostrarDesafio = false;
+          this._enviarCodigoPorEmail();
+          return;
+        }
+        this.isLoading = false;
+        this._message.add({
+          severity: "error",
+          summary: "Não foi possível enviar o código",
+          detail: error?.error?.data?.mensagemTela ?? "Tente novamente.",
+        });
+        this._logger.logError(error, "entrar:obter-desafio");
+      },
+    });
+  }
+
+  private _enviarCodigoPorEmail(): void {
     this._auth.solicitarCodigoSenha(this.formSolicitar.value).subscribe({
       next: (mensagem) => {
         this._message.add({ severity: "success", summary: "Código enviado", detail: mensagem });
@@ -122,7 +159,11 @@ export class EntrarComponent implements OnInit {
   }
 
   definirSenha(): void {
-    if (this.formDefinir.invalid) {
+    if (this.mostrarDesafio) {
+      this._definirSenhaPorDesafio();
+      return;
+    }
+    if (this.formDefinir.controls["codigo"].invalid || this.formDefinir.controls["novaSenha"].invalid) {
       this.formDefinir.markAllAsTouched();
       return;
     }
@@ -143,6 +184,36 @@ export class EntrarComponent implements OnInit {
           detail: error?.error?.data?.mensagemTela ?? "Tente novamente.",
         });
         this._logger.logError(error, "entrar:definir-senha");
+      },
+      complete: () => (this.isLoading = false),
+    });
+  }
+
+  private _definirSenhaPorDesafio(): void {
+    if (this.formDefinir.controls["resposta"].invalid || this.formDefinir.controls["novaSenha"].invalid) {
+      this.formDefinir.markAllAsTouched();
+      return;
+    }
+    this.isLoading = true;
+    const email = this.formSolicitar.value.email;
+    const { resposta, novaSenha } = this.formDefinir.value;
+    this._auth.definirSenhaPorDesafio({ email, resposta, novaSenha }).subscribe({
+      next: (mensagem) => {
+        this._message.add({ severity: "success", summary: "Senha definida", detail: mensagem });
+        this.formLogin.patchValue({ email });
+        this.mostrarDesafio = false;
+        this.modo = "login";
+      },
+      error: (error) => {
+        this.isLoading = false;
+        this._message.add({
+          severity: "error",
+          summary: "Não foi possível definir a senha",
+          detail: error?.error?.data?.mensagemTela ?? "Tente novamente.",
+        });
+        this._logger.logError(error, "entrar:definir-senha-desafio");
+        // Desafio expirado (15 min) → busca um novo automaticamente.
+        if (error?.error?.data?.desafioExpirado) this.solicitarCodigo();
       },
       complete: () => (this.isLoading = false),
     });

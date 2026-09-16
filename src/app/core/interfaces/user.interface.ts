@@ -26,6 +26,19 @@ export interface DefinirSenhaRequest {
   novaSenha: string;
 }
 
+// Alternativa ao código por e-mail (FT auth-senha-sem-email) — espelha
+// DesafioSenhaRequest/DefinirSenhaPorDesafioRequest do api-public.
+export interface DesafioSenhaRequest {
+  email: string;
+  nome?: string;
+}
+
+export interface DefinirSenhaPorDesafioRequest {
+  email: string;
+  resposta: number;
+  novaSenha: string;
+}
+
 export interface AuthResponse {
   id: number;
   nome: string;
