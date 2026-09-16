@@ -13,6 +13,7 @@ import { PrimeNgModule } from "../../../shared/primeng.module";
 import { AuthService } from "../../../core/services/auth.service";
 import { LoggerService } from "../../../core/services/logger.service";
 import { MetricasService, PaginaMetrica } from "../../../core/services/metricas.service";
+import { PerguntaSegurancaItem } from "../../../core/interfaces/user.interface";
 
 type Modo = "login" | "solicitar-codigo" | "definir-senha";
 
@@ -42,11 +43,19 @@ export class EntrarComponent implements OnInit {
   public formSolicitar!: FormGroup;
   public formDefinir!: FormGroup;
 
-  /** Alternativa ao código por e-mail (FT auth-senha-sem-email) — decidida
+  /** Pergunta de segurança pessoal cadastrada pelo próprio usuário — sempre
+   * tentada primeiro na recuperação de senha (mais forte que o desafio
+   * matemático: só quem é dono da conta sabe a resposta). */
+  public mostrarPerguntaPessoal = false;
+  public perguntaPessoal = "";
+
+  /** Alternativa ao código por e-mail (FT auth-senha-sem-email) — usada só no
+   * bootstrap de contas que ainda não têm pergunta pessoal cadastrada. Decidida
    * pelo backend a cada tentativa, nunca fixa no build (mesmo padrão de
    * validate-code.component.ts no cadastro de igreja). */
   public mostrarDesafio = false;
   public perguntaDesafio = "";
+  public catalogoPerguntas: PerguntaSegurancaItem[] = [];
 
   ngOnInit(): void {
     this._metricas.registrarVisualizacaoPagina(PaginaMetrica.Entrar);
@@ -64,6 +73,11 @@ export class EntrarComponent implements OnInit {
       codigo: [null, [Validators.required, Validators.min(100000), Validators.max(999999)]],
       resposta: [null, Validators.required],
       novaSenha: ["", [Validators.required, Validators.minLength(8)]],
+      // Bootstrap (desafio matemático): cadastro obrigatório da pergunta pessoal.
+      perguntaSegurancaId: [null, Validators.required],
+      respostaSegurancaCadastro: ["", Validators.required],
+      // Recuperação por pergunta pessoal (usuário já cadastrado).
+      respostaPerguntaPessoal: ["", Validators.required],
     });
 
     if (this._auth.estaLogado) {
@@ -104,16 +118,45 @@ export class EntrarComponent implements OnInit {
     });
   }
 
-  // Sempre tenta o desafio matemático primeiro; se o backend responder que ele
-  // não está habilitado (FT auth-senha-sem-email OFF e provedor de e-mail
-  // configurado), cai pro fluxo tradicional de código por e-mail. Decisão 100%
-  // do backend a cada chamada — nada fixo no build do frontend.
+  // Sempre tenta a pergunta de segurança pessoal primeiro (usuário já
+  // cadastrado). Se ele ainda não tem uma (conta nova, nunca definiu senha),
+  // cai pro bootstrap via desafio matemático — que já cadastra a pergoal nesse
+  // mesmo passo. Se nem o desafio estiver habilitado, cai pro código por
+  // e-mail tradicional. Decisão 100% do backend a cada chamada — nada fixo no
+  // build do frontend.
   solicitarCodigo(): void {
     if (this.formSolicitar.invalid) {
       this.formSolicitar.markAllAsTouched();
       return;
     }
     this.isLoading = true;
+    this._auth.obterPerguntaSeguranca(this.formSolicitar.value).subscribe({
+      next: (pergunta) => {
+        this.mostrarPerguntaPessoal = true;
+        this.mostrarDesafio = false;
+        this.perguntaPessoal = pergunta;
+        this.formDefinir.reset();
+        this.modo = "definir-senha";
+        this.isLoading = false;
+      },
+      error: (error) => {
+        if (error?.status === 404) {
+          this.mostrarPerguntaPessoal = false;
+          this._tentarDesafioBootstrap();
+          return;
+        }
+        this.isLoading = false;
+        this._message.add({
+          severity: "error",
+          summary: "Não foi possível continuar",
+          detail: error?.error?.data?.mensagemTela ?? "Tente novamente.",
+        });
+        this._logger.logError(error, "entrar:obter-pergunta-seguranca");
+      },
+    });
+  }
+
+  private _tentarDesafioBootstrap(): void {
     this._auth.obterDesafioSenha(this.formSolicitar.value).subscribe({
       next: (pergunta) => {
         this.mostrarDesafio = true;
@@ -121,6 +164,7 @@ export class EntrarComponent implements OnInit {
         this.formDefinir.reset();
         this.modo = "definir-senha";
         this.isLoading = false;
+        this._carregarCatalogoPerguntas();
       },
       error: (error) => {
         if (error?.status === 404) {
@@ -136,6 +180,14 @@ export class EntrarComponent implements OnInit {
         });
         this._logger.logError(error, "entrar:obter-desafio");
       },
+    });
+  }
+
+  private _carregarCatalogoPerguntas(): void {
+    if (this.catalogoPerguntas.length) return;
+    this._auth.obterCatalogoPerguntasSeguranca().subscribe({
+      next: (catalogo) => (this.catalogoPerguntas = catalogo),
+      error: (error) => this._logger.logError(error, "entrar:catalogo-perguntas"),
     });
   }
 
@@ -159,6 +211,10 @@ export class EntrarComponent implements OnInit {
   }
 
   definirSenha(): void {
+    if (this.mostrarPerguntaPessoal) {
+      this._definirSenhaPorPergunta();
+      return;
+    }
     if (this.mostrarDesafio) {
       this._definirSenhaPorDesafio();
       return;
@@ -190,32 +246,74 @@ export class EntrarComponent implements OnInit {
   }
 
   private _definirSenhaPorDesafio(): void {
-    if (this.formDefinir.controls["resposta"].invalid || this.formDefinir.controls["novaSenha"].invalid) {
+    const controlesObrigatorios = ["resposta", "novaSenha", "perguntaSegurancaId", "respostaSegurancaCadastro"];
+    const invalido = controlesObrigatorios.some((c) => this.formDefinir.controls[c].invalid);
+    if (invalido) {
       this.formDefinir.markAllAsTouched();
       return;
     }
     this.isLoading = true;
     const email = this.formSolicitar.value.email;
-    const { resposta, novaSenha } = this.formDefinir.value;
-    this._auth.definirSenhaPorDesafio({ email, resposta, novaSenha }).subscribe({
-      next: (mensagem) => {
-        this._message.add({ severity: "success", summary: "Senha definida", detail: mensagem });
-        this.formLogin.patchValue({ email });
-        this.mostrarDesafio = false;
-        this.modo = "login";
-      },
-      error: (error) => {
-        this.isLoading = false;
-        this._message.add({
-          severity: "error",
-          summary: "Não foi possível definir a senha",
-          detail: error?.error?.data?.mensagemTela ?? "Tente novamente.",
-        });
-        this._logger.logError(error, "entrar:definir-senha-desafio");
-        // Desafio expirado (15 min) → busca um novo automaticamente.
-        if (error?.error?.data?.desafioExpirado) this.solicitarCodigo();
-      },
-      complete: () => (this.isLoading = false),
-    });
+    const { resposta, novaSenha, perguntaSegurancaId, respostaSegurancaCadastro } = this.formDefinir.value;
+    this._auth
+      .definirSenhaPorDesafio({
+        email,
+        resposta,
+        novaSenha,
+        perguntaSegurancaId,
+        respostaSeguranca: respostaSegurancaCadastro,
+      })
+      .subscribe({
+        next: (mensagem) => {
+          this._message.add({ severity: "success", summary: "Senha definida", detail: mensagem });
+          this.formLogin.patchValue({ email });
+          this.mostrarDesafio = false;
+          this.modo = "login";
+        },
+        error: (error) => {
+          this.isLoading = false;
+          this._message.add({
+            severity: "error",
+            summary: "Não foi possível definir a senha",
+            detail: error?.error?.data?.mensagemTela ?? "Tente novamente.",
+          });
+          this._logger.logError(error, "entrar:definir-senha-desafio");
+          // Desafio expirado (15 min) → busca um novo automaticamente.
+          if (error?.error?.data?.desafioExpirado) this.solicitarCodigo();
+        },
+        complete: () => (this.isLoading = false),
+      });
+  }
+
+  private _definirSenhaPorPergunta(): void {
+    const controlesObrigatorios = ["respostaPerguntaPessoal", "novaSenha"];
+    const invalido = controlesObrigatorios.some((c) => this.formDefinir.controls[c].invalid);
+    if (invalido) {
+      this.formDefinir.markAllAsTouched();
+      return;
+    }
+    this.isLoading = true;
+    const email = this.formSolicitar.value.email;
+    const { respostaPerguntaPessoal, novaSenha } = this.formDefinir.value;
+    this._auth
+      .definirSenhaPorPergunta({ email, resposta: respostaPerguntaPessoal, novaSenha })
+      .subscribe({
+        next: (mensagem) => {
+          this._message.add({ severity: "success", summary: "Senha definida", detail: mensagem });
+          this.formLogin.patchValue({ email });
+          this.mostrarPerguntaPessoal = false;
+          this.modo = "login";
+        },
+        error: (error) => {
+          this.isLoading = false;
+          this._message.add({
+            severity: "error",
+            summary: "Não foi possível definir a senha",
+            detail: error?.error?.data?.mensagemTela ?? "Tente novamente.",
+          });
+          this._logger.logError(error, "entrar:definir-senha-pergunta");
+        },
+        complete: () => (this.isLoading = false),
+      });
   }
 }
