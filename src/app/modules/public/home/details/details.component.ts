@@ -12,6 +12,7 @@ import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { Mass } from "../../church/models/church.model";
 import { getNextOccurrenceMinutes } from "../../../../shared/utils/mass-time.utils";
+import { agruparSessoesPorDiasConsecutivos, SessaoAgrupada } from "../../../../shared/utils/sessao-horario.utils";
 import { AnalyticsService } from "../../../../core/services/analytics.service";
 import { ClarityService } from "../../../../core/services/clarity.service";
 import { RedesSociaisService, TipoRedeSocial } from "../../../../core/services/redes-sociais.service";
@@ -91,17 +92,13 @@ export class DetailsComponent implements OnInit {
   // Reportar problema
   modalReportarProblemaVisible = false;
 
-  // Sessões de atendimento/confissão (Feature B)
-  private static readonly DIAS_CURTOS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-
-  get sessoesSecretaria(): any[] {
-    return (this.churchInfo?.sessoes ?? []).filter((s: any) => s.tipo === 1);
+  // Sessões de atendimento/confissão (Feature B) — dias consecutivos com o
+  // mesmo horário são agrupados numa faixa só ("Ter a Sex — 08:00 às 11:30").
+  get sessoesSecretaria(): SessaoAgrupada[] {
+    return agruparSessoesPorDiasConsecutivos((this.churchInfo?.sessoes ?? []).filter((s: any) => s.tipo === 1));
   }
-  get sessoesConfissao(): any[] {
-    return (this.churchInfo?.sessoes ?? []).filter((s: any) => s.tipo === 2);
-  }
-  diaCurto(dia: number): string {
-    return DetailsComponent.DIAS_CURTOS[dia] ?? "";
+  get sessoesConfissao(): SessaoAgrupada[] {
+    return agruparSessoesPorDiasConsecutivos((this.churchInfo?.sessoes ?? []).filter((s: any) => s.tipo === 2));
   }
 
   // Responsável Verificado (Fase 5)
