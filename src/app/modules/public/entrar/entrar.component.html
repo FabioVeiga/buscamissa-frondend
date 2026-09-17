@@ -56,8 +56,9 @@
     <!-- SOLICITAR CÓDIGO -->
     <ng-container *ngIf="modo === 'solicitar-codigo'">
       <p>
-        Informe seu e-mail e enviaremos um código de 6 dígitos para você criar
-        (ou redefinir) sua senha.
+        Informe seu e-mail para criar ou redefinir sua senha. Se você já tem
+        uma pergunta de segurança cadastrada, vamos pedir a resposta dela —
+        senão, mostramos outra forma de confirmar que é você.
       </p>
       <form [formGroup]="formSolicitar" (ngSubmit)="solicitarCodigo()">
         <div class="p-fluid">
@@ -80,7 +81,7 @@
           </div>
           <p-button
             type="submit"
-            label="Enviar código"
+            label="Continuar"
             [loading]="isLoading"
             styleClass="w-full"
           ></p-button>
@@ -88,7 +89,7 @@
       </form>
       <div class="links">
         <a (click)="trocarModo('login')">Voltar para o login</a>
-        <a (click)="trocarModo('definir-senha')">Já tenho um código</a>
+        <a (click)="trocarModo('definir-senha')">Já tenho um código por e-mail</a>
       </div>
     </ng-container>
 
