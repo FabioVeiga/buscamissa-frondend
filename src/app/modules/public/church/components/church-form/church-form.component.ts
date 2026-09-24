@@ -421,7 +421,7 @@ export class ChurchFormComponent implements OnInit, OnChanges {
               id: [null],
               diaSemana: [dia, Validators.required],
               horario: [new Date(horario), [Validators.required, this.minutosValidos()]],
-              observacao: ["", Validators.maxLength(20)],
+              observacao: ["", Validators.maxLength(50)],
             })
           );
           adicionados++;
@@ -473,7 +473,7 @@ export class ChurchFormComponent implements OnInit, OnChanges {
           missa?.horario ? this.stringParaDate(missa.horario as string) : null,
           [Validators.required, this.minutosValidos()],
         ],
-        observacao: [missa?.observacao ?? "", Validators.maxLength(20)],
+        observacao: [missa?.observacao ?? "", Validators.maxLength(50)],
       })
     );
   }
@@ -511,7 +511,7 @@ export class ChurchFormComponent implements OnInit, OnChanges {
         id: [null],
         diaSemana: [this.diaUnico, Validators.required],
         horario: [new Date(this.horarioUnico), [Validators.required, this.minutosValidos()]],
-        observacao: [this.observacaoUnica ?? "", Validators.maxLength(20)],
+        observacao: [this.observacaoUnica ?? "", Validators.maxLength(50)],
       })
     );
     this.ordenarHorarios();
