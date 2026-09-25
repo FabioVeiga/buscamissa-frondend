@@ -38,4 +38,15 @@ export class DetailsContatoComponent {
     if (!site) return null;
     return /^https?:\/\//i.test(site) ? site : `https://${site}`;
   }
+
+  /** Só o domínio ("arquidiocesedecuritiba.org.br"): a URL inteira não cabia no card. */
+  get siteLabel(): string {
+    const url = this.siteUrl;
+    if (!url) return "";
+    try {
+      return new URL(url).hostname.replace(/^www\./i, "");
+    } catch {
+      return "Acessar site";
+    }
+  }
 }
