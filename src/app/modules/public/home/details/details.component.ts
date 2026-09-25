@@ -338,7 +338,7 @@ export class DetailsComponent implements OnInit {
 
     const temFoto = !!igreja.imagemUrl;
     const temTelefone = !!(contato.telefone || contato.telefoneWhatsApp);
-    const temSite = !!contato.site;
+    const temSite = !!contato.website;
     const temInstagram = redes.some((r: any) => r.tipoRedeSocial === 2);
     const temFacebook = redes.some((r: any) => r.tipoRedeSocial === 1);
     const qtdMissas = missas.length;

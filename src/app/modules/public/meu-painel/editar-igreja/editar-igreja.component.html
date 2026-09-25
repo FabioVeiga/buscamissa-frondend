@@ -192,18 +192,11 @@
     <!-- IMAGEM -->
     <section class="bloco">
       <h2><i class="pi pi-image"></i> Foto da igreja</h2>
-      <div class="imagem-area">
-        <div class="imagem-preview">
-          <img *ngIf="imagemPreview" [src]="imagemPreview" alt="Foto da igreja" />
-          <i *ngIf="!imagemPreview" class="pi pi-building"></i>
-        </div>
-        <div>
-          <input #inputImagem type="file" accept="image/*" hidden (change)="selecionarImagem($event)" />
-          <button pButton type="button" icon="pi pi-upload" label="Trocar foto"
-                  class="p-button-sm p-button-outlined" (click)="inputImagem.click()"></button>
-          <p class="dica-hora">JPG ou PNG, até 5MB.</p>
-        </div>
-      </div>
+      <app-foto-igreja-upload
+        [preview]="imagemPreview"
+        [permitirRemover]="false"
+        (fotoAlterada)="onFotoAlterada($event)"
+      ></app-foto-igreja-upload>
     </section>
 
     <!-- ENDEREÇO -->
@@ -307,7 +300,8 @@
           <input pInputText formControlName="horario" placeholder="HH:mm" maxlength="5" class="input-hora"
                  (blur)="normalizarHorario(missas.at(i).get('horario'))"
                  [class.ng-invalid-visual]="missas.at(i).get('horario')?.invalid && missas.at(i).get('horario')?.touched" />
-          <input pInputText formControlName="observacao" placeholder="Observação (opcional)" maxlength="255" />
+          <input pInputText formControlName="observacao" placeholder="Observação (opcional, até 20 caracteres)"
+                 [class.ng-invalid-visual]="missas.at(i).get('observacao')?.invalid" />
           <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm"
                   (click)="removerMissa(i)" aria-label="Remover horário"></button>
         </div>
