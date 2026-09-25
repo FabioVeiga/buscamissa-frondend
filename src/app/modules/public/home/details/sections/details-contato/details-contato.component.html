@@ -58,8 +58,8 @@
     </a>
 
     <!-- Site -->
-    <a *ngIf="igreja.contato?.site"
-       [href]="igreja.contato.site" target="_blank" rel="noopener"
+    <a *ngIf="siteUrl"
+       [href]="siteUrl" target="_blank" rel="noopener"
        (click)="objetivoClick.emit('site')"
        class="contact-row">
       <div class="contact-row__icon contact-row__icon--purple">
@@ -67,7 +67,7 @@
       </div>
       <div class="min-w-0">
         <p class="contact-row__label">Site</p>
-        <p class="contact-row__value truncate">{{ igreja.contato.site }}</p>
+        <p class="contact-row__value truncate">{{ igreja.contato.website }}</p>
       </div>
     </a>
 

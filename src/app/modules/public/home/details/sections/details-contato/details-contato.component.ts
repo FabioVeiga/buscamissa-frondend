@@ -25,10 +25,17 @@ export class DetailsContatoComponent {
 
   get temContato(): boolean {
     const c = this.igreja?.contato;
-    return !!(c?.telefone || c?.telefoneWhatsApp || c?.emailContato || c?.site || this.igreja?.redesSociais?.length);
+    return !!(c?.telefone || c?.telefoneWhatsApp || c?.emailContato || c?.website || this.igreja?.redesSociais?.length);
   }
 
   getSocialIcon(url: string): string {
     return getSocialIconFromTipos(url, this.tiposRedeSocial);
+  }
+
+  /** Website cadastrado pronto para link: aceita valor salvo sem protocolo ("www.paroquia.org"). */
+  get siteUrl(): string | null {
+    const site = this.igreja?.contato?.website?.trim();
+    if (!site) return null;
+    return /^https?:\/\//i.test(site) ? site : `https://${site}`;
   }
 }
