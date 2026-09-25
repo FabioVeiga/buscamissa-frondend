@@ -1,3 +1,4 @@
+import { FotoIgrejaSelecionada, FotoIgrejaUploadComponent } from "../../../../shared/components/foto-igreja-upload/foto-igreja-upload.component";
 import { Component, inject, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import {
@@ -55,7 +56,7 @@ const DIAS = [
  */
 @Component({
   selector: "app-editar-igreja",
-  imports: [PrimeNgModule, CommonModule, FormsModule, ReactiveFormsModule, RouterLink, SkeletonModule],
+  imports: [PrimeNgModule, CommonModule, FormsModule, ReactiveFormsModule, RouterLink, SkeletonModule, FotoIgrejaUploadComponent],
   providers: [MessageService],
   templateUrl: "./editar-igreja.component.html",
   styleUrl: "./editar-igreja.component.scss",
@@ -568,27 +569,9 @@ export class EditarIgrejaComponent implements OnInit {
     return localidadeMudou || ufMudou;
   }
 
-  selecionarImagem(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
-
-    if (!file.type.startsWith("image/")) {
-      this._message.add({ severity: "warn", summary: "Arquivo inválido", detail: "Selecione uma imagem." });
-      return;
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      this._message.add({ severity: "warn", summary: "Arquivo muito grande", detail: "Máximo de 5MB." });
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64 = reader.result as string;
-      this.imagemBase64 = base64.split(",")[1];
-      this.imagemPreview = base64;
-    };
-    reader.readAsDataURL(file);
+  onFotoAlterada(foto: FotoIgrejaSelecionada): void {
+    this.imagemBase64 = foto.base64;
+    this.imagemPreview = foto.preview;
   }
 
   salvar(): void {
