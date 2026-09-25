@@ -1,0 +1,53 @@
+<div class="foto-igreja">
+  <div class="foto-igreja__preview">
+    <p-progressSpinner *ngIf="carregando" styleClass="w-8 h-8" strokeWidth="4"></p-progressSpinner>
+    <img *ngIf="!carregando && preview" [src]="preview" alt="Foto da igreja" />
+    <i *ngIf="!carregando && !preview" class="pi pi-building"></i>
+  </div>
+
+  <div class="foto-igreja__acoes" tabindex="0" (paste)="onColar($event)">
+    <span class="foto-igreja__dica">
+      Selecione um arquivo, cole uma imagem (<strong>Ctrl+V</strong>) ou informe a URL de uma imagem.
+    </span>
+
+    <div class="foto-igreja__botoes">
+      <input #inputArquivo type="file" accept="image/*" hidden (change)="onSelecionarArquivo($event)" />
+      <p-button
+        [label]="preview ? 'Trocar foto' : 'Selecionar foto'"
+        icon="pi pi-upload"
+        size="small"
+        [outlined]="true"
+        (onClick)="inputArquivo.click()"
+      ></p-button>
+      <p-button
+        *ngIf="permitirRemover && preview"
+        label="Remover"
+        icon="pi pi-trash"
+        size="small"
+        severity="secondary"
+        [text]="true"
+        (onClick)="remover()"
+      ></p-button>
+    </div>
+
+    <div class="foto-igreja__url">
+      <input
+        pInputText
+        [(ngModel)]="imagemUrlInput"
+        [ngModelOptions]="{ standalone: true }"
+        placeholder="https://exemplo.com/foto.jpg"
+      />
+      <p-button
+        label="Adicionar"
+        icon="pi pi-link"
+        size="small"
+        [loading]="carregando"
+        [disabled]="!imagemUrlInput.trim()"
+        (onClick)="adicionarPorUrl()"
+      ></p-button>
+    </div>
+
+    <small class="foto-igreja__dica">JPG ou PNG, até 5MB.</small>
+    <small *ngIf="erro" class="foto-igreja__erro">{{ erro }}</small>
+  </div>
+</div>
