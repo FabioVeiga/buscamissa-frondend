@@ -470,7 +470,7 @@ export class EditarIgrejaComponent implements OnInit {
       this._fb.group({
         diaSemana: [dia, Validators.required],
         horario: [horario, [Validators.required, Validators.pattern(/^([01]\d|2[0-3]):[0-5]\d$/)]],
-        observacao: [observacao, Validators.maxLength(50)],
+        observacao: [observacao, Validators.maxLength(20)],
       })
     );
   }
@@ -597,7 +597,7 @@ export class EditarIgrejaComponent implements OnInit {
       this._message.add({
         severity: "warn",
         summary: "Revise o formulário",
-        detail: "Há campos inválidos (verifique horários no formato HH:mm, observações de missa com até 50 caracteres e nomes de perfil).",
+        detail: "Há campos inválidos (verifique horários no formato HH:mm, observações de missa com até 20 caracteres e nomes de perfil).",
       });
       return;
     }

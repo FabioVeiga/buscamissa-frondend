@@ -307,7 +307,7 @@
           <input pInputText formControlName="horario" placeholder="HH:mm" maxlength="5" class="input-hora"
                  (blur)="normalizarHorario(missas.at(i).get('horario'))"
                  [class.ng-invalid-visual]="missas.at(i).get('horario')?.invalid && missas.at(i).get('horario')?.touched" />
-          <input pInputText formControlName="observacao" placeholder="Observação (opcional, até 50 caracteres)"
+          <input pInputText formControlName="observacao" placeholder="Observação (opcional, até 20 caracteres)"
                  [class.ng-invalid-visual]="missas.at(i).get('observacao')?.invalid" />
           <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm"
                   (click)="removerMissa(i)" aria-label="Remover horário"></button>

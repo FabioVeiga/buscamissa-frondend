@@ -257,10 +257,10 @@
             [(ngModel)]="observacaoUnica"
             [ngModelOptions]="{ standalone: true }"
             placeholder="Observação"
-            maxlength="50"
+            maxlength="20"
             class="w-full"
           />
-          <small class="block text-right text-gray-400">{{ observacaoUnica.length }}/50</small>
+          <small class="block text-right text-gray-400">{{ observacaoUnica.length }}/20</small>
         </div>
 
         <p-button
@@ -385,11 +385,11 @@
                 pInputText
                 formControlName="observacao"
                 placeholder="Observação"
-                maxlength="50"
+                maxlength="20"
                 class="w-full"
               />
               <small class="block text-right text-gray-400">
-                {{ horarioCtrl.get('observacao')?.value?.length ?? 0 }}/50
+                {{ horarioCtrl.get('observacao')?.value?.length ?? 0 }}/20
               </small>
             </td>
 
