@@ -1,5 +1,6 @@
 import { Component, DestroyRef, inject, OnInit, PLATFORM_ID } from "@angular/core";
 import { isPlatformBrowser } from "@angular/common";
+import { Title } from "@angular/platform-browser";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { finalize } from "rxjs/operators";
 import { ChurchesService } from "../../../../core/services/churches.service";
@@ -58,6 +59,7 @@ export class DetailsComponent implements OnInit {
   _toast = inject(MessageService);
   _church = inject(ChurchesService);
   _seo = inject(SeoService);
+  private _title = inject(Title);
   _route = inject(ActivatedRoute);
   private _destroyRef = inject(DestroyRef);
   _router = inject(Router);
@@ -308,7 +310,14 @@ export class DetailsComponent implements OnInit {
         //
         // E uma REVALIDAÇÃO que falha não pode derrubar a paróquia que já está na
         // tela: sem conteúdo, o comportamento é o de sempre; com conteúdo, mantém.
-        if (this.temConteudo()) return;
+        if (this.temConteudo()) {
+          // Exceção de SEO, não de tela: um 404 na revalidação quer dizer que o HTML
+          // prerenderizado ficou velho (ex.: a cidade da paróquia mudou depois do
+          // build). O usuário continua vendo a página, mas ela sai do índice. Um 5xx
+          // segue sem mexer em nada: a canonical que está aí veio de dado válido.
+          if (err?.status === 404) this.tirarDoIndice();
+          return;
+        }
         if (err?.status === 404) this.marcarNaoEncontrada();
         else this.erroCarregar = true;
       },
@@ -324,6 +333,19 @@ export class DetailsComponent implements OnInit {
     this._seo.update({
       title: 'Paróquia não encontrada | BuscaMissa',
       description: 'Não encontramos esta paróquia. Veja as igrejas cadastradas na sua cidade.',
+      canonical: null,
+      noindex: true,
+    });
+  }
+
+  /** Conteúdo fica na tela; título e imagem ficam; canonical e schema saem, e noindex. */
+  private tirarDoIndice(): void {
+    this._seo.removeJsonLd('place');
+    this._seo.removeJsonLd('breadcrumb');
+    this._seo.update({
+      title: this._title.getTitle(),
+      canonical: null,
+      image: this.churchInfo?.imagemUrl || undefined,
       noindex: true,
     });
   }

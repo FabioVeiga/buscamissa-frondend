@@ -5,7 +5,14 @@ import { DOCUMENT } from '@angular/common';
 export interface SeoData {
   title: string;
   description?: string;
-  canonical?: string;
+  /**
+   * `string` = define a canonical (e o og:url). `null` = REMOVE a canonical — para
+   * a página que ainda não sabe qual é a sua (rota dinâmica antes do dado, erro da
+   * API). `undefined` = cai no `document.URL`, o comportamento de sempre.
+   *
+   * Ignorado quando `noindex` é true: ver `update()`.
+   */
+  canonical?: string | null;
   /** Imagem de compartilhamento específica da rota (og:image / twitter:image). */
   image?: string;
   /** true = página privada/transacional (login, painel...): não deve ser indexada. */
@@ -47,17 +54,25 @@ export class SeoService {
     this._meta.updateTag({ property: 'og:title', content: data.title });
     this._meta.updateTag({ name: 'twitter:title', content: data.title });
 
-    const canonicalUrl = data.canonical ?? this._doc.URL.split('?')[0];
-    let link: HTMLLinkElement | null = this._doc.querySelector('link[rel="canonical"]');
-    if (!link) {
-      link = this._doc.createElement('link');
-      link.setAttribute('rel', 'canonical');
-      this._doc.head.appendChild(link);
-    }
-    link.setAttribute('href', canonicalUrl);
+    // Página fora do índice não tem versão canônica: `noindex` com canonical é sinal
+    // contraditório — e, na página "não encontrada", a canonical caía no fallback
+    // `document.URL` e apontava para a própria URL inexistente. Por isso `noindex`
+    // SEMPRE remove, mesmo que uma canonical tenha sido informada.
+    if (data.noindex || data.canonical === null) {
+      this.removerCanonical();
+    } else {
+      const canonicalUrl = data.canonical ?? this._doc.URL.split('?')[0];
+      let link: HTMLLinkElement | null = this._doc.querySelector('link[rel="canonical"]');
+      if (!link) {
+        link = this._doc.createElement('link');
+        link.setAttribute('rel', 'canonical');
+        this._doc.head.appendChild(link);
+      }
+      link.setAttribute('href', canonicalUrl);
 
-    // og:url acompanha a URL canônica da rota (evita ficar preso na home).
-    this._meta.updateTag({ property: 'og:url', content: canonicalUrl });
+      // og:url acompanha a URL canônica da rota (evita ficar preso na home).
+      this._meta.updateTag({ property: 'og:url', content: canonicalUrl });
+    }
 
     // og:image/twitter:image específicos da rota, quando informados.
     //
@@ -94,5 +109,10 @@ export class SeoService {
   removeJsonLd(id: string): void {
     const el = this._doc.getElementById(`ld-${id}`);
     if (el) el.remove();
+  }
+
+  private removerCanonical(): void {
+    this._doc.querySelector('link[rel="canonical"]')?.remove();
+    this._meta.removeTag("property='og:url'");
   }
 }
