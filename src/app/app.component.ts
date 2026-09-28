@@ -37,7 +37,10 @@ export class AppComponent implements OnInit {
         this._seo.update({
           title: data['title'],
           description: data['description'],
-          canonical: data['canonical'],
+          // Sem canonical na rota = rota dinâmica (paróquia, cidade, estado...): a
+          // canonical vem da API, pelo componente. Até lá a página fica SEM canonical,
+          // em vez de ganhar a `document.URL` — que numa URL inexistente é ela mesma.
+          canonical: data['canonical'] ?? null,
           noindex: data['noindex'],
         });
       }

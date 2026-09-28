@@ -4,7 +4,7 @@ import { HttpRequest, HttpHandler, HttpResponse, HttpEvent } from '@angular/comm
 import { Observable, of, throwError } from 'rxjs';
 import { toArray } from 'rxjs/operators';
 import { PrerenderTransferStateInterceptor } from './prerender-transfer-state.interceptor';
-import { chaveParoquia, stateKeyParoquia } from './prerender-state-keys';
+import { chaveCidade, chaveParoquia, stateKeyCidade, stateKeyParoquia } from './prerender-state-keys';
 
 /**
  * Contrato SWR do interceptor de leitura do TransferState (Fase "frescor de dados"):
@@ -58,6 +58,42 @@ describe('PrerenderTransferStateInterceptor (SWR)', () => {
           done();
         },
         error: () => fail('a revalidação NÃO deve virar erro da página'),
+      });
+  });
+
+  it('revalidação com 404 PROPAGA o erro, depois do cache — o recurso deixou de existir', (done) => {
+    ts.set<any>(key, { data: { igreja: { id: 1, nome: 'cache' } } });
+    const emitidos: unknown[] = [];
+
+    interceptor.intercept(new HttpRequest('GET', url), next(throwError(() => ({ status: 404 }))))
+      .subscribe({
+        next: (e) => emitidos.push(e),
+        error: (err) => {
+          expect(emitidos.length).withContext('o cache já foi entregue antes do 404').toBe(1);
+          expect(err.status).toBe(404);
+          // `finalize` roda no teardown, DEPOIS deste callback de erro.
+          setTimeout(() => {
+            expect(ts.hasKey(key)).toBeFalse();
+            done();
+          });
+        },
+        complete: () => fail('404 na revalidação deve chegar ao componente'),
+      });
+  });
+
+  it('404 na revalidação de OUTRO recurso (não paróquia) continua engolido', (done) => {
+    const urlCidade = 'https://api.exemplo.com/api/v2/Igreja/cidade/rj/mendes';
+    const keyCidade = stateKeyCidade(chaveCidade(urlCidade)!);
+    ts.set<any>(keyCidade, { data: { igrejas: [] } });
+
+    interceptor.intercept(new HttpRequest('GET', urlCidade), next(throwError(() => ({ status: 404 }))))
+      .pipe(toArray())
+      .subscribe({
+        next: (eventos) => {
+          expect(eventos.length).toBe(1);
+          done();
+        },
+        error: () => fail('só a paróquia propaga o 404'),
       });
   });
 

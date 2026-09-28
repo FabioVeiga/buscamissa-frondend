@@ -150,6 +150,29 @@ describe('CityComponent — skeleton não pode substituir conteúdo já renderiz
     expect(c.erroCarregar).toBeTrue();
     expect(cards()).toBe(0);
   });
+
+  // ── E. Canonical no erro ──────────────────────────────────────────────────
+  describe('canonical no erro', () => {
+    const canonical = () => document.head.querySelector('link[rel="canonical"]')?.getAttribute('href') ?? null;
+    const limparHead = () => document.head.querySelectorAll('link[rel="canonical"], meta[property="og:url"]').forEach((el) => el.remove());
+
+    beforeEach(limparHead);
+    afterEach(limparHead);
+
+    it('E1) erro SEM conteúdo: não recria canonical a partir da URL', () => {
+      montar(throwError(() => new Error('500')));
+      fixture.detectChanges();
+
+      expect(canonical()).toBeNull();
+    });
+
+    it('E2) erro na revalidação COM conteúdo: a canonical da API permanece', () => {
+      montar(concat(of(resposta(['Catedral'])), throwError(() => new Error('500'))));
+      fixture.detectChanges();
+
+      expect(canonical()).toBe('https://buscamissa.com.br/missas/pb/joao-pessoa');
+    });
+  });
 });
 
 /**
