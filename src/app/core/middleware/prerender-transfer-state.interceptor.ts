@@ -7,7 +7,7 @@ import {
   HttpRequest,
   HttpResponse,
 } from '@angular/common/http';
-import { Observable, of, concat, EMPTY } from 'rxjs';
+import { Observable, of, concat, EMPTY, throwError } from 'rxjs';
 import { catchError, finalize } from 'rxjs/operators';
 import { StateKey } from '@angular/core';
 import {
@@ -88,7 +88,15 @@ export class PrerenderTransferStateInterceptor implements HttpInterceptor {
       next.handle(req).pipe(
         // 2ª perna: revalidação viva (a única que pode falhar). Falha NÃO derruba o
         // conteúdo já renderizado — ver comentário do cabeçalho.
-        catchError(() => EMPTY),
+        //
+        // Exceção: o 404 de PARÓQUIA passa. Não é falha de rede — é a API dizendo que
+        // a paróquia do HTML prerenderizado não existe mais nessa URL (ex.: a cidade
+        // mudou depois do build). O details usa esse 404 para tirar a página do índice
+        // sem tirá-la da tela. Só paróquia: é o único consumidor que trata o caso — o
+        // /cidades, por exemplo, troca o conteúdo por "sem dados" em qualquer erro.
+        catchError((err) =>
+          err?.status === 404 && chaveParoquia(req.url) ? throwError(() => err) : EMPTY,
+        ),
         // Consome a chave só ao fim da revalidação (robusto a cancelamento).
         finalize(() => this._transferState.remove(key)),
       ),

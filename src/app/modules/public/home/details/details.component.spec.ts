@@ -155,4 +155,67 @@ describe('DetailsComponent — skeleton não pode substituir conteúdo já rende
     expect(c.erroCarregar).toBeTrue();
     expect(conteudo()).toBe(0);
   });
+
+  // ── E. SEO: canonical e robots em cada desfecho ───────────────────────────
+  //
+  // O SeoService é o real e escreve no <head> do documento do Karma, compartilhado
+  // entre os testes — daí a limpeza antes e depois de cada caso.
+  describe('SEO', () => {
+    const CANONICAL_API = 'https://buscamissa.com.br/paroquia/pb/joao-pessoa/x';
+    const head = () => document.head;
+    const canonical = () => head().querySelector('link[rel="canonical"]')?.getAttribute('href') ?? null;
+    const robots = () => head().querySelector('meta[name="robots"]')?.getAttribute('content') ?? null;
+    const schema = (id: string) => !!document.getElementById(`ld-${id}`);
+
+    const limparHead = () => {
+      head().querySelectorAll('link[rel="canonical"], meta[property="og:url"], meta[name="robots"], #ld-place, #ld-breadcrumb')
+        .forEach((el) => el.remove());
+    };
+
+    beforeEach(limparHead);
+    afterEach(limparHead);
+
+    it('E1) sucesso: index, canonical da API e schema', () => {
+      montar(of(resposta('Catedral')));
+      fixture.detectChanges();
+
+      expect(robots()).toBe('index, follow');
+      expect(canonical()).toBe(CANONICAL_API);
+      expect(schema('place')).toBeTrue();
+      expect(schema('breadcrumb')).toBeTrue();
+    });
+
+    it('E2) 404 sem conteúdo: não encontrada, noindex e SEM canonical', () => {
+      montar(throwError(() => ({ status: 404 })));
+      fixture.detectChanges();
+
+      expect(c.naoEncontrada).toBeTrue();
+      expect(robots()).toBe('noindex, nofollow');
+      expect(canonical()).withContext('URL inexistente não pode se declarar canônica').toBeNull();
+      expect(schema('place')).toBeFalse();
+      expect(schema('breadcrumb')).toBeFalse();
+    });
+
+    it('E3) 404 na revalidação COM conteúdo (prerender velho): conteúdo fica, página sai do índice', () => {
+      montar(concat(of(resposta('Catedral')), throwError(() => ({ status: 404 }))));
+      fixture.detectChanges();
+
+      expect(conteudo()).withContext('o usuário continua vendo a paróquia').toBe(1);
+      expect(c.naoEncontrada).toBeFalse();
+      expect(robots()).toBe('noindex, nofollow');
+      expect(canonical()).toBeNull();
+      expect(schema('place')).toBeFalse();
+      expect(schema('breadcrumb')).toBeFalse();
+    });
+
+    it('E4) 5xx na revalidação COM conteúdo: SEO intocado — canonical veio de dado válido', () => {
+      montar(concat(of(resposta('Catedral')), throwError(() => ({ status: 500 }))));
+      fixture.detectChanges();
+
+      expect(conteudo()).toBe(1);
+      expect(robots()).withContext('falha transitória não desindexa').toBe('index, follow');
+      expect(canonical()).toBe(CANONICAL_API);
+      expect(schema('place')).toBeTrue();
+    });
+  });
 });
