@@ -1,6 +1,7 @@
-import { Component } from "@angular/core";
+import { Component, OnInit, inject } from "@angular/core";
 import { PrimeNgModule } from "../../../shared/primeng.module";
 import { CommonModule } from "@angular/common";
+import { MetricasService, PaginaMetrica } from "../../../core/services/metricas.service";
 
 interface Link {
   label: string;
@@ -22,7 +23,13 @@ interface Category {
   templateUrl: "./sponsors.component.html",
   styleUrl: "./sponsors.component.scss",
 })
-export class SponsorsComponent {
+export class SponsorsComponent implements OnInit {
+  private _metricas = inject(MetricasService);
+
+  ngOnInit(): void {
+    this._metricas.registrarVisualizacaoPagina(PaginaMetrica.Anuncios);
+  }
+
   advertisementCategories: Category[] = [
     {
       header: "Cursos",

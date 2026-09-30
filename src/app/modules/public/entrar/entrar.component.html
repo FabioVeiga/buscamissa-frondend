@@ -56,8 +56,9 @@
     <!-- SOLICITAR CÓDIGO -->
     <ng-container *ngIf="modo === 'solicitar-codigo'">
       <p>
-        Informe seu e-mail e enviaremos um código de 6 dígitos para você criar
-        (ou redefinir) sua senha.
+        Informe seu e-mail para criar ou redefinir sua senha. Se você já tem
+        uma pergunta de segurança cadastrada, vamos pedir a resposta dela —
+        senão, mostramos outra forma de confirmar que é você.
       </p>
       <form [formGroup]="formSolicitar" (ngSubmit)="solicitarCodigo()">
         <div class="p-fluid">
@@ -80,7 +81,7 @@
           </div>
           <p-button
             type="submit"
-            label="Enviar código"
+            label="Continuar"
             [loading]="isLoading"
             styleClass="w-full"
           ></p-button>
@@ -88,16 +89,23 @@
       </form>
       <div class="links">
         <a (click)="trocarModo('login')">Voltar para o login</a>
-        <a (click)="trocarModo('definir-senha')">Já tenho um código</a>
+        <a (click)="trocarModo('definir-senha')">Já tenho um código por e-mail</a>
       </div>
     </ng-container>
 
     <!-- DEFINIR SENHA -->
     <ng-container *ngIf="modo === 'definir-senha'">
-      <p>
+      <p *ngIf="!mostrarDesafio && !mostrarPerguntaPessoal">
         Digite o código de 6 dígitos que enviamos para
         <strong>{{ formSolicitar.value.email || "seu e-mail" }}</strong> e
         escolha sua nova senha.
+      </p>
+      <p *ngIf="mostrarDesafio">
+        Responda a pergunta abaixo, escolha uma pergunta de segurança pessoal
+        (será usada em futuras recuperações de senha) e defina sua nova senha.
+      </p>
+      <p *ngIf="mostrarPerguntaPessoal">
+        Responda a sua pergunta de segurança e escolha sua nova senha.
       </p>
       <form [formGroup]="formDefinir" (ngSubmit)="definirSenha()">
         <div class="p-fluid">
@@ -113,7 +121,7 @@
               <label htmlFor="emailDefinir">E-mail</label>
             </p-iftalabel>
           </div>
-          <div class="field">
+          <div class="field" *ngIf="!mostrarDesafio && !mostrarPerguntaPessoal">
             <p-iftalabel>
               <input
                 pInputText
@@ -128,6 +136,74 @@
               class="p-error block"
               *ngIf="formDefinir.controls['codigo'].invalid && formDefinir.controls['codigo'].touched"
               >Informe o código de 6 dígitos recebido por e-mail.</small
+            >
+          </div>
+          <div class="field" *ngIf="mostrarDesafio">
+            <p-iftalabel>
+              <input
+                pInputText
+                id="resposta"
+                type="number"
+                formControlName="resposta"
+                inputmode="numeric"
+              />
+              <label htmlFor="resposta">{{ perguntaDesafio || "Resposta" }}</label>
+            </p-iftalabel>
+            <small
+              class="p-error block"
+              *ngIf="formDefinir.controls['resposta'].invalid && formDefinir.controls['resposta'].touched"
+              >Informe a resposta da pergunta.</small
+            >
+          </div>
+          <div class="field" *ngIf="mostrarDesafio">
+            <p-iftalabel>
+              <p-select
+                id="perguntaSegurancaId"
+                formControlName="perguntaSegurancaId"
+                [options]="catalogoPerguntas"
+                optionLabel="texto"
+                optionValue="id"
+              ></p-select>
+              <label htmlFor="perguntaSegurancaId">Escolha uma pergunta de segurança</label>
+            </p-iftalabel>
+            <small
+              class="p-error block"
+              *ngIf="formDefinir.controls['perguntaSegurancaId'].invalid && formDefinir.controls['perguntaSegurancaId'].touched"
+              >Escolha uma pergunta de segurança.</small
+            >
+          </div>
+          <div class="field" *ngIf="mostrarDesafio">
+            <p-iftalabel>
+              <input
+                pInputText
+                id="respostaSegurancaCadastro"
+                type="text"
+                formControlName="respostaSegurancaCadastro"
+                autocomplete="off"
+              />
+              <label htmlFor="respostaSegurancaCadastro">Resposta da pergunta de segurança</label>
+            </p-iftalabel>
+            <small
+              class="p-error block"
+              *ngIf="formDefinir.controls['respostaSegurancaCadastro'].invalid && formDefinir.controls['respostaSegurancaCadastro'].touched"
+              >Informe a resposta da pergunta de segurança escolhida.</small
+            >
+          </div>
+          <div class="field" *ngIf="mostrarPerguntaPessoal">
+            <p-iftalabel>
+              <input
+                pInputText
+                id="respostaPerguntaPessoal"
+                type="text"
+                formControlName="respostaPerguntaPessoal"
+                autocomplete="off"
+              />
+              <label htmlFor="respostaPerguntaPessoal">{{ perguntaPessoal || "Resposta" }}</label>
+            </p-iftalabel>
+            <small
+              class="p-error block"
+              *ngIf="formDefinir.controls['respostaPerguntaPessoal'].invalid && formDefinir.controls['respostaPerguntaPessoal'].touched"
+              >Informe a resposta da sua pergunta de segurança.</small
             >
           </div>
           <div class="field">
@@ -155,7 +231,7 @@
         </div>
       </form>
       <div class="links">
-        <a (click)="trocarModo('solicitar-codigo')">Reenviar código</a>
+        <a (click)="trocarModo('solicitar-codigo')">{{ mostrarDesafio || mostrarPerguntaPessoal ? "Tentar novamente" : "Reenviar código" }}</a>
         <a (click)="trocarModo('login')">Voltar para o login</a>
       </div>
     </ng-container>

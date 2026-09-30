@@ -1,0 +1,115 @@
+<p-toast></p-toast>
+
+<div class="conta-wrapper">
+  <div class="conta-header">
+    <div>
+      <h1>Minha conta</h1>
+      <p>Altere sua senha ou sua pergunta de segurança pessoal.</p>
+    </div>
+    <a routerLink="/meu-painel">Voltar para o painel</a>
+  </div>
+
+  <p-panel header="Alterar senha" class="container">
+    <p>Você será desconectado de todos os dispositivos após a troca — faça login novamente com a nova senha.</p>
+    <form [formGroup]="formSenha" (ngSubmit)="trocarSenha()">
+      <div class="p-fluid">
+        <div class="field">
+          <p-iftalabel>
+            <p-password
+              id="senhaAtual"
+              formControlName="senhaAtual"
+              [feedback]="false"
+              [toggleMask]="true"
+              autocomplete="current-password"
+            ></p-password>
+            <label htmlFor="senhaAtual">Senha atual</label>
+          </p-iftalabel>
+          <small
+            class="p-error block"
+            *ngIf="formSenha.controls['senhaAtual'].invalid && formSenha.controls['senhaAtual'].touched"
+            >Informe sua senha atual.</small
+          >
+        </div>
+        <div class="field">
+          <p-iftalabel>
+            <p-password
+              id="novaSenha"
+              formControlName="novaSenha"
+              [toggleMask]="true"
+              autocomplete="new-password"
+            ></p-password>
+            <label htmlFor="novaSenha">Nova senha (mínimo 8 caracteres)</label>
+          </p-iftalabel>
+          <small
+            class="p-error block"
+            *ngIf="formSenha.controls['novaSenha'].invalid && formSenha.controls['novaSenha'].touched"
+            >A senha precisa ter pelo menos 8 caracteres.</small
+          >
+        </div>
+        <p-button type="submit" label="Alterar senha" [loading]="isLoadingSenha" styleClass="w-full"></p-button>
+      </div>
+    </form>
+  </p-panel>
+
+  <p-panel header="Pergunta de segurança" class="container">
+    <p *ngIf="perguntaAtual">
+      Pergunta atual: <strong>{{ perguntaAtual }}</strong>
+    </p>
+    <p *ngIf="!perguntaAtual">Você ainda não tem uma pergunta de segurança cadastrada.</p>
+    <form [formGroup]="formPergunta" (ngSubmit)="trocarPergunta()">
+      <div class="p-fluid">
+        <div class="field">
+          <p-iftalabel>
+            <p-password
+              id="senhaAtualPergunta"
+              formControlName="senhaAtual"
+              [feedback]="false"
+              [toggleMask]="true"
+              autocomplete="current-password"
+            ></p-password>
+            <label htmlFor="senhaAtualPergunta">Senha atual</label>
+          </p-iftalabel>
+          <small
+            class="p-error block"
+            *ngIf="formPergunta.controls['senhaAtual'].invalid && formPergunta.controls['senhaAtual'].touched"
+            >Informe sua senha atual.</small
+          >
+        </div>
+        <div class="field">
+          <p-iftalabel>
+            <p-select
+              id="perguntaSegurancaId"
+              formControlName="perguntaSegurancaId"
+              [options]="catalogoPerguntas"
+              optionLabel="texto"
+              optionValue="id"
+            ></p-select>
+            <label htmlFor="perguntaSegurancaId">Nova pergunta de segurança</label>
+          </p-iftalabel>
+          <small
+            class="p-error block"
+            *ngIf="formPergunta.controls['perguntaSegurancaId'].invalid && formPergunta.controls['perguntaSegurancaId'].touched"
+            >Escolha uma pergunta de segurança.</small
+          >
+        </div>
+        <div class="field">
+          <p-iftalabel>
+            <input pInputText id="resposta" type="text" formControlName="resposta" autocomplete="off" />
+            <label htmlFor="resposta">Resposta</label>
+          </p-iftalabel>
+          <small
+            class="p-error block"
+            *ngIf="formPergunta.controls['resposta'].invalid && formPergunta.controls['resposta'].touched"
+            >Informe a resposta da pergunta escolhida.</small
+          >
+        </div>
+        <p-button
+          type="submit"
+          label="Salvar pergunta de segurança"
+          [loading]="isLoadingPergunta"
+          styleClass="w-full"
+        ></p-button>
+      </div>
+    </form>
+  </p-panel>
+</div>

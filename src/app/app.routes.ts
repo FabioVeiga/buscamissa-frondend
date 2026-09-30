@@ -331,6 +331,18 @@ export const routes: Routes = [
           ),
       },
       {
+        path: "meu-painel/conta",
+        data: {
+          title: 'Minha conta | BuscaMissa',
+          description: 'Altere sua senha e sua pergunta de segurança pessoal.',
+          noindex: true,
+        },
+        loadComponent: () =>
+          import("./modules/public/meu-painel/minha-conta/minha-conta.component").then(
+            (m) => m.MinhaContaComponent
+          ),
+      },
+      {
         path: "solicitar",
         data: {
           title: 'Fale Conosco | BuscaMissa',

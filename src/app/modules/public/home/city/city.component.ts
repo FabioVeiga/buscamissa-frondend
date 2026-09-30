@@ -121,6 +121,9 @@ export class CityComponent implements OnInit, OnDestroy {
         .split('-')
         .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
         .join(' ');
+      if (this.uf && this.cidade) {
+        this._metricas.registrarVisualizacaoCidade(this.uf, this.cidade, this.cidadeNome);
+      }
 
       this._route.queryParams.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((qp) => {
         this.diaAtivo = this.parseDiaSlug(qp["dia"]);
@@ -219,8 +222,10 @@ export class CityComponent implements OnInit, OnDestroy {
         // Mas uma REVALIDAÇÃO que falha não pode inserir o aviso por cima de uma
         // lista que já está na tela — isso empurraria FAQ e links internos para
         // baixo. Sem conteúdo, o aviso é o comportamento correto de sempre.
-        if (!this.temConteudo()) this.erroCarregar = true;
-        this._seo.update({ title: `Missas em ${this.cidade}/${this.uf?.toUpperCase()} | BuscaMissa` });
+        // Com conteúdo, o SEO também fica: a canonical que está aí veio de dado válido.
+        if (this.temConteudo()) return;
+        this.erroCarregar = true;
+        this._seo.update({ title: `Missas em ${this.cidade}/${this.uf?.toUpperCase()} | BuscaMissa`, canonical: null });
       },
     });
   }

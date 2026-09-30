@@ -1,5 +1,6 @@
 import { Component, DestroyRef, inject, OnInit, PLATFORM_ID } from "@angular/core";
 import { isPlatformBrowser } from "@angular/common";
+import { Title } from "@angular/platform-browser";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { finalize } from "rxjs/operators";
 import { ChurchesService } from "../../../../core/services/churches.service";
@@ -12,6 +13,7 @@ import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { Mass } from "../../church/models/church.model";
 import { getNextOccurrenceMinutes } from "../../../../shared/utils/mass-time.utils";
+import { agruparSessoesPorDiasConsecutivos, SessaoAgrupada } from "../../../../shared/utils/sessao-horario.utils";
 import { AnalyticsService } from "../../../../core/services/analytics.service";
 import { ClarityService } from "../../../../core/services/clarity.service";
 import { RedesSociaisService, TipoRedeSocial } from "../../../../core/services/redes-sociais.service";
@@ -57,6 +59,7 @@ export class DetailsComponent implements OnInit {
   _toast = inject(MessageService);
   _church = inject(ChurchesService);
   _seo = inject(SeoService);
+  private _title = inject(Title);
   _route = inject(ActivatedRoute);
   private _destroyRef = inject(DestroyRef);
   _router = inject(Router);
@@ -91,17 +94,13 @@ export class DetailsComponent implements OnInit {
   // Reportar problema
   modalReportarProblemaVisible = false;
 
-  // Sessões de atendimento/confissão (Feature B)
-  private static readonly DIAS_CURTOS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
-
-  get sessoesSecretaria(): any[] {
-    return (this.churchInfo?.sessoes ?? []).filter((s: any) => s.tipo === 1);
+  // Sessões de atendimento/confissão (Feature B) — dias consecutivos com o
+  // mesmo horário são agrupados numa faixa só ("Ter a Sex — 08:00 às 11:30").
+  get sessoesSecretaria(): SessaoAgrupada[] {
+    return agruparSessoesPorDiasConsecutivos((this.churchInfo?.sessoes ?? []).filter((s: any) => s.tipo === 1));
   }
-  get sessoesConfissao(): any[] {
-    return (this.churchInfo?.sessoes ?? []).filter((s: any) => s.tipo === 2);
-  }
-  diaCurto(dia: number): string {
-    return DetailsComponent.DIAS_CURTOS[dia] ?? "";
+  get sessoesConfissao(): SessaoAgrupada[] {
+    return agruparSessoesPorDiasConsecutivos((this.churchInfo?.sessoes ?? []).filter((s: any) => s.tipo === 2));
   }
 
   // Responsável Verificado (Fase 5)
@@ -311,7 +310,14 @@ export class DetailsComponent implements OnInit {
         //
         // E uma REVALIDAÇÃO que falha não pode derrubar a paróquia que já está na
         // tela: sem conteúdo, o comportamento é o de sempre; com conteúdo, mantém.
-        if (this.temConteudo()) return;
+        if (this.temConteudo()) {
+          // Exceção de SEO, não de tela: um 404 na revalidação quer dizer que o HTML
+          // prerenderizado ficou velho (ex.: a cidade da paróquia mudou depois do
+          // build). O usuário continua vendo a página, mas ela sai do índice. Um 5xx
+          // segue sem mexer em nada: a canonical que está aí veio de dado válido.
+          if (err?.status === 404) this.tirarDoIndice();
+          return;
+        }
         if (err?.status === 404) this.marcarNaoEncontrada();
         else this.erroCarregar = true;
       },
@@ -327,6 +333,19 @@ export class DetailsComponent implements OnInit {
     this._seo.update({
       title: 'Paróquia não encontrada | BuscaMissa',
       description: 'Não encontramos esta paróquia. Veja as igrejas cadastradas na sua cidade.',
+      canonical: null,
+      noindex: true,
+    });
+  }
+
+  /** Conteúdo fica na tela; título e imagem ficam; canonical e schema saem, e noindex. */
+  private tirarDoIndice(): void {
+    this._seo.removeJsonLd('place');
+    this._seo.removeJsonLd('breadcrumb');
+    this._seo.update({
+      title: this._title.getTitle(),
+      canonical: null,
+      image: this.churchInfo?.imagemUrl || undefined,
       noindex: true,
     });
   }
@@ -341,7 +360,7 @@ export class DetailsComponent implements OnInit {
 
     const temFoto = !!igreja.imagemUrl;
     const temTelefone = !!(contato.telefone || contato.telefoneWhatsApp);
-    const temSite = !!contato.site;
+    const temSite = !!contato.website;
     const temInstagram = redes.some((r: any) => r.tipoRedeSocial === 2);
     const temFacebook = redes.some((r: any) => r.tipoRedeSocial === 1);
     const qtdMissas = missas.length;

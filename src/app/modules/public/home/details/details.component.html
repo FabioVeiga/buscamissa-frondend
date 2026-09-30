@@ -79,14 +79,14 @@
         <div *ngIf="sessoesSecretaria.length">
           <p class="text-xs font-semibold text-gray-500 uppercase mb-1.5">Secretaria</p>
           <p *ngFor="let s of sessoesSecretaria" class="text-sm text-gray-600 my-0.5">
-            {{ diaCurto(s.diaSemana) }} — {{ s.horarioInicio }} às {{ s.horarioFim }}
+            {{ s.diasLabel }} — {{ s.horarioInicio }} às {{ s.horarioFim }}
             <span *ngIf="s.observacao" class="text-xs text-gray-400">({{ s.observacao }})</span>
           </p>
         </div>
         <div *ngIf="sessoesConfissao.length">
           <p class="text-xs font-semibold text-gray-500 uppercase mb-1.5">Confissão</p>
           <p *ngFor="let s of sessoesConfissao" class="text-sm text-gray-600 my-0.5">
-            {{ diaCurto(s.diaSemana) }} — {{ s.horarioInicio }} às {{ s.horarioFim }}
+            {{ s.diasLabel }} — {{ s.horarioInicio }} às {{ s.horarioFim }}
             <span *ngIf="s.observacao" class="text-xs text-gray-400">({{ s.observacao }})</span>
           </p>
         </div>

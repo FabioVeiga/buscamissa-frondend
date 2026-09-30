@@ -1,6 +1,7 @@
 import { Component, inject, OnInit } from "@angular/core";
 import { ActivatedRoute, Router } from "@angular/router";
 import { ChurchesService } from "../../../core/services/churches.service";
+import { MetricasService, PaginaMetrica } from "../../../core/services/metricas.service";
 
 @Component({
   selector: "app-cep-redirect",
@@ -11,8 +12,10 @@ export class CepRedirectComponent implements OnInit {
   private _route = inject(ActivatedRoute);
   private _router = inject(Router);
   private _churches = inject(ChurchesService);
+  private _metricas = inject(MetricasService);
 
   ngOnInit(): void {
+    this._metricas.registrarVisualizacaoPagina(PaginaMetrica.CepRedirect);
     const cep = this._route.snapshot.paramMap.get("cep")?.replace(/\D/g, "") ?? "";
 
     if (!cep || cep.length !== 8) {

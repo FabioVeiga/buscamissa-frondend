@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { MetricasService, PaginaMetrica } from '../../../core/services/metricas.service';
 
 /**
  * Página 404 dedicada. Substitui o antigo wildcard `** -> /home`, que gerava
@@ -51,4 +52,10 @@ import { RouterModule } from '@angular/router';
     .btn-secundario { border: 1px solid #ccc; color: #333; }
   `],
 })
-export class NotFoundComponent {}
+export class NotFoundComponent implements OnInit {
+  private _metricas = inject(MetricasService);
+
+  ngOnInit(): void {
+    this._metricas.registrarVisualizacaoPagina(PaginaMetrica.NaoEncontrado);
+  }
+}

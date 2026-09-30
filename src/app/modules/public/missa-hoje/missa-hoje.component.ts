@@ -1,6 +1,7 @@
 import { Component, OnInit, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Router } from '@angular/router';
+import { MetricasService, PaginaMetrica } from '../../../core/services/metricas.service';
 
 // getDay(): 0=domingo … 6=sábado — mesma ordem do DiaDaSemanaEnum do backend.
 const SLUG_POR_DIA = ['domingo', 'segunda-feira', 'terca-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sabado'];
@@ -17,10 +18,12 @@ const SLUG_POR_DIA = ['domingo', 'segunda-feira', 'terca-feira', 'quarta-feira',
 })
 export class MissaHojeComponent implements OnInit {
   private _router = inject(Router);
+  private _metricas = inject(MetricasService);
   private readonly _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   ngOnInit(): void {
     if (!this._isBrowser) return;
+    this._metricas.registrarVisualizacaoPagina(PaginaMetrica.MissaHoje);
     const slug = SLUG_POR_DIA[new Date().getDay()] ?? 'domingo';
     this._router.navigate(['/missa-' + slug], { replaceUrl: true });
   }

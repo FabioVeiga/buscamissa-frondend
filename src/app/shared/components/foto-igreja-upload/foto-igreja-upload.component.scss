@@ -1,0 +1,63 @@
+.foto-igreja {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  flex-wrap: wrap;
+}
+
+.foto-igreja__preview {
+  width: 140px;
+  height: 140px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  background: var(--p-surface-100, #f3f4f6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .pi {
+    font-size: 2rem;
+    color: var(--p-surface-400, #9ca3af);
+  }
+}
+
+.foto-igreja__acoes {
+  flex: 1 1 240px;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border: 1px dashed var(--p-surface-300, #d1d5db);
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.foto-igreja__botoes,
+.foto-igreja__url {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.foto-igreja__url input {
+  flex: 1 1 160px;
+  min-width: 0;
+}
+
+.foto-igreja__dica {
+  font-size: 0.8rem;
+  color: var(--p-surface-500, #6b7280);
+}
+
+.foto-igreja__erro {
+  font-size: 0.8rem;
+  color: var(--p-red-500, #ef4444);
+}
