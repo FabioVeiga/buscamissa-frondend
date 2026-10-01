@@ -1,6 +1,6 @@
 import { Mass } from '../../core/interfaces/church.interface';
 import { ConfidenceLevel, MassUrgency } from '../models/mass-card.model';
-import { TipoDaRegra, ehSemanal, proximaOcorrencia } from './recorrencia-missa';
+import { TIPO_RECORRENCIA, TipoDaRegra, ehSemanal, proximaOcorrencia } from './recorrencia-missa';
 
 const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
@@ -57,6 +57,10 @@ function proximaData(
   return target;
 }
 
+function ehDiaDoMes(regra: TipoDaRegra | null | undefined): boolean {
+  return regra?.tipoRecorrencia === TIPO_RECORRENCIA.DiaDoMes;
+}
+
 /** Rótulo estável (sem data relativa) de uma missa de dia fixo: "Dia 13". */
 function rotuloDiaFixo(regra: TipoDaRegra): string {
   return `Dia ${regra.diaDoMes ?? ''}`.trim();
@@ -101,7 +105,7 @@ export function getDiaLabel(
   relativo: boolean,
   regra?: TipoDaRegra | null
 ): string {
-  const nomeDoDia = regra && !ehSemanal(regra) ? rotuloDiaFixo(regra) : DIAS_LONGOS[diaSemana] ?? '';
+  const nomeDoDia = ehDiaDoMes(regra) ? rotuloDiaFixo(regra!) : DIAS_LONGOS[diaSemana] ?? '';
   if (!relativo) return nomeDoDia;
 
   const min = getNextOccurrenceMinutes(diaSemana, horario, regra);
@@ -133,7 +137,8 @@ export function getProximaMissaData(
   relativo: boolean,
   regra?: TipoDaRegra | null
 ): string {
-  const diaFixo = !!regra && !ehSemanal(regra);
+  // Dia fixo: "todo dia 13". Ocorrência no mês tem dia da semana, então segue o nome do dia.
+  const diaFixo = ehDiaDoMes(regra);
   if (!relativo) return diaFixo ? `todo dia ${regra!.diaDoMes}` : DIAS_POR_EXTENSO[diaSemana] ?? '';
 
   const min = getNextOccurrenceMinutes(diaSemana, horario, regra);

@@ -20,6 +20,7 @@ export interface IgrejaFavorita {
   tipoRecorrencia?: number | null;
   diaDoMes?: number | null;
   diasSemanaExcecao?: number | null;
+  semanasDoMes?: number | null;
   proximaMissaLabel?: string;
 }
 
