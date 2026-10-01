@@ -382,3 +382,10 @@ h2.mt {
   color: #c2410c;
   margin: 0.25rem 0 0;
 }
+
+.semanas-mes {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
+}

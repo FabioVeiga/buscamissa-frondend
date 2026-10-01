@@ -307,9 +307,12 @@
             <p-select formControlName="diaOcorrencia" [options]="dias" optionLabel="nome" optionValue="valor"
                       placeholder="Dia" styleClass="w-full" appendTo="body"
                       [class.ng-invalid-visual]="!diaFixoValido(i)"></p-select>
-            <label *ngFor="let s of SEMANAS_DO_MES" class="excecao-dia">
-              <input type="checkbox" [checked]="temSemana(i, s.bit)" (change)="toggleSemana(i, s.bit)" /> {{ s.label }}
-            </label>
+            <!-- Semanas juntas num bloco: não se separam do dia na quebra de linha. -->
+            <span class="semanas-mes">
+              <label *ngFor="let s of SEMANAS_DO_MES" class="excecao-dia">
+                <input type="checkbox" [checked]="temSemana(i, s.bit)" (change)="toggleSemana(i, s.bit)" /> {{ s.label }}
+              </label>
+            </span>
           </ng-container>
           <input pInputText formControlName="horario" placeholder="HH:mm" maxlength="5" class="input-hora"
                  (blur)="normalizarHorario(missas.at(i).get('horario'))"
