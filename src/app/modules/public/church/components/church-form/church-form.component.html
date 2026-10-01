@@ -224,8 +224,46 @@
     <div class="flex flex-col gap-3 pb-4 mb-4 border-b border-surface-200">
       <span class="font-medium">Adicionar horário</span>
 
+      <div class="flex flex-wrap gap-2 items-center">
+        <span class="text-sm text-gray-500">Frequência:</span>
+        <p-button
+          label="Toda semana"
+          size="small"
+          [outlined]="frequenciaUnica !== TIPO_RECORRENCIA.Semanal"
+          (click)="frequenciaUnica = TIPO_RECORRENCIA.Semanal"
+        ></p-button>
+        <p-button
+          label="Dia fixo do mês"
+          size="small"
+          [outlined]="frequenciaUnica !== TIPO_RECORRENCIA.DiaDoMes"
+          (click)="frequenciaUnica = TIPO_RECORRENCIA.DiaDoMes"
+        ></p-button>
+      </div>
+
+      <div *ngIf="frequenciaUnica === TIPO_RECORRENCIA.DiaDoMes" class="flex flex-wrap gap-3 items-center">
+        <input
+          pInputText
+          type="number"
+          min="1"
+          max="31"
+          [(ngModel)]="diaDoMesUnico"
+          [ngModelOptions]="{ standalone: true }"
+          placeholder="Dia do mês (1 a 31)"
+          class="w-full md:w-1/4"
+        />
+        <span class="text-sm text-gray-500">Não ocorre se cair em:</span>
+        <label class="flex items-center gap-1 text-sm">
+          <input type="checkbox" [(ngModel)]="excecaoSabadoUnico" [ngModelOptions]="{ standalone: true }" /> Sábado
+        </label>
+        <label class="flex items-center gap-1 text-sm">
+          <input type="checkbox" [(ngModel)]="excecaoDomingoUnico" [ngModelOptions]="{ standalone: true }" /> Domingo
+        </label>
+        <small class="w-full text-gray-400">Em meses sem esse dia (ex.: dia 31 em abril) a missa não acontece.</small>
+      </div>
+
       <div class="flex flex-col md:flex-row gap-2 items-start md:items-center">
         <p-select
+          *ngIf="frequenciaUnica === TIPO_RECORRENCIA.Semanal"
           [(ngModel)]="diaUnico"
           [ngModelOptions]="{ standalone: true }"
           [options]="diasSemana"
@@ -268,7 +306,7 @@
           icon="pi pi-plus"
           size="small"
           class="w-full md:w-auto"
-          [disabled]="diaUnico === null || !horarioUnico"
+          [disabled]="!podeAdicionarUnico"
           (click)="adicionarHorarioUnico()"
         ></p-button>
       </div>
@@ -354,7 +392,11 @@
             class="align-top"
           >
             <td class="pr-2 pb-2 w-1/3">
+              <span *ngIf="ehDiaFixo(horarioCtrl)" class="block py-2 text-sm font-medium">
+                {{ descreverLinha(horarioCtrl) }}
+              </span>
               <p-select
+                *ngIf="!ehDiaFixo(horarioCtrl)"
                 formControlName="diaSemana"
                 [options]="diasSemana"
                 optionLabel="label"

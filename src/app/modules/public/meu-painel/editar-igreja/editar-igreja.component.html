@@ -295,8 +295,14 @@
       <h2><i class="pi pi-clock"></i> Horários de missa</h2>
       <div formArrayName="missas">
         <div *ngFor="let missa of missas.controls; let i = index" [formGroupName]="i" class="linha-missa">
-          <p-select formControlName="diaSemana" [options]="dias" optionLabel="nome" optionValue="valor"
+          <p-select formControlName="diaSemana" [options]="diasMissa" optionLabel="nome" optionValue="valor"
                     styleClass="w-full" appendTo="body"></p-select>
+          <ng-container *ngIf="missas.at(i).get('diaSemana')?.value === DIA_FIXO">
+            <input pInputText type="number" min="1" max="31" formControlName="diaDoMes" placeholder="Dia (1 a 31)"
+                   class="input-hora" [class.ng-invalid-visual]="!diaFixoValido(i)" />
+            <label class="excecao-dia"><input type="checkbox" formControlName="excecaoSabado" /> Exceto sáb.</label>
+            <label class="excecao-dia"><input type="checkbox" formControlName="excecaoDomingo" /> Exceto dom.</label>
+          </ng-container>
           <input pInputText formControlName="horario" placeholder="HH:mm" maxlength="5" class="input-hora"
                  (blur)="normalizarHorario(missas.at(i).get('horario'))"
                  [class.ng-invalid-visual]="missas.at(i).get('horario')?.invalid && missas.at(i).get('horario')?.touched" />
