@@ -16,6 +16,10 @@ export interface IgrejaFavorita {
   nomeUnico?: string;
   diaSemana?: number | null;
   horario?: string | null;
+  // Recorrência da missa salva (ausente em favoritos antigos = semanal).
+  tipoRecorrencia?: number | null;
+  diaDoMes?: number | null;
+  diasSemanaExcecao?: number | null;
   proximaMissaLabel?: string;
 }
 

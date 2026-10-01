@@ -1,3 +1,4 @@
+import { ehSemanal } from "../../../../shared/utils/recorrencia-missa";
 import { Component, DestroyRef, inject, OnInit, PLATFORM_ID } from "@angular/core";
 import { isPlatformBrowser } from "@angular/common";
 import { Title } from "@angular/platform-browser";
@@ -409,8 +410,8 @@ export class DetailsComponent implements OnInit {
     const missas: Mass[] = this.churchInfo?.missas ?? [];
     if (!missas.length) return null;
     return missas.reduce((melhor, m) => {
-      const min = getNextOccurrenceMinutes(m.diaSemana!, m.horario);
-      const melhorMin = getNextOccurrenceMinutes(melhor.diaSemana!, melhor.horario);
+      const min = getNextOccurrenceMinutes(m.diaSemana!, m.horario, m);
+      const melhorMin = getNextOccurrenceMinutes(melhor.diaSemana!, melhor.horario, melhor);
       return min < melhorMin ? m : melhor;
     });
   }
@@ -585,6 +586,8 @@ export class DetailsComponent implements OnInit {
     // Dedupe por (dia, hora): registros repetidos no banco gerariam entradas
     // idênticas. Ordenado por dia e hora para a saída ser estável entre builds.
     const horarios = (igreja.missas ?? [])
+      // Só semanais: "todo dia 13" não cabe em OpeningHoursSpecification (dia da semana).
+      .filter((m: any) => ehSemanal(m))
       .filter((m: any) => m.diaSemana !== undefined && m.diaSemana !== null && dias[m.diaSemana])
       .map((m: any) => ({ dia: m.diaSemana as number, hora: (m.horario ?? "").slice(0, 5) }))
       .filter((m: any) => !!m.hora);

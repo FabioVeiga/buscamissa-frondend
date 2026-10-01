@@ -1,3 +1,4 @@
+import { ocorreNoDia } from '../../../../../shared/utils/recorrencia-missa';
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterModule } from '@angular/router';
@@ -35,15 +36,15 @@ export class HomeFavoritosComponent {
   /** Urgência da próxima missa de um favorito. */
   getUrgencia(fav: IgrejaFavorita): 'hot' | 'soon' | null {
     if (!fav || fav.diaSemana == null || !fav.horario) return null;
-    const mins = getNextOccurrenceMinutes(fav.diaSemana, fav.horario);
+    const mins = getNextOccurrenceMinutes(fav.diaSemana, fav.horario, fav);
     if (mins <= 180) return 'hot';
-    if (new Date().getDay() === fav.diaSemana) return 'soon';
+    if (ocorreNoDia({ ...fav, horario: fav.horario }, 0)) return 'soon';
     return null;
   }
 
   /** Label da próxima missa para um favorito. */
   getProximaLabel(fav: IgrejaFavorita): string {
     if (!fav || fav.diaSemana == null || !fav.horario) return '';
-    return getCountdownLabel(fav.diaSemana, fav.horario);
+    return getCountdownLabel(fav.diaSemana, fav.horario, fav);
   }
 }

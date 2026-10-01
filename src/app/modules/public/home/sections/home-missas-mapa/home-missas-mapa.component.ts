@@ -57,7 +57,7 @@ export class HomeMissasMapaComponent {
 
   getUrgency(card: MassCardData) {
     if (card.mass.diaSemana == null) return null;
-    return getMissaAgoraUrgency(card.mass.diaSemana, card.mass.horario);
+    return getMissaAgoraUrgency(card.mass.diaSemana, card.mass.horario, card.mass);
   }
 
   get mapChurches(): { id: number; nome: string; lat: number | null; lng: number | null }[] {

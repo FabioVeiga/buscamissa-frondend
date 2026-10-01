@@ -88,8 +88,8 @@ export class ChurchResultCardComponent implements OnInit {
     const candidatas: any[] = this.igreja?.missas ?? [];
     if (!candidatas.length) return null;
     return candidatas.reduce((melhor: any, m: any) => {
-      const min = getNextOccurrenceMinutes(m.diaSemana, m.horario);
-      const melhorMin = getNextOccurrenceMinutes(melhor.diaSemana, melhor.horario);
+      const min = getNextOccurrenceMinutes(m.diaSemana, m.horario, m);
+      const melhorMin = getNextOccurrenceMinutes(melhor.diaSemana, melhor.horario, melhor);
       return min < melhorMin ? m : melhor;
     });
   }
@@ -99,11 +99,11 @@ export class ChurchResultCardComponent implements OnInit {
   }
 
   countdownLabel(m: any): string {
-    return getCountdownLabel(m.diaSemana, m.horario);
+    return getCountdownLabel(m.diaSemana, m.horario, m);
   }
 
   ehUrgente(m: any): boolean {
-    return getNextOccurrenceMinutes(m.diaSemana, m.horario) <= 180;
+    return getNextOccurrenceMinutes(m.diaSemana, m.horario, m) <= 180;
   }
 
   private diaNome(dia: number): string {
@@ -111,7 +111,7 @@ export class ChurchResultCardComponent implements OnInit {
   }
 
   diaLabelRelativo(m: any): string {
-    const min = getNextOccurrenceMinutes(m.diaSemana, m.horario);
+    const min = getNextOccurrenceMinutes(m.diaSemana, m.horario, m);
     const alvo = new Date(Date.now() + min * 60_000);
     const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
     const dAlvo = new Date(alvo); dAlvo.setHours(0, 0, 0, 0);
