@@ -312,8 +312,12 @@
                   (click)="removerMissa(i)" aria-label="Remover horário"></button>
         </div>
       </div>
-      <button pButton type="button" icon="pi pi-plus" label="Adicionar horário"
-              class="p-button-text p-button-sm mt-1" (click)="adicionarMissa()"></button>
+      <div class="acoes-missa">
+        <button pButton type="button" icon="pi pi-plus" label="Adicionar horário semanal"
+                class="p-button-text p-button-sm" (click)="adicionarMissa()"></button>
+        <button pButton type="button" icon="pi pi-calendar-plus" label="Adicionar dia fixo do mês"
+                class="p-button-text p-button-sm" (click)="adicionarMissa(DIA_FIXO)"></button>
+      </div>
       <p class="dica-hora">Use o formato 24h, ex.: 07:30, 19:00.</p>
     </section>
 
