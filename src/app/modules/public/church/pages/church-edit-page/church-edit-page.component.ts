@@ -184,6 +184,10 @@ export class ChurchEditPageComponent implements OnInit {
             ? this.datePipe.transform(missa.horario, "HH:mm:ss")!
             : "00:00:00",
         observacao: missa.observacao,
+        tipoRecorrencia: missa.tipoRecorrencia ?? 0,
+        diaDoMes: missa.diaDoMes ?? null,
+        diasSemanaExcecao: missa.diasSemanaExcecao ?? null,
+        semanasDoMes: missa.semanasDoMes ?? null,
       })),
       endereco: {
         cep: formData.cep.replace(/\D/g, ""),

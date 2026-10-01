@@ -1,5 +1,6 @@
 import { Mass } from '../../core/interfaces/church.interface';
 import { ConfidenceLevel, MassUrgency } from '../models/mass-card.model';
+import { TIPO_RECORRENCIA, TipoDaRegra, ehSemanal, proximaOcorrencia } from './recorrencia-missa';
 
 const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
@@ -19,26 +20,50 @@ export function formatDistance(meters: number): string {
   );
 }
 
+/**
+ * Minutos até a próxima ocorrência. `regra` (opcional) traz o tipo de recorrência:
+ * sem ela, ou com missa semanal, vale a regra semanal de sempre. Missa de dia fixo
+ * que não ocorre no horizonte devolve `Infinity` (fica de fora de "próxima missa").
+ */
 export function getNextOccurrenceMinutes(
   diaSemana: number,
-  horario: string
+  horario: string,
+  regra?: TipoDaRegra | null
 ): number {
   const now = new Date();
-  const [h, m] = horario.split(':').map(Number);
+  const proxima = proximaData(diaSemana, horario, regra, now);
+  if (!proxima) return Number.POSITIVE_INFINITY;
+  return Math.round((proxima.getTime() - now.getTime()) / 60_000);
+}
 
-  const target = new Date(now);
+/** Data da próxima ocorrência (semanal ou dia fixo). */
+function proximaData(
+  diaSemana: number,
+  horario: string,
+  regra: TipoDaRegra | null | undefined,
+  agora: Date
+): Date | null {
+  if (regra && !ehSemanal(regra)) return proximaOcorrencia({ ...regra, diaSemana, horario }, agora);
+
+  const [h, m] = horario.split(':').map(Number);
+  const target = new Date(agora);
   target.setHours(h, m, 0, 0);
 
-  const currentDay = now.getDay();
-  let daysUntil = ((diaSemana - currentDay) + 7) % 7;
-
+  let daysUntil = ((diaSemana - agora.getDay()) + 7) % 7;
   // Mesma semana, horário já passou → próxima semana
-  if (daysUntil === 0 && target <= now) {
-    daysUntil = 7;
-  }
+  if (daysUntil === 0 && target <= agora) daysUntil = 7;
 
   target.setDate(target.getDate() + daysUntil);
-  return Math.round((target.getTime() - now.getTime()) / 60_000);
+  return target;
+}
+
+function ehDiaDoMes(regra: TipoDaRegra | null | undefined): boolean {
+  return regra?.tipoRecorrencia === TIPO_RECORRENCIA.DiaDoMes;
+}
+
+/** Rótulo estável (sem data relativa) de uma missa de dia fixo: "Dia 13". */
+function rotuloDiaFixo(regra: TipoDaRegra): string {
+  return `Dia ${regra.diaDoMes ?? ''}`.trim();
 }
 
 /** Nomes longos, como nos cards. Índice = `Date.getDay()` = `DiaDaSemanaEnum`. */
@@ -77,12 +102,14 @@ const DIAS_POR_EXTENSO = [
 export function getDiaLabel(
   diaSemana: number,
   horario: string,
-  relativo: boolean
+  relativo: boolean,
+  regra?: TipoDaRegra | null
 ): string {
-  const nomeDoDia = DIAS_LONGOS[diaSemana] ?? '';
+  const nomeDoDia = ehDiaDoMes(regra) ? rotuloDiaFixo(regra!) : DIAS_LONGOS[diaSemana] ?? '';
   if (!relativo) return nomeDoDia;
 
-  const min = getNextOccurrenceMinutes(diaSemana, horario);
+  const min = getNextOccurrenceMinutes(diaSemana, horario, regra);
+  if (!Number.isFinite(min)) return nomeDoDia;
   const alvo = new Date(Date.now() + min * 60_000);
   const hoje = new Date();
   hoje.setHours(0, 0, 0, 0);
@@ -107,11 +134,15 @@ export function getDiaLabel(
 export function getProximaMissaData(
   diaSemana: number,
   horario: string,
-  relativo: boolean
+  relativo: boolean,
+  regra?: TipoDaRegra | null
 ): string {
-  if (!relativo) return DIAS_POR_EXTENSO[diaSemana] ?? '';
+  // Dia fixo: "todo dia 13". Ocorrência no mês tem dia da semana, então segue o nome do dia.
+  const diaFixo = ehDiaDoMes(regra);
+  if (!relativo) return diaFixo ? `todo dia ${regra!.diaDoMes}` : DIAS_POR_EXTENSO[diaSemana] ?? '';
 
-  const min = getNextOccurrenceMinutes(diaSemana, horario);
+  const min = getNextOccurrenceMinutes(diaSemana, horario, regra);
+  if (!Number.isFinite(min)) return diaFixo ? `todo dia ${regra!.diaDoMes}` : '';
   const data = new Date(Date.now() + min * 60_000);
   return data.toLocaleDateString('pt-BR', {
     weekday: 'long',
@@ -120,18 +151,17 @@ export function getProximaMissaData(
   });
 }
 
-export function getCountdownLabel(diaSemana: number, horario: string): string {
+export function getCountdownLabel(
+  diaSemana: number,
+  horario: string,
+  regra?: TipoDaRegra | null
+): string {
   const now = new Date();
   const [h, m] = horario.split(':').map(Number);
   const timeStr = m > 0 ? `${h}h${m.toString().padStart(2, '0')}` : `${h}h`;
 
-  const target = new Date(now);
-  target.setHours(h, m, 0, 0);
-
-  const currentDay = now.getDay();
-  let daysUntil = ((diaSemana - currentDay) + 7) % 7;
-  if (daysUntil === 0 && target <= now) daysUntil = 7;
-  target.setDate(target.getDate() + daysUntil);
+  const target = proximaData(diaSemana, horario, regra, now);
+  if (!target) return '';
 
   const minutes = Math.round((target.getTime() - now.getTime()) / 60_000);
 
@@ -154,6 +184,10 @@ export function getCountdownLabel(diaSemana: number, horario: string): string {
 
   if (dayDiff === 0) return `Hoje às ${timeStr}`;
   if (dayDiff === 1) return `Amanhã às ${timeStr}`;
+  if (regra && !ehSemanal(regra)) {
+    const data = `${String(target.getDate()).padStart(2, '0')}/${String(target.getMonth() + 1).padStart(2, '0')}`;
+    return `${data} às ${timeStr}`;
+  }
   return `${DAY_NAMES[diaSemana]} às ${timeStr}`;
 }
 
@@ -176,9 +210,10 @@ export function getConfidenceLevel(mass: Mass): ConfidenceLevel {
 
 export function getMissaAgoraUrgency(
   diaSemana: number,
-  horario: string
+  horario: string,
+  regra?: TipoDaRegra | null
 ): MassUrgency {
-  const minutes = getNextOccurrenceMinutes(diaSemana, horario);
+  const minutes = getNextOccurrenceMinutes(diaSemana, horario, regra);
   if (minutes > 120) return null;
   if (minutes <= 30) return 'urgent';
   if (minutes <= 90) return 'soon';

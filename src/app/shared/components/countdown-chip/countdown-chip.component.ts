@@ -1,3 +1,4 @@
+import { TipoDaRegra } from '../../utils/recorrencia-missa';
 import { ChangeDetectorRef, Component, Input, NgZone, OnChanges, OnDestroy, OnInit, PLATFORM_ID, inject } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { getCountdownLabel } from '../../utils/mass-time.utils';
@@ -12,6 +13,8 @@ import { getCountdownLabel } from '../../utils/mass-time.utils';
 export class CountdownChipComponent implements OnInit, OnChanges, OnDestroy {
   @Input({ required: true }) diaSemana!: number;
   @Input({ required: true }) horario!: string;
+  /** Missa completa (tipo de recorrência); sem ela vale a regra semanal. */
+  @Input() regra?: TipoDaRegra | null;
 
   label = '';
   private intervalId?: ReturnType<typeof setInterval>;
@@ -34,7 +37,7 @@ export class CountdownChipComponent implements OnInit, OnChanges, OnDestroy {
     if (this._isBrowser) {
       this.intervalId = this._ngZone.runOutsideAngular(() =>
         setInterval(() => {
-          const novo = getCountdownLabel(this.diaSemana, this.horario);
+          const novo = getCountdownLabel(this.diaSemana, this.horario, this.regra);
           if (novo !== this.label) {
             this._ngZone.run(() => {
               this.label = novo;
@@ -83,7 +86,7 @@ export class CountdownChipComponent implements OnInit, OnChanges, OnDestroy {
    */
   private updateLabel(): void {
     this.label = this._isBrowser
-      ? getCountdownLabel(this.diaSemana, this.horario)
+      ? getCountdownLabel(this.diaSemana, this.horario, this.regra)
       : '';
   }
 }

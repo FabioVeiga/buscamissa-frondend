@@ -1,3 +1,4 @@
+import { ehSemanal, ocorreNoDia, ocorreNoFimDeSemana } from '../../../shared/utils/recorrencia-missa';
 import { Component, DestroyRef, inject, NgZone, PLATFORM_ID, ViewChild } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { finalize } from "rxjs/operators";
@@ -126,17 +127,17 @@ export class HomeComponent {
     if (cards.length === 0) return null;
     const mins = getNextOccurrenceMinutes(
       cards[0].mass.diaSemana!,
-      cards[0].mass.horario
+      cards[0].mass.horario,
+      cards[0].mass
     );
     if (mins <= 90) return `🟢 Próxima missa em ${mins} min`;
     return '📍 Missas encontradas perto de você';
   }
 
   get missasDeHojeHorarios(): string[] {
-    const hoje = new Date().getDay();
     return [...new Set(
       this.proximasMissasCards
-        .filter(c => c.mass.diaSemana === hoje)
+        .filter(c => ocorreNoDia(c.mass, 0))
         .map(c => formatMassTime(c.mass.horario))
     )].slice(0, 8);
   }
@@ -162,14 +163,12 @@ export class HomeComponent {
   readonly chipsTooltip = 'Busque uma cidade ou ative "Perto de mim" para filtrar por horário';
 
   private _aplicarQuickFilterCards(cards: MassCardData[]): MassCardData[] {
-    const hoje = new Date().getDay();
-    const amanha = (hoje + 1) % 7;
     const hora = (c: MassCardData) => parseInt((c.mass.horario || '0').split(':')[0], 10);
 
     switch (this.quickFilter) {
-      case 'hoje':  return cards.filter(c => c.mass.diaSemana === hoje);
-      case 'amanha': return cards.filter(c => c.mass.diaSemana === amanha);
-      case 'fds':   return cards.filter(c => c.mass.diaSemana === 0 || c.mass.diaSemana === 6);
+      case 'hoje':  return cards.filter(c => ocorreNoDia(c.mass, 0));
+      case 'amanha': return cards.filter(c => ocorreNoDia(c.mass, 1));
+      case 'fds':   return cards.filter(c => ocorreNoFimDeSemana(c.mass));
       case 'manha': return cards.filter(c => hora(c) < 12);
       case 'tarde': return cards.filter(c => hora(c) >= 12 && hora(c) < 18);
       case 'noite': return cards.filter(c => hora(c) >= 18);
@@ -205,8 +204,6 @@ export class HomeComponent {
   private _aplicarQuickFilterChurches(igrejas: Church[]): Church[] {
     if (!this.quickFilter) return igrejas;
 
-    const hoje = new Date().getDay();
-    const amanha = (hoje + 1) % 7;
     const hora = (horario: string) => parseInt((horario || '0').split(':')[0], 10);
 
     return igrejas.filter(church => {
@@ -214,9 +211,9 @@ export class HomeComponent {
       if (!missas.length) return false;
 
       switch (this.quickFilter) {
-        case 'hoje':  return missas.some(m => m.diaSemana === hoje);
-        case 'amanha': return missas.some(m => m.diaSemana === amanha);
-        case 'fds':   return missas.some(m => m.diaSemana === 0 || m.diaSemana === 6);
+        case 'hoje':  return missas.some(m => ocorreNoDia(m, 0));
+        case 'amanha': return missas.some(m => ocorreNoDia(m, 1));
+        case 'fds':   return missas.some(m => ocorreNoFimDeSemana(m));
         case 'manha': return missas.some(m => hora(m.horario) < 12);
         case 'tarde': return missas.some(m => {
           const h = hora(m.horario);
@@ -862,6 +859,10 @@ export class HomeComponent {
       slug: card.slug,
       diaSemana: card.mass.diaSemana,
       horario: card.mass.horario,
+      tipoRecorrencia: card.mass.tipoRecorrencia,
+      diaDoMes: card.mass.diaDoMes,
+      diasSemanaExcecao: card.mass.diasSemanaExcecao,
+      semanasDoMes: card.mass.semanasDoMes,
     };
     this._favorites.adicionar(novaFavorita);
     this._metricas.registrarFavorito(card.churchId);
@@ -881,7 +882,7 @@ export class HomeComponent {
   private _loadFavorita(): void {
     this.paroquiasFavoritas = this._favorites.listar().map((f) => ({
       ...f,
-      proximaMissaLabel: f.diaSemana != null && f.horario ? getCountdownLabel(f.diaSemana, f.horario) : undefined,
+      proximaMissaLabel: f.diaSemana != null && f.horario ? getCountdownLabel(f.diaSemana, f.horario, f) : undefined,
     }));
   }
 
@@ -1445,20 +1446,10 @@ export class HomeComponent {
     const missas: any[] = church.missas ?? [];
     if (!missas.length) return Infinity;
     return Math.min(...missas.map((m: any) => getMissaAgoraUrgency != null
-      ? this._nextMinutes(m.diaSemana, m.horario)
+      ? getNextOccurrenceMinutes(m.diaSemana, m.horario, m)
       : Infinity));
   }
 
-  private _nextMinutes(diaSemana: number, horario: string): number {
-    const agora = new Date();
-    const [h, min] = (horario ?? '00:00').split(':').map(Number);
-    const diasAte = ((diaSemana - agora.getDay()) + 7) % 7;
-    const alvo = new Date(agora);
-    alvo.setDate(agora.getDate() + diasAte);
-    alvo.setHours(h, min, 0, 0);
-    if (diasAte === 0 && alvo.getTime() <= agora.getTime()) alvo.setDate(alvo.getDate() + 7);
-    return Math.round((alvo.getTime() - agora.getTime()) / 60_000);
-  }
 
   private _distHome(church: any): number | null {
     return distanciaMetrosAte(

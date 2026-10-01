@@ -22,6 +22,7 @@ import {
   ValidationErrors,
 } from "@angular/forms";
 import { CommonModule, DatePipe } from "@angular/common";
+import { SEMANAS_DO_MES, TIPO_RECORRENCIA, alertaConflitoSemanal, descrever, ehSemanal } from "../../../../../shared/utils/recorrencia-missa";
 import { PrimeNgModule } from "../../../../../shared/primeng.module";
 import { ChurchFormData, Mass } from "../../models/church.model";
 import { MessageService } from "primeng/api";
@@ -414,7 +415,7 @@ export class ChurchFormComponent implements OnInit, OnChanges {
       this.horariosLote.forEach((horario) => {
         const jaExisteNoForm = this.horarios.controls.some((ctrl) => {
           const v = ctrl.value;
-          return v.diaSemana === dia && v.horario instanceof Date && this.mesmoHorario(v.horario, horario);
+          return ehSemanal(v) && v.diaSemana === dia && v.horario instanceof Date && this.mesmoHorario(v.horario, horario);
         });
         if (!jaExisteNoForm) {
           this.horarios.push(
@@ -423,6 +424,10 @@ export class ChurchFormComponent implements OnInit, OnChanges {
               diaSemana: [dia, Validators.required],
               horario: [new Date(horario), [Validators.required, this.minutosValidos()]],
               observacao: ["", Validators.maxLength(20)],
+              tipoRecorrencia: [TIPO_RECORRENCIA.Semanal],
+              diaDoMes: [null],
+              diasSemanaExcecao: [null],
+              semanasDoMes: [null],
             })
           );
           adicionados++;
@@ -451,8 +456,8 @@ export class ChurchFormComponent implements OnInit, OnChanges {
     const controlsOrdenados = [...this.horarios.controls].sort((a, b) => {
       const va = a.value;
       const vb = b.value;
-      const diaA = va.diaSemana ?? Number.MAX_SAFE_INTEGER;
-      const diaB = vb.diaSemana ?? Number.MAX_SAFE_INTEGER;
+      const diaA = this.chaveOrdenacao(va);
+      const diaB = this.chaveOrdenacao(vb);
       if (diaA !== diaB) return diaA - diaB;
 
       const horaA = va.horario instanceof Date ? va.horario.getTime() : Number.MAX_SAFE_INTEGER;
@@ -475,8 +480,33 @@ export class ChurchFormComponent implements OnInit, OnChanges {
           [Validators.required, this.minutosValidos()],
         ],
         observacao: [missa?.observacao ?? "", Validators.maxLength(20)],
+        tipoRecorrencia: [missa?.tipoRecorrencia ?? TIPO_RECORRENCIA.Semanal],
+        diaDoMes: [missa?.diaDoMes ?? null],
+        diasSemanaExcecao: [missa?.diasSemanaExcecao ?? null],
+        semanasDoMes: [missa?.semanasDoMes ?? null],
       })
     );
+  }
+
+  /** Semanais pelo dia da semana; dia fixo do mês depois, pelo dia do mês. */
+  private chaveOrdenacao(v: any): number {
+    if (v.tipoRecorrencia === TIPO_RECORRENCIA.OcorrenciaNoMes) return 50 + (v.diaSemana ?? 0);
+    if (!ehSemanal(v)) return 100 + (v.diaDoMes ?? 0);
+    return v.diaSemana ?? Number.MAX_SAFE_INTEGER;
+  }
+
+  ehDiaFixo(ctrl: AbstractControl): boolean {
+    return !ehSemanal(ctrl.value);
+  }
+
+  /** "Todo dia 13, 19h (exceto domingos)" para a linha da tabela. */
+  descreverLinha(ctrl: AbstractControl): string {
+    const v = ctrl.value;
+    const horario =
+      v.horario instanceof Date
+        ? `${String(v.horario.getHours()).padStart(2, "0")}:${String(v.horario.getMinutes()).padStart(2, "0")}`
+        : v.horario ?? "";
+    return descrever({ ...v, horario });
   }
   
 
@@ -487,6 +517,50 @@ export class ChurchFormComponent implements OnInit, OnChanges {
   diaUnico: number | null = null;
   horarioUnico: Date | null = null;
   observacaoUnica: string = "";
+  // Frequência da missa a adicionar: toda semana ou dia fixo do mês ("todo dia 13").
+  readonly TIPO_RECORRENCIA = TIPO_RECORRENCIA;
+  frequenciaUnica: number = TIPO_RECORRENCIA.Semanal;
+  diaDoMesUnico: number | null = null;
+  excecaoSabadoUnico = false;
+  excecaoDomingoUnico = false;
+
+  // Ocorrência no mês ("1ª e 3ª sexta"): dia da semana + semanas.
+  readonly SEMANAS_DO_MES = SEMANAS_DO_MES;
+  diaOcorrenciaUnico: number | null = null;
+  semanasDoMesUnico = 0;
+
+  toggleSemanaUnica(bit: number): void {
+    this.semanasDoMesUnico ^= bit;
+  }
+
+  // Templates Angular não aceitam operador bit a bit: a checagem fica aqui.
+  temSemanaUnica(bit: number): boolean {
+    return (this.semanasDoMesUnico & bit) !== 0;
+  }
+
+  get podeAdicionarUnico(): boolean {
+    if (!this.horarioUnico) return false;
+    if (this.frequenciaUnica === TIPO_RECORRENCIA.DiaDoMes) return this.diaDoMesUnico != null;
+    if (this.frequenciaUnica === TIPO_RECORRENCIA.OcorrenciaNoMes)
+      return this.diaOcorrenciaUnico !== null && this.semanasDoMesUnico > 0;
+    return this.diaUnico !== null;
+  }
+
+  /** Aviso de semanal x ocorrência no mês no mesmo dia e horário (não bloqueia). */
+  get alertaUnico(): string | null {
+    if (!this.horarioUnico || this.frequenciaUnica === TIPO_RECORRENCIA.DiaDoMes) return null;
+    const hhmm = (d: Date) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+    const existentes = this.horarios.controls.map((c) => ({
+      ...c.value,
+      horario: c.value.horario instanceof Date ? hhmm(c.value.horario) : c.value.horario ?? "",
+    }));
+    const ocorrencia = this.frequenciaUnica === TIPO_RECORRENCIA.OcorrenciaNoMes;
+    return alertaConflitoSemanal(existentes, {
+      tipoRecorrencia: this.frequenciaUnica,
+      diaSemana: ocorrencia ? this.diaOcorrenciaUnico : this.diaUnico,
+      horario: hhmm(this.horarioUnico),
+    });
+  }
 
   setDefaultTimeIfNullUnico(): void {
     const current = this.horarioUnico;
@@ -498,6 +572,14 @@ export class ChurchFormComponent implements OnInit, OnChanges {
   }
 
   adicionarHorarioUnico(): void {
+    if (this.frequenciaUnica === TIPO_RECORRENCIA.DiaDoMes) {
+      this.adicionarDiaFixoUnico();
+      return;
+    }
+    if (this.frequenciaUnica === TIPO_RECORRENCIA.OcorrenciaNoMes) {
+      this.adicionarOcorrenciaUnica();
+      return;
+    }
     if (this.diaUnico === null || !this.horarioUnico) {
       this.messageService.add({
         severity: "warn",
@@ -513,11 +595,80 @@ export class ChurchFormComponent implements OnInit, OnChanges {
         diaSemana: [this.diaUnico, Validators.required],
         horario: [new Date(this.horarioUnico), [Validators.required, this.minutosValidos()]],
         observacao: [this.observacaoUnica ?? "", Validators.maxLength(20)],
+        tipoRecorrencia: [TIPO_RECORRENCIA.Semanal],
+        diaDoMes: [null],
+        diasSemanaExcecao: [null],
+        semanasDoMes: [null],
       })
     );
     this.ordenarHorarios();
 
     this.diaUnico = null;
+    this.horarioUnico = null;
+    this.observacaoUnica = "";
+    this.cd.markForCheck();
+  }
+
+  private adicionarDiaFixoUnico(): void {
+    const dia = Number(this.diaDoMesUnico);
+    if (!this.horarioUnico || !Number.isInteger(dia) || dia < 1 || dia > 31) {
+      this.messageService.add({
+        severity: "warn",
+        summary: "Selecione os dados",
+        detail: "Informe o dia do mês (1 a 31) e o horário antes de adicionar.",
+      });
+      return;
+    }
+    const excecao = (this.excecaoSabadoUnico ? 1 << 6 : 0) | (this.excecaoDomingoUnico ? 1 : 0);
+
+    this.horarios.push(
+      this.fb.group({
+        id: [null],
+        diaSemana: [0, Validators.required], // ignorado no dia fixo
+        horario: [new Date(this.horarioUnico), [Validators.required, this.minutosValidos()]],
+        observacao: [this.observacaoUnica ?? "", Validators.maxLength(20)],
+        tipoRecorrencia: [TIPO_RECORRENCIA.DiaDoMes],
+        diaDoMes: [dia],
+        diasSemanaExcecao: [excecao || null],
+        semanasDoMes: [null],
+      })
+    );
+    this.ordenarHorarios();
+
+    this.diaDoMesUnico = null;
+    this.horarioUnico = null;
+    this.observacaoUnica = "";
+    this.excecaoSabadoUnico = false;
+    this.excecaoDomingoUnico = false;
+    this.cd.markForCheck();
+  }
+
+  private adicionarOcorrenciaUnica(): void {
+    if (!this.horarioUnico || this.diaOcorrenciaUnico === null || this.semanasDoMesUnico <= 0) {
+      this.messageService.add({
+        severity: "warn",
+        summary: "Selecione os dados",
+        detail: "Escolha o dia da semana, ao menos uma semana do mês e o horário antes de adicionar.",
+      });
+      return;
+    }
+
+    this.horarios.push(
+      this.fb.group({
+        id: [null],
+        diaSemana: [this.diaOcorrenciaUnico, Validators.required],
+        horario: [new Date(this.horarioUnico), [Validators.required, this.minutosValidos()]],
+        observacao: [this.observacaoUnica ?? "", Validators.maxLength(20)],
+        tipoRecorrencia: [TIPO_RECORRENCIA.OcorrenciaNoMes],
+        diaDoMes: [null],
+        diasSemanaExcecao: [null],
+        semanasDoMes: [this.semanasDoMesUnico],
+      })
+    );
+    this.ordenarHorarios();
+
+    this.diaOcorrenciaUnico = null;
+    this.semanasDoMesUnico = 0;
     this.horarioUnico = null;
     this.observacaoUnica = "";
     this.cd.markForCheck();

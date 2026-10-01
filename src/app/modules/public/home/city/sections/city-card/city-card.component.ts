@@ -80,11 +80,11 @@ export class CityCardComponent {
    * ~345 px, então inserir o chip não muda a altura do card e não desloca layout.
    */
   ehUrgente(m: any): boolean {
-    return this._isBrowser && getNextOccurrenceMinutes(m.diaSemana, m.horario) <= 180;
+    return this._isBrowser && getNextOccurrenceMinutes(m.diaSemana, m.horario, m) <= 180;
   }
 
   countdownLabel(m: any): string {
-    return this._isBrowser ? getCountdownLabel(m.diaSemana, m.horario) : '';
+    return this._isBrowser ? getCountdownLabel(m.diaSemana, m.horario, m) : '';
   }
 
   /**
@@ -92,7 +92,7 @@ export class CityCardComponent {
    * `.city-card__dia` do template é o MESMO nos dois casos — muda só o texto.
    */
   diaLabelRelativo(m: any): string {
-    return getDiaLabel(m.diaSemana, m.horario, this._isBrowser);
+    return getDiaLabel(m.diaSemana, m.horario, this._isBrowser, m);
   }
 
   onFavoritar(event: MouseEvent): void {

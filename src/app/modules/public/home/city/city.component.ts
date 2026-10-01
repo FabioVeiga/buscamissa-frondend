@@ -1,3 +1,4 @@
+import { ehSemanal, ocorreNoDia, ocorreNoFimDeSemana } from '../../../../shared/utils/recorrencia-missa';
 import { Component, DestroyRef, inject, OnDestroy, OnInit, PLATFORM_ID } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { CommonModule, isPlatformBrowser } from "@angular/common";
@@ -291,16 +292,17 @@ export class CityComponent implements OnInit, OnDestroy {
 
     // Quick filters
     if (this.quickFilter === 'hoje') {
-      lista = lista.filter(ig => ig.missas?.some((m: any) => m.diaSemana === this.diaHoje));
+      lista = lista.filter(ig => ig.missas?.some((m: any) => ocorreNoDia(m, 0)));
     } else if (this.quickFilter === 'amanha') {
-      lista = lista.filter(ig => ig.missas?.some((m: any) => m.diaSemana === this.diaAmanha));
+      lista = lista.filter(ig => ig.missas?.some((m: any) => ocorreNoDia(m, 1)));
     } else if (this.quickFilter === 'fds') {
-      lista = lista.filter(ig => ig.missas?.some((m: any) => m.diaSemana === 0 || m.diaSemana === 6));
+      lista = lista.filter(ig => ig.missas?.some((m: any) => ocorreNoFimDeSemana(m)));
     }
 
     // Filtro por dia manual
     if (this.diaAtivo !== null) {
-      lista = lista.filter(ig => ig.missas?.some((m: any) => m.diaSemana === this.diaAtivo));
+      // Filtro por dia da semana considera só missas semanais (dia fixo do mês não tem dia da semana).
+      lista = lista.filter(ig => ig.missas?.some((m: any) => ehSemanal(m) && m.diaSemana === this.diaAtivo));
     }
 
     // Filtro por período
@@ -341,20 +343,18 @@ export class CityComponent implements OnInit, OnDestroy {
   }
 
   private _minProximaMissa(igreja: any): number {
-    const diasFiltro = this._diasFiltroAtivos();
-    const missas: any[] = (igreja.missas ?? []).filter((m: any) =>
-      diasFiltro === null || diasFiltro.includes(m.diaSemana)
-    );
+    const missas: any[] = (igreja.missas ?? []).filter((m: any) => this._missaPassaFiltro(m));
     if (!missas.length) return Infinity;
-    return Math.min(...missas.map((m) => getNextOccurrenceMinutes(m.diaSemana, m.horario)));
+    return Math.min(...missas.map((m) => getNextOccurrenceMinutes(m.diaSemana, m.horario, m)));
   }
 
-  private _diasFiltroAtivos(): number[] | null {
-    if (this.quickFilter === 'hoje') return [this.diaHoje];
-    if (this.quickFilter === 'amanha') return [this.diaAmanha];
-    if (this.quickFilter === 'fds') return [0, 6];
-    if (this.diaAtivo !== null) return [this.diaAtivo];
-    return null;
+  /** A missa entra no filtro de dia ativo (Hoje/Amanhã/Fim de semana ou dia da semana)? */
+  private _missaPassaFiltro(m: any): boolean {
+    if (this.quickFilter === 'hoje') return ocorreNoDia(m, 0);
+    if (this.quickFilter === 'amanha') return ocorreNoDia(m, 1);
+    if (this.quickFilter === 'fds') return ocorreNoFimDeSemana(m);
+    if (this.diaAtivo !== null) return ehSemanal(m) && m.diaSemana === this.diaAtivo;
+    return true;
   }
 
   // ── Próxima missa do card ─────────────────────────────────────────────────
@@ -363,8 +363,7 @@ export class CityComponent implements OnInit, OnDestroy {
     let candidatas: any[] = igreja.missas ?? [];
     if (!candidatas.length) return null;
 
-    const diasFiltro = this._diasFiltroAtivos();
-    if (diasFiltro) candidatas = candidatas.filter((m) => diasFiltro.includes(m.diaSemana));
+    candidatas = candidatas.filter((m) => this._missaPassaFiltro(m));
 
     if (this.periodoAtivo && PERIODOS[this.periodoAtivo]) {
       const { de, ate } = PERIODOS[this.periodoAtivo];
@@ -378,8 +377,8 @@ export class CityComponent implements OnInit, OnDestroy {
     if (!candidatas.length) candidatas = igreja.missas ?? [];
 
     return candidatas.reduce((melhor: any, m: any) => {
-      const min = getNextOccurrenceMinutes(m.diaSemana, m.horario);
-      const melhorMin = getNextOccurrenceMinutes(melhor.diaSemana, melhor.horario);
+      const min = getNextOccurrenceMinutes(m.diaSemana, m.horario, m);
+      const melhorMin = getNextOccurrenceMinutes(melhor.diaSemana, melhor.horario, melhor);
       return min < melhorMin ? m : melhor;
     });
   }

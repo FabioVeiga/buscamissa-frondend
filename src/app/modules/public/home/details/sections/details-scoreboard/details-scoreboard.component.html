@@ -12,7 +12,7 @@
         </div>
         <div *ngIf="mostrarContador" class="scoreboard-countdown mt-1.5 flex items-center gap-1.5">
           <i class="pi pi-clock text-sm"></i>
-          <app-countdown-chip [diaSemana]="proximaMissa.diaSemana!" [horario]="proximaMissa.horario" />
+          <app-countdown-chip [diaSemana]="proximaMissa.diaSemana!" [horario]="proximaMissa.horario" [regra]="proximaMissa" />
         </div>
       </div>
       <span class="scoreboard-data text-sm text-gray-500 capitalize hidden sm:block self-center">{{ proximaMissaData }}</span>

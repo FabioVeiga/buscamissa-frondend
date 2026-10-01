@@ -55,14 +55,14 @@ export class MinhasIgrejasComponent implements OnInit, OnDestroy {
     this.igrejas = this._favorites.listar().map((f) => ({
       ...f,
       proximaMissaLabel: f.diaSemana != null && f.horario
-        ? getCountdownLabel(f.diaSemana, f.horario)
+        ? getCountdownLabel(f.diaSemana, f.horario, f)
         : undefined,
     }));
   }
 
   getUrgency(igreja: IgrejaFavorita) {
     if (igreja.diaSemana == null) return null;
-    return getMissaAgoraUrgency(igreja.diaSemana, igreja.horario ?? '');
+    return getMissaAgoraUrgency(igreja.diaSemana, igreja.horario ?? '', igreja);
   }
 
   removerIgreja(id: number, event: Event): void {

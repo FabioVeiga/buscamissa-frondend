@@ -61,6 +61,12 @@ export interface Mass {
   diaSemana?: number;
   horario: string;
   observacao?: string;
+  // Recorrência (ausente = semanal). Ver shared/utils/recorrencia-missa.ts.
+  tipoRecorrencia?: number | null;
+  diaDoMes?: number | null;
+  diasSemanaExcecao?: number | null;
+  semanasDoMes?: number | null;
+  descricaoRecorrencia?: string;
   // Confiança (preenchida pelo backend)
   fontePrincipal?: number;
   ultimaValidacao?: string | null;

@@ -152,14 +152,26 @@ h2.mt {
 }
 
 .linha-missa {
-  display: grid;
-  grid-template-columns: 160px 90px 1fr auto;
+  // Flex com quebra: a linha de "dia fixo do mês" tem campos a mais (dia + exceções).
+  display: flex;
+  flex-wrap: wrap;
   gap: 0.5rem;
   align-items: center;
   margin-bottom: 0.5rem;
 
+  p-select {
+    flex: 0 0 170px;
+  }
+
   .input-hora {
+    flex: 0 0 90px;
+    width: 90px;
     text-align: center;
+  }
+
+  input[formcontrolname="observacao"] {
+    flex: 1 1 160px;
+    min-width: 0;
   }
 }
 
@@ -203,11 +215,12 @@ h2.mt {
     grid-template-columns: 1fr auto;
   }
   .linha-missa {
-    grid-template-columns: 1fr 80px auto;
+    p-select {
+      flex: 1 1 100%;
+    }
 
-    input[formcontrolname="observacao"],
-    input[placeholder*="Observação"] {
-      grid-column: 1 / -1;
+    input[formcontrolname="observacao"] {
+      flex: 1 1 100%;
     }
   }
 }
@@ -347,4 +360,32 @@ h2.mt {
   font-weight: 400;
   font-size: 0.68rem;
   color: #9ca3af;
+}
+
+.excecao-dia {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.acoes-missa {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+  margin-top: 0.25rem;
+}
+
+.alerta-missa {
+  font-size: 0.8rem;
+  color: #c2410c;
+  margin: 0.25rem 0 0;
+}
+
+.semanas-mes {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.5rem;
 }
