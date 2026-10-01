@@ -110,10 +110,15 @@ function ehExcecao(regra: RegraRecorrencia, diaDaSemana: number): boolean {
 function descreverExcecao(regra: RegraRecorrencia): string {
   const mask = regra.diasSemanaExcecao;
   if (!mask) return '';
+  // Exceção em 4+ dias: mais claro dizer quando OCORRE ("somente sábados e domingos").
+  const excluidos = [0, 1, 2, 3, 4, 5, 6].filter((d) => (mask & (1 << d)) !== 0).length;
+  const somente = excluidos >= 4;
   // Semana a partir de segunda, para ler "sábados e domingos".
-  const dias = [1, 2, 3, 4, 5, 6, 0].filter((d) => (mask & (1 << d)) !== 0).map((d) => DIAS_PLURAL[d]);
+  const dias = [1, 2, 3, 4, 5, 6, 0]
+    .filter((d) => ((mask & (1 << d)) !== 0) !== somente)
+    .map((d) => DIAS_PLURAL[d]);
   const lista = dias.length === 1 ? dias[0] : `${dias.slice(0, -1).join(', ')} e ${dias[dias.length - 1]}`;
-  return ` (exceto ${lista})`;
+  return somente ? ` (somente ${lista})` : ` (exceto ${lista})`;
 }
 
 function formatarHora(horario: string): string {
