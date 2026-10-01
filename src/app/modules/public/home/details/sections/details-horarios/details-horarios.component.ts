@@ -3,7 +3,12 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { Mass } from '../../../../church/models/church.model';
 import { formatMassTime } from '../../../../../../shared/utils/mass-time.utils';
-import { descrever, ehSemanal } from '../../../../../../shared/utils/recorrencia-missa';
+import { descrever, ehSemanal, ocorreEm } from '../../../../../../shared/utils/recorrencia-missa';
+
+/** Missa na grade semanal; `diaDoMes` marca a de dia fixo que cai nesta semana. */
+interface MissaNaGrade extends Mass {
+  diaFixoNaSemana?: number;
+}
 
 /** Agenda semanal de horários da paróquia (extraído do DetailsComponent — auditoria 2.x). */
 @Component({
@@ -20,19 +25,42 @@ export class DetailsHorariosComponent {
   @Output() adicionarHorarios = new EventEmitter<void>();
 
   /** Semana completa (7 dias) — dias sem missa entram vazios para mostrar "—" */
-  get agendaSemana(): { dia: number; label: string; missas: Mass[] }[] {
+  get agendaSemana(): { dia: number; label: string; missas: MissaNaGrade[] }[] {
     const labels = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
-    const grupos: Record<number, Mass[]> = {};
+    const grupos: Record<number, MissaNaGrade[]> = {};
     (this.missas ?? []).filter((m) => ehSemanal(m)).forEach((m) => {
       if (m.diaSemana !== undefined && m.diaSemana !== null) {
         (grupos[m.diaSemana] = grupos[m.diaSemana] ?? []).push(m);
       }
     });
+    this._adicionarDiaFixoDaSemana(grupos);
     return labels.map((label, dia) => ({
       dia,
       label,
       missas: (grupos[dia] ?? []).sort((a, b) => a.horario.localeCompare(b.horario)),
     }));
+  }
+
+  /**
+   * Dia fixo do mês que cai nos próximos 7 dias (a partir de hoje) entra na linha do
+   * dia da semana correspondente, marcado com o dia ("14h00 · dia 1"). Só no browser:
+   * o prerender fica no ar por dias e não sabe que dia é hoje — o HTML pré-gerado
+   * mantém a grade só com as semanais (a regra completa segue na seção abaixo).
+   * Dia de exceção (ex.: "exceto domingos") já fica de fora pelo `ocorreEm`.
+   */
+  private _adicionarDiaFixoDaSemana(grupos: Record<number, MissaNaGrade[]>): void {
+    if (!this._isBrowser) return;
+    const diasFixos = (this.missas ?? []).filter((m) => !ehSemanal(m));
+    if (!diasFixos.length) return;
+
+    const data = new Date();
+    data.setHours(0, 0, 0, 0);
+    for (let i = 0; i < 7; i++, data.setDate(data.getDate() + 1)) {
+      for (const m of diasFixos) {
+        if (!ocorreEm(m, data)) continue;
+        (grupos[data.getDay()] = grupos[data.getDay()] ?? []).push({ ...m, diaFixoNaSemana: data.getDate() });
+      }
+    }
   }
 
   /** Missas de dia fixo do mês ("Todo dia 13, 19h"): fora da grade semanal. */

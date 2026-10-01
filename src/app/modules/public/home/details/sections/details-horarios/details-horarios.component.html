@@ -33,7 +33,9 @@
       <div class="flex flex-wrap gap-2 flex-1">
         <ng-container *ngIf="grupo.missas.length; else semMissa">
           <div *ngFor="let m of grupo.missas" class="mass-chip">
-            <span class="mass-chip__time">{{ formatarHorario(m.horario) }}</span>
+            <span class="mass-chip__time">
+              {{ formatarHorario(m.horario) }}<span *ngIf="m.diaFixoNaSemana" class="mass-chip__dia"> · dia {{ m.diaFixoNaSemana }}</span>
+            </span>
             <span *ngIf="m.observacao" class="mass-chip__obs">{{ m.observacao }}</span>
           </div>
         </ng-container>
