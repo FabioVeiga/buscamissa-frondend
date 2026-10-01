@@ -303,6 +303,14 @@
             <label class="excecao-dia"><input type="checkbox" formControlName="excecaoSabado" /> Exceto sáb.</label>
             <label class="excecao-dia"><input type="checkbox" formControlName="excecaoDomingo" /> Exceto dom.</label>
           </ng-container>
+          <ng-container *ngIf="missas.at(i).get('diaSemana')?.value === OCORRENCIA_NO_MES">
+            <p-select formControlName="diaOcorrencia" [options]="dias" optionLabel="nome" optionValue="valor"
+                      placeholder="Dia" styleClass="w-full" appendTo="body"
+                      [class.ng-invalid-visual]="!diaFixoValido(i)"></p-select>
+            <label *ngFor="let s of SEMANAS_DO_MES" class="excecao-dia">
+              <input type="checkbox" [checked]="temSemana(i, s.bit)" (change)="toggleSemana(i, s.bit)" /> {{ s.label }}
+            </label>
+          </ng-container>
           <input pInputText formControlName="horario" placeholder="HH:mm" maxlength="5" class="input-hora"
                  (blur)="normalizarHorario(missas.at(i).get('horario'))"
                  [class.ng-invalid-visual]="missas.at(i).get('horario')?.invalid && missas.at(i).get('horario')?.touched" />
@@ -317,7 +325,10 @@
                 class="p-button-text p-button-sm" (click)="adicionarMissa()"></button>
         <button pButton type="button" icon="pi pi-calendar-plus" label="Adicionar dia fixo do mês"
                 class="p-button-text p-button-sm" (click)="adicionarMissa(DIA_FIXO)"></button>
+        <button pButton type="button" icon="pi pi-calendar-plus" label="Adicionar dia da semana no mês"
+                class="p-button-text p-button-sm" (click)="adicionarMissa(OCORRENCIA_NO_MES)"></button>
       </div>
+      <p *ngFor="let a of alertasMissas" class="alerta-missa">⚠ {{ a }}</p>
       <p class="dica-hora">Use o formato 24h, ex.: 07:30, 19:00.</p>
     </section>
 

@@ -187,6 +187,7 @@ export class ChurchEditPageComponent implements OnInit {
         tipoRecorrencia: missa.tipoRecorrencia ?? 0,
         diaDoMes: missa.diaDoMes ?? null,
         diasSemanaExcecao: missa.diasSemanaExcecao ?? null,
+        semanasDoMes: missa.semanasDoMes ?? null,
       })),
       endereco: {
         cep: formData.cep.replace(/\D/g, ""),

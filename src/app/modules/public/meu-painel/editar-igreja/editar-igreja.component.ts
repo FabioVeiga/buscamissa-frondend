@@ -1,4 +1,4 @@
-import { TIPO_RECORRENCIA, ehSemanal } from "../../../../shared/utils/recorrencia-missa";
+import { SEMANAS_DO_MES, TIPO_RECORRENCIA, alertaConflitoSemanal, ehSemanal } from "../../../../shared/utils/recorrencia-missa";
 import { FotoIgrejaSelecionada, FotoIgrejaUploadComponent } from "../../../../shared/components/foto-igreja-upload/foto-igreja-upload.component";
 import { Component, inject, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
@@ -40,6 +40,8 @@ const TIPOS_SESSAO = [
 
 // Valor fictício do seletor de dia da missa para "dia fixo do mês" (não vai para a API).
 const DIA_FIXO = 7;
+// Valor fictício para "dia da semana no mês" ("1ª e 3ª sexta").
+const OCORRENCIA_NO_MES = 8;
 
 const DIAS = [
   { valor: 0, nome: "Domingo" },
@@ -80,7 +82,13 @@ export class EditarIgrejaComponent implements OnInit {
   readonly dias = DIAS;
   /** Opções do dia da missa: os 7 dias da semana + "Dia fixo do mês" (valor DIA_FIXO). */
   readonly DIA_FIXO = DIA_FIXO;
-  readonly diasMissa = [...DIAS, { valor: DIA_FIXO, nome: "Dia fixo do mês" }];
+  readonly OCORRENCIA_NO_MES = OCORRENCIA_NO_MES;
+  readonly SEMANAS_DO_MES = SEMANAS_DO_MES;
+  readonly diasMissa = [
+    ...DIAS,
+    { valor: DIA_FIXO, nome: "Dia fixo do mês" },
+    { valor: OCORRENCIA_NO_MES, nome: "Dia da semana no mês" },
+  ];
   readonly estados = STATES;
   readonly tiposSessao = TIPOS_SESSAO;
 
@@ -408,11 +416,17 @@ export class EditarIgrejaComponent implements OnInit {
         dados.redesSociais.forEach((r) => this.adicionarRede(r.tipoRedeSocial, r.nomeDoPerfil));
         dados.missas.forEach((m) =>
           this.adicionarMissa(
-            ehSemanal(m) ? m.diaSemana : DIA_FIXO,
+            ehSemanal(m)
+              ? m.diaSemana
+              : m.tipoRecorrencia === TIPO_RECORRENCIA.OcorrenciaNoMes
+                ? OCORRENCIA_NO_MES
+                : DIA_FIXO,
             m.horario,
             m.observacao ?? "",
             m.diaDoMes ?? null,
-            m.diasSemanaExcecao ?? null
+            m.diasSemanaExcecao ?? null,
+            m.tipoRecorrencia === TIPO_RECORRENCIA.OcorrenciaNoMes ? m.diaSemana : null,
+            m.semanasDoMes ?? 0
           )
         );
         dados.sessoes.forEach((se) =>
@@ -481,10 +495,21 @@ export class EditarIgrejaComponent implements OnInit {
     this.redesSociais.removeAt(i);
   }
 
-  adicionarMissa(dia = 0, horario = "", observacao = "", diaDoMes: number | null = null, excecao: number | null = null): void {
+  adicionarMissa(
+    dia = 0,
+    horario = "",
+    observacao = "",
+    diaDoMes: number | null = null,
+    excecao: number | null = null,
+    diaOcorrencia: number | null = null,
+    semanasDoMes = 0
+  ): void {
     this.missas.push(
       this._fb.group({
         diaSemana: [dia, Validators.required],
+        // Só usados quando diaSemana === OCORRENCIA_NO_MES.
+        diaOcorrencia: [diaOcorrencia],
+        semanasDoMes: [semanasDoMes],
         // Só usados quando diaSemana === DIA_FIXO.
         diaDoMes: [diaDoMes, [Validators.min(1), Validators.max(31)]],
         excecaoSabado: [!!excecao && (excecao & (1 << 6)) !== 0],
@@ -594,8 +619,36 @@ export class EditarIgrejaComponent implements OnInit {
   }
 
   /** Linha de dia fixo precisa de um dia do mês entre 1 e 31. */
+  toggleSemana(i: number, bit: number): void {
+    const ctrl = this.missas.at(i).get("semanasDoMes");
+    ctrl?.setValue((Number(ctrl.value) || 0) ^ bit);
+  }
+
+  temSemana(i: number, bit: number): boolean {
+    return ((Number(this.missas.at(i).get("semanasDoMes")?.value) || 0) & bit) !== 0;
+  }
+
+  /** Avisos de semanal x "1ª sexta" no mesmo dia e horário (não bloqueiam). */
+  get alertasMissas(): string[] {
+    const linhas = this.missas.controls.map((c) => this._regraDaLinha(c.value));
+    const alertas = linhas
+      .filter((l) => l.tipoRecorrencia === TIPO_RECORRENCIA.OcorrenciaNoMes)
+      .map((l) => alertaConflitoSemanal(linhas, l))
+      .filter((a): a is string => !!a);
+    return [...new Set(alertas)];
+  }
+
+  private _regraDaLinha(m: any) {
+    if (m.diaSemana === OCORRENCIA_NO_MES)
+      return { tipoRecorrencia: TIPO_RECORRENCIA.OcorrenciaNoMes, diaSemana: m.diaOcorrencia, horario: m.horario ?? "" };
+    if (m.diaSemana === DIA_FIXO) return { tipoRecorrencia: TIPO_RECORRENCIA.DiaDoMes, horario: m.horario ?? "" };
+    return { tipoRecorrencia: TIPO_RECORRENCIA.Semanal, diaSemana: m.diaSemana, horario: m.horario ?? "" };
+  }
+
   diaFixoValido(i: number): boolean {
     const g = this.missas.at(i);
+    if (g.get("diaSemana")?.value === OCORRENCIA_NO_MES)
+      return g.get("diaOcorrencia")?.value != null && (Number(g.get("semanasDoMes")?.value) || 0) > 0;
     if (g.get("diaSemana")?.value !== DIA_FIXO) return true;
     const dia = Number(g.get("diaDoMes")?.value);
     return Number.isInteger(dia) && dia >= 1 && dia <= 31;
@@ -606,7 +659,7 @@ export class EditarIgrejaComponent implements OnInit {
       this._message.add({
         severity: "warn",
         summary: "Revise o formulário",
-        detail: "Informe o dia do mês (1 a 31) nas missas de dia fixo.",
+        detail: "Informe o dia do mês (1 a 31) nas missas de dia fixo e o dia e as semanas nas de dia da semana no mês.",
       });
       return;
     }
@@ -642,7 +695,15 @@ export class EditarIgrejaComponent implements OnInit {
                 diaDoMes: Number(m.diaDoMes),
                 diasSemanaExcecao: ((m.excecaoSabado ? 1 << 6 : 0) | (m.excecaoDomingo ? 1 : 0)) || null,
               }
-            : { diaSemana: m.diaSemana, horario: m.horario, observacao: m.observacao, tipoRecorrencia: TIPO_RECORRENCIA.Semanal }
+            : m.diaSemana === OCORRENCIA_NO_MES
+              ? {
+                  diaSemana: m.diaOcorrencia,
+                  horario: m.horario,
+                  observacao: m.observacao,
+                  tipoRecorrencia: TIPO_RECORRENCIA.OcorrenciaNoMes,
+                  semanasDoMes: Number(m.semanasDoMes),
+                }
+              : { diaSemana: m.diaSemana, horario: m.horario, observacao: m.observacao, tipoRecorrencia: TIPO_RECORRENCIA.Semanal }
         ),
         endereco: {
           cep: v.endereco.cep,
