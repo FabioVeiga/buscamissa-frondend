@@ -43,4 +43,15 @@
       </div>
     </div>
   </div>
+
+  <!-- Missas de dia fixo do mês (fora da grade semanal) -->
+  <div *ngIf="missasDiaFixo.length" class="mt-4">
+    <h3 class="text-sm font-bold uppercase tracking-wide text-gray-500 mb-2">Missas em datas do mês</h3>
+    <div class="flex flex-wrap gap-2">
+      <div *ngFor="let m of missasDiaFixo" class="mass-chip">
+        <span class="mass-chip__time">{{ m.descricao }}</span>
+        <span *ngIf="m.observacao" class="mass-chip__obs">{{ m.observacao }}</span>
+      </div>
+    </div>
+  </div>
 </section>

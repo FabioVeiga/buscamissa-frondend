@@ -3,6 +3,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { Mass } from '../../../../church/models/church.model';
 import { formatMassTime } from '../../../../../../shared/utils/mass-time.utils';
+import { descrever, ehSemanal } from '../../../../../../shared/utils/recorrencia-missa';
 
 /** Agenda semanal de horários da paróquia (extraído do DetailsComponent — auditoria 2.x). */
 @Component({
@@ -22,7 +23,7 @@ export class DetailsHorariosComponent {
   get agendaSemana(): { dia: number; label: string; missas: Mass[] }[] {
     const labels = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
     const grupos: Record<number, Mass[]> = {};
-    (this.missas ?? []).forEach((m) => {
+    (this.missas ?? []).filter((m) => ehSemanal(m)).forEach((m) => {
       if (m.diaSemana !== undefined && m.diaSemana !== null) {
         (grupos[m.diaSemana] = grupos[m.diaSemana] ?? []).push(m);
       }
@@ -32,6 +33,14 @@ export class DetailsHorariosComponent {
       label,
       missas: (grupos[dia] ?? []).sort((a, b) => a.horario.localeCompare(b.horario)),
     }));
+  }
+
+  /** Missas de dia fixo do mês ("Todo dia 13, 19h"): fora da grade semanal. */
+  get missasDiaFixo(): { descricao: string; observacao?: string }[] {
+    return (this.missas ?? [])
+      .filter((m) => !ehSemanal(m))
+      .sort((a, b) => (a.diaDoMes ?? 0) - (b.diaDoMes ?? 0) || a.horario.localeCompare(b.horario))
+      .map((m) => ({ descricao: m.descricaoRecorrencia || descrever(m), observacao: m.observacao }));
   }
 
   /** Falso no prerender: separa informação temporal estável da relativa. */

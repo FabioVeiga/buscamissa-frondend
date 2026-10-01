@@ -29,7 +29,7 @@ export class DetailsScoreboardComponent {
   /** Minutos até a próxima missa */
   private get minutosProximaMissa(): number | null {
     const pm = this.proximaMissa;
-    return pm ? getNextOccurrenceMinutes(pm.diaSemana!, pm.horario) : null;
+    return pm ? getNextOccurrenceMinutes(pm.diaSemana!, pm.horario, pm) : null;
   }
 
   /**
@@ -46,7 +46,7 @@ export class DetailsScoreboardComponent {
   get proximaMissaDiaLabel(): string {
     const pm = this.proximaMissa;
     if (!pm) return '';
-    return getDiaLabel(pm.diaSemana!, pm.horario, this._isBrowser);
+    return getDiaLabel(pm.diaSemana!, pm.horario, this._isBrowser, pm);
   }
 
   /**
@@ -59,7 +59,7 @@ export class DetailsScoreboardComponent {
   get proximaMissaData(): string {
     const pm = this.proximaMissa;
     if (!pm) return '';
-    return getProximaMissaData(pm.diaSemana!, pm.horario, this._isBrowser);
+    return getProximaMissaData(pm.diaSemana!, pm.horario, this._isBrowser, pm);
   }
 
   formatarHorario(horario: string): string {

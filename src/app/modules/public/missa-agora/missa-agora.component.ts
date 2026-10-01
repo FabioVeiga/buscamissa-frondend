@@ -330,7 +330,7 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
 
   getUrgency(card: MassCardData) {
     if (card.mass.diaSemana == null) return null;
-    return getMissaAgoraUrgency(card.mass.diaSemana, card.mass.horario);
+    return getMissaAgoraUrgency(card.mass.diaSemana, card.mass.horario, card.mass);
   }
 
   tentar(): void {
