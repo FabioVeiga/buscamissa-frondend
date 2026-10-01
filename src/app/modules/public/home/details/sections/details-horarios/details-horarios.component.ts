@@ -53,9 +53,7 @@ export class DetailsHorariosComponent {
     const diasFixos = (this.missas ?? []).filter((m) => !ehSemanal(m));
     if (!diasFixos.length) return;
 
-    const data = new Date();
-    data.setHours(0, 0, 0, 0);
-    for (let i = 0; i < 7; i++, data.setDate(data.getDate() + 1)) {
+    for (const data of this._proximos7Dias()) {
       for (const m of diasFixos) {
         if (!ocorreEm(m, data)) continue;
         (grupos[data.getDay()] = grupos[data.getDay()] ?? []).push({ ...m, diaFixoNaSemana: data.getDate() });
@@ -63,10 +61,24 @@ export class DetailsHorariosComponent {
     }
   }
 
+  /** Hoje + 6 dias, à meia-noite local. */
+  private _proximos7Dias(): Date[] {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    return Array.from({ length: 7 }, (_, i) => new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate() + i));
+  }
+
+  /** Missa de dia fixo que já aparece na grade desta semana (só no browser). */
+  private _estaNaGrade(m: Mass): boolean {
+    return this._isBrowser && this._proximos7Dias().some((d) => ocorreEm(m, d));
+  }
+
   /** Missas de dia fixo do mês ("Todo dia 13, 19h"): fora da grade semanal. */
+  // Só as que NÃO estão na grade desta semana: a que já aparece como "14h00 · dia 1"
+  // não se repete aqui. No prerender todas entram (a grade lá não tem dia fixo).
   get missasDiaFixo(): { descricao: string; observacao?: string }[] {
     return (this.missas ?? [])
-      .filter((m) => !ehSemanal(m))
+      .filter((m) => !ehSemanal(m) && !this._estaNaGrade(m))
       .sort((a, b) => (a.diaDoMes ?? 0) - (b.diaDoMes ?? 0) || a.horario.localeCompare(b.horario))
       .map((m) => ({ descricao: m.descricaoRecorrencia || descrever(m), observacao: m.observacao }));
   }
