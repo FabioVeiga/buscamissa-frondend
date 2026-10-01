@@ -53,6 +53,7 @@ export interface MissaEdicao {
   tipoRecorrencia?: number | null;
   diaDoMes?: number | null;
   diasSemanaExcecao?: number | null;
+  semanasDoMes?: number | null;
 }
 
 // ---- Fase 9: endereço + imagem ----

@@ -28,6 +28,38 @@ export interface RegraRecorrencia {
 /** Bit de "última" em `semanasDoMes`. */
 export const ULTIMA_SEMANA = 1 << 5;
 
+/** Opções de semana do mês nos formulários (1ª a 4ª e "Última", decisão do produto). */
+export const SEMANAS_DO_MES = [
+  { bit: 1 << 0, label: '1ª' },
+  { bit: 1 << 1, label: '2ª' },
+  { bit: 1 << 2, label: '3ª' },
+  { bit: 1 << 3, label: '4ª' },
+  { bit: ULTIMA_SEMANA, label: 'Última' },
+];
+
+/**
+ * Aviso (não bloqueia) quando há semanal e ocorrência no mês no mesmo dia e horário
+ * ("toda sexta 19h" + "1ª sexta 19h"): costuma ser a mesma missa com intenção especial.
+ * `horario` em "HH:mm". Mesmo texto do recorrenciaMissa.js do admin.
+ */
+export function alertaConflitoSemanal(missas: RegraRecorrencia[], nova: RegraRecorrencia): string | null {
+  const tipoNovo = nova.tipoRecorrencia ?? TIPO_RECORRENCIA.Semanal;
+  if (tipoNovo === TIPO_RECORRENCIA.DiaDoMes || nova.diaSemana == null || !nova.horario) return null;
+  const conflito = missas.find(
+    (m) =>
+      m.diaSemana === nova.diaSemana &&
+      (m.horario ?? '').slice(0, 5) === nova.horario.slice(0, 5) &&
+      (tipoNovo === TIPO_RECORRENCIA.OcorrenciaNoMes
+        ? ehSemanal(m)
+        : m.tipoRecorrencia === TIPO_RECORRENCIA.OcorrenciaNoMes)
+  );
+  if (!conflito) return null;
+  const semanal = ehSemanal(conflito) ? conflito : nova;
+  const dia = semanal.diaSemana ?? 0;
+  const todo = dia === 0 || dia === 6 ? 'todo' : 'toda';
+  return `Já existe missa ${todo} ${DIAS_NOME[dia]} às ${formatarHora(semanal.horario)}. Se for a mesma missa, use a observação.`;
+}
+
 /** Só os campos que dizem o TIPO da regra; dia/horário vêm à parte. */
 export type TipoDaRegra = Pick<RegraRecorrencia, 'tipoRecorrencia' | 'diaDoMes' | 'diasSemanaExcecao' | 'semanasDoMes'>;
 

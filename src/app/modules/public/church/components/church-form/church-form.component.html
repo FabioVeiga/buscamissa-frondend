@@ -238,7 +238,33 @@
           [outlined]="frequenciaUnica !== TIPO_RECORRENCIA.DiaDoMes"
           (click)="frequenciaUnica = TIPO_RECORRENCIA.DiaDoMes"
         ></p-button>
+        <p-button
+          label="Dia da semana no mês"
+          size="small"
+          [outlined]="frequenciaUnica !== TIPO_RECORRENCIA.OcorrenciaNoMes"
+          (click)="frequenciaUnica = TIPO_RECORRENCIA.OcorrenciaNoMes"
+        ></p-button>
       </div>
+
+      <div *ngIf="frequenciaUnica === TIPO_RECORRENCIA.OcorrenciaNoMes" class="flex flex-wrap gap-3 items-center">
+        <p-select
+          [(ngModel)]="diaOcorrenciaUnico"
+          [ngModelOptions]="{ standalone: true }"
+          [options]="diasSemana"
+          optionLabel="label"
+          optionValue="key"
+          placeholder="Dia da semana"
+          appendTo="body"
+          class="w-full md:w-1/4"
+        ></p-select>
+        <span class="text-sm text-gray-500">Semanas do mês:</span>
+        <label *ngFor="let s of SEMANAS_DO_MES" class="flex items-center gap-1 text-sm">
+          <input type="checkbox" [checked]="temSemanaUnica(s.bit)" (change)="toggleSemanaUnica(s.bit)" /> {{ s.label }}
+        </label>
+        <small class="w-full text-gray-400">"Última" vale para a última do mês, seja a 4ª ou a 5ª.</small>
+      </div>
+
+      <small *ngIf="alertaUnico" class="text-orange-600">⚠ {{ alertaUnico }}</small>
 
       <div *ngIf="frequenciaUnica === TIPO_RECORRENCIA.DiaDoMes" class="flex flex-wrap gap-3 items-center">
         <input
