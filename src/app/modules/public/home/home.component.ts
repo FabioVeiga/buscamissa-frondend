@@ -862,6 +862,7 @@ export class HomeComponent {
       tipoRecorrencia: card.mass.tipoRecorrencia,
       diaDoMes: card.mass.diaDoMes,
       diasSemanaExcecao: card.mass.diasSemanaExcecao,
+      semanasDoMes: card.mass.semanasDoMes,
     };
     this._favorites.adicionar(novaFavorita);
     this._metricas.registrarFavorito(card.churchId);

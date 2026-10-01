@@ -3,11 +3,11 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { Mass } from '../../../../church/models/church.model';
 import { formatMassTime } from '../../../../../../shared/utils/mass-time.utils';
-import { descrever, ehSemanal, ocorreEm } from '../../../../../../shared/utils/recorrencia-missa';
+import { descrever, ehSemanal, ocorreEm, rotuloNaData } from '../../../../../../shared/utils/recorrencia-missa';
 
-/** Missa na grade semanal; `diaDoMes` marca a de dia fixo que cai nesta semana. */
+/** Missa na grade semanal; `rotuloNaSemana` marca a mensal que cai nesta semana ("dia 2", "1ª do mês"). */
 interface MissaNaGrade extends Mass {
-  diaFixoNaSemana?: number;
+  rotuloNaSemana?: string;
 }
 
 /** Agenda semanal de horários da paróquia (extraído do DetailsComponent — auditoria 2.x). */
@@ -56,7 +56,7 @@ export class DetailsHorariosComponent {
     for (const data of this._proximos7Dias()) {
       for (const m of diasFixos) {
         if (!ocorreEm(m, data)) continue;
-        (grupos[data.getDay()] = grupos[data.getDay()] ?? []).push({ ...m, diaFixoNaSemana: data.getDate() });
+        (grupos[data.getDay()] = grupos[data.getDay()] ?? []).push({ ...m, rotuloNaSemana: rotuloNaData(m, data) });
       }
     }
   }

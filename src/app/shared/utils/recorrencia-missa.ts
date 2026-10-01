@@ -1,6 +1,6 @@
 /**
- * Regra de recorrência de uma missa: semanal ("todo domingo") ou dia fixo do mês
- * ("todo dia 13"). Espelho de RecorrenciaMissa.cs (buscamissa-api-admin e
+ * Regra de recorrência de uma missa: semanal ("todo domingo"), dia fixo do mês
+ * ("todo dia 13") ou ocorrência no mês ("1ª e 3ª sexta-feira do mês"). Espelho de RecorrenciaMissa.cs (buscamissa-api-admin e
  * buscamissa-api-public) — mantenha as três implementações iguais.
  *
  * Calcula no relógio do navegador: o prerender fica no ar por dias e "hoje/amanhã"
@@ -9,7 +9,7 @@
 
 export const TIPO_RECORRENCIA = {
   Semanal: 0,
-  OcorrenciaNoMes: 1, // reservado ("1ª sexta"), ainda não suportado
+  OcorrenciaNoMes: 1, // "1ª e 3ª sexta", "última terça"
   DiaDoMes: 2,
 } as const;
 
@@ -21,13 +21,19 @@ export interface RegraRecorrencia {
   diaDoMes?: number | null;
   /** Bitmask dos dias em que a missa de dia fixo NÃO ocorre (bit0 = domingo … bit6 = sábado). */
   diasSemanaExcecao?: number | null;
+  /** Bitmask das semanas na ocorrência no mês (bit0..bit4 = 1ª..5ª, bit5 = última). */
+  semanasDoMes?: number | null;
 }
 
+/** Bit de "última" em `semanasDoMes`. */
+export const ULTIMA_SEMANA = 1 << 5;
+
 /** Só os campos que dizem o TIPO da regra; dia/horário vêm à parte. */
-export type TipoDaRegra = Pick<RegraRecorrencia, 'tipoRecorrencia' | 'diaDoMes' | 'diasSemanaExcecao'>;
+export type TipoDaRegra = Pick<RegraRecorrencia, 'tipoRecorrencia' | 'diaDoMes' | 'diasSemanaExcecao' | 'semanasDoMes'>;
 
 const HORIZONTE_PADRAO_DIAS = 400;
 const DIAS_ROTULO = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
+const DIAS_NOME = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
 const DIAS_PLURAL = ['domingos', 'segundas-feiras', 'terças-feiras', 'quartas-feiras', 'quintas-feiras', 'sextas-feiras', 'sábados'];
 
 /** Ausência do campo (cliente/API antigos, favorito salvo antes) = semanal. */
@@ -43,6 +49,15 @@ export function ocorreEm(regra: RegraRecorrencia, data: Date): boolean {
     case TIPO_RECORRENCIA.DiaDoMes:
       // Dia 29–31 em mês que não tem o dia nunca casa: a missa não ocorre naquele mês.
       return regra.diaDoMes != null && data.getDate() === regra.diaDoMes && !ehExcecao(regra, data.getDay());
+    case TIPO_RECORRENCIA.OcorrenciaNoMes:
+      // 1ª..5ª pela posição no mês (dia 1–7 = 1ª...); "última" quando não há outra depois.
+      return (
+        regra.semanasDoMes != null &&
+        regra.diaSemana != null &&
+        data.getDay() === regra.diaSemana &&
+        (((regra.semanasDoMes & (1 << ordinalNoMes(data))) !== 0) ||
+          ((regra.semanasDoMes & ULTIMA_SEMANA) !== 0 && ehUltimaDoMes(data)))
+      );
     default:
       return false;
   }
@@ -98,9 +113,45 @@ export function descrever(regra: RegraRecorrencia): string {
       return `${DIAS_ROTULO[regra.diaSemana ?? -1] ?? ''}, ${hora}`;
     case TIPO_RECORRENCIA.DiaDoMes:
       return `Todo dia ${regra.diaDoMes}, ${hora}${descreverExcecao(regra)}`;
+    case TIPO_RECORRENCIA.OcorrenciaNoMes:
+      return `${descreverSemanas(regra)} do mês, ${hora}`;
     default:
       return hora;
   }
+}
+
+/**
+ * Marca curta para a grade da semana, na data em que a missa cai: "dia 13" (dia fixo),
+ * "1ª do mês" / "última do mês" (ocorrência no mês).
+ */
+export function rotuloNaData(regra: RegraRecorrencia, data: Date): string {
+  if ((regra.tipoRecorrencia ?? TIPO_RECORRENCIA.Semanal) !== TIPO_RECORRENCIA.OcorrenciaNoMes) return `dia ${data.getDate()}`;
+  const masculino = regra.diaSemana === 0 || regra.diaSemana === 6;
+  const semanas = regra.semanasDoMes ?? 0;
+  const ordinal = ordinalNoMes(data);
+  if ((semanas & (1 << ordinal)) !== 0) return `${ordinal + 1}${masculino ? 'º' : 'ª'} do mês`;
+  return `${masculino ? 'último' : 'última'} do mês`;
+}
+
+/** 0 = 1ª ocorrência do dia da semana no mês (dias 1–7), 1 = 2ª (8–14)... */
+function ordinalNoMes(data: Date): number {
+  return Math.floor((data.getDate() - 1) / 7);
+}
+
+function ehUltimaDoMes(data: Date): boolean {
+  const diasNoMes = new Date(data.getFullYear(), data.getMonth() + 1, 0).getDate();
+  return data.getDate() + 7 > diasNoMes;
+}
+
+// "1ª e 3ª sexta-feira" · "1º e último sábado" (sábado e domingo são masculinos).
+function descreverSemanas(regra: RegraRecorrencia): string {
+  const semanas = regra.semanasDoMes ?? 0;
+  const masculino = regra.diaSemana === 0 || regra.diaSemana === 6;
+  const ordinais = [0, 1, 2, 3, 4].filter((i) => (semanas & (1 << i)) !== 0).map((i) => `${i + 1}${masculino ? 'º' : 'ª'}`);
+  if ((semanas & ULTIMA_SEMANA) !== 0) ordinais.push(masculino ? 'último' : 'última');
+  const lista = ordinais.length <= 1 ? ordinais[0] ?? '' : `${ordinais.slice(0, -1).join(', ')} e ${ordinais[ordinais.length - 1]}`;
+  const texto = `${lista} ${DIAS_NOME[regra.diaSemana ?? 0]}`;
+  return texto.charAt(0).toUpperCase() + texto.slice(1);
 }
 
 function ehExcecao(regra: RegraRecorrencia, diaDaSemana: number): boolean {
