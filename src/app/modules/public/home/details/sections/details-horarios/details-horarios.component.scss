@@ -81,3 +81,9 @@
   max-width: 10rem;
   margin-top: 0.1rem;
 }
+
+// Missa de dia fixo do mês que cai nesta semana (só aparece no browser).
+.mass-chip__dia {
+  font-weight: 500;
+  opacity: 0.75;
+}
