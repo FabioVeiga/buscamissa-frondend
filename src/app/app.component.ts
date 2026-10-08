@@ -6,6 +6,7 @@ import { SeoService } from "./core/services/seo.service";
 import { AnalyticsService } from "./core/services/analytics.service";
 import { ClarityService } from "./core/services/clarity.service";
 import { NavigationHistoryService } from "./core/services/navigation-history.service";
+import { ConsentService } from "./core/services/consent.service";
 
 @Component({
   selector: "app-root",
@@ -19,6 +20,7 @@ export class AppComponent implements OnInit {
   private _analytics = inject(AnalyticsService);
   private _clarity = inject(ClarityService);
   private _navHistory = inject(NavigationHistoryService);
+  private _consent = inject(ConsentService);
   private _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   ngOnInit(): void {
@@ -54,6 +56,7 @@ export class AppComponent implements OnInit {
     // Analytics/Clarity/histórico são exclusivamente de browser.
     if (!this._isBrowser) return;
 
+    this._consent.iniciar();
     this._analytics.initPageTracking();
     this._initClarityGlobalTags();
 
