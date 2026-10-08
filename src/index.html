@@ -21,19 +21,28 @@
     <!-- Fotos das igrejas: host do LCP da paróquia (handshake ~430ms). Comentário
          curto de propósito — este arquivo é assado em 3.3k páginas. -->
     <link rel="preconnect" href="https://plataformacatolicaprod.blob.core.windows.net" />
-    <link rel="dns-prefetch" href="https://tag.goadopt.io" />
 
     <!-- LGPD: Google Consent Mode com tudo negado por padrão.
-         O AdOpt (CMP) atualiza os sinais para "granted" quando o usuário consente;
-         até lá o GA4 opera sem cookies (pings anônimos do Consent Mode). -->
+         O ConsentService (vanilla-cookieconsent) atualiza analytics_storage para "granted"
+         quando o usuário consente; até lá o GA4 opera sem cookies (pings anônimos do
+         Consent Mode). Quem já consentiu (cookie bm_consent) começa com "granted" para
+         não perder a primeira página vista. -->
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
+      window.__bmConsentimentoAnalitico = function () {
+        try {
+          var m = document.cookie.match(/(?:^|; )bm_consent=([^;]*)/);
+          if (!m) return false;
+          var c = JSON.parse(decodeURIComponent(m[1]));
+          return (c.categories || []).indexOf('analytics') > -1;
+        } catch (e) { return false; }
+      };
       gtag('consent', 'default', {
         ad_storage: 'denied',
         ad_user_data: 'denied',
         ad_personalization: 'denied',
-        analytics_storage: 'denied'
+        analytics_storage: window.__bmConsentimentoAnalitico() ? 'granted' : 'denied'
       });
       gtag('js', new Date());
       gtag('config', 'G-CGY94P6KSN');
@@ -64,8 +73,9 @@
       })();
     </script>
 
-    <!-- Microsoft Clarity — só carrega após decisão de consentimento no AdOpt
-         (callback documentado window.adoptCB). Sem consentimento, não carrega. -->
+    <!-- Microsoft Clarity — só carrega com consentimento da categoria "analytics":
+         o ConsentService chama window.__bmIniciarClarity() ao consentir; quem já
+         consentiu antes (cookie bm_consent) carrega no idle. Sem consentimento, não carrega. -->
     <script type="text/javascript">
       (function () {
         var clarityIniciado = false;
@@ -78,43 +88,14 @@
               y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
           })(window, document, "clarity", "script", "xctugfdm46");
         }
-        var adoptCBAnterior = window.adoptCB;
-        window.adoptCB = function (consent) {
-          if (typeof adoptCBAnterior === 'function') adoptCBAnterior(consent);
-          if (consent && consent.optInTags && consent.optInTags.length > 0) {
-            iniciarClarity();
-          }
-        };
+        window.__bmIniciarClarity = iniciarClarity;
+        if (window.__bmConsentimentoAnalitico && window.__bmConsentimentoAnalitico()) {
+          if ('requestIdleCallback' in window) requestIdleCallback(iniciarClarity, { timeout: 4000 });
+          else setTimeout(iniciarClarity, 3000);
+        }
       })();
     </script>
 
-    <meta
-      name="adopt-website-id"
-      content="0b3ece11-386e-4ab4-85f6-75334c157dc5"
-    />
-    <!-- Perf: o injector do AdOpt (~944 KB) é o maior recurso da página e domina o TBT
-         na main thread. Carrega SÓ no 1º gesto do usuário (mousemove/scroll/tap/tecla),
-         ficando totalmente fora do carregamento inicial. No desktop o mousemove dispara
-         quase de imediato; no mobile, no 1º scroll/tap. Compliance mantida — o GA está em
-         Consent Mode "denied" por padrão e o Clarity só carrega no adoptCB, então NADA
-         rastreia antes do consentimento (que só é possível após o banner, que aparece no
-         gesto). Trade-off aceito: quem não interage não vê o banner (e não é rastreado). -->
-    <script>
-      (function () {
-        var carregado = false;
-        function carregarAdopt() {
-          if (carregado) return;
-          carregado = true;
-          var s = document.createElement('script');
-          s.src = '//tag.goadopt.io/injector.js?website_code=0b3ece11-386e-4ab4-85f6-75334c157dc5';
-          s.className = 'adopt-injector';
-          document.head.appendChild(s);
-        }
-        ['mousemove', 'pointerdown', 'keydown', 'touchstart', 'scroll'].forEach(function (ev) {
-          window.addEventListener(ev, carregarAdopt, { once: true, passive: true });
-        });
-      })();
-    </script>
     <!-- SEO Básico -->
     <title>BuscaMissa | Encontre ou cadastre missas</title>
     <meta
