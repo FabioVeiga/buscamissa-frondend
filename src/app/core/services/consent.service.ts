@@ -1,6 +1,8 @@
+import { HttpClient } from '@angular/common/http';
 import { inject, Injectable, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import type * as CookieConsentApi from 'vanilla-cookieconsent';
+import { LoggerService } from './logger.service';
 
 type Cc = typeof CookieConsentApi;
 
@@ -21,6 +23,8 @@ declare global {
 @Injectable({ providedIn: 'root' })
 export class ConsentService {
   private readonly _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
+  private readonly _http = inject(HttpClient);
+  private readonly _logger = inject(LoggerService);
   private _cc: Cc | null = null;
   private _iniciado = false;
 
@@ -78,8 +82,11 @@ export class ConsentService {
           },
         },
       },
+      // onConsent roda também a cada carga com consentimento já dado; só registramos decisões
+      // novas (primeira escolha e alterações), via onFirstConsent/onChange.
       onConsent: () => this._aplicar(),
-      onChange: () => this._aplicar(),
+      onFirstConsent: ({ cookie }) => this._registrar(cookie, 'primeira'),
+      onChange: ({ cookie }) => this._registrar(cookie, 'alterou'),
       language: {
         default: 'pt-BR',
         translations: { 'pt-BR': TEXTOS_PT_BR },
@@ -87,6 +94,22 @@ export class ConsentService {
     });
 
     this._aplicar();
+  }
+
+  /** Prova de consentimento (LGPD): registro anônimo no backend, fire-and-forget. */
+  private _registrar(cookie: CookieConsentApi.CookieValue, tipo: 'primeira' | 'alterou'): void {
+    const categorias = cookie.categories ?? [];
+    const analitico = categorias.includes('analytics');
+    const acao = tipo === 'alterou' ? 'alterou' : analitico ? 'aceitou_todos' : 'recusou';
+
+    this._http
+      .post('v2/consentimentos', {
+        consentId: cookie.consentId,
+        acao,
+        categorias: categorias.join(','),
+        revisao: cookie.revision ?? 0,
+      })
+      .subscribe({ error: (err) => this._logger.logError(err, 'consentimento') });
   }
 
   private _aplicar(): void {
