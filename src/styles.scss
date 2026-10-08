@@ -8,13 +8,23 @@
 
 /* Poppins é carregada via <link> no index.html (apenas os pesos usados: 400–900, sem itálico) */
 @import "primeicons/primeicons.css";
+@import "vanilla-cookieconsent/dist/cookieconsent.css";
 
 /* ── Anti-CLS ──────────────────────────────────────────────────────────────────
-   1) Banner LGPD do AdOpt: a entrada animada via top/height conta como layout
-      shift (Lighthouse/Clarity). Elemento que APARECE de uma vez não gera CLS;
-      elemento que SE MOVE gera. Matamos a animação de entrada. */
-#cookie-banner,
-#cookie-banner * {
+   1) Banner LGPD (vanilla-cookieconsent): é position:fixed, então não desloca o
+      layout; ainda assim zeramos a animação de entrada para não contar como shift
+      (Lighthouse/Clarity) e alinhamos as cores à marca. */
+#cc-main {
+  --cc-btn-primary-bg: #bc5d10;
+  --cc-btn-primary-border-color: #bc5d10;
+  --cc-btn-primary-hover-bg: #9a4a0b;
+  --cc-btn-primary-hover-border-color: #9a4a0b;
+  --cc-toggle-on-bg: #bc5d10;
+  --cc-font-family: 'Poppins', 'Poppins-fallback', sans-serif;
+}
+#cc-main .cm,
+#cc-main .pm,
+#cc-main .cm-wrapper {
   transition: none !important;
   animation: none !important;
 }

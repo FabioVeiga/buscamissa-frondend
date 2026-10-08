@@ -1,5 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
 import { RouterModule } from '@angular/router';
+import { ConsentService } from '../../../services/consent.service';
 
 @Component({
   selector: 'app-footer-home',
@@ -8,5 +9,10 @@ import { RouterModule } from '@angular/router';
   styleUrl: './footer.component.scss'
 })
 export class FooterHomeComponent {
+  private _consent = inject(ConsentService);
   currentYear = new Date().getFullYear();
+
+  abrirPreferenciasCookies(): void {
+    this._consent.abrirPreferencias();
+  }
 }
