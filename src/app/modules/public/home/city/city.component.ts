@@ -18,6 +18,7 @@ import { CityMapComponent, MapChurch } from "../../../../shared/components/city-
 import { DIAS, PERIODOS } from "./city.constants";
 import { CityFiltrosComponent, Ordenacao, QuickFilter } from "./sections/city-filtros/city-filtros.component";
 import { CityCardComponent } from "./sections/city-card/city-card.component";
+import { ConviteAnuncieComponent } from "../../../../shared/components/convite-anuncie/convite-anuncie.component";
 import { CityFaqComponent } from "./sections/city-faq/city-faq.component";
 import { CityOutrasComponent } from "./sections/city-outras/city-outras.component";
 
@@ -37,6 +38,7 @@ import { CityOutrasComponent } from "./sections/city-outras/city-outras.componen
     CityCardComponent,
     CityFaqComponent,
     CityOutrasComponent,
+    ConviteAnuncieComponent,
   ],
   templateUrl: "./city.component.html",
   styleUrl: "./city.component.scss",

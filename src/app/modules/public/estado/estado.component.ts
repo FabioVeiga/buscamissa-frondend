@@ -19,6 +19,7 @@ import { SeoService } from '../../../core/services/seo.service';
 import { MetricasService, PaginaMetrica } from '../../../core/services/metricas.service';
 import { DIAS_INTENCAO } from '../../../core/constants/dias-intencao';
 import { preposicaoDe, nomeDoEstadoComArtigo } from '../../../core/constants/states';
+import { ConviteAnuncieComponent } from '../../../shared/components/convite-anuncie/convite-anuncie.component';
 import { PageHeroComponent, HeroTile } from '../../../shared/components/page-hero/page-hero.component';
 import { HubBreadcrumb } from '../../../shared/components/hub-lista/hub-lista.component';
 import { normalizarTexto } from '../../../shared/utils/busca.utils';
@@ -60,7 +61,7 @@ interface DiaLink {
 @Component({
   selector: 'app-estado',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, SkeletonModule, PageHeroComponent],
+  imports: [CommonModule, FormsModule, RouterLink, SkeletonModule, PageHeroComponent, ConviteAnuncieComponent],
   templateUrl: './estado.component.html',
   styleUrl: './estado.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
