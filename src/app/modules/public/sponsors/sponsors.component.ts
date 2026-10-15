@@ -1,6 +1,6 @@
 import { Component, OnInit, inject } from "@angular/core";
 import { RouterLink } from "@angular/router";
-import { MetricasService, PaginaMetrica } from "../../../core/services/metricas.service";
+import { MetricasService, OrigemAnuncie, PaginaMetrica } from "../../../core/services/metricas.service";
 import { instagramUsuario } from "../../../../environments/environment.common";
 
 interface Pacote {
@@ -54,6 +54,10 @@ export class SponsorsComponent implements OnInit {
         "Não. Todo criativo passa por aprovação do BuscaMissa antes de ir ao ar, e alguns segmentos não são aceitos.",
     },
   ];
+
+  registrarCliqueAnunciar(): void {
+    this._metricas.registrarCliqueAnuncie(OrigemAnuncie.Pagina);
+  }
 
   ngOnInit(): void {
     this._metricas.registrarVisualizacaoPagina(PaginaMetrica.Anuncios);

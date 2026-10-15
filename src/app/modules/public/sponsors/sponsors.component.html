@@ -7,7 +7,7 @@
       com anúncios discretos e sem atrapalhar a busca.
     </p>
     <div class="anuncie__acoes">
-      <a routerLink="/solicitar" [queryParams]="{ tipo: 'anunciar' }" class="anuncie__btn anuncie__btn--primario">
+      <a routerLink="/solicitar" [queryParams]="{ tipo: 'anunciar' }" class="anuncie__btn anuncie__btn--primario" (click)="registrarCliqueAnunciar()">
         Quero anunciar
       </a>
       <a [href]="instagramDirect" target="_blank" rel="noopener noreferrer" class="anuncie__btn">

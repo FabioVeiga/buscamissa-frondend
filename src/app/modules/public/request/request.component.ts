@@ -12,7 +12,7 @@ import { NgIf } from "@angular/common";
 import { ActivatedRoute } from "@angular/router";
 import { MessageService } from "primeng/api";
 import { LoggerService } from "../../../core/services/logger.service";
-import { MetricasService, PaginaMetrica } from "../../../core/services/metricas.service";
+import { MetricasService, OrigemAnuncie, PaginaMetrica } from "../../../core/services/metricas.service";
 
 @Component({
   selector: "app-request",
@@ -77,6 +77,7 @@ export class RequestComponent implements OnInit {
             summary: "Sucesso",
             detail: "Solicitação enviada com sucesso.",
           });
+          if (this.anunciar) this._metricas.registrarCliqueAnuncie(OrigemAnuncie.Formulario);
           this.form.reset();
         }
       },

@@ -1,5 +1,6 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { MetricasService, OrigemAnuncie } from '../../../core/services/metricas.service';
 
 /**
  * Convite discreto para a página /anuncie. Não é anúncio (sem selo "Patrocinado"):
@@ -13,7 +14,7 @@ import { RouterLink } from '@angular/router';
     <p class="convite">
       <i class="pi pi-megaphone" aria-hidden="true"></i>
       <span>Tem um negócio ou projeto para divulgar?</span>
-      <a routerLink="/anuncie" [queryParams]="{ origem }">Anuncie no BuscaMissa</a>
+      <a routerLink="/anuncie" [queryParams]="{ origem }" (click)="registrarClique()">Anuncie no BuscaMissa</a>
     </p>
   `,
   styles: [`
@@ -33,5 +34,12 @@ import { RouterLink } from '@angular/router';
   `],
 })
 export class ConviteAnuncieComponent {
-  @Input() origem = '';
+  private readonly _metricas = inject(MetricasService);
+
+  @Input() origem: 'home' | 'cidade' | 'estado' | '' = '';
+
+  registrarClique(): void {
+    const origens = { home: OrigemAnuncie.Home, cidade: OrigemAnuncie.Cidade, estado: OrigemAnuncie.Estado };
+    if (this.origem) this._metricas.registrarCliqueAnuncie(origens[this.origem]);
+  }
 }
