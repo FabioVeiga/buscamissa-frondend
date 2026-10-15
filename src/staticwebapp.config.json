@@ -15,7 +15,9 @@
     { "route": "/detalhes/02674030", "redirect": "/paroquia/sp/sao-paulo/paroquia-santa-cruz", "statusCode": 301 },
     { "route": "/detalhes/02755000", "redirect": "/paroquia/sp/sao-paulo/paroquia-santa-luzia", "statusCode": 301 },
     { "route": "/detalhes/12050543", "redirect": "/paroquia/sp/taubate/comunidade-santa-isabel", "statusCode": 301 },
-    { "route": "/detalhes/02856110", "redirect": "/paroquia/sp/sao-paulo/paroquia-sagrada-familia", "statusCode": 301 }
+    { "route": "/detalhes/02856110", "redirect": "/paroquia/sp/sao-paulo/paroquia-sagrada-familia", "statusCode": 301 },
+    { "route": "/anuncios", "redirect": "/anuncie", "statusCode": 301 },
+    { "route": "/anuncios/", "redirect": "/anuncie", "statusCode": 301 }
   ],
   "navigationFallback": {
     "rewrite": "/index.csr.html",
