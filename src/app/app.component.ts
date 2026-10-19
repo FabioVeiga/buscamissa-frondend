@@ -1,6 +1,6 @@
 import { Component, inject, OnInit, PLATFORM_ID } from "@angular/core";
 import { isPlatformBrowser } from "@angular/common";
-import { RouterOutlet, Router, NavigationEnd, ActivatedRoute } from "@angular/router";
+import { RouterOutlet, Router, NavigationEnd, NavigationStart, ActivatedRoute } from "@angular/router";
 import { filter, map, pairwise, startWith } from "rxjs/operators";
 import { SeoService } from "./core/services/seo.service";
 import { AnalyticsService } from "./core/services/analytics.service";
@@ -59,6 +59,28 @@ export class AppComponent implements OnInit {
     this._consent.iniciar();
     this._analytics.initPageTracking();
     this._initClarityGlobalTags();
+
+    // Topo da página ao trocar de PÁGINA (path). Antes isso acontecia por acidente:
+    // a rota nova nascia curta, o documento encolhia e o navegador cortava o scroll
+    // para 0. Com o <main> em min-height (anti-CLS do footer, layout.component.ts),
+    // o documento não encolhe mais, e a rota nova abriria na altura de scroll da
+    // anterior — no meio de uma página ainda carregando, onde a chegada dos dados
+    // empurra o que está na tela (medido: estado → cidade, CLS 1,44 no desktop).
+    // Só o path conta: os filtros de cidade/busca reescrevem a query e não podem
+    // jogar o usuário para o topo. Back/forward segue com a restauração nativa.
+    let gatilho: NavigationStart['navigationTrigger'];
+    this._router.events
+      .pipe(filter((e): e is NavigationStart => e instanceof NavigationStart))
+      .subscribe(e => (gatilho = e.navigationTrigger));
+    const caminho = (url: string) => url.split(/[?#]/)[0];
+    navEnd$.pipe(
+      map(e => (e as NavigationEnd).urlAfterRedirects),
+      pairwise()
+    ).subscribe(([anterior, atual]) => {
+      if (gatilho !== 'popstate' && !atual.includes('#') && caminho(anterior) !== caminho(atual)) {
+        window.scrollTo(0, 0);
+      }
+    });
 
     // Rastreia rota anterior para uso no ClarityService
     navEnd$.pipe(

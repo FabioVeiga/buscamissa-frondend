@@ -41,6 +41,14 @@ import { RouterModule } from "@angular/router";
     }
     /* O foco programático no <main> ao trocar de rota não deve exibir outline */
     main:focus { outline: none; }
+    /* Anti-CLS na navegação SPA: a rota nova nasce curta (skeleton/carregando) e,
+       com o container em min-height 100vh + space-between, o footer subia para
+       dentro da viewport e era empurrado para baixo quando os dados chegavam.
+       O CrUX soma esse shift na URL de entrada (medido: cidade → paróquia
+       0,36–0,50 em app-footer-home); o Lighthouse não vê, porque só mede a carga
+       inicial. Com o <main> ocupando ao menos a viewport inteira, o footer fica
+       sempre abaixo da dobra e um shift fora da viewport não conta no CLS. */
+    main.layout-main { min-height: 100vh; }
   `],
 })
 export class LayoutHomeComponent {
