@@ -2,7 +2,7 @@
   <div class="bm-header__inner">
 
     <!-- Logo -->
-    <a routerLink="/home" [queryParams]="{}" class="bm-header__logo">
+    <a routerLink="/" [queryParams]="{}" class="bm-header__logo">
       <!-- width/height intrínsecos (73x71) reservam o espaço antes do download (anti-CLS) -->
       <img src="assets/logo.png" alt="Busca Missa" width="73" height="71" class="h-8 w-auto" />
       <span class="bm-header__brand">Busca Missa</span>
@@ -10,7 +10,7 @@
 
     <!-- Desktop nav -->
     <nav class="bm-header__nav">
-      <a routerLink="/home" routerLinkActive="bm-header__link--ativo"
+      <a routerLink="/" routerLinkActive="bm-header__link--ativo"
          [routerLinkActiveOptions]="{exact: true}" class="bm-header__link">Início</a>
 
       <!-- Explorar: os hubs de navegação. O painel é escondido por CSS (não por
@@ -68,7 +68,7 @@
 
   <!-- Mobile dropdown -->
   <nav *ngIf="menuAberto" class="bm-header__mobile" (click)="menuAberto = false">
-    <a routerLink="/home" class="bm-header__mobile-link">Início</a>
+    <a routerLink="/" class="bm-header__mobile-link">Início</a>
 
     <span class="bm-header__mobile-grupo">Explorar</span>
     <a routerLink="/cidades" class="bm-header__mobile-link bm-header__mobile-link--sub">

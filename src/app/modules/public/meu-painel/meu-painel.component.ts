@@ -91,7 +91,7 @@ export class MeuPainelComponent implements OnInit {
 
   sair(): void {
     this._auth.logout();
-    this._router.navigate(["/home"]);
+    this._router.navigate(["/"]);
   }
 
   /** Editável: aprovada direta ou herdada da paróquia (não pendente/rejeitada/revogada). */

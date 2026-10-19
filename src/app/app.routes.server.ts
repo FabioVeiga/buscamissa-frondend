@@ -233,9 +233,14 @@ export const serverRoutes: ServerRoute[] = [
   // Fase 3 — HOME (página de maior tráfego e pior CWV). Sem :param → sem
   // getPrerenderParams. A home guarda navigator/document/geo com isPlatformBrowser
   // (o server assa o estado default estável; o browser faz o upgrade ao hidratar).
-  // Precisa vir ANTES do '**'. A raiz '' redireciona p/ home mas também é assada.
-  { path: 'home', renderMode: RenderMode.Prerender },
+  // Precisa vir ANTES do '**'. A home mora na raiz '' (canonical `/`).
+  //
+  // `home` é só um redirectTo para `/`. O 301 de verdade é da borda
+  // (staticwebapp.config.json); o prerender aqui assa `home/index.html` como página
+  // de redirect (meta refresh para `/`), a rede para qualquer variante de URL que
+  // escape da regra da borda (ex.: `/home/`).
   { path: '', renderMode: RenderMode.Prerender },
+  { path: 'home', renderMode: RenderMode.Prerender },
 
   // Tudo o mais (busca, área logada, rotas legadas) segue CSR.
   { path: '**', renderMode: RenderMode.Client },
