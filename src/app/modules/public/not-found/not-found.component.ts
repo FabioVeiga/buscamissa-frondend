@@ -20,7 +20,7 @@ import { MetricasService, PaginaMetrica } from '../../../core/services/metricas.
         missa perto de você?
       </p>
       <div class="acoes">
-        <a routerLink="/home" class="btn-primario">Ir para a página inicial</a>
+        <a routerLink="/" class="btn-primario">Ir para a página inicial</a>
         <a routerLink="/cidades" class="btn-secundario">Ver todas as cidades</a>
       </div>
     </section>

@@ -51,7 +51,7 @@ export class EstadosComponent implements OnInit, OnDestroy {
   private _metricas = inject(MetricasService);
 
   readonly breadcrumb: HubBreadcrumb[] = [
-    { label: 'Início', link: ['/home'] },
+    { label: 'Início', link: ['/'] },
     { label: 'Estados' },
   ];
 
@@ -173,7 +173,7 @@ export class EstadosComponent implements OnInit, OnDestroy {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Início', item: `${SITE}/home` },
+        { '@type': 'ListItem', position: 1, name: 'Início', item: `${SITE}/` },
         { '@type': 'ListItem', position: 2, name: 'Estados', item: `${SITE}/estados` },
       ],
     });

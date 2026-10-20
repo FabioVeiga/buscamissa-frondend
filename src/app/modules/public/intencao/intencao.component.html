@@ -9,7 +9,7 @@
     <div class="intencao__vazio">
       <h1>Nenhuma missa de {{ rotulo }} encontrada</h1>
       <p>Não há paróquias com missa de {{ rotulo }} cadastradas aqui.</p>
-      <a routerLink="/home">Voltar ao início</a>
+      <a routerLink="/">Voltar ao início</a>
     </div>
   } @else if (erroCarregar) {
     <div class="intencao__erro">
@@ -18,7 +18,7 @@
     </div>
   } @else {
     <nav class="breadcrumb" aria-label="Trilha de navegação">
-      <a routerLink="/home">Início</a>
+      <a routerLink="/">Início</a>
       <span aria-hidden="true">›</span>
       @if (nivel === 'nacional') {
         <span aria-current="page">Missa de {{ rotulo }}</span>

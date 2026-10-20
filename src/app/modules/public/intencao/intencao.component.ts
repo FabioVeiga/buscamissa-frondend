@@ -259,7 +259,7 @@ export class IntencaoComponent implements OnInit {
 
   private jsonLdBreadcrumb(): void {
     const itens: any[] = [
-      { '@type': 'ListItem', position: 1, name: 'Início', item: `${SITE}/home` },
+      { '@type': 'ListItem', position: 1, name: 'Início', item: `${SITE}/` },
       { '@type': 'ListItem', position: 2, name: `Missa de ${this.rotulo}`, item: `${SITE}/missa-${this.dia}` },
     ];
     if (this.nivel !== 'nacional') {
