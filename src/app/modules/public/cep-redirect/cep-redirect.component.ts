@@ -19,7 +19,7 @@ export class CepRedirectComponent implements OnInit {
     const cep = this._route.snapshot.paramMap.get("cep")?.replace(/\D/g, "") ?? "";
 
     if (!cep || cep.length !== 8) {
-      this._router.navigate(["/home"]);
+      this._router.navigate(["/"]);
       return;
     }
 
@@ -29,7 +29,7 @@ export class CepRedirectComponent implements OnInit {
         const endereco = igrejas[0]?.dadosEndereco;
 
         if (!endereco?.localidade || !endereco?.uf) {
-          this._router.navigate(["/home"]);
+          this._router.navigate(["/"]);
           return;
         }
 
@@ -50,7 +50,7 @@ export class CepRedirectComponent implements OnInit {
           this._router.navigate(["/missas", uf, cidadeSlug]);
         }
       },
-      error: () => this._router.navigate(["/home"]),
+      error: () => this._router.navigate(["/"]),
     });
   }
 

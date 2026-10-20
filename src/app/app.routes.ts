@@ -41,11 +41,18 @@ export const routes: Routes = [
     component: LayoutHomeComponent,
     children: [
       {
-        path: "home",
+        // A home mora na RAIZ. Até 10/2026 ela vivia em /home, com canonical /home e
+        // `''` redirecionando para cá — mas o Google ignorou a canonical declarada e
+        // consolidou tudo em `/` (GSC: `/` com 606 cliques em 3 meses, `/home` fora do
+        // top 1000). Agora o código diz o mesmo que o Google já decidiu. `/home`
+        // virou redirect: 301 na borda (staticwebapp.config.json) e redirectTo no
+        // router, para links internos antigos e navegação SPA.
+        path: "",
+        pathMatch: "full",
         data: {
           title: 'BuscaMissa | Encontre missas perto de você',
           description: 'Busque missas e igrejas católicas perto de você por estado, cidade e bairro. Encontre horários e cadastre novas paróquias.',
-          canonical: 'https://buscamissa.com.br/home',
+          canonical: 'https://buscamissa.com.br/',
         },
         loadComponent: () =>
           import("./modules/public/home/home.component").then(
@@ -390,7 +397,7 @@ export const routes: Routes = [
             (m) => m.TermsComponent
           ),
       },
-      { path: "", redirectTo: "home", pathMatch: "full" },
+      { path: "home", redirectTo: "/", pathMatch: "full" },
       // 404 real (noindex) em vez de redirecionar à home — elimina soft-404.
       {
         path: "**",
