@@ -3,7 +3,7 @@ import { inject, Injectable } from "@angular/core";
 import { Observable, of } from "rxjs";
 import { catchError, map } from "rxjs/operators";
 
-export type PosicaoAnuncio = "fim_resultados" | "home";
+export type PosicaoAnuncio = "fim_resultados" | "home" | "detalhe_igreja";
 
 export interface CampanhaAtiva {
   id: number;

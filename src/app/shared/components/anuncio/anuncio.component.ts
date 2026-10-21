@@ -37,6 +37,11 @@ import { EventoAnuncio, MetricasService } from '../../../core/services/metricas.
             <span class="anuncio__texto">{{ c.textoCurto }}</span>
           }
         </a>
+        @if (posicao === 'detalhe_igreja') {
+          <small class="anuncio__isencao">
+            Conteúdo patrocinado. A exibição deste anúncio não representa apoio ou recomendação da paróquia nem da Igreja.
+          </small>
+        }
       </aside>
     }
   `,
@@ -63,6 +68,7 @@ import { EventoAnuncio, MetricasService } from '../../../core/services/metricas.
     .anuncio__img { width: 100%; height: auto; aspect-ratio: 4 / 1; object-fit: cover; border-radius: 8px; }
     .anuncio__titulo { font-weight: 600; }
     .anuncio__texto { opacity: 0.8; }
+    .anuncio__isencao { font-size: 0.7rem; opacity: 0.7; }
   `],
 })
 export class AnuncioComponent implements OnInit, OnDestroy {
