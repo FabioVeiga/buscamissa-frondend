@@ -118,6 +118,10 @@ $primary-light: #fff4ed;
     font-size: 0.8125rem;
     color: #6b7280;
     margin: 0.2rem 0 0;
+
+    // Espaço reservado enquanto não há dados: ocupa a linha, mas não aparece
+    // nem é lido por leitor de tela.
+    &--reservado { visibility: hidden; }
   }
 
   &__share {
