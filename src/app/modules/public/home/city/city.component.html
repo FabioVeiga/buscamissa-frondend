@@ -24,10 +24,16 @@
           <i class="pi pi-map-marker city-header__titulo-icon"></i>
           Missas em {{ cidadeNome }}<span *ngIf="uf">/{{ uf.toUpperCase() }}</span>
         </h1>
-        <p class="city-header__sub" *ngIf="!isLoading && igrejas.length">
-          {{ igrejasFiltradas.length }}
-          <ng-container *ngIf="temFiltroAtivo"> de {{ igrejas.length }}</ng-container>
-          igreja{{ igrejasFiltradas.length !== 1 ? 's' : '' }} encontrada{{ igrejasFiltradas.length !== 1 ? 's' : '' }}
+        <!-- Sempre no layout (anti-CLS na navegação SPA): sem dados, a linha fica
+             reservada e invisível; com *ngIf ela nascia junto com os dados e empurrava
+             filtros e lista (medido: 0,78 no celular). -->
+        <p class="city-header__sub" [class.city-header__sub--reservado]="isLoading || !igrejas.length">
+          <ng-container *ngIf="!isLoading && igrejas.length; else subReservado">
+            {{ igrejasFiltradas.length }}
+            <ng-container *ngIf="temFiltroAtivo"> de {{ igrejas.length }}</ng-container>
+            igreja{{ igrejasFiltradas.length !== 1 ? 's' : '' }} encontrada{{ igrejasFiltradas.length !== 1 ? 's' : '' }}
+          </ng-container>
+          <ng-template #subReservado>&nbsp;</ng-template>
         </p>
       </div>
     </div>

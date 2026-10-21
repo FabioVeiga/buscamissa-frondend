@@ -101,6 +101,9 @@
   gap: 0.5rem;
   flex-shrink: 0;
 
+  // Sem dados: ocupa o espaço, mas fica invisível e fora do foco do teclado.
+  &--reservado { visibility: hidden; }
+
   &__label {
     font-size: 0.75rem;
     color: #9ca3af;

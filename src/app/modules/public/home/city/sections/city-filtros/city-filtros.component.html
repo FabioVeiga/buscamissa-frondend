@@ -34,7 +34,9 @@
       {{ p.label }}
     </button>
   </div>
-  <div class="city-sort" *ngIf="mostrarOrdenacao">
+  <!-- Sempre no layout (anti-CLS): no celular a ordenação quebra para uma 2ª linha;
+       inserida só com os dados, ela empurrava a lista. Sem dados fica invisível. -->
+  <div class="city-sort" [class.city-sort--reservado]="!mostrarOrdenacao">
     <span class="city-sort__label">Ordenar por:</span>
     <select class="city-sort__select" (change)="ordenacaoChange.emit($any($event.target).value)" [value]="ordenacaoAtiva">
       <option value="proxima-missa">Próxima missa</option>
