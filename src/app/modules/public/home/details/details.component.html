@@ -64,6 +64,9 @@
       (verTodas)="scrollToHorarios()"
     />
 
+    <!-- ══ ANÚNCIO logo abaixo da próxima missa (com aviso de isenção; fora da conversão principal) ══ -->
+    <app-anuncio posicao="detalhe_igreja" />
+
     <!-- HORÁRIOS (largura total) -->
     <app-details-horarios
       [missas]="churchInfo.missas ?? []"

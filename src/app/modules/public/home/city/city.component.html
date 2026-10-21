@@ -87,8 +87,8 @@
 
       <!-- Resultados -->
       <ng-container *ngIf="!isLoading">
+        <ng-container *ngFor="let igreja of igrejasFiltradas; let i = index; trackBy: trackByIgrejaId">
         <app-city-card
-          *ngFor="let igreja of igrejasFiltradas; let i = index; trackBy: trackByIgrejaId"
           [igreja]="igreja"
           [proximaMissa]="proximaMissa(igreja)"
           [destaque]="i === 0"
@@ -103,6 +103,8 @@
           (favoritarClick)="toggleFavoritar(igreja)"
           (comoChegarClick)="comoChegar(igreja)"
         />
+        <app-anuncio *ngIf="i === 2 || (i === igrejasFiltradas.length - 1 && igrejasFiltradas.length < 3)" posicao="fim_resultados" />
+        </ng-container>
 
         <!-- Vazio por filtro -->
         <div *ngIf="!igrejasFiltradas.length && igrejas.length" class="city-vazio">
@@ -126,7 +128,6 @@
         </div>
 
         <!-- Convite Anuncie -->
-        <app-anuncio *ngIf="igrejasFiltradas.length" posicao="fim_resultados" />
         <app-convite-anuncie *ngIf="igrejasFiltradas.length" origem="cidade" />
 
         <!-- FAQ -->
