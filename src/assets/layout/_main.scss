@@ -11,9 +11,11 @@
   flex: 1 1 auto;
   padding-bottom: 1rem;
 
+  // O .card é a caixa PERSISTENTE entre rotas: tem sempre a largura toda e nunca
+  // muda. A largura de leitura de cada página fica no componente da rota (ver
+  // styles.scss). Se ela morasse aqui, o .card mudaria de largura e de x a cada
+  // troca de rota, e o Chrome conta isso como layout shift (medido: até 0,245).
   > .card {
-    max-width: 640px;
-    margin-left: auto;
-    margin-right: auto;
+    max-width: none;
   }
 }

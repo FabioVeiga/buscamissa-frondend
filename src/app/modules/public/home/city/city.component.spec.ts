@@ -117,6 +117,25 @@ describe('CityComponent — skeleton não pode substituir conteúdo já renderiz
     expect(sort()!.classList).not.toContain('city-sort--reservado');
   });
 
+  // ── A3. Botão "Ver mapa" só entra com os dados ────────────────────────────
+  // Ele é o último elemento da página e fica no fluxo (sem fixed). Visível durante o
+  // skeleton, era empurrado para o fim quando os cards chegavam (CLS 0,016–0,021).
+  it('A3) botão "Ver mapa" ausente durante o skeleton e presente com os dados', () => {
+    const rede = new Subject<any>();
+    montar(rede);
+    const botao = () => fixture.nativeElement.querySelector('.city-fab-mapa') as HTMLElement | null;
+
+    fixture.detectChanges();
+    expect(skeletons()).toBeGreaterThan(0);
+    expect(botao()).withContext('sem botão durante o skeleton').toBeNull();
+
+    rede.next(resposta(['Catedral', 'Guadalupe', 'Penha']));
+    fixture.detectChanges();
+
+    expect(botao()).withContext('botão presente com os dados').not.toBeNull();
+    expect(botao()!.textContent).toContain('Ver mapa');
+  });
+
   // ── B. Conteúdo vindo do TransferState/cache ──────────────────────────────
   it('B) com cache síncrono: renderiza os cards direto, sem passar por skeleton', () => {
     const revalidacao = new Subject<any>();

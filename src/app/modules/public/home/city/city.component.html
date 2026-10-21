@@ -169,8 +169,12 @@
 
   </div>
 
-  <!-- Botão flutuante Ver mapa (mobile) -->
-  <button class="city-fab-mapa" (click)="mapVisible = !mapVisible">
+  <!-- Botão Ver mapa / Ver lista (mobile), no fluxo ao fim da página.
+       Só depois dos dados (anti-CLS): é o último elemento da página; durante o
+       skeleton ele ficava visível logo abaixo dos esqueletos e era empurrado para o
+       fim quando os cards chegavam (0,016–0,021 em celular/tablet). Inserido junto
+       com os cards, nasce no lugar final e não conta como deslocamento. -->
+  <button class="city-fab-mapa" *ngIf="!isLoading" (click)="mapVisible = !mapVisible">
     <i class="pi" [class.pi-map]="!mapVisible" [class.pi-list]="mapVisible"></i>
     {{ mapVisible ? 'Ver lista' : 'Ver mapa' }}
   </button>
