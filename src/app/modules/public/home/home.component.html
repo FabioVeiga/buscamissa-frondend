@@ -216,6 +216,9 @@
     (favoriteClick)="onFavoriteClick($event)"
   />
 
+  <!-- ══ ANÚNCIO logo abaixo das próximas missas (home sem busca) ══ -->
+  <app-anuncio *ngIf="!resultsMode" posicao="home" />
+
   <!-- ══ ESTATÍSTICAS ══ -->
   <app-home-stats *ngIf="!resultsMode" [stats]="stats" />
 
@@ -238,7 +241,6 @@
        leve, então renderiza direto. -->
   @if (!resultsMode) {
     <app-home-como-funciona />
-    <app-anuncio posicao="home" />
   }
 
   <!-- ══ SEUS FAVORITOS ══ -->
