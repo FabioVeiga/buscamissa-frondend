@@ -471,7 +471,7 @@ export class DetailsComponent implements OnInit {
     const uf = this.churchInfo?.endereco?.uf;
     const cidadeSlug = this.churchInfo?.endereco?.cidadeSlug;
     if (uf && cidadeSlug) return ["/missas", uf.toLowerCase(), cidadeSlug];
-    return ["/home"];
+    return ["/"];
   }
 
   private getSocialTrackName(url: string): string {
@@ -494,7 +494,7 @@ export class DetailsComponent implements OnInit {
 
   voltar(): void {
     const anterior = this._navHistory.previousUrl;
-    this._router.navigateByUrl(anterior ?? "/home");
+    this._router.navigateByUrl(anterior ?? "/");
   }
 
   /** Compartilhar: usa a API nativa quando disponível, senão copia o link */
@@ -633,7 +633,7 @@ export class DetailsComponent implements OnInit {
     const uf = igreja?.endereco?.uf?.toLowerCase();
     const cidadeSlug = igreja?.endereco?.cidadeSlug;
     const itens: any[] = [
-      { "@type": "ListItem", position: 1, name: "Início", item: `${base}/home` },
+      { "@type": "ListItem", position: 1, name: "Início", item: `${base}/` },
     ];
     if (uf && cidadeSlug) {
       itens.push({

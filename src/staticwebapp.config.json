@@ -1,5 +1,6 @@
 {
   "routes": [
+    { "route": "/home", "redirect": "/", "statusCode": 301 },
     { "route": "/detalhes/02839070", "redirect": "/paroquia/sp/sao-paulo/paroquia-santos-apostolos", "statusCode": 301 },
     { "route": "/detalhes/02810000", "redirect": "/paroquia/sp/sao-paulo/paroquia-nossa-senhora-das-dores", "statusCode": 301 },
     { "route": "/detalhes/12240540", "redirect": "/paroquia/sp/sao-jose-dos-campos/capela-nossa-senhora-aparecida", "statusCode": 301 },

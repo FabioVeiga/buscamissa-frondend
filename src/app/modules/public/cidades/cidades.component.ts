@@ -103,7 +103,7 @@ export class CidadesComponent implements OnInit, OnDestroy {
   principaisCidades: CidadeDestaque[] = [];
 
   readonly breadcrumb: HubBreadcrumb[] = [
-    { label: 'Início', link: ['/home'] },
+    { label: 'Início', link: ['/'] },
     { label: 'Cidades' },
   ];
 
@@ -394,7 +394,7 @@ export class CidadesComponent implements OnInit, OnDestroy {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Início', item: `${SITE}/home` },
+        { '@type': 'ListItem', position: 1, name: 'Início', item: `${SITE}/` },
         { '@type': 'ListItem', position: 2, name: 'Cidades', item: `${SITE}/cidades` },
       ],
     });

@@ -29,8 +29,8 @@ const MARCADOR_ERRO = 'Tentar novamente';
 const LIMIAR = 0.02; // 2%
 
 // Seções prerenderizadas com estado de erro auditável (city, details e home).
-// 'home' cobre dist/<app>/browser/home/index.html (rota `home`). A raiz `''`
-// (browser/index.html) é verificada à parte, por não ficar numa subpasta.
+// A home mora na raiz `''` (browser/index.html) e é verificada à parte, por não
+// ficar numa subpasta. `home/index.html` hoje é só a página de redirect para `/`.
 // 'missas' cobre também os hubs de Estado (/missas/{uf}, Fase 3). Os `missa-{dia}`
 // são as landings/hubs/folhas da árvore de intenção (Fase 3), uma pasta por dia.
 const DIAS_INTENCAO = ['domingo', 'segunda-feira', 'terca-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sabado'];
@@ -44,7 +44,7 @@ const DIAS_INTENCAO = ['domingo', 'segunda-feira', 'terca-feira', 'quarta-feira'
  */
 const HUBS = ['cidades', 'estados', 'dias'];
 
-const SECOES = ['missas', 'paroquia', 'home', ...HUBS, ...DIAS_INTENCAO.map((d) => `missa-${d}`)];
+const SECOES = ['missas', 'paroquia', ...HUBS, ...DIAS_INTENCAO.map((d) => `missa-${d}`)];
 
 /** Acha dist/<app>/browser, varrendo os apps sob dist/. */
 function acharBrowserDir(base) {
@@ -124,6 +124,59 @@ if (browserDir) {
     } else {
       console.log('[guard-rail] raiz (index.html): OK.');
     }
+  }
+}
+
+// ── HOME na raiz: canonical `/` e `/home` só como redirect ─────────────────
+//
+// Até 10/2026 a home vivia em /home com canonical /home, e o Google ignorou isso:
+// consolidou tudo em `/`. O código passou a dizer o mesmo. O acordo tem três
+// metades e cada uma regride calada: a raiz voltar a declarar /home (ou perder a
+// canonical), `home/index.html` voltar a ser uma cópia da home em 200, ou a regra
+// 301 sumir da config. Qualquer uma reabre a duplicata `/` × `/home`.
+if (browserDir) {
+  const falhas = [];
+  const raiz = join(browserDir, 'index.html');
+  const htmlRaiz = existsSync(raiz) ? readFileSync(raiz, 'utf-8') : '';
+  if (!htmlRaiz) {
+    falhas.push('raiz (index.html) ausente do dist');
+  } else {
+    const canonical = htmlRaiz.match(/rel="canonical"\s+href="([^"]*)"/)?.[1] ?? '';
+    const titulo = htmlRaiz.match(/<title>([^<]*)<\/title>/)?.[1] ?? '';
+    if (canonical !== 'https://buscamissa.com.br/') {
+      falhas.push(`canonical da raiz é "${canonical}" (esperado "https://buscamissa.com.br/")`);
+    }
+    if (!titulo || titulo === 'BuscaMissa | Encontre ou cadastre missas') {
+      falhas.push(`<title> da raiz ausente ou genérico do shell: "${titulo}"`);
+    }
+    if (!/<h1[\s>]/.test(htmlRaiz)) falhas.push('<h1> ausente na raiz');
+  }
+
+  // O prerender da rota `home` (redirectTo) assa uma página de meta refresh. Se
+  // alguém trocar o redirect por um componente, aqui nasce de novo a 2ª cópia.
+  const arqHome = join(browserDir, 'home', 'index.html');
+  if (existsSync(arqHome) && !/http-equiv="refresh"\s+content="0;\s*url=\/"/.test(readFileSync(arqHome, 'utf-8'))) {
+    falhas.push('home/index.html não é a página de redirect para "/" — seria uma 2ª cópia da home em 200');
+  }
+
+  // Config lida do DIST, como no bloco de /detalhes: prova que a regra chegou ao
+  // artefato publicado. Sem `statusCode: 301` explícito o SWA emite 302.
+  const caminhoConfig = join(browserDir, 'staticwebapp.config.json');
+  const regraHome = existsSync(caminhoConfig)
+    ? (JSON.parse(readFileSync(caminhoConfig, 'utf8')).routes ?? []).find((r) => r.route === '/home')
+    : undefined;
+  if (!regraHome || regraHome.redirect !== '/' || regraHome.statusCode !== 301) {
+    falhas.push(`regra "/home" → "/" (301) ausente ou divergente na config do dist: ${JSON.stringify(regraHome ?? null)}`);
+  }
+
+  algoVerificado = true;
+  if (falhas.length === 0) {
+    console.log('[home] raiz com canonical "/", /home em redirect e 301 na config: OK.');
+  } else {
+    algumFalhou = true;
+    console.error('\n❌ [home] a identidade da home divergiu:');
+    for (const f of falhas) console.error(`     - ${f}`);
+    console.error('   `/` e `/home` voltariam a competir como duas cópias da mesma página.');
   }
 }
 

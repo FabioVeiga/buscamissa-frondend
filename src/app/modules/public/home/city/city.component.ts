@@ -484,7 +484,7 @@ export class CityComponent implements OnInit, OnDestroy {
       "@context": "https://schema.org",
       "@type": "BreadcrumbList",
       itemListElement: [
-        { "@type": "ListItem", position: 1, name: "Início", item: `${base}/home` },
+        { "@type": "ListItem", position: 1, name: "Início", item: `${base}/` },
         { "@type": "ListItem", position: 2, name: `${this.cidadeNome}/${this.uf.toUpperCase()}`, item: `${base}/missas/${this.uf}/${this.cidade}` },
       ],
     });

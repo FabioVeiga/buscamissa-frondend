@@ -38,7 +38,7 @@
     <!-- Breadcrumb -->
     <nav aria-label="Breadcrumb"
          class="flex items-center flex-wrap gap-1 text-xs text-gray-400 pt-4 pb-3">
-      <a routerLink="/home" class="hover:text-primary">Início</a>
+      <a routerLink="/" class="hover:text-primary">Início</a>
       <span>›</span>
       <a [routerLink]="linkCidade()" class="hover:text-primary">
         {{ churchInfo.endereco?.localidade }}<span *ngIf="churchInfo.endereco?.uf">/{{ churchInfo.endereco.uf }}</span>

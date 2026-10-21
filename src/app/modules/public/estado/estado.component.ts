@@ -171,7 +171,7 @@ export class EstadoComponent implements OnInit, OnDestroy {
   /** Monta os dados do `app-page-hero`. Chamado uma vez por carga. */
   private montarHero(): void {
     this.breadcrumb = [
-      { label: 'Início', link: ['/home'] },
+      { label: 'Início', link: ['/'] },
       { label: 'Estados', link: ['/estados'] },
       { label: this.estadoNome },
     ];
@@ -460,7 +460,7 @@ export class EstadoComponent implements OnInit, OnDestroy {
       '@context': 'https://schema.org',
       '@type': 'BreadcrumbList',
       itemListElement: [
-        { '@type': 'ListItem', position: 1, name: 'Início', item: `${SITE}/home` },
+        { '@type': 'ListItem', position: 1, name: 'Início', item: `${SITE}/` },
         { '@type': 'ListItem', position: 2, name: 'Estados', item: `${SITE}/estados` },
         {
           '@type': 'ListItem',
