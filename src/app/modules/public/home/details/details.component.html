@@ -64,6 +64,9 @@
       (verTodas)="scrollToHorarios()"
     />
 
+    <!-- ══ ANÚNCIO logo abaixo da próxima missa (com aviso de isenção; fora da conversão principal) ══ -->
+    <app-anuncio posicao="detalhe_igreja" />
+
     <!-- HORÁRIOS (largura total) -->
     <app-details-horarios
       [missas]="churchInfo.missas ?? []"
@@ -174,11 +177,6 @@
                 [loading]="solicitacaoEnviando" (click)="enviarSolicitacaoResponsavel()"></button>
       </ng-template>
     </p-dialog>
-
-    <!-- ══ ANÚNCIO (com aviso de isenção; fora da conversão principal) ══ -->
-    <div class="mt-6">
-      <app-anuncio posicao="detalhe_igreja" />
-    </div>
 
     <!-- ══ REPORTAR (largura total) ══ -->
     <section class="mt-6 rounded-xl bg-surface-50 border border-surface-100 px-4 py-3
