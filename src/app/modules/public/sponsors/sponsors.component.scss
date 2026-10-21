@@ -1,21 +1,98 @@
-.custom-carousel .p-carousel-item {
-    padding: 10px;
-    margin: 0 10px;
-  }
-  
-  .p-card {
-    border-radius: 8px;
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
-  }
-  
-  .p-button {
+.anuncie {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+
+  &__hero {
     text-align: center;
-    margin: 5px 0;
+    padding: 1.5rem 0;
+
+    h1 { font-size: 1.9rem; font-weight: 700; margin: 0.5rem 0; }
+    p { color: #4b5563; margin: 0 auto; max-width: 560px; }
   }
-  
-  img {
-    border-radius: 8px; /* Adicionando bordas arredondadas nas imagens */
-    object-fit: cover; /* Faz a imagem preencher o espaço sem distorção */
-    max-height: 200px; /* Limita a altura da imagem */
+
+  &__etiqueta {
+    display: inline-block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    background: #fef3c7;
+    color: #92400e;
   }
-  
+
+  &__acoes {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+  }
+
+  &__btn {
+    display: inline-block;
+    padding: 0.6rem 1.1rem;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    font-weight: 600;
+    text-decoration: none;
+    color: inherit;
+
+    &--primario { background: #1d4ed8; border-color: #1d4ed8; color: #fff; }
+  }
+
+  &__bloco {
+    margin-top: 2rem;
+
+    h2 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.75rem; }
+    ul { padding-left: 1.2rem; list-style: disc; display: grid; gap: 0.4rem; }
+  }
+
+  &__exemplo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 1rem;
+    border: 1px dashed #9ca3af;
+    border-radius: 8px;
+    max-width: 480px;
+  }
+
+  &__selo {
+    align-self: flex-start;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0.1rem 0.45rem;
+    border-radius: 4px;
+    background: #e5e7eb;
+    color: #374151;
+  }
+
+  &__nota { font-size: 0.8rem; color: #6b7280; margin-top: 0.5rem; }
+
+  &__pacotes {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 0.75rem;
+  }
+
+  &__pacote {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    padding: 0.9rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 0.9rem;
+  }
+
+  &__faq {
+    border-bottom: 1px solid #e5e7eb;
+    padding: 0.6rem 0;
+
+    summary { cursor: pointer; font-weight: 600; }
+    p { margin: 0.5rem 0 0; color: #4b5563; }
+  }
+
+  &__contato a { text-decoration: underline; font-weight: 600; }
+}

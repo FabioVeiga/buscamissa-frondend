@@ -14,3 +14,6 @@ export const applicationBase = {
   primeng: 'PrimeNG 19.0.10',
   primeicons: 'Prime Icons 7.0.0',
 };
+
+// Usuário do Instagram do BuscaMissa (links de Direct e perfil na página /anuncie).
+export const instagramUsuario = 'buscamissa';

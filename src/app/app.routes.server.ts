@@ -139,7 +139,7 @@ export const serverRoutes: ServerRoute[] = [
   { path: 'como-funciona', renderMode: RenderMode.Prerender },
   { path: 'guia-responsavel', renderMode: RenderMode.Prerender },
   { path: 'contribuir', renderMode: RenderMode.Prerender },
-  { path: 'anuncios', renderMode: RenderMode.Prerender },
+  { path: 'anuncie', renderMode: RenderMode.Prerender },
   { path: 'solicitar', renderMode: RenderMode.Prerender },
   { path: 'termos', renderMode: RenderMode.Prerender },
   { path: 'privacidade', renderMode: RenderMode.Prerender },

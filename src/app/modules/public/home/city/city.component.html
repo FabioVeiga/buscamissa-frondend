@@ -125,6 +125,10 @@
           <a routerLink="/nova">Cadastrar paróquia</a>
         </div>
 
+        <!-- Convite Anuncie -->
+        <app-anuncio *ngIf="igrejasFiltradas.length" posicao="fim_resultados" />
+        <app-convite-anuncie *ngIf="igrejasFiltradas.length" origem="cidade" />
+
         <!-- FAQ -->
         <app-city-faq [faqs]="faqs" />
 

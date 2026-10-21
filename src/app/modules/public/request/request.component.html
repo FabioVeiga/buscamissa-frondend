@@ -4,6 +4,10 @@
 </div>
 <p-panel header="Nova Solicitação" class="container">
   <p>Preencha o formulário abaixo para enviar sua solicitação.</p>
+  <p *ngIf="anunciar">
+    Para anunciar, informe no campo de mensagem o nome da sua empresa ou projeto
+    e a praça de interesse (nacional, estado ou cidade).
+  </p>
   <form [formGroup]="form" (ngSubmit)="sendSubject()">
     <div class="p-fluid">
       <div class="field">

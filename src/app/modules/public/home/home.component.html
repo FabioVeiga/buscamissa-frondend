@@ -238,6 +238,7 @@
        leve, então renderiza direto. -->
   @if (!resultsMode) {
     <app-home-como-funciona />
+    <app-anuncio posicao="home" />
   }
 
   <!-- ══ SEUS FAVORITOS ══ -->
@@ -308,6 +309,10 @@
     <p-paginator [rows]="pageSize" [first]="(pageIndex - 1) * pageSize" [totalRecords]="totalRecordsFiltrado"
       [rowsPerPageOptions]="[5, 10, 20]" (onPageChange)="onPageChange($event)"></p-paginator>
   </div>
+
+  <!-- ══ CONVITE ANUNCIE ══ -->
+  <app-anuncio *ngIf="resultsMode && churchInfo && churchInfo.length > 0" posicao="fim_resultados" />
+  <app-convite-anuncie *ngIf="resultsMode && churchInfo && churchInfo.length > 0" origem="home" />
 
   <!-- ══ INSTAGRAM ══ -->
   <div class="home-instagram" *ngIf="!resultsMode">

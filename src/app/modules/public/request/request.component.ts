@@ -9,9 +9,10 @@ import {
 } from "@angular/forms";
 import { RequestService } from "../../../core/services/request.service";
 import { NgIf } from "@angular/common";
+import { ActivatedRoute } from "@angular/router";
 import { MessageService } from "primeng/api";
 import { LoggerService } from "../../../core/services/logger.service";
-import { MetricasService, PaginaMetrica } from "../../../core/services/metricas.service";
+import { MetricasService, OrigemAnuncie, PaginaMetrica } from "../../../core/services/metricas.service";
 
 @Component({
   selector: "app-request",
@@ -26,9 +27,11 @@ export class RequestComponent implements OnInit {
   private _fb = inject(FormBuilder);
   private _logger = inject(LoggerService);
   private _metricas = inject(MetricasService);
+  private _route = inject(ActivatedRoute);
   public isLoading = false;
   public form!: FormGroup;
   public tipos: any[] = [];
+  public anunciar = false;
 
   ngOnInit(): void {
     this._metricas.registrarVisualizacaoPagina(PaginaMetrica.Solicitar);
@@ -42,14 +45,24 @@ export class RequestComponent implements OnInit {
       assunto: ["", Validators.required],
       mensagem: ["", Validators.required],
       nomeSolicitante: ["", Validators.required],
-      emailSolicitante: ["", Validators.required, Validators.email],
+      emailSolicitante: ["", [Validators.required, Validators.email]],
     });
+  }
+
+  // /solicitar?tipo=anunciar pré-seleciona o tipo "Anunciar" e sugere o assunto.
+  private preSelecionarAnunciar(): void {
+    if (this._route.snapshot.queryParamMap.get("tipo") !== "anunciar") return;
+    const tipo = this.tipos.find((t) => t.nome === "Anunciar");
+    if (!tipo) return;
+    this.form.patchValue({ tipo: tipo.id, assunto: "Quero anunciar no BuscaMissa" });
+    this.anunciar = true;
   }
 
   getSubject() {
     this._service.getSubject().subscribe({
       next: (res) => {
         this.tipos = res;
+        this.preSelecionarAnunciar();
       },
     });
   }
@@ -64,6 +77,7 @@ export class RequestComponent implements OnInit {
             summary: "Sucesso",
             detail: "Solicitação enviada com sucesso.",
           });
+          if (this.anunciar) this._metricas.registrarCliqueAnuncie(OrigemAnuncie.Formulario);
           this.form.reset();
         }
       },
