@@ -25,11 +25,9 @@ export class SponsorsComponent implements OnInit {
   readonly instagramDirect = `https://ig.me/m/${instagramUsuario}`;
   readonly instagramPerfil = `https://www.instagram.com/${instagramUsuario}/`;
 
+  // MVP: somente o pacote nacional. Estado, cidades e regional entram quando houver demanda (Fase 5).
   readonly pacotes: Pacote[] = [
     { nome: "Nacional", descricao: "Sua marca em todo o Brasil, nos espaços do site." },
-    { nome: "Por estado", descricao: "Foco em um estado, como SP, MG, RJ ou PR." },
-    { nome: "Cidades de maior movimento", descricao: "Pacote com as cidades que mais buscam missa." },
-    { nome: "Regional", descricao: "União de estados vizinhos para uma campanha regional." },
   ];
 
   readonly perguntas: Pergunta[] = [
