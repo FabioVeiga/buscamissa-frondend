@@ -127,3 +127,71 @@ describe('CityCardComponent — estável no prerender, relativo no browser', () 
     expect(depois).toBe(antes);
   });
 });
+
+/**
+ * Foto × fallback no MESMO nó. O *ngFor da cidade hidrata por posição e a ordem
+ * "Próxima missa" do prerender (hora do build) difere da do browser, então um card
+ * hidrata sobre o HTML de outra igreja. Com dois *ngIf, o ramo do servidor ficava no
+ * DOM até a app estabilizar: foto de OUTRA igreja + placeholder lado a lado (CLS e
+ * conteúdo errado). Com bindings, trocar de igreja só atualiza atributos.
+ */
+describe('CityCardComponent — foto e fallback num nó só', () => {
+  let fixture: ComponentFixture<CityCardComponent>;
+  const base = { id: 1, nome: 'Paróquia A', slug: 'a', endereco: { bairro: 'Centro' }, missas: [] };
+  const wraps = () => fixture.nativeElement.querySelectorAll('.city-card__img-wrap');
+  const img = () => fixture.nativeElement.querySelector('img.city-card__img') as HTMLImageElement;
+  const ph = () => fixture.nativeElement.querySelector('app-church-placeholder') as HTMLElement;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [CityCardComponent],
+      providers: [provideRouter([]), { provide: PLATFORM_ID, useValue: 'browser' }],
+    }).compileComponents();
+    fixture = TestBed.createComponent(CityCardComponent);
+    Object.assign(fixture.componentInstance, { cidadeNome: 'Campinas', uf: 'sp', cidadeSlug: 'campinas' });
+  });
+
+  it('com foto: um único wrap, imagem visível e fallback oculto', () => {
+    fixture.componentInstance.igreja = { ...base, imagemUrl: 'https://x/a.png' };
+    fixture.detectChanges();
+    expect(wraps().length).toBe(1);
+    expect(img().hidden).toBeFalse();
+    expect(img().getAttribute('src')).toBe('https://x/a.png');
+    expect(ph().hidden).toBeTrue();
+  });
+
+  it('sem foto: o mesmo wrap mostra o fallback e a imagem fica sem src', () => {
+    fixture.componentInstance.igreja = { ...base, imagemUrl: null };
+    fixture.detectChanges();
+    expect(wraps().length).toBe(1);
+    expect(img().hidden).toBeTrue();
+    expect(img().hasAttribute('src')).toBeFalse();
+    expect(ph().hidden).toBeFalse();
+  });
+
+  it('trocar a igreja do card (como na hidratação por posição) reaproveita os nós', () => {
+    fixture.componentInstance.igreja = { ...base, imagemUrl: 'https://x/a.png' };
+    fixture.detectChanges();
+    const [imgAntes, phAntes] = [img(), ph()];
+
+    fixture.componentRef.setInput('igreja', { ...base, id: 2, nome: 'Paróquia B', imagemUrl: null });
+    fixture.detectChanges();
+
+    expect(wraps().length).toBe(1);
+    expect(img()).toBe(imgAntes);
+    expect(ph()).toBe(phAntes);
+    expect(img().alt).toBe('Paróquia B');
+    expect(img().hidden).toBeTrue();
+    expect(ph().hidden).toBeFalse();
+  });
+
+  it('erro de carregamento cai no fallback sem criar outro nó', () => {
+    fixture.componentInstance.igreja = { ...base, imagemUrl: 'https://x/quebrada.png' };
+    fixture.detectChanges();
+    img().dispatchEvent(new Event('error'));
+    fixture.detectChanges();
+    expect(wraps().length).toBe(1);
+    expect(img().hidden).toBeTrue();
+    expect(ph().hidden).toBeFalse();
+  });
+});
