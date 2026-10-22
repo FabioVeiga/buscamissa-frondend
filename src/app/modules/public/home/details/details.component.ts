@@ -1,4 +1,5 @@
 import { ehSemanal } from "../../../../shared/utils/recorrencia-missa";
+import { AnuncioComponent } from "../../../../shared/components/anuncio/anuncio.component";
 import { Component, DestroyRef, inject, OnInit, PLATFORM_ID } from "@angular/core";
 import { isPlatformBrowser } from "@angular/common";
 import { Title } from "@angular/platform-browser";
@@ -51,6 +52,7 @@ import { LoggerService } from "../../../../core/services/logger.service";
     DetailsComoChegarComponent,
     DetailsContatoComponent,
     DetailsReportarModalComponent,
+    AnuncioComponent,
   ],
   providers: [MessageService],
   templateUrl: "./details.component.html",

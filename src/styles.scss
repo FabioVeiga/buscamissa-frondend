@@ -57,25 +57,40 @@ button:focus-visible,
   border-radius: 4px;
 }
 
-/* Estas páginas usam layout largo (alinhado ao header). Demais mantêm 640px de leitura. */
-.layout-main > .card:has(app-home),
-.layout-main > .card:has(app-missa-agora),
-.layout-main > .card:has(app-como-funciona) {
+/* Largura de leitura de cada página: no COMPONENTE DA ROTA (o elemento logo depois
+   do <router-outlet>), nunca no .card. O .card persiste entre rotas; quando a largura
+   morava nele (via :has(app-...)), trocar de rota entre grupos de largura mudava o x
+   do .card e virava layout shift — home → cidade 0,095 e estado → cidade 0,245 no
+   desktop. O componente da rota é um elemento NOVO a cada navegação, e elemento
+   inserido não conta como shift. As caixas visíveis são as mesmas de antes.
+
+   display: block é necessário: sem :host estilizado, o componente é inline e
+   ignoraria max-width e margin auto. */
+.layout-main > .card > router-outlet + * {
+  display: block;
+  max-width: 640px; /* padrão: largura de leitura */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Layout largo, alinhado ao header. */
+.layout-main > .card > :is(app-home, app-missa-agora, app-como-funciona) {
   max-width: 72rem;
 }
 
-/* Páginas com <app-page-hero> têm faixa sangrando de borda a borda: o .card não
-   pode limitar a largura. O próprio hero centraliza o conteúdo (72rem). Evita o
-   truque de 100vw, que somaria a barra de rolagem e criaria scroll lateral.
+/* Lista larga da cidade (mapa ao lado no desktop). Antes ela escapava dos 640px do
+   .card com 100vw + translateX no :host; o transform prendia o botão fixed "Ver mapa"
+   à página em vez da tela. */
+.layout-main > .card > app-city {
+  max-width: 1200px;
+}
 
-   `app-estado` continua na lista porque naquela página o hero só existe depois da
-   carga: durante o skeleton não há `.ph-hero` no DOM, e sem o seletor de elemento
-   o `.card` nasceria em 640px e pularia para full-bleed ao chegar o dado. */
-.layout-main > .card:has(.ph-hero),
-.layout-main > .card:has(app-estado) {
+/* Páginas com <app-page-hero> têm faixa sangrando de borda a borda: sem limite. O
+   próprio hero centraliza o conteúdo (72rem). `app-estado` vai pelo nome porque o hero
+   só existe depois da carga: durante o skeleton não há `.ph-hero` no DOM. */
+.layout-main > .card > :is(app-estado, app-cidades, app-estados, app-dias),
+.layout-main > .card > router-outlet + :has(.ph-hero) {
   max-width: none;
-  padding-left: 0;
-  padding-right: 0;
 }
 
 .hero {

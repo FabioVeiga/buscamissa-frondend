@@ -277,11 +277,11 @@ export const routes: Routes = [
           ).then((m) => m.ValidateCodeComponent),
       },
       {
-        path: "anuncios",
+        path: "anuncie",
         data: {
           title: 'Anuncie no BuscaMissa | Patrocinadores',
-          description: 'Conheça as opções de anúncio e patrocínio disponíveis no BuscaMissa.',
-          canonical: 'https://buscamissa.com.br/anuncios',
+          description: 'Anuncie no BuscaMissa e divulgue sua marca para quem busca horários de missa em todo o Brasil.',
+          canonical: 'https://buscamissa.com.br/anuncie',
         },
         loadComponent: () =>
           import("./modules/public/sponsors/sponsors.component").then(

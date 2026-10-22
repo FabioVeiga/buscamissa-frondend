@@ -24,10 +24,16 @@
           <i class="pi pi-map-marker city-header__titulo-icon"></i>
           Missas em {{ cidadeNome }}<span *ngIf="uf">/{{ uf.toUpperCase() }}</span>
         </h1>
-        <p class="city-header__sub" *ngIf="!isLoading && igrejas.length">
-          {{ igrejasFiltradas.length }}
-          <ng-container *ngIf="temFiltroAtivo"> de {{ igrejas.length }}</ng-container>
-          igreja{{ igrejasFiltradas.length !== 1 ? 's' : '' }} encontrada{{ igrejasFiltradas.length !== 1 ? 's' : '' }}
+        <!-- Sempre no layout (anti-CLS na navegação SPA): sem dados, a linha fica
+             reservada e invisível; com *ngIf ela nascia junto com os dados e empurrava
+             filtros e lista (medido: 0,78 no celular). -->
+        <p class="city-header__sub" [class.city-header__sub--reservado]="isLoading || !igrejas.length">
+          <ng-container *ngIf="!isLoading && igrejas.length; else subReservado">
+            {{ igrejasFiltradas.length }}
+            <ng-container *ngIf="temFiltroAtivo"> de {{ igrejas.length }}</ng-container>
+            igreja{{ igrejasFiltradas.length !== 1 ? 's' : '' }} encontrada{{ igrejasFiltradas.length !== 1 ? 's' : '' }}
+          </ng-container>
+          <ng-template #subReservado>&nbsp;</ng-template>
         </p>
       </div>
     </div>
@@ -81,8 +87,8 @@
 
       <!-- Resultados -->
       <ng-container *ngIf="!isLoading">
+        <ng-container *ngFor="let igreja of igrejasFiltradas; let i = index; trackBy: trackByIgrejaId">
         <app-city-card
-          *ngFor="let igreja of igrejasFiltradas; let i = index; trackBy: trackByIgrejaId"
           [igreja]="igreja"
           [proximaMissa]="proximaMissa(igreja)"
           [destaque]="i === 0"
@@ -97,6 +103,8 @@
           (favoritarClick)="toggleFavoritar(igreja)"
           (comoChegarClick)="comoChegar(igreja)"
         />
+        <app-anuncio *ngIf="i === 2 || (i === igrejasFiltradas.length - 1 && igrejasFiltradas.length < 3)" posicao="fim_resultados" />
+        </ng-container>
 
         <!-- Vazio por filtro -->
         <div *ngIf="!igrejasFiltradas.length && igrejas.length" class="city-vazio">
@@ -118,6 +126,9 @@
           <p>Nenhuma paróquia cadastrada em {{ cidadeNome }} ainda.</p>
           <a routerLink="/nova">Cadastrar paróquia</a>
         </div>
+
+        <!-- Convite Anuncie -->
+        <app-convite-anuncie *ngIf="igrejasFiltradas.length" origem="cidade" />
 
         <!-- FAQ -->
         <app-city-faq [faqs]="faqs" />
@@ -163,8 +174,12 @@
 
   </div>
 
-  <!-- Botão flutuante Ver mapa (mobile) -->
-  <button class="city-fab-mapa" (click)="mapVisible = !mapVisible">
+  <!-- Botão Ver mapa / Ver lista (mobile), no fluxo ao fim da página.
+       Só depois dos dados (anti-CLS): é o último elemento da página; durante o
+       skeleton ele ficava visível logo abaixo dos esqueletos e era empurrado para o
+       fim quando os cards chegavam (0,016–0,021 em celular/tablet). Inserido junto
+       com os cards, nasce no lugar final e não conta como deslocamento. -->
+  <button class="city-fab-mapa" *ngIf="!isLoading" (click)="mapVisible = !mapVisible">
     <i class="pi" [class.pi-map]="!mapVisible" [class.pi-list]="mapVisible"></i>
     {{ mapVisible ? 'Ver lista' : 'Ver mapa' }}
   </button>

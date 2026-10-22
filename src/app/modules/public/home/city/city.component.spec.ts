@@ -92,6 +92,50 @@ describe('CityComponent — skeleton não pode substituir conteúdo já renderiz
     expect(cards()).toBe(3);
   });
 
+  // ── A2. Espaço do cabeçalho reservado durante o carregamento ──────────────
+  // Subtítulo e ordenação nasciam junto com os dados (*ngIf) e empurravam filtros
+  // e lista na navegação SPA (CLS 0,78 no celular). Agora existem desde o início,
+  // invisíveis, e só ganham conteúdo/visibilidade quando o dado chega.
+  it('A2) subtítulo e ordenação ocupam o layout desde o skeleton, invisíveis até o dado chegar', () => {
+    const rede = new Subject<any>();
+    montar(rede);
+    const sub = () => fixture.nativeElement.querySelector('.city-header__sub') as HTMLElement | null;
+    const sort = () => fixture.nativeElement.querySelector('.city-sort') as HTMLElement | null;
+
+    fixture.detectChanges();
+    expect(skeletons()).toBeGreaterThan(0);
+    expect(sub()).withContext('subtítulo no DOM durante o skeleton').not.toBeNull();
+    expect(sub()!.classList).toContain('city-header__sub--reservado');
+    expect(sort()).withContext('ordenação no DOM durante o skeleton').not.toBeNull();
+    expect(sort()!.classList).toContain('city-sort--reservado');
+
+    rede.next(resposta(['Catedral', 'Guadalupe', 'Penha']));
+    fixture.detectChanges();
+
+    expect(sub()!.classList).not.toContain('city-header__sub--reservado');
+    expect(sub()!.textContent!.replace(/\s+/g, ' ').trim()).toBe('3 igrejas encontradas');
+    expect(sort()!.classList).not.toContain('city-sort--reservado');
+  });
+
+  // ── A3. Botão "Ver mapa" só entra com os dados ────────────────────────────
+  // Ele é o último elemento da página e fica no fluxo (sem fixed). Visível durante o
+  // skeleton, era empurrado para o fim quando os cards chegavam (CLS 0,016–0,021).
+  it('A3) botão "Ver mapa" ausente durante o skeleton e presente com os dados', () => {
+    const rede = new Subject<any>();
+    montar(rede);
+    const botao = () => fixture.nativeElement.querySelector('.city-fab-mapa') as HTMLElement | null;
+
+    fixture.detectChanges();
+    expect(skeletons()).toBeGreaterThan(0);
+    expect(botao()).withContext('sem botão durante o skeleton').toBeNull();
+
+    rede.next(resposta(['Catedral', 'Guadalupe', 'Penha']));
+    fixture.detectChanges();
+
+    expect(botao()).withContext('botão presente com os dados').not.toBeNull();
+    expect(botao()!.textContent).toContain('Ver mapa');
+  });
+
   // ── B. Conteúdo vindo do TransferState/cache ──────────────────────────────
   it('B) com cache síncrono: renderiza os cards direto, sem passar por skeleton', () => {
     const revalidacao = new Subject<any>();

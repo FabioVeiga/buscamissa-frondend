@@ -6,19 +6,20 @@ $primary: #bc5d10;
 $primary-dark: #9a4a0c;
 $primary-light: #fff4ed;
 
-// Escape the 640px .card container so the city page can use full viewport width
+// A largura (máx. 1200px, centralizada) vem de styles.scss, que define a largura de
+// cada componente de rota. Antes o :host escapava do .card de 640px com
+// `left: 50%; transform: translateX(-50%); width: 100vw` — e o transform fazia do
+// :host o containing block do botão fixed "Ver mapa", que ficava preso à página.
 :host {
   display: block;
-  position: relative;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 100vw;
-  max-width: 1200px;
 }
 
 // ── Page wrapper ──────────────────────────────────────────────────────────────
 .city-page {
-  padding: 0.75rem 0.75rem 5rem;
+  // O fundo era 5rem para reservar o espaço do botão "Ver mapa"; agora ele ocupa
+  // espaço próprio no fluxo (ver .city-fab-mapa), e 1.25rem mantém a altura total
+  // perto da de antes.
+  padding: 0.75rem 0.75rem 1.25rem;
   background: #fff;
 
   @media (min-width: 900px) {
@@ -118,6 +119,10 @@ $primary-light: #fff4ed;
     font-size: 0.8125rem;
     color: #6b7280;
     margin: 0.2rem 0 0;
+
+    // Espaço reservado enquanto não há dados: ocupa a linha, mas não aparece
+    // nem é lido por leitor de tela.
+    &--reservado { visibility: hidden; }
   }
 
   &__share {
@@ -265,13 +270,15 @@ $primary-light: #fff4ed;
   }
 }
 
-// ── Botão flutuante Ver mapa (mobile) ─────────────────────────────────────────
+// ── Botão Ver mapa / Ver lista (mobile) ───────────────────────────────────────
+// No FLUXO da página, ao fim da seção da cidade — onde ele já aparecia em produção:
+// era `position: fixed`, mas o transform do :host o prendia ao fim da página. Sem o
+// transform, fixed o faria flutuar sobre a lista e cobrir os links do rodapé
+// ("Preferências de cookies", "Termos de Uso"); flutuar fica para uma decisão própria.
 .city-fab-mapa {
-  position: fixed;
-  bottom: 1.25rem;
-  left: 50%;
-  transform: translateX(-50%);
-  display: inline-flex;
+  display: flex;
+  width: fit-content;
+  margin: 1rem auto 0;
   align-items: center;
   gap: 0.4rem;
   padding: 0.625rem 1.375rem;
@@ -283,10 +290,9 @@ $primary-light: #fff4ed;
   font-weight: 700;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
   cursor: pointer;
-  z-index: 50;
   transition: background 0.15s, transform 0.12s;
 
-  &:hover { background: #111827; transform: translateX(-50%) translateY(-1px); }
+  &:hover { background: #111827; transform: translateY(-1px); }
 
   @media (min-width: 900px) { display: none; }
 }

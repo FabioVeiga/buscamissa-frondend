@@ -38,6 +38,23 @@ export enum PaginaMetrica {
   NaoEncontrado = 26,
 }
 
+/** Origem do clique em "Anuncie no BuscaMissa" (EntidadeId de TipoEntidade=Anuncio). */
+export enum OrigemAnuncie {
+  Rodape = 1,
+  Home = 2,
+  Cidade = 3,
+  Estado = 4,
+  Pagina = 5,
+  Formulario = 6,
+}
+
+/** Espelha TipoMetricaEnum (10..12) no backend. */
+export enum EventoAnuncio {
+  CliqueAnuncie = 10,
+  ImpressaoAnuncio = 11,
+  CliqueAnuncio = 12,
+}
+
 @Injectable({ providedIn: 'root' })
 export class MetricasService {
   private http = inject(HttpClient);
@@ -54,6 +71,21 @@ export class MetricasService {
       .subscribe({
         error: (err) => this.logger.logError(err, `metrica:${rota}`),
       });
+  }
+
+  // Sem dedupe de cliques (cada clique é uma intenção); a impressão de campanhas
+  // deve ser deduplicada por sessão por quem a chama.
+  registrarEventoAnuncio(evento: EventoAnuncio, entidadeId: number): void {
+    if (!this._isBrowser) return;
+    this.http
+      .post('v2/metricas/evento-anuncio', { evento, entidadeId })
+      .subscribe({
+        error: (err) => this.logger.logError(err, 'metrica:evento-anuncio'),
+      });
+  }
+
+  registrarCliqueAnuncie(origem: OrigemAnuncie): void {
+    this.registrarEventoAnuncio(EventoAnuncio.CliqueAnuncie, origem);
   }
 
   registrarVisualizacaoIgreja(igrejaId: number): void {

@@ -1,37 +1,72 @@
-<div>
-  <p-panel class="p-1 mt-4" *ngFor="let category of advertisementCategories" [header]="category.header">
-    <p-carousel
-      [value]="category.links"
-      [numVisible]="3"
-      [numScroll]="1"
-      [responsiveOptions]="responsiveOptions"
-      styleClass="custom-carousel"
-    >
-      <ng-template pTemplate="item" let-link>
-        <p-card [style]="{ width: '25rem', overflow: 'hidden' }">
-          <ng-template #header>
-            <img [alt]="link.title" class="w-full" [src]="link.image" loading="lazy" />
-          </ng-template>
+<div class="anuncie">
+  <section class="anuncie__hero">
+    <span class="anuncie__etiqueta">Pré-lançamento</span>
+    <h1>Anuncie no BuscaMissa</h1>
+    <p>
+      Divulgue sua marca, produto ou projeto para quem procura horários de missa em todo o Brasil,
+      com anúncios discretos e sem atrapalhar a busca.
+    </p>
+    <div class="anuncie__acoes">
+      <a routerLink="/solicitar" [queryParams]="{ tipo: 'anunciar' }" class="anuncie__btn anuncie__btn--primario" (click)="registrarCliqueAnunciar()">
+        Quero anunciar
+      </a>
+      <a [href]="instagramDirect" target="_blank" rel="noopener noreferrer" class="anuncie__btn">
+        Falar pelo Instagram
+      </a>
+    </div>
+  </section>
 
-          <div class="p-3 flex flex-col gap-2">
-            <!-- TÍTULO -->
-            <h3 class="text-lg font-semibold m-0">{{ link.title }}</h3>
+  <section class="anuncie__bloco">
+    <h2>Por que anunciar aqui</h2>
+    <ul>
+      <li>Público que busca uma missa e está em momento de atenção.</li>
+      <li>Alcance estimado de cerca de 150 mil visualizações de página por mês (estimativa).</li>
+      <li>Alcance nacional: sua marca em todo o Brasil.</li>
+      <li>Relatório com visualizações e cliques da sua campanha.</li>
+    </ul>
+  </section>
 
-            <!-- DESCRIÇÃO -->
-            <p class="text-sm text-gray-700 m-0">{{ link.description }}</p>
+  <section class="anuncie__bloco">
+    <h2>Como o anúncio aparece</h2>
+    <div class="anuncie__exemplo" aria-label="Exemplo ilustrativo de anúncio">
+      <span class="anuncie__selo">Patrocinado</span>
+      <strong>Nome do seu anúncio</strong>
+      <span>Texto curto de apresentação e botão de chamada para ação.</span>
+    </div>
+    <p class="anuncie__nota">
+      Exemplo ilustrativo. Todo anúncio é rotulado, e a busca de missas segue 100% gratuita.
+    </p>
+  </section>
 
-            <!-- BOTÃO -->
-            <a
-              [href]="link.url"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="p-button p-button-sm p-button-primary w-full mt-2"
-            >
-              {{ link.label }}
-            </a>
-          </div>
-        </p-card>
-      </ng-template>
-    </p-carousel>
-  </p-panel>
+  <section class="anuncie__bloco">
+    <h2>Pacote</h2>
+    <div class="anuncie__pacotes">
+      @for (p of pacotes; track p.nome) {
+        <div class="anuncie__pacote">
+          <strong>{{ p.nome }}</strong>
+          <span>{{ p.descricao }}</span>
+        </div>
+      }
+    </div>
+    <p class="anuncie__nota">Valores sob consulta. Fale com a gente e receba uma proposta.</p>
+  </section>
+
+  <section class="anuncie__bloco">
+    <h2>Perguntas frequentes</h2>
+    @for (q of perguntas; track q.pergunta) {
+      <details class="anuncie__faq">
+        <summary>{{ q.pergunta }}</summary>
+        <p>{{ q.resposta }}</p>
+      </details>
+    }
+  </section>
+
+  <section class="anuncie__bloco anuncie__contato">
+    <h2>Vamos conversar?</h2>
+    <p>
+      Envie sua proposta pelo <a routerLink="/solicitar" [queryParams]="{ tipo: 'anunciar' }">formulário</a>
+      ou pelo <a [href]="instagramDirect" target="_blank" rel="noopener noreferrer">Direct do Instagram</a>
+      (<a [href]="instagramPerfil" target="_blank" rel="noopener noreferrer">ver perfil</a>).
+    </p>
+  </section>
 </div>

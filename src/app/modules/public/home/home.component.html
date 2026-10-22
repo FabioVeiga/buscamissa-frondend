@@ -216,6 +216,9 @@
     (favoriteClick)="onFavoriteClick($event)"
   />
 
+  <!-- ══ ANÚNCIO logo abaixo das próximas missas (home sem busca) ══ -->
+  <app-anuncio *ngIf="!resultsMode" posicao="home" />
+
   <!-- ══ ESTATÍSTICAS ══ -->
   <app-home-stats *ngIf="!resultsMode" [stats]="stats" />
 
@@ -304,10 +307,16 @@
         [userLng]="geoLng"
         (churchClick)="onResultCardClick($event)"
       />
+      @if (resultsMode && ($index === 2 || ($last && $count < 3))) {
+        <app-anuncio posicao="fim_resultados" />
+      }
     }
     <p-paginator [rows]="pageSize" [first]="(pageIndex - 1) * pageSize" [totalRecords]="totalRecordsFiltrado"
       [rowsPerPageOptions]="[5, 10, 20]" (onPageChange)="onPageChange($event)"></p-paginator>
   </div>
+
+  <!-- ══ CONVITE ANUNCIE ══ -->
+  <app-convite-anuncie *ngIf="resultsMode && churchInfo && churchInfo.length > 0" origem="home" />
 
   <!-- ══ INSTAGRAM ══ -->
   <div class="home-instagram" *ngIf="!resultsMode">

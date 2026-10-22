@@ -1,4 +1,6 @@
 import { ehSemanal, ocorreNoDia, ocorreNoFimDeSemana } from '../../../shared/utils/recorrencia-missa';
+import { AnuncioComponent } from "../../../shared/components/anuncio/anuncio.component";
+import { ConviteAnuncieComponent } from "../../../shared/components/convite-anuncie/convite-anuncie.component";
 import { Component, DestroyRef, inject, NgZone, PLATFORM_ID, ViewChild } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { finalize } from "rxjs/operators";
@@ -64,6 +66,8 @@ interface AddressData {
     HomeFavoritosComponent,
     HomeCidadesComponent,
     HomeMissasMapaComponent,
+    ConviteAnuncieComponent,
+    AnuncioComponent,
   ],
   providers: [MessageService, DatePipe],
   templateUrl: "./home.component.html",
