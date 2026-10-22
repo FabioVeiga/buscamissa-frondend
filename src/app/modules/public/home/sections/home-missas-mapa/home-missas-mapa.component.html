@@ -1,5 +1,5 @@
 <section id="proximas-section" class="missas-mapa">
-  <div class="missas-mapa__col-missas">
+  <div class="missas-mapa__col-missas" [class.missas-mapa__col-missas--vazia]="!isLoading && cards.length === 0">
     <div class="sec-header">
       <div class="flex items-center gap-2">
         <i class="pi pi-star-fill" style="color: #bc5d10;"></i>

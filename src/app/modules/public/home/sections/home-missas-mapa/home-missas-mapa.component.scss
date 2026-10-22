@@ -11,9 +11,14 @@
   // Reserva a altura típica de 2 linhas de cards (evita CLS quando carregam)
   &__col-missas { min-height: 360px; }
 
+  // Sem missas depois de carregar: a reserva anti-CLS não faz mais sentido e abria um
+  // vão grande antes da próxima seção (ex.: o anúncio da home).
+  &__col-missas--vazia { min-height: 0; }
+
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
     &__col-missas { min-height: 200px; }
+    &__col-missas--vazia { min-height: 0; }
   }
 }
 
