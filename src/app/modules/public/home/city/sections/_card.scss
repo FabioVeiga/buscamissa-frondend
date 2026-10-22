@@ -248,4 +248,38 @@
       &:hover { background: #e5e7eb; }
     }
   }
+
+  // Mobile (< 480px): o horário sobe para uma faixa própria no topo e foto + texto ficam em
+  // duas colunas, devolvendo largura ao corpo (antes ~177px, com o nome em 3 linhas).
+  // O skeleton usa as mesmas classes e acompanha o layout.
+  @media (max-width: 479.98px) {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-areas:
+      'time time'
+      'img  body';
+    column-gap: 0.875rem;
+    row-gap: 0.5rem;
+    padding: 0.875rem 1rem;
+
+    &__time-col {
+      grid-area: time;
+      flex-direction: row;
+      align-items: baseline;
+      gap: 0.5rem;
+      width: auto;
+      padding-top: 0;
+    }
+
+    &__hora { font-size: 1.5rem; }
+    &__dia { margin-top: 0; font-size: 0.75rem; }
+    &__countdown { margin-top: 0; margin-left: auto; align-self: center; width: auto; white-space: nowrap; }
+
+    &__img-wrap { grid-area: img; width: 5rem; height: 5rem; }
+    &__body { grid-area: body; }
+
+    // Dois botões lado a lado na largura do corpo (alvo de toque de 44px mantido).
+    &__actions { flex-wrap: nowrap; }
+    &__btn { flex: 1 1 0; padding: 0.425rem 0.5rem; white-space: nowrap; }
+  }
 }
