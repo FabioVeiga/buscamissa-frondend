@@ -38,6 +38,11 @@
                 "glob": "**/*",
                 "input": "public"
               },
+              {
+                "glob": "cookieconsent.umd.js",
+                "input": "node_modules/vanilla-cookieconsent/dist",
+                "output": "vendor"
+              },
               "src/favicon.ico",
               "src/assets",
               "src/staticwebapp.config.json"
