@@ -207,6 +207,15 @@ $primary-light: #fff4ed;
     }
   }
 
+  // Altura do mapa reservada desde o prerender: 28rem = min-height do .city-map-wrap
+  // (com o placeholder de 24rem o mapa ainda crescia ~56px ao chegar).
+  &__slot {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 28rem;
+  }
+
   app-city-map {
     flex: 1;
     min-height: 24rem;
