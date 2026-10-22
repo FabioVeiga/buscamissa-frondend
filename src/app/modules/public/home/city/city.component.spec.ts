@@ -48,7 +48,7 @@ describe('CityComponent — skeleton não pode substituir conteúdo já renderiz
   /** Cards de skeleton (o estado de carregamento). */
   const skeletons = () => fixture.nativeElement.querySelectorAll('.city-card--skeleton').length;
 
-  const montar = (resposta$: Observable<any>) => {
+  const montar = (resposta$: Observable<any>, plataforma: 'browser' | 'server' = 'browser') => {
     TestBed.resetTestingModule();
     TestBed.configureTestingModule({
       imports: [CityComponent],
@@ -57,7 +57,7 @@ describe('CityComponent — skeleton não pode substituir conteúdo já renderiz
         provideHttpClientTesting(),
         provideNoopAnimations(),
         provideRouter([]),
-        { provide: PLATFORM_ID, useValue: 'browser' },
+        { provide: PLATFORM_ID, useValue: plataforma },
         {
           provide: ActivatedRoute,
           useValue: {
@@ -134,6 +134,22 @@ describe('CityComponent — skeleton não pode substituir conteúdo já renderiz
 
     expect(botao()).withContext('botão presente com os dados').not.toBeNull();
     expect(botao()!.textContent).toContain('Ver mapa');
+  });
+
+  // ── A4. Altura do mapa reservada no prerender ─────────────────────────────
+  // O mapa é client-only (@if _isBrowser + @defer). Sem reserva no HTML do servidor
+  // a coluna nascia só com o CTA, e o mapa entrava na hidratação empurrando o CTA
+  // ~400px (CLS 0,017–0,042 na carga direta no desktop).
+  it('A4) o slot do mapa existe no servidor (prerender) e no browser', () => {
+    const slot = () => fixture.nativeElement.querySelector('.city-mapa .city-mapa__slot');
+
+    montar(of(resposta(['Catedral'])), 'server');
+    fixture.detectChanges();
+    expect(slot()).withContext('prerender').not.toBeNull();
+
+    montar(of(resposta(['Catedral'])));
+    fixture.detectChanges();
+    expect(slot()).withContext('browser').not.toBeNull();
   });
 
   // ── B. Conteúdo vindo do TransferState/cache ──────────────────────────────
