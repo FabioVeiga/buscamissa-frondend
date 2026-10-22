@@ -16,19 +16,17 @@
     </ng-template>
   </div>
 
-  <!-- Imagem -->
-  <a *ngIf="igreja.imagemUrl && !imagemQuebrada"
-    [routerLink]="linkParoquia" class="city-card__img-wrap" (click)="churchClick.emit()">
-    <img [src]="igreja.imagemUrl" [alt]="igreja.nome"
+  <!-- Imagem ou fallback num nó SÓ, alternado por binding (não por *ngIf): o *ngFor
+       hidrata por posição, e a ordem "Próxima missa" do prerender (hora do build)
+       difere da do browser. Com dois *ngIf, o ramo do servidor ficava no DOM até a
+       app estabilizar — card com a foto de OUTRA igreja + placeholder lado a lado. -->
+  <a [routerLink]="linkParoquia" class="city-card__img-wrap" (click)="churchClick.emit()">
+    <img [attr.src]="temFoto ? igreja.imagemUrl : null" [alt]="igreja.nome"
+      [hidden]="!temFoto"
       (error)="imagemQuebrada = true"
       loading="lazy"
       class="city-card__img">
-  </a>
-
-  <!-- Fallback quando não há imagem ou ela falhou -->
-  <a *ngIf="!igreja.imagemUrl || imagemQuebrada"
-    [routerLink]="linkParoquia" class="city-card__img-wrap" (click)="churchClick.emit()">
-    <app-church-placeholder class="city-card__img" [showLabel]="false" />
+    <app-church-placeholder class="city-card__img" [hidden]="temFoto" [showLabel]="false" />
   </a>
 
   <!-- Corpo do card -->

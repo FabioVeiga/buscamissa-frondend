@@ -106,6 +106,10 @@
     display: block;
   }
 
+  // [hidden] alterna foto/fallback no mesmo nó; o display:block acima venceria o
+  // [hidden] do navegador.
+  &__img[hidden] { display: none; }
+
   // Corpo
   &__body {
     flex: 1;
