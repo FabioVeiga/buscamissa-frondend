@@ -1,7 +1,7 @@
 // Campo de busca projetado no slot [hero-busca].
 @use '../../../shared/styles/hero-busca' as *;
 
-$laranja: #bc5d10;
+$laranja: #ad540c;
 $laranja-vivo: #e2761b;
 $creme: #fdf6f0;
 $borda: #e5e7eb;
@@ -177,7 +177,7 @@ $muted: #6b7280;
   flex-shrink: 0;
 
   // Cores por estado
-  &--sp      { background: #fff4ed; color: #bc5d10; }
+  &--sp      { background: #fff4ed; color: #ad540c; }
   &--mg      { background: #d1fae5; color: #065f46; }
   &--rj      { background: #fee2e2; color: #991b1b; }
   &--pr      { background: #e0e7ff; color: #3730a3; }
