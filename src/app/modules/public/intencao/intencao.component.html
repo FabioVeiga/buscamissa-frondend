@@ -56,7 +56,14 @@
       </header>
       <ul class="grid" role="list">
         @for (c of cidades; track c.cidadeSlug) {
-          <li><a [routerLink]="['/missa-' + dia, uf, c.cidadeSlug]">{{ c.cidade }}</a></li>
+          <!-- Aponta para a página de CIDADE (prerenderizada, canonical próprio) com o
+               filtro do dia — não para a folha /missa-{dia}/{uf}/{cidade}, que é CSR:
+               no HTML inicial ela é a casca da home (200, sem canonical), e cada link
+               daqui virava uma URL "Duplicate, Google chose different canonical" no
+               GSC (995 de 1.000 da amostra de 14/10/2026). A folha continua no ar
+               para quem já tem o link. scripts/verificar-links-dia-cidade.mjs trava
+               a volta do formato antigo no HTML prerenderizado. -->
+          <li><a [routerLink]="['/missas', uf, c.cidadeSlug]" [queryParams]="{ dia: diaCidade }">{{ c.cidade }}</a></li>
         }
       </ul>
 
@@ -88,12 +95,14 @@
         }
       </ul>
 
-      <!-- Linkagem interna: missa em outros dias na mesma cidade (links HTML puros). -->
+      <!-- Linkagem interna: missa em outros dias na mesma cidade (links HTML puros).
+           Mesmo motivo do nível UF: aponta para a cidade filtrada, não para outra folha
+           CSR — e aqui sem checar se o dia tem missa, o que gerava URLs vazias. -->
       <nav class="outros-dias" aria-label="Missa em outros dias">
         <h2>Missa em {{ cidadeNome }} em outros dias</h2>
         <ul role="list">
           @for (d of outrosDias; track d.slug) {
-            <li><a [routerLink]="['/missa-' + d.slug, uf, cidadeSlug]">Missa de {{ d.nome }} em {{ cidadeNome }}</a></li>
+            <li><a [routerLink]="['/missas', uf, cidadeSlug]" [queryParams]="{ dia: filtroCidade(d.slug) }">Missa de {{ d.nome }} em {{ cidadeNome }}</a></li>
           }
         </ul>
       </nav>
