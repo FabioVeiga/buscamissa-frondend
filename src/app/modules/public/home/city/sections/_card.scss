@@ -245,8 +245,13 @@
     .pi { font-size: 0.7rem; }
   }
 
+  // Mesma altura para todos os níveis de confiança: "Não validado" sai em pílula
+  // (~19px) e "Confirmado" em texto (~17px); a troca de card na reordenação mudava 2px.
   &__badge {
     margin-top: 0.25rem;
+    display: flex;
+    align-items: center;
+    min-height: 1.375rem;
   }
 
   &__dia-missa {
