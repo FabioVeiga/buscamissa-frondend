@@ -117,6 +117,10 @@ $primary-light: #fff4ed;
   &__titulo-icon {
     color: $primary;
     font-size: 1.25rem;
+    // Mesmo motivo do ícone do Compartilhar (abaixo): largura do glifo real desde o
+    // 1º quadro, senão o título ganha uma linha quando a primeicons chega.
+    width: 1em;
+    flex-shrink: 0;
   }
 
   &__sub {
