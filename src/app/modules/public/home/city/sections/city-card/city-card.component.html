@@ -32,7 +32,7 @@
   <!-- Corpo do card -->
   <div class="city-card__body">
     <div class="city-card__topo">
-      <a [routerLink]="linkParoquia" class="city-card__nome" (click)="churchClick.emit()">
+      <a [routerLink]="linkParoquia" class="city-card__nome" [title]="igreja.nome" (click)="churchClick.emit()">
         {{ igreja.nome }}
       </a>
       <div class="city-card__topo-actions">
