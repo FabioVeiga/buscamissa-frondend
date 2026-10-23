@@ -18,7 +18,7 @@
   font-size: 2.75rem;
   line-height: 1;
   font-weight: 800;
-  color: #bc5d10;
+  color: #ad540c;
 
   @media (min-width: 640px) {
     font-size: 3.25rem;
@@ -34,11 +34,11 @@
 }
 
 .scoreboard-countdown {
-  color: #bc5d10;
+  color: #ad540c;
 
   ::ng-deep .countdown-chip {
     font-size: 1rem;
     font-weight: 700;
-    color: #bc5d10;
+    color: #ad540c;
   }
 }

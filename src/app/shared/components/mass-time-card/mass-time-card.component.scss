@@ -47,7 +47,7 @@
   &__time {
     font-size: 1.5rem;
     font-weight: 700;
-    color: #bc5d10;
+    color: #ad540c;
     line-height: 1;
     flex-shrink: 0;
   }
@@ -108,8 +108,8 @@
 
     &--navigate {
       flex: 1;
-      color: #bc5d10;
-      border-color: #bc5d10;
+      color: #ad540c;
+      border-color: #ad540c;
 
       &:hover {
         background: #fcf7f3;
@@ -126,15 +126,15 @@
       }
 
       &:hover .pi {
-        color: #bc5d10;
+        color: #ad540c;
       }
 
       &-ativo {
-        border-color: #bc5d10;
+        border-color: #ad540c;
         background: #fcf7f3;
 
         .pi {
-          color: #bc5d10;
+          color: #ad540c;
         }
       }
     }

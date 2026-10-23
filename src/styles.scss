@@ -15,11 +15,11 @@
       layout; ainda assim zeramos a animação de entrada para não contar como shift
       (Lighthouse/Clarity) e alinhamos as cores à marca. */
 #cc-main {
-  --cc-btn-primary-bg: #bc5d10;
-  --cc-btn-primary-border-color: #bc5d10;
+  --cc-btn-primary-bg: #ad540c;
+  --cc-btn-primary-border-color: #ad540c;
   --cc-btn-primary-hover-bg: #9a4a0b;
   --cc-btn-primary-hover-border-color: #9a4a0b;
-  --cc-toggle-on-bg: #bc5d10;
+  --cc-toggle-on-bg: #ad540c;
   /* Fonte do sistema de propósito: o banner pinta junto com o conteúdo, antes da
      Poppins chegar; com ela, a troca de fonte refluía o texto e o banner ganhava
      uma linha (shift de ~0,12 em 375px). Sem fonte web, não há troca. */
@@ -55,7 +55,7 @@ button:focus-visible,
 .city-card__favoritar:focus-visible,
 .city-card__btn:focus-visible,
 .city-card__nome:focus-visible {
-  outline: 2px solid #bc5d10;
+  outline: 2px solid #ad540c;
   outline-offset: 2px;
   border-radius: 4px;
 }
