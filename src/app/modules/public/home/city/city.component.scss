@@ -145,6 +145,11 @@ $primary-light: #fff4ed;
     transition: background 0.15s, border-color 0.15s;
     flex-shrink: 0;
 
+    // Largura do ícone fixa: enquanto a primeicons carrega, o glifo de fallback mede
+    // ~10px (o real, 14px). O botão 9px mais estreito cabia ao lado do título em 320px
+    // e descia de linha quando a fonte chegava (CLS ~0,2 em Rio/SP).
+    .pi { width: 1em; flex-shrink: 0; }
+
     &:hover { background: #e5e7eb; border-color: #d1d5db; }
   }
 }
