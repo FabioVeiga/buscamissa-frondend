@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { inject, Injectable, PLATFORM_ID } from '@angular/core';
+import { inject, Injectable, NgZone, PLATFORM_ID } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import type * as CookieConsentApi from 'vanilla-cookieconsent';
 import { LoggerService } from './logger.service';
@@ -25,6 +25,7 @@ export class ConsentService {
   private readonly _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
   private readonly _http = inject(HttpClient);
   private readonly _logger = inject(LoggerService);
+  private readonly _zone = inject(NgZone);
   private _cc: Cc | null = null;
   private _iniciado = false;
 
@@ -33,7 +34,7 @@ export class ConsentService {
     if (!this._isBrowser || this._iniciado) return;
     this._iniciado = true;
 
-    const carregar = () => void this._carregar();
+    const carregar = () => void this._aguardarPoppins().then(() => this._carregar());
     if ('requestIdleCallback' in window) {
       requestIdleCallback(carregar, { timeout: 2500 });
     } else {
@@ -48,6 +49,35 @@ export class ConsentService {
     } else {
       void this._carregar().then(() => this._cc?.showPreferences());
     }
+  }
+
+  /**
+   * O banner é grande e fixo no rodapé: se a Poppins (carregada fora do caminho
+   * crítico) chega DEPOIS dele, o texto reflui no fallback→Poppins, o banner ganha
+   * uma linha e o topo sobe — layout shift de ~0,12 medido em 375px. Espera os pesos
+   * que o banner usa (400/600 do vanilla-cookieconsent, 700 do <strong>) — o 400 do
+   * corpo da página chega antes e não basta. O teto evita segurar o banner se a
+   * fonte nunca vier (Google Fonts bloqueado, rede ruim).
+   */
+  private async _aguardarPoppins(limiteMs = 3000): Promise<void> {
+    const fonts = document.fonts;
+    if (!fonts) return;
+    const temPoppins = () => [...fonts].some((f) => f.family.replace(/["']/g, '') === 'Poppins');
+    const carregar = async () => {
+      // As @font-face só existem depois que o CSS do Google Fonts aplica (preload →
+      // stylesheet no onload); até lá, fonts.load() resolveria vazio na hora.
+      while (!temPoppins()) {
+        await new Promise((r) => fonts.addEventListener('loadingdone', r, { once: true }));
+      }
+      await Promise.all(['400', '600', '700'].map((peso) => fonts.load(`${peso} 1em Poppins`)));
+    };
+    let teto: ReturnType<typeof setTimeout> | undefined;
+    // Fora da zona: um timer pendente na zona segura a estabilidade da app (NG0506).
+    const limite = new Promise<void>((r) => {
+      teto = this._zone.runOutsideAngular(() => setTimeout(r, limiteMs));
+    });
+    await Promise.race([carregar(), limite]);
+    clearTimeout(teto);
   }
 
   private async _carregar(): Promise<void> {

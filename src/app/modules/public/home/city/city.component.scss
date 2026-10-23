@@ -73,10 +73,14 @@ $primary-light: #fff4ed;
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
+  // Em 320px título + "Compartilhar" não cabem lado a lado: o botão desce de linha
+  // em vez de estourar a página. O título reserva 12rem antes de ceder a linha.
+  flex-wrap: wrap;
   gap: 1rem;
   margin-bottom: 1rem;
 
   &__left {
+    flex: 1 1 12rem;
     display: flex;
     align-items: flex-start;
     gap: 0.75rem;
@@ -201,6 +205,15 @@ $primary-light: #fff4ed;
       align-self: flex-start;
       max-height: calc(100vh - 5rem);
     }
+  }
+
+  // Altura do mapa reservada desde o prerender: 28rem = min-height do .city-map-wrap
+  // (com o placeholder de 24rem o mapa ainda crescia ~56px ao chegar).
+  &__slot {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 28rem;
   }
 
   app-city-map {
