@@ -20,7 +20,10 @@
   --cc-btn-primary-hover-bg: #9a4a0b;
   --cc-btn-primary-hover-border-color: #9a4a0b;
   --cc-toggle-on-bg: #ad540c;
-  --cc-font-family: 'Poppins', 'Poppins-fallback', sans-serif;
+  /* Fonte do sistema de propósito: o banner pinta junto com o conteúdo, antes da
+     Poppins chegar; com ela, a troca de fonte refluía o texto e o banner ganhava
+     uma linha (shift de ~0,12 em 375px). Sem fonte web, não há troca. */
+  --cc-font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
 }
 #cc-main .cm,
 #cc-main .pm,
