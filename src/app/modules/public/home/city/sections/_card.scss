@@ -12,6 +12,8 @@
   transition: box-shadow 0.18s, border-color 0.18s, transform 0.12s;
   cursor: default;
   align-items: flex-start;
+  // Âncora do selo "Melhor opção" (absoluto, fora do fluxo).
+  position: relative;
 
   &:hover {
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
@@ -138,7 +140,13 @@
     margin-left: auto;
   }
 
+  // Altura do card constante, qualquer que seja a igreja: a ordem "Próxima missa" do
+  // prerender (hora do build) é refeita no navegador e o *ngFor troca o conteúdo dos
+  // cards. Com alturas diferentes, a lista inteira deslocava (CLS até 0,54 conforme a
+  // hora). O nome ocupa sempre N linhas (cortado com "…" além disso; o texto completo
+  // continua no DOM para leitores de tela e na página da paróquia).
   &__nome {
+    --linhas-nome: 2;
     flex: 1 1 6rem;
     font-size: 0.9375rem;
     font-weight: 700;
@@ -146,10 +154,26 @@
     text-decoration: none;
     line-height: 1.3;
     transition: color 0.15s;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: var(--linhas-nome);
+    line-clamp: var(--linhas-nome);
+    overflow: hidden;
+    min-height: calc(var(--linhas-nome) * 1.3em);
     &:hover { color: $primary; }
+
+    // Em 320px a coluna do nome tem ~141px: 21% dos nomes passam de 2 linhas.
+    @media (max-width: 359.98px) { --linhas-nome: 3; }
   }
 
+  // Fora do fluxo, na borda superior do card: no fluxo ele espremia o nome (375px+)
+  // ou ganhava linha própria (320/360px), e só o 1º card o tem — trocar de card na
+  // reordenação mudava a altura de dois cards. A foto (70px) é estreita demais para ele.
   &__badge-destaque {
+    position: absolute;
+    top: -0.65rem;
+    left: 1rem;
+    z-index: 1;
     font-size: 0.6875rem;
     font-weight: 700;
     color: #92400e;
@@ -188,17 +212,26 @@
     }
   }
 
+  // Bairro + cidade/UF reservam 2 linhas (a 2ª linha mudava a altura do card em
+  // 6–23% das igrejas conforme a largura); corte só além de 2 linhas (~0,5% em 320px).
   &__meta {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     flex-wrap: wrap;
     margin-top: 0.1rem;
+    min-height: calc(2 * 1.5 * 0.8125rem);
   }
 
   &__bairro {
     font-size: 0.8125rem;
+    line-height: 1.5;
     color: #6b7280;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
   }
 
   &__distancia {
