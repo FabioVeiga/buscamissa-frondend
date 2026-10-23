@@ -47,8 +47,9 @@ export class AppComponent implements OnInit {
         });
       }
       // A11y: move o foco para o <main> a cada navegação SPA. Só no browser
-      // (o DOM do servidor não tem foco).
-      if (this._isBrowser) {
+      // (o DOM do servidor não tem foco). Não tira o foco do banner de cookies:
+      // ele abre antes da hidratação (public/consentimento.js) e é um diálogo modal.
+      if (this._isBrowser && !document.activeElement?.closest('#cc-main')) {
         document.getElementById('conteudo')?.focus({ preventScroll: true });
       }
     });
