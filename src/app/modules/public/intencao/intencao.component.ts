@@ -10,6 +10,7 @@ import { SeoService } from '../../../core/services/seo.service';
 import { MetricasService, PaginaMetrica } from '../../../core/services/metricas.service';
 import { DIAS_INTENCAO } from '../../../core/constants/dias-intencao';
 import { paroquias as rotuloParoquias } from '../../../shared/utils/plural.utils';
+import { DIAS } from '../home/city/city.constants';
 
 const SITE = 'https://buscamissa.com.br';
 
@@ -24,6 +25,17 @@ const ROTULO: Record<string, string> = {
 };
 
 type Nivel = 'nacional' | 'uf' | 'cidade';
+
+/**
+ * Slug do dia da intenção (`sexta-feira`) → slug do filtro `?dia=` da página de
+ * cidade (`sexta`, ver city.constants DIAS). Os dois vocabulários são diferentes, e
+ * o CityComponent ignora em silêncio um `?dia=` que não reconhece — o link levaria
+ * à cidade SEM filtro. Retorna null para dia desconhecido (o link sai sem `?dia=`).
+ */
+export function diaFiltroCidade(diaIntencao: string): string | null {
+  const curto = diaIntencao.replace(/-feira$/, '');
+  return DIAS.find((d) => d.slug === curto)?.slug ?? null;
+}
 
 /**
  * Árvore de INTENÇÃO (`/missa-{dia}[/:uf[/:cidade]]`) — Fase 3 SEO. Um componente,
@@ -56,6 +68,16 @@ export class IntencaoComponent implements OnInit {
 
   get rotulo(): string {
     return ROTULO[this.dia] ?? this.dia;
+  }
+
+  /** `?dia=` dos links de cidade do nível UF (ver diaFiltroCidade). */
+  get diaCidade(): string | null {
+    return diaFiltroCidade(this.dia);
+  }
+
+  /** Ponte para o template (ele não alcança a função importada). */
+  filtroCidade(dia: string): string | null {
+    return diaFiltroCidade(dia);
   }
 
   /** Demais dias (para linkagem "outros dias" na mesma cidade). */
@@ -184,7 +206,10 @@ export class IntencaoComponent implements OnInit {
             this.aplicarSeo(estado.seo);
             this.jsonLdBreadcrumb();
             this.jsonLdItemList(
-              this.cidades.map((c) => ({ nome: c.cidade, url: `${SITE}/missa-${this.dia}/${this.uf}/${c.cidadeSlug}` })),
+              // Mesmo destino dos <a> do nível UF, na forma CANÔNICA (sem ?dia=): o
+              // ItemList também é rota de descoberta, e com a folha /missa-{dia}/{uf}/{cidade}
+              // aqui o crawler seguia achando as URLs-casca mesmo sem o link no HTML.
+              this.cidades.map((c) => ({ nome: c.cidade, url: `${SITE}/missas/${this.uf}/${c.cidadeSlug}` })),
               `Cidades com missa de ${this.rotulo} em ${this.estadoNome}`,
             );
           }
