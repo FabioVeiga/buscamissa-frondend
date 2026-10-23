@@ -128,3 +128,13 @@ button:focus-visible,
   }
   
 }
+/* iOS Safari dá zoom automático ao focar campo com fonte < 16px e a página fica
+   maior que a tela. Em telas de toque, todo campo editável usa no mínimo 16px. */
+@media (hover: none) and (pointer: coarse) {
+  input,
+  select,
+  textarea,
+  .p-inputtext {
+    font-size: max(16px, 1em) !important;
+  }
+}
