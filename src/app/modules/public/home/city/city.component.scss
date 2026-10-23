@@ -40,6 +40,10 @@ $primary-light: #fff4ed;
   font-size: 0.8125rem;
   font-weight: 600;
 
+  // Ícone de início com a largura do glifo real desde o 1º quadro (fallback da
+  // primeicons: 8,9px → 12,3px), senão o breadcrumb inteiro desliza.
+  .pi { width: 1em; flex-shrink: 0; }
+
   &__item {
     color: #b45309;
     text-decoration: none;
