@@ -23,7 +23,7 @@
     <link rel="preconnect" href="https://plataformacatolicaprod.blob.core.windows.net" />
 
     <!-- LGPD: Google Consent Mode com tudo negado por padrão.
-         O ConsentService (vanilla-cookieconsent) atualiza analytics_storage para "granted"
+         O banner (public/consentimento.js, vanilla-cookieconsent) atualiza analytics_storage para "granted"
          quando o usuário consente; até lá o GA4 opera sem cookies (pings anônimos do
          Consent Mode). Quem já consentiu (cookie bm_consent) começa com "granted" para
          não perder a primeira página vista. -->
@@ -47,6 +47,10 @@
       gtag('js', new Date());
       gtag('config', 'G-CGY94P6KSN');
     </script>
+    <!-- Banner de cookies fora do Angular (public/consentimento.js): aberto pelo
+         ConsentService ele só pintava após a hidratação e virava o LCP tardio. -->
+    <link rel="preload" href="/vendor/cookieconsent.umd.js" as="script" />
+    <script async src="/consentimento.js"></script>
     <!-- Perf: o gtag.js (~163 KB) sai do caminho crítico — carrega no
          requestIdleCallback (ou no 1º gesto do usuário). Os comandos gtag() acima
          ficam na fila no dataLayer e são processados quando o script chega, então
@@ -74,7 +78,7 @@
     </script>
 
     <!-- Microsoft Clarity — só carrega com consentimento da categoria "analytics":
-         o ConsentService chama window.__bmIniciarClarity() ao consentir; quem já
+         o banner (public/consentimento.js) chama window.__bmIniciarClarity() ao consentir; quem já
          consentiu antes (cookie bm_consent) carrega no idle. Sem consentimento, não carrega. -->
     <script type="text/javascript">
       (function () {
