@@ -19,8 +19,11 @@ export class DetailsHeaderComponent {
   @Input() isFavorita = false;
   /** Selo "Responsável Verificado" (status público vindo do ResponsavelService). */
   @Input() verificada = false;
+  /** Link `wa.me` com a mensagem pronta (horários + link com UTM). Vazio = sem botão. */
+  @Input() whatsappUrl = '';
 
   @Output() compartilharClick = new EventEmitter<void>();
+  @Output() whatsappClick = new EventEmitter<void>();
   @Output() favoritarClick = new EventEmitter<void>();
   @Output() direcoesClick = new EventEmitter<void>();
 

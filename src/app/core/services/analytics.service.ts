@@ -4,6 +4,11 @@ import { filter } from 'rxjs/operators';
 
 declare function gtag(...args: unknown[]): void;
 
+/** Canal do compartilhamento (parâmetro `method` do evento `share` do GA4). */
+export type ShareMethod = 'native' | 'copy_link' | 'whatsapp';
+/** O que foi compartilhado (parâmetro `content_type` do evento `share` do GA4). */
+export type ShareContentType = 'igreja' | 'cidade';
+
 @Injectable({ providedIn: 'root' })
 export class AnalyticsService {
 
@@ -67,6 +72,24 @@ export class AnalyticsService {
   /** Usuário salvou uma paróquia favorita */
   favoriteParishSaved(churchName: string): void {
     this._send('favorite_parish_saved', { church_name: churchName });
+  }
+
+  /**
+   * Usuário compartilhou uma página — evento recomendado `share` do GA4.
+   * `itemId` é o slug do conteúdo (igreja: slug da paróquia; cidade: `uf/cidade`).
+   * Em cidade não há igreja: `churchName` vazio fica fora do evento.
+   */
+  share(
+    method: ShareMethod,
+    churchName: string,
+    cidade: string,
+    uf: string,
+    itemId: string,
+    contentType: ShareContentType = 'igreja',
+  ): void {
+    const params: Record<string, string> = { method, content_type: contentType, item_id: itemId, cidade, uf };
+    if (churchName) params['church_name'] = churchName;
+    this._send('share', params);
   }
 
   private _send(eventName: string, params: Record<string, string> = {}): void {
