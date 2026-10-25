@@ -111,7 +111,7 @@ describe('SeoService — og:image', () => {
     expect(prop('og:image')).toBe(OG_IMAGE_PADRAO.url);
     expect(twitterImage()).toBe(OG_IMAGE_PADRAO.url);
     expect(prop('og:image:width')).toBe('1200');
-    expect(prop('og:image:height')).toBe(OG_IMAGE_PADRAO.height);
+    expect(prop('og:image:height')).toBe('630');
     expect(prop('og:image:alt')).toBe(OG_IMAGE_PADRAO.alt);
   });
 

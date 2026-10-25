@@ -31,14 +31,14 @@ export interface SeoData {
 
 /**
  * Imagem de compartilhamento padrão, usada quando a rota não informa a sua.
- * Dimensões reais do arquivo em src/assets/images/og-image.jpg (1200×364) —
+ * Dimensões reais do arquivo em src/assets/images/og-image.jpg (1200×630, recorte da foto da home) —
  * se o arquivo for trocado, atualize aqui e no src/index.html.
  */
 export const OG_IMAGE_PADRAO = {
   url: 'https://buscamissa.com.br/assets/images/og-image.jpg',
   width: '1200',
-  height: '364',
-  alt: 'BuscaMissa — encontre horários de missa perto de você',
+  height: '630',
+  alt: 'Interior de igreja católica com altar e bancos — BuscaMissa',
 } as const;
 
 @Injectable({ providedIn: 'root' })
