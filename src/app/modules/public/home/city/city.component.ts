@@ -464,9 +464,12 @@ export class CityComponent implements OnInit, OnDestroy {
   compartilhar(): void {
     if (!this._isBrowser) return;
     const title = `Missas em ${this.cidadeNome}/${this.uf.toUpperCase()} | BuscaMissa`;
+    const itemId = `${this.uf.toLowerCase()}/${this.cidade}`;
     if (navigator.share) {
+      this._analytics.share('native', '', this.cidadeNome, this.uf.toUpperCase(), itemId, 'cidade');
       navigator.share({ title, url: window.location.href }).catch(() => {});
     } else {
+      this._analytics.share('copy_link', '', this.cidadeNome, this.uf.toUpperCase(), itemId, 'cidade');
       navigator.clipboard?.writeText(window.location.href);
     }
   }
