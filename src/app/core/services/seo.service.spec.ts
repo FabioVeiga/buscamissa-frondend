@@ -1,7 +1,7 @@
 import { TestBed } from '@angular/core/testing';
 import { DOCUMENT } from '@angular/common';
 
-import { SeoService } from './seo.service';
+import { OG_IMAGE_PADRAO, SeoService } from './seo.service';
 
 /**
  * Contrato de canonical/robots do SeoService.
@@ -73,5 +73,65 @@ describe('SeoService — canonical e robots', () => {
 
     seo.update({ title: 't', noindex: true, seguirLinks: true });
     expect(robots()).toBe('noindex, follow');
+  });
+});
+
+/**
+ * Contrato de og:image: toda página termina com uma imagem de compartilhamento
+ * ABSOLUTA. Antes, a rota sem imagem própria removia a tag e o HTML prerenderizado
+ * de home/cidade/intenção saía sem og:image — prévia sem imagem no WhatsApp.
+ */
+describe('SeoService — og:image', () => {
+  let seo: SeoService;
+  let doc: Document;
+
+  const prop = (p: string) => doc.querySelector(`meta[property="${p}"]`)?.getAttribute('content') ?? null;
+  const twitterImage = () => doc.querySelector('meta[name="twitter:image"]')?.getAttribute('content') ?? null;
+
+  const limparHead = () => {
+    doc.querySelectorAll('meta[property^="og:image"], meta[name="twitter:image"]').forEach((el) => el.remove());
+  };
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+    seo = TestBed.inject(SeoService);
+    doc = TestBed.inject(DOCUMENT);
+    limparHead();
+  });
+
+  afterEach(limparHead);
+
+  it('a imagem padrão é uma URL absoluta', () => {
+    expect(OG_IMAGE_PADRAO.url).toMatch(/^https:\/\//);
+  });
+
+  it('sem image: aplica a imagem padrão absoluta com dimensões e alt', () => {
+    seo.update({ title: 't' });
+
+    expect(prop('og:image')).toBe(OG_IMAGE_PADRAO.url);
+    expect(twitterImage()).toBe(OG_IMAGE_PADRAO.url);
+    expect(prop('og:image:width')).toBe('1200');
+    expect(prop('og:image:height')).toBe('630');
+    expect(prop('og:image:alt')).toBe(OG_IMAGE_PADRAO.alt);
+  });
+
+  it('com image: usa a da rota, alt = título e não declara as dimensões da padrão', () => {
+    seo.update({ title: 'Paróquia X', image: 'https://cdn.test/igreja.jpg' });
+
+    expect(prop('og:image')).toBe('https://cdn.test/igreja.jpg');
+    expect(twitterImage()).toBe('https://cdn.test/igreja.jpg');
+    expect(prop('og:image:alt')).toBe('Paróquia X');
+    expect(prop('og:image:width')).toBeNull();
+    expect(prop('og:image:height')).toBeNull();
+  });
+
+  it('navegação SPA: a foto da paróquia anterior não vaza para a rota seguinte', () => {
+    seo.update({ title: 'Paróquia X', image: 'https://cdn.test/igreja.jpg' });
+
+    seo.update({ title: 'Missas em São Paulo' });
+
+    expect(prop('og:image')).toBe(OG_IMAGE_PADRAO.url);
+    expect(twitterImage()).toBe(OG_IMAGE_PADRAO.url);
+    expect(prop('og:image:width')).toBe('1200');
   });
 });
