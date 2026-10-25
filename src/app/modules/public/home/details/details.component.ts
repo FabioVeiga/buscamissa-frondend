@@ -17,6 +17,7 @@ import { Mass } from "../../church/models/church.model";
 import { getNextOccurrenceMinutes } from "../../../../shared/utils/mass-time.utils";
 import { agruparSessoesPorDiasConsecutivos, SessaoAgrupada } from "../../../../shared/utils/sessao-horario.utils";
 import { AnalyticsService, ShareMethod } from "../../../../core/services/analytics.service";
+import { linkWhatsappIgreja } from "../../../../shared/utils/compartilhar-whatsapp.utils";
 import { ClarityService } from "../../../../core/services/clarity.service";
 import { RedesSociaisService, TipoRedeSocial } from "../../../../core/services/redes-sociais.service";
 import { MetricasService } from "../../../../core/services/metricas.service";
@@ -513,6 +514,19 @@ export class DetailsComponent implements OnInit {
       navigator.clipboard?.writeText(url);
       this._toast.add({ severity: "success", summary: "Link copiado!", detail: "Cole onde quiser para compartilhar." });
     }
+  }
+
+  /** Link do botão "Enviar no WhatsApp": horários resumidos + shareUrl com UTM (a canonical segue sem UTM). */
+  get whatsappUrl(): string {
+    const ig = this.churchInfo;
+    if (!ig?.nome) return '';
+    return linkWhatsappIgreja(ig.nome, ig.missas ?? [], this.proximaMissa, this.shareUrl);
+  }
+
+  compartilharWhatsapp(): void {
+    this.trackShare('whatsapp');
+    this.trackObjetivoAlcancado('compartilhar_whatsapp');
+    if (this.churchInfo?.id) this._metricas.registrarCompartilhamento(this.churchInfo.id);
   }
 
   /** Evento `share` do GA4 para a paróquia (item_id = slug da igreja). */

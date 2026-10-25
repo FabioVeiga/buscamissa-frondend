@@ -56,6 +56,10 @@
       <button (click)="compartilharClick.emit()" class="action-btn">
         <i class="pi pi-share-alt"></i> Compartilhar
       </button>
+      <a *ngIf="whatsappUrl" [href]="whatsappUrl" target="_blank" rel="noopener"
+         class="action-btn action-btn--whatsapp" (click)="whatsappClick.emit()">
+        <i class="pi pi-whatsapp"></i> Enviar no WhatsApp
+      </a>
       <button (click)="favoritarClick.emit()" class="action-btn action-btn--fav"
               [class.action-btn--fav-ativo]="isFavorita"
               [attr.aria-pressed]="isFavorita"
