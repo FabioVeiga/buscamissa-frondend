@@ -49,12 +49,11 @@ import {
   ARQUIVO_PROTECAO,
   ARQUIVO_REGISTRO,
   avaliarJanelas,
-  criterioAtivo,
+  gravarRegistroCriterio,
   lerDemanda,
   lerJanelaDemanda,
   lerProtecao,
   paroquiasDoDisco,
-  registroDaSelecao,
   VARIAVEL_CRITERIO,
 } from './lib/selecionar-paroquias-prerender.mjs';
 
@@ -184,30 +183,6 @@ async function main() {
       console.warn('[sitemap-estatico] cache .prerender-cache/paroquias.json ausente — filtro de cobertura de paróquias NÃO aplicado.');
     } else {
       console.log(`[sitemap-estatico] filtro de cobertura: ${removidas} URL(s) de paróquia sem HTML removida(s), ${total} restantes.`);
-      const criterio = criterioAtivo();
-      const demanda = lerDemanda();
-      console.log(
-        criterio === 'v8'
-          ? `[prerender-paroquias] critério: V8 (${ARQUIVO_PROTECAO} + ${ARQUIVO_DEMANDA}, teto dinâmico).`
-          : criterio === 'demanda'
-            ? `[prerender-paroquias] critério do resto: DEMANDA (${ARQUIVO_DEMANDA}, ${demanda.length} paróquias).`
-            : `[prerender-paroquias] critério do resto: QUALIDADE (sem ${ARQUIVO_DEMANDA} ou ${VARIAVEL_CRITERIO}=qualidade).`,
-      );
-      // O postbuild (verificar-prerender.mjs) recalcula e compara com este registro.
-      writeFileSync(join(ROOT, ARQUIVO_REGISTRO), JSON.stringify(registroDaSelecao(criterio, paroquiasDoDisco())));
-      const janelaDemanda = lerJanelaDemanda();
-      const protecao = criterio === 'v8' ? lerProtecao() : null;
-      if (janelaDemanda) console.log(`[prerender-paroquias] janela da demanda: ${janelaDemanda.inicio} a ${janelaDemanda.fim}.`);
-      if (protecao) {
-        const { sitemap, searchConsole } = protecao.fontes;
-        console.log(`[prerender-paroquias] proteção: Search Console ${searchConsole.inicio} a ${searchConsole.fim}; sitemap ${sitemap.url} de ${sitemap.data}.`);
-      }
-      const avisos = avaliarJanelas({
-        demanda: janelaDemanda,
-        protecao: protecao?.fontes.searchConsole,
-        hoje: new Date().toISOString().slice(0, 10),
-      });
-      for (const aviso of avisos) console.warn(`⚠ [prerender-paroquias] ${aviso}.`);
     }
     if (adicionadas) console.log(`[sitemap-estatico] landing de intenção adicionada: ${baseUrl}/missa-agora.`);
   } catch (err) {
@@ -215,6 +190,38 @@ async function main() {
   } finally {
     clearTimeout(timer);
   }
+  // Fora do try: o registro do critério não depende do sitemap da API, e um erro de
+  // critério (v8 sem proteção válida) deve derrubar o prebuild, não virar aviso.
+  registrarCriterio();
+}
+
+/** Grava o registro do prebuild e loga critério e janelas (ver gravarRegistroCriterio). */
+function registrarCriterio() {
+  const registro = gravarRegistroCriterio(ROOT);
+  if (!registro) return;
+  const { criterio } = registro;
+  const demanda = lerDemanda(ROOT);
+  console.log(
+    criterio === 'v8'
+      ? `[prerender-paroquias] critério: V8 (${ARQUIVO_PROTECAO} + ${ARQUIVO_DEMANDA}, teto dinâmico, ${registro.paroquias} paróquias).`
+      : criterio === 'demanda'
+        ? `[prerender-paroquias] critério do resto: DEMANDA (${ARQUIVO_DEMANDA}, ${demanda.length} paróquias).`
+        : `[prerender-paroquias] critério do resto: QUALIDADE (sem ${ARQUIVO_DEMANDA} ou ${VARIAVEL_CRITERIO}=qualidade).`,
+  );
+  console.log(`[prerender-paroquias] registro do critério → ${ARQUIVO_REGISTRO}.`);
+  const janelaDemanda = lerJanelaDemanda(ROOT);
+  const protecao = criterio === 'v8' ? lerProtecao(ROOT) : null;
+  if (janelaDemanda) console.log(`[prerender-paroquias] janela da demanda: ${janelaDemanda.inicio} a ${janelaDemanda.fim}.`);
+  if (protecao) {
+    const { sitemap, searchConsole } = protecao.fontes;
+    console.log(`[prerender-paroquias] proteção: Search Console ${searchConsole.inicio} a ${searchConsole.fim}; sitemap ${sitemap.url} de ${sitemap.data}.`);
+  }
+  const avisos = avaliarJanelas({
+    demanda: janelaDemanda,
+    protecao: protecao?.fontes.searchConsole,
+    hoje: new Date().toISOString().slice(0, 10),
+  });
+  for (const aviso of avisos) console.warn(`⚠ [prerender-paroquias] ${aviso}.`);
 }
 
 main();

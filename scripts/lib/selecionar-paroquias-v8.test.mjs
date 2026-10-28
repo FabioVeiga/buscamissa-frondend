@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -14,6 +14,8 @@ import {
   criterioAtivo,
   criterioEsperado,
   ErroCapacidadePrerender,
+  gravarRegistroCriterio,
+  ARQUIVO_REGISTRO,
   LIMITE_DESCARTE_PROTECAO,
   paroquiasDoDisco,
   registroDaSelecao,
@@ -268,4 +270,25 @@ test('janelas: sem aviso quando recentes e próximas; avisa idade > 45 dias e di
   const longe = avaliarJanelas({ demanda, protecao: { fim: '2026-11-08' }, hoje: '2026-11-09' });
   assert.match(longe[0], /a 15 dias/);
   assert.deepEqual(avaliarJanelas({ demanda: null, protecao: null, hoje: '2026-10-28' }), []);
+});
+
+test('registro do prebuild: gravado a partir do cache, sem depender do sitemap da API', () => {
+  const base = montarBase({ demanda: ['sp/sao-paulo/sp-b'] });
+  const registro = gravarRegistroCriterio(base, {});
+  assert.equal(registro.criterio, 'demanda');
+  assert.deepEqual(JSON.parse(readFileSync(join(base, ARQUIVO_REGISTRO), 'utf-8')), registro);
+  assert.deepEqual(conferirRegistro(registro, registroDaSelecao(criterioAtivo(base, {}), paroquiasDoDisco(base, {}))), []);
+});
+
+test('registro do prebuild: sem cache não grava nada (build:dev)', () => {
+  const base = mkdtempSync(join(tmpdir(), 'v8-sem-cache-'));
+  mkdirSync(join(base, '.prerender-cache'));
+  assert.equal(gravarRegistroCriterio(base, {}), null);
+  assert.equal(existsSync(join(base, ARQUIVO_REGISTRO)), false);
+});
+
+test('registro do prebuild: erro de critério sobe (não vira aviso nem registro parcial)', () => {
+  const base = montarBase({ protecao: '{ quebrado' });
+  assert.throws(() => gravarRegistroCriterio(base, V8), /não é JSON/);
+  assert.equal(existsSync(join(base, ARQUIVO_REGISTRO)), false);
 });

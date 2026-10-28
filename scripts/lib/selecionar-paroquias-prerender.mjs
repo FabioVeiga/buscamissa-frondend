@@ -15,7 +15,7 @@
  * nunca de `fetch`/API — a seleção é sempre derivada do cache em disco.
  */
 
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tetoParoquias } from './orcamento-arquivos.mjs';
 
@@ -431,6 +431,21 @@ export function assinaturaSelecao(selecionadas) {
 
 export function registroDaSelecao(criterio, selecionadas) {
   return { criterio, paroquias: selecionadas.length, assinatura: assinaturaSelecao(selecionadas) };
+}
+
+/**
+ * Calcula e grava o registro do prebuild. Independe do sitemap da API: precisa existir
+ * mesmo quando a busca do sitemap falha e o build segue com o sitemap anterior, senão
+ * o postbuild barraria todo deploy em que a API oscilou. Sem cache do prebuild não há
+ * seleção a registrar (build:dev) e devolve null. Erros de critério (v8 sem arquivo,
+ * proteção divergente) NÃO são engolidos: sobem e derrubam o prebuild.
+ */
+export function gravarRegistroCriterio(base = process.cwd(), env = process.env) {
+  const selecionadas = paroquiasDoDisco(base, env);
+  if (selecionadas === null) return null;
+  const registro = registroDaSelecao(criterioAtivo(base, env), selecionadas);
+  writeFileSync(join(base, ARQUIVO_REGISTRO), JSON.stringify(registro));
+  return registro;
 }
 
 /** Lista de divergências entre o registro do prebuild e o estado do postbuild. */
