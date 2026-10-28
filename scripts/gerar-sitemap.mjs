@@ -44,7 +44,14 @@ import { writeFileSync, mkdirSync, readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { normalizarBaseUrl } from './lib/seo-routes.mjs';
-import { ARQUIVO_DEMANDA, lerDemanda, paroquiasDoDisco, VARIAVEL_CRITERIO } from './lib/selecionar-paroquias-prerender.mjs';
+import {
+  ARQUIVO_DEMANDA,
+  ARQUIVO_PROTECAO,
+  criterioAtivo,
+  lerDemanda,
+  paroquiasDoDisco,
+  VARIAVEL_CRITERIO,
+} from './lib/selecionar-paroquias-prerender.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -172,11 +179,14 @@ async function main() {
       console.warn('[sitemap-estatico] cache .prerender-cache/paroquias.json ausente — filtro de cobertura de paróquias NÃO aplicado.');
     } else {
       console.log(`[sitemap-estatico] filtro de cobertura: ${removidas} URL(s) de paróquia sem HTML removida(s), ${total} restantes.`);
+      const criterio = criterioAtivo();
       const demanda = lerDemanda();
       console.log(
-        demanda
-          ? `[prerender-paroquias] critério do resto: DEMANDA (${ARQUIVO_DEMANDA}, ${demanda.length} paróquias).`
-          : `[prerender-paroquias] critério do resto: QUALIDADE (sem ${ARQUIVO_DEMANDA} ou ${VARIAVEL_CRITERIO}=qualidade).`,
+        criterio === 'v8'
+          ? `[prerender-paroquias] critério: V8 (${ARQUIVO_PROTECAO} + ${ARQUIVO_DEMANDA}, teto dinâmico).`
+          : criterio === 'demanda'
+            ? `[prerender-paroquias] critério do resto: DEMANDA (${ARQUIVO_DEMANDA}, ${demanda.length} paróquias).`
+            : `[prerender-paroquias] critério do resto: QUALIDADE (sem ${ARQUIVO_DEMANDA} ou ${VARIAVEL_CRITERIO}=qualidade).`,
       );
     }
     if (adicionadas) console.log(`[sitemap-estatico] landing de intenção adicionada: ${baseUrl}/missa-agora.`);
