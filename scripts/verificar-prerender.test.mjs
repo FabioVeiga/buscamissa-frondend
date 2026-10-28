@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { cpSync, mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -12,6 +12,8 @@ const SCRIPTS = dirname(fileURLToPath(import.meta.url));
 function raizComCache() {
   const raiz = mkdtempSync(join(tmpdir(), 'guard-'));
   cpSync(SCRIPTS, join(raiz, 'scripts'), { recursive: true });
+  // A cópia traz o arquivo de proteção versionado; o cenário testado é a ausência dele.
+  rmSync(join(raiz, 'scripts', 'data', 'prerender-protecao.json'), { force: true });
   mkdirSync(join(raiz, '.prerender-cache'), { recursive: true });
   writeFileSync(join(raiz, '.prerender-cache', 'paroquias.json'), '[]');
   return raiz;

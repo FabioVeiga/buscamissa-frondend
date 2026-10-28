@@ -86,11 +86,11 @@ export const VARIAVEL_CRITERIO = 'PRERENDER_PAROQUIAS_CRITERIO';
 export const CRITERIOS = Object.freeze(['v8', 'demanda', 'qualidade']);
 
 /**
- * Critério quando a variável não está definida. Fica em `demanda` enquanto
- * `ARQUIVO_PROTECAO` não é versionado; o PR que versionar o arquivo troca para `v8`
- * no mesmo commit.
+ * Critério quando a variável não está definida. `v8` desde o commit que versionou
+ * `ARQUIVO_PROTECAO`: sem o arquivo válido o build falha (ver criterioAtivo). Reversão
+ * por variável do repositório — docs/prerender-paroquias-criterio.md.
  */
-export const CRITERIO_PADRAO = 'demanda';
+export const CRITERIO_PADRAO = 'v8';
 
 /**
  * Fração máxima de chaves do arquivo de proteção que podem não existir mais na base

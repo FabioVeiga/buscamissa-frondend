@@ -170,13 +170,17 @@ function montarBase({ protecao, demanda, cidades = true }) {
   return base;
 }
 
-test('critério padrão é demanda enquanto a proteção não é versionada', () => {
-  assert.equal(CRITERIO_PADRAO, 'demanda');
-  assert.equal(criterioEsperado({}), 'demanda');
-  // Mesmo com o arquivo presente, sem pedir v8 o build segue na demanda.
+test('critério padrão é v8: com arquivo válido usa V8, sem ele falha explicitamente', () => {
+  assert.equal(CRITERIO_PADRAO, 'v8');
+  assert.equal(criterioEsperado({}), 'v8');
   const base = montarBase({ protecao: ARQUIVO_OK, demanda: ['sp/sao-paulo/sp-b'] });
-  assert.equal(criterioAtivo(base, {}), 'demanda');
-  assert.deepEqual(paroquiasDoDisco(base, {}), selecionarParoquias(LISTA, { demanda: ['sp/sao-paulo/sp-b'] }));
+  assert.equal(criterioAtivo(base, {}), 'v8');
+  assert.deepEqual(paroquiasDoDisco(base, {}), paroquiasDoDisco(base, V8));
+  assert.throws(() => criterioAtivo(montarBase({ demanda: ['sp/sao-paulo/sp-b'] }), {}), /exige/);
+});
+
+test('variável vazia (do repositório sem valor) equivale a não definida', () => {
+  assert.equal(criterioEsperado({ [VARIAVEL_CRITERIO]: '' }), 'v8');
 });
 
 test('valor desconhecido na variável derruba o build', () => {
@@ -240,7 +244,7 @@ test('reversão: =qualidade e =demanda ignoram a proteção, inclusive inválida
 
 test('demanda sem arquivo de demanda segue o comportamento anterior (qualidade)', () => {
   const base = montarBase({});
-  assert.equal(criterioAtivo(base, {}), 'qualidade');
+  assert.equal(criterioAtivo(base, { [VARIAVEL_CRITERIO]: 'demanda' }), 'qualidade');
 });
 
 test('V8 sem cidades.json falha explicitamente (não adivinha o teto)', () => {
@@ -273,9 +277,9 @@ test('janelas: sem aviso quando recentes e próximas; avisa idade > 45 dias e di
 });
 
 test('registro do prebuild: gravado a partir do cache, sem depender do sitemap da API', () => {
-  const base = montarBase({ demanda: ['sp/sao-paulo/sp-b'] });
+  const base = montarBase({ protecao: ARQUIVO_OK, demanda: ['sp/sao-paulo/sp-b'] });
   const registro = gravarRegistroCriterio(base, {});
-  assert.equal(registro.criterio, 'demanda');
+  assert.equal(registro.criterio, 'v8');
   assert.deepEqual(JSON.parse(readFileSync(join(base, ARQUIVO_REGISTRO), 'utf-8')), registro);
   assert.deepEqual(conferirRegistro(registro, registroDaSelecao(criterioAtivo(base, {}), paroquiasDoDisco(base, {}))), []);
 });
