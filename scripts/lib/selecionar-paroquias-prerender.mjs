@@ -75,23 +75,45 @@ export const CEPS_COM_CITACAO_EXTERNA = [
 export const ARQUIVO_DEMANDA = join('scripts', 'data', 'paroquias-demanda.json');
 
 /**
- * Chave de reversão, em dois degraus:
- *  - `PRERENDER_PAROQUIAS_CRITERIO=qualidade` ignora demanda e proteção e volta ao
- *    critério original (resto por qualidade, teto fixo);
- *  - `PRERENDER_PAROQUIAS_CRITERIO=demanda` ignora só o arquivo de proteção e volta à
- *    seleção por demanda com teto fixo (o critério anterior ao V8).
+ * Critério do prerender de paróquias. Valores aceitos:
+ *  - `v8` — exige `ARQUIVO_PROTECAO` válido; sem ele o build FALHA (nunca cai em outro
+ *    critério em silêncio);
+ *  - `demanda` — seleção por demanda com teto fixo (o critério anterior ao V8);
+ *  - `qualidade` — critério original (resto por qualidade, teto fixo).
+ * Sem a variável vale `CRITERIO_PADRAO`. Qualquer outro valor derruba o build.
  */
 export const VARIAVEL_CRITERIO = 'PRERENDER_PAROQUIAS_CRITERIO';
+export const CRITERIOS = Object.freeze(['v8', 'demanda', 'qualidade']);
+
+/**
+ * Critério quando a variável não está definida. Fica em `demanda` enquanto
+ * `ARQUIVO_PROTECAO` não é versionado; o PR que versionar o arquivo troca para `v8`
+ * no mesmo commit.
+ */
+export const CRITERIO_PADRAO = 'demanda';
+
+/**
+ * Fração máxima de chaves do arquivo de proteção que podem não existir mais na base
+ * (paróquia apagada, renomeada ou sem horário). Acima disso o arquivo está velho
+ * demais para garantir a permanência das páginas: o build falha e pede regeneração.
+ * 2% ≈ 19 das 947 protegidas; em 28/10 eram 0 protegidas e 2 atuais (0,1%).
+ */
+export const LIMITE_DESCARTE_PROTECAO = 0.02;
 
 /**
  * Arquivo versionado que liga o critério V8 (ver `selecionarParoquiasV8`). Gerado fora
  * do build por `scripts/gerar-protecao-prerender.mjs`, a partir do sitemap publicado e
  * do Search Console:
  *
- *   { versao, geradoEm, fontes, cidadesComDemanda: ['uf/cidade'],
- *     atuais: ['uf/cidade/slug'], protegidas: [{ chave, cliques }] }
+ *   { versao: 1, geradoEm,
+ *     fontes: { sitemap: { url, data }, searchConsole: { inicio, fim, metrica } },
+ *     cidadesComDemanda: ['uf/cidade'], atuais: ['uf/cidade/slug'],
+ *     protegidas: [{ chave, cliques }] }
  *
- * Sem o arquivo (ou com ele inválido) a seleção é a de demanda, como antes.
+ * REGENERAÇÃO CONJUNTA: este arquivo e `ARQUIVO_DEMANDA` são gerados no MESMO ciclo,
+ * com o Search Console terminando no mesmo dia e o sitemap publicado daquele dia —
+ * `atualizar-demanda-paroquias.mjs` e depois `gerar-protecao-prerender.mjs`. O build
+ * avisa se as janelas envelhecerem ou se afastarem (ver `avaliarJanelas`).
  */
 export const ARQUIVO_PROTECAO = join('scripts', 'data', 'prerender-protecao.json');
 
@@ -282,32 +304,143 @@ export function selecionarParoquiasV8(lista, { protecao, demanda = null, teto })
     .map((p) => ({ uf: p.uf, cidade: p.cidadeSlug, slug: p.slug }));
 }
 
+/** O critério pedido (variável ou padrão). Valor desconhecido derruba o build. */
+export function criterioEsperado(env = process.env) {
+  const valor = env[VARIAVEL_CRITERIO];
+  if (valor === undefined || valor === '') return CRITERIO_PADRAO;
+  if (!CRITERIOS.includes(valor)) {
+    throw new Error(`[prerender-paroquias] ${VARIAVEL_CRITERIO}="${valor}" inválido; use ${CRITERIOS.join(', ')}.`);
+  }
+  return valor;
+}
+
+const DATA_ISO = /^\d{4}-\d{2}-\d{2}$/;
+
 /**
- * Lê `ARQUIVO_PROTECAO`. Devolve `null` — e a seleção fica na de demanda — quando a
- * variável de reversão pede (`qualidade` ou `demanda`), quando o arquivo não existe ou
- * quando ele é inválido. Como `lerDemanda`, um arquivo ruim nunca derruba o build.
+ * Valida `ARQUIVO_PROTECAO` e devolve `{ dados }` ou `{ erro }` com o motivo. Exige a
+ * versão conhecida, as três listas e a procedência (sitemap com URL e data, janela do
+ * Search Console).
  */
-export function lerProtecao(base = process.cwd(), env = process.env) {
-  if (env[VARIAVEL_CRITERIO] === 'qualidade' || env[VARIAVEL_CRITERIO] === 'demanda') return null;
+export function validarProtecao(base = process.cwd()) {
   const arquivo = join(base, ARQUIVO_PROTECAO);
-  if (!existsSync(arquivo)) return null;
+  if (!existsSync(arquivo)) return { erro: `${ARQUIVO_PROTECAO} ausente` };
+  let dados;
   try {
-    const dados = JSON.parse(readFileSync(arquivo, 'utf-8'));
-    const listaDeTexto = (v) => Array.isArray(v) && v.every((x) => typeof x === 'string');
-    if (!listaDeTexto(dados?.cidadesComDemanda) || !listaDeTexto(dados?.atuais)) return null;
-    if (!Array.isArray(dados?.protegidas) || !dados.protegidas.every((x) => typeof x?.chave === 'string')) {
-      return null;
+    dados = JSON.parse(readFileSync(arquivo, 'utf-8'));
+  } catch {
+    return { erro: `${ARQUIVO_PROTECAO} não é JSON válido` };
+  }
+  const listaDeTexto = (v) => Array.isArray(v) && v.every((x) => typeof x === 'string');
+  if (dados?.versao !== 1) return { erro: `versão ${dados?.versao} incompatível (esperada 1)` };
+  if (!listaDeTexto(dados.cidadesComDemanda)) return { erro: 'cidadesComDemanda ausente ou inválido' };
+  if (!listaDeTexto(dados.atuais) || dados.atuais.length === 0) return { erro: 'atuais ausente, vazio ou inválido' };
+  if (!Array.isArray(dados.protegidas) || !dados.protegidas.every((x) => typeof x?.chave === 'string')) {
+    return { erro: 'protegidas ausente ou inválido' };
+  }
+  const { sitemap, searchConsole } = dados.fontes ?? {};
+  if (!/^https?:\/\//.test(sitemap?.url ?? '') || !DATA_ISO.test(sitemap?.data ?? '')) {
+    return { erro: 'procedência do sitemap (fontes.sitemap.url/data) ausente' };
+  }
+  if (!DATA_ISO.test(searchConsole?.inicio ?? '') || !DATA_ISO.test(searchConsole?.fim ?? '')) {
+    return { erro: 'janela do Search Console (fontes.searchConsole.inicio/fim) ausente' };
+  }
+  return { dados };
+}
+
+/** Arquivo de proteção válido, ou null. Só para leitura de metadados (logs). */
+export function lerProtecao(base = process.cwd()) {
+  return validarProtecao(base).dados ?? null;
+}
+
+/**
+ * Critério que o build vai usar. Em `v8` o arquivo de proteção é obrigatório: ausente,
+ * inválido ou incompatível lança erro. `demanda` sem arquivo de demanda segue o
+ * comportamento anterior (qualidade).
+ */
+export function criterioAtivo(base = process.cwd(), env = process.env) {
+  const esperado = criterioEsperado(env);
+  if (esperado === 'v8') {
+    const { erro } = validarProtecao(base);
+    if (erro) throw new Error(`[prerender-paroquias] critério v8 exige ${ARQUIVO_PROTECAO}: ${erro}.`);
+    return 'v8';
+  }
+  if (esperado === 'qualidade') return 'qualidade';
+  return lerDemanda(base, env) ? 'demanda' : 'qualidade';
+}
+
+/**
+ * Chaves do arquivo de proteção que não existem mais entre as elegíveis. Contadas à
+ * parte (protegidas × atuais) para o log; acima de `limite` o arquivo é recusado.
+ */
+export function conferirDescartes(lista, protecao, limite = LIMITE_DESCARTE_PROTECAO) {
+  const elegiveis = new Set(elegiveisParaPrerender(lista).map(chaveParoquia));
+  const protegidas = protecao.protegidas.map((p) => p.chave);
+  const descartadas = {
+    protegidas: protegidas.filter((c) => !elegiveis.has(c)),
+    atuais: protecao.atuais.filter((c) => !elegiveis.has(c)),
+  };
+  const fracao = {
+    protegidas: protegidas.length ? descartadas.protegidas.length / protegidas.length : 0,
+    atuais: descartadas.atuais.length / protecao.atuais.length,
+  };
+  const excedeu = fracao.protegidas > limite || fracao.atuais > limite;
+  return { descartadas, fracao, excedeu, limite };
+}
+
+/**
+ * Avisos de procedência: janela do Search Console terminada há mais de `idadeMaxDias`
+ * (dado velho) e fins de janela de demanda e proteção distantes mais de
+ * `divergenciaMaxDias` (os dois arquivos devem ser regenerados juntos).
+ */
+export function avaliarJanelas({ demanda, protecao, hoje, idadeMaxDias = 45, divergenciaMaxDias = 14 }) {
+  const dias = (a, b) => Math.round((Date.parse(a) - Date.parse(b)) / 86_400_000);
+  const avisos = [];
+  for (const [nome, janela] of [['demanda', demanda], ['proteção', protecao]]) {
+    if (!janela?.fim) continue;
+    const idade = dias(hoje, janela.fim);
+    if (idade > idadeMaxDias) avisos.push(`janela de ${nome} terminou há ${idade} dias (máx. ${idadeMaxDias})`);
+  }
+  if (demanda?.fim && protecao?.fim) {
+    const diferenca = Math.abs(dias(demanda.fim, protecao.fim));
+    if (diferenca > divergenciaMaxDias) {
+      avisos.push(`fins das janelas de demanda (${demanda.fim}) e proteção (${protecao.fim}) a ${diferenca} dias (máx. ${divergenciaMaxDias})`);
     }
-    return dados;
+  }
+  return avisos;
+}
+
+/** Janela do arquivo de demanda (metadado), ou null. */
+export function lerJanelaDemanda(base = process.cwd()) {
+  try {
+    return JSON.parse(readFileSync(join(base, ARQUIVO_DEMANDA), 'utf-8'))?.janela ?? null;
   } catch {
     return null;
   }
 }
 
-/** Critério que o build vai usar, para o log do sitemap e para o guard. */
-export function criterioAtivo(base = process.cwd(), env = process.env) {
-  if (lerProtecao(base, env)) return 'v8';
-  return lerDemanda(base, env) ? 'demanda' : 'qualidade';
+/**
+ * Arquivo, no cache do prebuild, com o critério e a seleção que o sitemap usou. O
+ * postbuild recalcula e compara: critério ou seleção diferentes entre as etapas
+ * (variável de ambiente só em uma delas, arquivo trocado no meio) derrubam o build.
+ */
+export const ARQUIVO_REGISTRO = join('.prerender-cache', 'criterio-prerender.json');
+
+export function assinaturaSelecao(selecionadas) {
+  return selecionadas.map((s) => `${String(s.uf).toLowerCase()}/${s.cidade}/${s.slug}`).sort().join('\n');
+}
+
+export function registroDaSelecao(criterio, selecionadas) {
+  return { criterio, paroquias: selecionadas.length, assinatura: assinaturaSelecao(selecionadas) };
+}
+
+/** Lista de divergências entre o registro do prebuild e o estado do postbuild. */
+export function conferirRegistro(registro, atual) {
+  if (!registro) return ['registro do prebuild ausente'];
+  const erros = [];
+  if (registro.criterio !== atual.criterio) erros.push(`critério ${registro.criterio} no prebuild × ${atual.criterio} no postbuild`);
+  if (registro.paroquias !== atual.paroquias) erros.push(`${registro.paroquias} paróquias no prebuild × ${atual.paroquias} no postbuild`);
+  else if (registro.assinatura !== atual.assinatura) erros.push('mesma contagem, mas paróquias diferentes entre prebuild e postbuild');
+  return erros;
 }
 
 /**
@@ -349,9 +482,23 @@ export function paroquiasDoDisco(base = process.cwd(), env = process.env) {
   const arquivo = join(base, '.prerender-cache', 'paroquias.json');
   if (!existsSync(arquivo)) return null;
   const lista = JSON.parse(readFileSync(arquivo, 'utf-8'));
+  const criterio = criterioAtivo(base, env);
+  if (criterio === 'qualidade') return selecionarParoquias(lista, { demanda: null });
   const demanda = lerDemanda(base, env);
-  const protecao = lerProtecao(base, env);
-  if (!protecao) return selecionarParoquias(lista, { demanda });
+  if (criterio === 'demanda') return selecionarParoquias(lista, { demanda });
+
+  const protecao = validarProtecao(base).dados;
+  const descarte = conferirDescartes(lista, protecao);
+  const pct = (f) => `${(f * 100).toFixed(1)}%`;
+  const resumo =
+    `protegidas descartadas ${descarte.descartadas.protegidas.length}/${protecao.protegidas.length} (${pct(descarte.fracao.protegidas)}), ` +
+    `atuais descartadas ${descarte.descartadas.atuais.length}/${protecao.atuais.length} (${pct(descarte.fracao.atuais)})`;
+  if (descarte.excedeu) {
+    throw new Error(
+      `[prerender-paroquias] ${ARQUIVO_PROTECAO} divergente da base: ${resumo}; limite ${pct(descarte.limite)}. Regenere o arquivo.`,
+    );
+  }
+  console.log(`[prerender-paroquias] proteção: ${resumo}.`);
 
   const arquivoCidades = join(base, '.prerender-cache', 'cidades.json');
   if (!existsSync(arquivoCidades)) {

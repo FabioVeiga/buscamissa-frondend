@@ -4,8 +4,12 @@ import { dirname, join } from 'path';
 import {
   MAX_PAROQUIAS_PRERENDER,
   CEPS_COM_CITACAO_EXTERNA,
+  ARQUIVO_REGISTRO,
+  conferirRegistro,
   contarCidades,
   criterioAtivo,
+  paroquiasDoDisco,
+  registroDaSelecao,
 } from './lib/selecionar-paroquias-prerender.mjs';
 import { tetoParoquias } from './lib/orcamento-arquivos.mjs';
 
@@ -358,6 +362,26 @@ function lerCache(arquivo) {
     return JSON.parse(readFileSync(caminho, 'utf-8'));
   } catch {
     return null;
+  }
+}
+
+// Consistência entre etapas: o sitemap (prebuild) registrou critério e seleção; aqui
+// recalculamos com o ambiente do postbuild. Divergência = HTML e sitemap gerados com
+// critérios diferentes (variável só em uma etapa, arquivo trocado no meio do build).
+if (lerCache('paroquias.json')) {
+  let erros;
+  try {
+    const registro = lerCache('criterio-prerender.json');
+    erros = conferirRegistro(registro, registroDaSelecao(criterioAtivo(ROOT), paroquiasDoDisco(ROOT)));
+  } catch (err) {
+    erros = [err.message];
+  }
+  if (erros.length) {
+    algumFalhou = true;
+    console.error(`\n❌ [criterio] seleção de paróquias inconsistente entre prebuild e postbuild (${ARQUIVO_REGISTRO}):`);
+    for (const e of erros) console.error(`   - ${e}`);
+  } else {
+    console.log(`[criterio] seleção de paróquias igual no prebuild e no postbuild (${criterioAtivo(ROOT)}).`);
   }
 }
 

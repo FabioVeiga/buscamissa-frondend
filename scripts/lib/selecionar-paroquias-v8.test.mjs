@@ -7,10 +7,17 @@ import {
   ARQUIVO_DEMANDA,
   ARQUIVO_PROTECAO,
   CEPS_COM_CITACAO_EXTERNA,
+  avaliarJanelas,
+  conferirDescartes,
+  conferirRegistro,
+  CRITERIO_PADRAO,
   criterioAtivo,
+  criterioEsperado,
   ErroCapacidadePrerender,
-  lerProtecao,
+  LIMITE_DESCARTE_PROTECAO,
   paroquiasDoDisco,
+  registroDaSelecao,
+  validarProtecao,
   selecionarParoquias,
   selecionarParoquiasV8,
   VARIAVEL_CRITERIO,
@@ -129,7 +136,18 @@ test('resultado nunca passa do teto', () => {
   assert.equal(sel.length, 5);
 });
 
-// --- leitura do disco e reversão -------------------------------------------------
+// --- leitura do disco, critério esperado e reversão ------------------------------
+
+const ARQUIVO_OK = {
+  versao: 1,
+  geradoEm: '2026-10-28',
+  fontes: {
+    sitemap: { url: 'https://buscamissa.com.br/sitemap.xml', data: '2026-10-28' },
+    searchConsole: { inicio: '2026-07-30', fim: '2026-10-27', metrica: 'cliques por página' },
+  },
+  ...PROTECAO,
+};
+const V8 = { [VARIAVEL_CRITERIO]: 'v8' };
 
 function montarBase({ protecao, demanda, cidades = true }) {
   const base = mkdtempSync(join(tmpdir(), 'v8-'));
@@ -144,44 +162,110 @@ function montarBase({ protecao, demanda, cidades = true }) {
     writeFileSync(join(base, '.prerender-cache', 'cidades.json'), JSON.stringify(lista));
   }
   if (protecao) writeFileSync(join(base, ARQUIVO_PROTECAO), typeof protecao === 'string' ? protecao : JSON.stringify(protecao));
-  if (demanda) writeFileSync(join(base, ARQUIVO_DEMANDA), JSON.stringify({ resto: demanda.map((c) => ({ chave: c })) }));
+  if (demanda) {
+    writeFileSync(join(base, ARQUIVO_DEMANDA), JSON.stringify({ janela: { inicio: '2026-09-01', fim: '2026-10-24' }, resto: demanda.map((c) => ({ chave: c })) }));
+  }
   return base;
 }
 
-test('paroquiasDoDisco: com arquivo de proteção usa o V8 e o teto dinâmico', () => {
-  const base = montarBase({ protecao: PROTECAO });
-  assert.equal(criterioAtivo(base, {}), 'v8');
-  const sel = paroquiasDoDisco(base, {});
-  assert.deepEqual(sel, selecionarParoquiasV8(LISTA, { protecao: PROTECAO, teto: tetoParoquias({ cidades: 4 }) }));
-});
-
-test('reversão: =qualidade volta ao critério original, ignorando proteção e demanda', () => {
-  const base = montarBase({ protecao: PROTECAO, demanda: ['sp/sao-paulo/sp-b'] });
-  const env = { [VARIAVEL_CRITERIO]: 'qualidade' };
-  assert.equal(criterioAtivo(base, env), 'qualidade');
-  assert.deepEqual(paroquiasDoDisco(base, env), selecionarParoquias(LISTA, { demanda: null }));
-});
-
-test('reversão: =demanda ignora só a proteção (critério anterior ao V8)', () => {
-  const base = montarBase({ protecao: PROTECAO, demanda: ['sp/sao-paulo/sp-b'] });
-  const env = { [VARIAVEL_CRITERIO]: 'demanda' };
-  assert.equal(criterioAtivo(base, env), 'demanda');
-  assert.deepEqual(paroquiasDoDisco(base, env), selecionarParoquias(LISTA, { demanda: ['sp/sao-paulo/sp-b'] }));
-});
-
-test('sem arquivo de proteção o build segue com a seleção por demanda', () => {
-  const base = montarBase({ demanda: ['sp/sao-paulo/sp-b'] });
+test('critério padrão é demanda enquanto a proteção não é versionada', () => {
+  assert.equal(CRITERIO_PADRAO, 'demanda');
+  assert.equal(criterioEsperado({}), 'demanda');
+  // Mesmo com o arquivo presente, sem pedir v8 o build segue na demanda.
+  const base = montarBase({ protecao: ARQUIVO_OK, demanda: ['sp/sao-paulo/sp-b'] });
   assert.equal(criterioAtivo(base, {}), 'demanda');
   assert.deepEqual(paroquiasDoDisco(base, {}), selecionarParoquias(LISTA, { demanda: ['sp/sao-paulo/sp-b'] }));
 });
 
-test('arquivo de proteção inválido → null (nunca derruba o build)', () => {
-  assert.equal(lerProtecao(montarBase({ protecao: '{ quebrado' }), {}), null);
-  assert.equal(lerProtecao(montarBase({ protecao: { atuais: [], protegidas: [] } }), {}), null);
-  assert.equal(lerProtecao(montarBase({ protecao: { ...PROTECAO, protegidas: [{ cliques: 3 }] } }), {}), null);
+test('valor desconhecido na variável derruba o build', () => {
+  assert.throws(() => criterioEsperado({ [VARIAVEL_CRITERIO]: 'V8 ' }), /inválido/);
+});
+
+test('v8 com arquivo válido: seleção V8 com teto dinâmico', () => {
+  const base = montarBase({ protecao: ARQUIVO_OK });
+  assert.equal(criterioAtivo(base, V8), 'v8');
+  assert.deepEqual(
+    paroquiasDoDisco(base, V8),
+    selecionarParoquiasV8(LISTA, { protecao: ARQUIVO_OK, teto: tetoParoquias({ cidades: 4 }) }),
+  );
+});
+
+test('v8 exigido e arquivo ausente, inválido ou incompatível: falha com o motivo', () => {
+  const casos = [
+    [undefined, /ausente/],
+    ['{ quebrado', /não é JSON/],
+    [{ ...ARQUIVO_OK, versao: 2 }, /versão 2 incompatível/],
+    [{ ...ARQUIVO_OK, atuais: [] }, /atuais/],
+    [{ ...ARQUIVO_OK, protegidas: [{ cliques: 3 }] }, /protegidas/],
+    [{ ...ARQUIVO_OK, cidadesComDemanda: 'sp/campinas' }, /cidadesComDemanda/],
+    [{ ...ARQUIVO_OK, fontes: { ...ARQUIVO_OK.fontes, sitemap: { url: 'sitemap.xml', data: '2026-10-28' } } }, /sitemap/],
+    [{ ...ARQUIVO_OK, fontes: { sitemap: ARQUIVO_OK.fontes.sitemap } }, /Search Console/],
+  ];
+  for (const [protecao, motivo] of casos) {
+    const base = montarBase({ protecao });
+    assert.throws(() => criterioAtivo(base, V8), motivo);
+    assert.throws(() => paroquiasDoDisco(base, V8), motivo);
+    assert.match(validarProtecao(base).erro, motivo);
+  }
+});
+
+test('descartes: contados à parte; dentro do limite passa, acima falha sem cortar protegidas', () => {
+  const ok = conferirDescartes(LISTA, ARQUIVO_OK);
+  assert.deepEqual(ok.descartadas, { protegidas: [], atuais: [] });
+  assert.equal(ok.excedeu, false);
+
+  const sujo = { ...ARQUIVO_OK, atuais: [...ARQUIVO_OK.atuais, 'xx/sumiu/a'], protegidas: [...ARQUIVO_OK.protegidas, { chave: 'sp/jundiai/sem-horario', cliques: 4 }] };
+  const r = conferirDescartes(LISTA, sujo);
+  assert.deepEqual(r.descartadas, { protegidas: ['sp/jundiai/sem-horario'], atuais: ['xx/sumiu/a'] });
+  assert.equal(r.fracao.protegidas, 0.5);
+  assert.equal(r.excedeu, true);
+  assert.equal(conferirDescartes(LISTA, sujo, 0.6).excedeu, false);
+
+  const base = montarBase({ protecao: sujo });
+  assert.throws(() => paroquiasDoDisco(base, V8), /divergente da base.*protegidas descartadas 1\/2/);
+  assert.equal(LIMITE_DESCARTE_PROTECAO, 0.02);
+});
+
+test('reversão: =qualidade e =demanda ignoram a proteção, inclusive inválida', () => {
+  const base = montarBase({ protecao: '{ quebrado', demanda: ['sp/sao-paulo/sp-b'] });
+  const q = { [VARIAVEL_CRITERIO]: 'qualidade' };
+  const d = { [VARIAVEL_CRITERIO]: 'demanda' };
+  assert.equal(criterioAtivo(base, q), 'qualidade');
+  assert.deepEqual(paroquiasDoDisco(base, q), selecionarParoquias(LISTA, { demanda: null }));
+  assert.equal(criterioAtivo(base, d), 'demanda');
+  assert.deepEqual(paroquiasDoDisco(base, d), selecionarParoquias(LISTA, { demanda: ['sp/sao-paulo/sp-b'] }));
+});
+
+test('demanda sem arquivo de demanda segue o comportamento anterior (qualidade)', () => {
+  const base = montarBase({});
+  assert.equal(criterioAtivo(base, {}), 'qualidade');
 });
 
 test('V8 sem cidades.json falha explicitamente (não adivinha o teto)', () => {
-  const base = montarBase({ protecao: PROTECAO, cidades: false });
-  assert.throws(() => paroquiasDoDisco(base, {}), /cidades\.json/);
+  const base = montarBase({ protecao: ARQUIVO_OK, cidades: false });
+  assert.throws(() => paroquiasDoDisco(base, V8), /cidades\.json/);
+});
+
+test('registro prebuild × postbuild: igual passa; critério, contagem ou conjunto diferentes falham', () => {
+  const sel = selecionarParoquias(LISTA, { demanda: null });
+  const reg = registroDaSelecao('qualidade', sel);
+  assert.deepEqual(conferirRegistro(reg, registroDaSelecao('qualidade', [...sel].reverse())), []);
+  assert.match(conferirRegistro(reg, registroDaSelecao('v8', sel))[0], /critério qualidade no prebuild × v8/);
+  assert.match(conferirRegistro(reg, registroDaSelecao('qualidade', sel.slice(1)))[0], /paróquias no prebuild/);
+  const trocada = [...sel.slice(1), { uf: 'xx', cidade: 'y', slug: 'z' }];
+  assert.match(conferirRegistro(reg, registroDaSelecao('qualidade', trocada))[0], /paróquias diferentes/);
+  assert.deepEqual(conferirRegistro(null, reg), ['registro do prebuild ausente']);
+});
+
+test('janelas: sem aviso quando recentes e próximas; avisa idade > 45 dias e diferença > 14 dias', () => {
+  const demanda = { inicio: '2026-09-01', fim: '2026-10-24' };
+  const protecao = { inicio: '2026-07-30', fim: '2026-10-27' };
+  assert.deepEqual(avaliarJanelas({ demanda, protecao, hoje: '2026-10-28' }), []);
+  assert.deepEqual(avaliarJanelas({ demanda, protecao, hoje: '2026-12-08' }), []); // 45 dias após 24/10
+  const velha = avaliarJanelas({ demanda, protecao, hoje: '2026-12-09' });
+  assert.equal(velha.length, 1);
+  assert.match(velha[0], /demanda terminou há 46 dias/);
+  const longe = avaliarJanelas({ demanda, protecao: { fim: '2026-11-08' }, hoje: '2026-11-09' });
+  assert.match(longe[0], /a 15 dias/);
+  assert.deepEqual(avaliarJanelas({ demanda: null, protecao: null, hoje: '2026-10-28' }), []);
 });

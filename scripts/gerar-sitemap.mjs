@@ -47,9 +47,14 @@ import { normalizarBaseUrl } from './lib/seo-routes.mjs';
 import {
   ARQUIVO_DEMANDA,
   ARQUIVO_PROTECAO,
+  ARQUIVO_REGISTRO,
+  avaliarJanelas,
   criterioAtivo,
   lerDemanda,
+  lerJanelaDemanda,
+  lerProtecao,
   paroquiasDoDisco,
+  registroDaSelecao,
   VARIAVEL_CRITERIO,
 } from './lib/selecionar-paroquias-prerender.mjs';
 
@@ -188,6 +193,21 @@ async function main() {
             ? `[prerender-paroquias] critério do resto: DEMANDA (${ARQUIVO_DEMANDA}, ${demanda.length} paróquias).`
             : `[prerender-paroquias] critério do resto: QUALIDADE (sem ${ARQUIVO_DEMANDA} ou ${VARIAVEL_CRITERIO}=qualidade).`,
       );
+      // O postbuild (verificar-prerender.mjs) recalcula e compara com este registro.
+      writeFileSync(join(ROOT, ARQUIVO_REGISTRO), JSON.stringify(registroDaSelecao(criterio, paroquiasDoDisco())));
+      const janelaDemanda = lerJanelaDemanda();
+      const protecao = criterio === 'v8' ? lerProtecao() : null;
+      if (janelaDemanda) console.log(`[prerender-paroquias] janela da demanda: ${janelaDemanda.inicio} a ${janelaDemanda.fim}.`);
+      if (protecao) {
+        const { sitemap, searchConsole } = protecao.fontes;
+        console.log(`[prerender-paroquias] proteção: Search Console ${searchConsole.inicio} a ${searchConsole.fim}; sitemap ${sitemap.url} de ${sitemap.data}.`);
+      }
+      const avisos = avaliarJanelas({
+        demanda: janelaDemanda,
+        protecao: protecao?.fontes.searchConsole,
+        hoje: new Date().toISOString().slice(0, 10),
+      });
+      for (const aviso of avisos) console.warn(`⚠ [prerender-paroquias] ${aviso}.`);
     }
     if (adicionadas) console.log(`[sitemap-estatico] landing de intenção adicionada: ${baseUrl}/missa-agora.`);
   } catch (err) {

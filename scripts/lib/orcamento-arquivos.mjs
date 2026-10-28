@@ -38,6 +38,34 @@ export const FOLGA_ARQUIVOS = 150;
  */
 export const ARQUIVOS_FIXOS = 383;
 
+/**
+ * Exceção à folga mínima: `PRERENDER_ACEITAR_MARGEM=<n>` aceita UMA margem real entre
+ * `n` e a folga, com `0 ≤ n < FOLGA_ARQUIVOS`. Serve para não travar uma correção
+ * urgente quando os fixos cresceram; o log registra a exceção e a margem observada.
+ */
+export const VARIAVEL_EXCECAO_MARGEM = 'PRERENDER_ACEITAR_MARGEM';
+
+/**
+ * Decide se a margem real (MAX_FILES − arquivos do dist) passa. Abaixo da folga falha,
+ * salvo exceção válida; acima de MAX_FILES falha sempre (o guard trata à parte).
+ */
+export function avaliarMargem({ arquivos, env = process.env, maxArquivos = MAX_FILES, folga = FOLGA_ARQUIVOS }) {
+  const margem = maxArquivos - arquivos;
+  if (margem >= folga) return { ok: true, margem };
+  const bruto = env[VARIAVEL_EXCECAO_MARGEM];
+  if (bruto === undefined || bruto === '') {
+    return { ok: false, margem, motivo: `margem real de ${margem} arquivos abaixo da folga de ${folga}` };
+  }
+  const minimo = Number(bruto);
+  if (!Number.isInteger(minimo) || minimo < 0 || minimo >= folga) {
+    return { ok: false, margem, motivo: `${VARIAVEL_EXCECAO_MARGEM}="${bruto}" inválido (inteiro entre 0 e ${folga - 1})` };
+  }
+  if (margem < minimo) {
+    return { ok: false, margem, motivo: `margem real de ${margem} abaixo até da exceção ${VARIAVEL_EXCECAO_MARGEM}=${minimo}` };
+  }
+  return { ok: true, margem, excecao: minimo };
+}
+
 /** Contagem recursiva de arquivos e bytes de um diretório — a regra do guard. */
 export function medirDiretorio(dir) {
   let bytes = 0;

@@ -1,7 +1,7 @@
 import { readdirSync, statSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { FOLGA_ARQUIVOS, MAX_FILES, medirDiretorio } from './lib/orcamento-arquivos.mjs';
+import { avaliarMargem, MAX_FILES, medirDiretorio, VARIAVEL_EXCECAO_MARGEM } from './lib/orcamento-arquivos.mjs';
 
 /**
  * Guard-rail da ESTEIRA de build (Auditoria2 / Fase 3). Roda no postbuild, depois
@@ -147,17 +147,22 @@ if (arquivos > MAX_FILES) {
   console.error('   em app.routes.server.ts.');
 }
 
+// O teto dinâmico de paróquias reserva a folga abaixo de MAX_FILES a partir de uma
+// estimativa dos arquivos fixos. Margem real menor que a folga = a estimativa ficou
+// velha (mais chunks, mais rotas estáticas): falha, salvo exceção explícita.
+const margem = avaliarMargem({ arquivos });
+if (!margem.ok && arquivos <= MAX_FILES) {
+  falhou = true;
+  console.error(`\n❌ [dist-size] ${margem.motivo}.`);
+  console.error('   Remeça os arquivos fixos (ARQUIVOS_FIXOS em lib/orcamento-arquivos.mjs) ou, para');
+  console.error(`   uma correção urgente, defina ${VARIAVEL_EXCECAO_MARGEM}=<mínimo aceito>.`);
+} else if (margem.excecao !== undefined) {
+  console.warn(`⚠ [dist-size] EXCEÇÃO ${VARIAVEL_EXCECAO_MARGEM}=${margem.excecao}: margem real de ${margem.margem} arquivos aceita abaixo da folga.`);
+}
+
 if (falhou) {
   console.error('\n   Build abortado para não estourar a esteira de deploy.\n');
   process.exit(1);
-}
-
-// O teto dinâmico de paróquias reserva FOLGA_ARQUIVOS abaixo de MAX_FILES a partir de
-// uma estimativa dos arquivos fixos. Margem real menor que a folga = a estimativa ficou
-// velha (mais chunks, mais rotas estáticas) e precisa de nova medição.
-if (MAX_FILES - arquivos < FOLGA_ARQUIVOS) {
-  console.warn(`⚠ [dist-size] margem real de ${MAX_FILES - arquivos} arquivos, abaixo da folga de ${FOLGA_ARQUIVOS}.`);
-  console.warn('   Remeça os arquivos fixos (ARQUIVOS_FIXOS em lib/orcamento-arquivos.mjs).');
 }
 
 console.log('✓ [dist-size] esteira dentro dos limites.');
