@@ -321,6 +321,17 @@ if (estadosDoCache && dirEstados) {
 // tem que barrar o deploy, não liberá-lo.
 const COBERTURA_MINIMA = 0.9;
 
+// Critério do postbuild, calculado uma vez. Configuração inválida (valor desconhecido na
+// variável, v8 sem arquivo de proteção válido) encerra aqui com a mensagem do erro, em
+// vez de estourar com stack trace no meio da verificação de cobertura.
+let criterioPostbuild;
+try {
+  criterioPostbuild = criterioAtivo(ROOT);
+} catch (err) {
+  console.error(`\n❌ [criterio] configuração do prerender de paróquias inválida: ${err.message}`);
+  process.exit(1);
+}
+
 /** Espelha exatamente o universo de app.routes.server.ts (paroquiasDoDisco/cidadesDoDisco). */
 const esperadoPorSecao = {
   missas: () => {
@@ -348,7 +359,7 @@ const esperadoPorSecao = {
     const elegiveis = lista.filter(
       (p) => p?.uf && p?.cidadeSlug && p?.slug && (p?.igreja?.missas?.length ?? 0) > 0,
     ).length;
-    if (criterioAtivo(ROOT) !== 'v8') return Math.min(elegiveis, MAX_PAROQUIAS_PRERENDER);
+    if (criterioPostbuild !== 'v8') return Math.min(elegiveis, MAX_PAROQUIAS_PRERENDER);
     const cidades = lerCache('cidades.json');
     if (!cidades) return null;
     return Math.min(elegiveis, tetoParoquias({ cidades: contarCidades(cidades) }));
@@ -372,7 +383,7 @@ if (lerCache('paroquias.json')) {
   let erros;
   try {
     const registro = lerCache('criterio-prerender.json');
-    erros = conferirRegistro(registro, registroDaSelecao(criterioAtivo(ROOT), paroquiasDoDisco(ROOT)));
+    erros = conferirRegistro(registro, registroDaSelecao(criterioPostbuild, paroquiasDoDisco(ROOT)));
   } catch (err) {
     erros = [err.message];
   }
@@ -381,7 +392,7 @@ if (lerCache('paroquias.json')) {
     console.error(`\n❌ [criterio] seleção de paróquias inconsistente entre prebuild e postbuild (${ARQUIVO_REGISTRO}):`);
     for (const e of erros) console.error(`   - ${e}`);
   } else {
-    console.log(`[criterio] seleção de paróquias igual no prebuild e no postbuild (${criterioAtivo(ROOT)}).`);
+    console.log(`[criterio] seleção de paróquias igual no prebuild e no postbuild (${criterioPostbuild}).`);
   }
 }
 
