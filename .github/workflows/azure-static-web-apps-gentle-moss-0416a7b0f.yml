@@ -30,11 +30,11 @@ jobs:
     # navegador delas já comete. Fuso por igreja é trabalho separado.
     env:
       TZ: America/Sao_Paulo
-      # Critério do prerender de paróquias e exceção de margem (docs/prerender-paroquias-criterio.md).
-      # Variáveis do repositório, vazias por padrão = critério padrão do código e nenhuma exceção.
-      # Valem para prebuild, build e postbuild, que rodam neste mesmo job.
-      PRERENDER_PAROQUIAS_CRITERIO: ${{ vars.PRERENDER_PAROQUIAS_CRITERIO }}
-      PRERENDER_ACEITAR_MARGEM: ${{ vars.PRERENDER_ACEITAR_MARGEM }}
+      # Critério do prerender de paróquias e exceção de margem DESTE ambiente (produção);
+      # ver docs/prerender-paroquias-criterio.md. Variável vazia = padrão do código (v8) e
+      # nenhuma exceção. Valem para prebuild, build e postbuild, que rodam neste job.
+      PRERENDER_PAROQUIAS_CRITERIO: ${{ vars.PRERENDER_PAROQUIAS_CRITERIO_PRODUCAO }}
+      PRERENDER_ACEITAR_MARGEM: ${{ vars.PRERENDER_ACEITAR_MARGEM_PRODUCAO }}
     steps:
       - uses: actions/checkout@v3
         with:

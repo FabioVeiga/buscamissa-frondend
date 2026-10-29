@@ -94,8 +94,7 @@ function paroquiaDaLoc(loc) {
  * no `prebuild`), NÃO filtra: melhor publicar o sitemap sem o filtro extra do que
  * arriscar remover tudo por engano.
  */
-function filtrarParoquiasSemHtml(xml) {
-  const selecionadas = paroquiasDoDisco();
+function filtrarParoquiasSemHtml(xml, selecionadas) {
   if (selecionadas === null) {
     return { xml, removidas: 0, semCache: true };
   }
@@ -153,6 +152,11 @@ function adicionarLandingsDeIntencao(xml, baseUrl) {
 }
 
 async function main() {
+  // Seleção calculada UMA vez, antes da busca do sitemap: um erro de critério (v8 sem
+  // proteção válida, proteção divergente da base) derruba o prebuild aqui, com uma única
+  // mensagem, em vez de ser capturado como "falha ao buscar o sitemap" e reaparecer
+  // depois no registro. O filtro e o registro usam esta mesma seleção.
+  const selecionadas = paroquiasDoDisco(ROOT);
   const base = lerApiUrl();
   const url = `${base}/sitemap.xml`;
   const inicio = Date.now();
@@ -165,7 +169,7 @@ async function main() {
     if (!xmlBruto.includes('<urlset')) throw new Error('resposta não parece um sitemap XML válido');
 
     const totalBruto = (xmlBruto.match(/<loc>/g) ?? []).length;
-    const { xml: xmlFiltrado, removidas, semCache } = filtrarParoquiasSemHtml(xmlBruto);
+    const { xml: xmlFiltrado, removidas, semCache } = filtrarParoquiasSemHtml(xmlBruto, selecionadas);
 
     // Base do XML (não hardcoded): staging e prod usam hosts diferentes, e o
     // SitemapController já resolveu isso via FrontendBaseUrl. Reaproveitamos a mesma.
@@ -192,12 +196,12 @@ async function main() {
   }
   // Fora do try: o registro do critério não depende do sitemap da API, e um erro de
   // critério (v8 sem proteção válida) deve derrubar o prebuild, não virar aviso.
-  registrarCriterio();
+  registrarCriterio(selecionadas);
 }
 
 /** Grava o registro do prebuild e loga critério e janelas (ver gravarRegistroCriterio). */
-function registrarCriterio() {
-  const registro = gravarRegistroCriterio(ROOT);
+function registrarCriterio(selecionadas) {
+  const registro = gravarRegistroCriterio(ROOT, process.env, selecionadas);
   if (!registro) return;
   const { criterio } = registro;
   const demanda = lerDemanda(ROOT);
@@ -224,4 +228,9 @@ function registrarCriterio() {
   for (const aviso of avisos) console.warn(`⚠ [prerender-paroquias] ${aviso}.`);
 }
 
-main();
+// Erro fora da busca do sitemap (critério, proteção, registro): uma mensagem e exit 1,
+// sem stack trace — a busca do sitemap continua tolerante a falha, tratada dentro de main.
+main().catch((err) => {
+  console.error(`\n❌ ${err?.message ?? err}`);
+  process.exit(1);
+});

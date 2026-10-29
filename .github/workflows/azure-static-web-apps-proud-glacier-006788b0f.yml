@@ -20,11 +20,11 @@ jobs:
     # que master vai gerar.
     env:
       TZ: America/Sao_Paulo
-      # Critério do prerender de paróquias e exceção de margem (docs/prerender-paroquias-criterio.md).
-      # Variáveis do repositório, vazias por padrão = critério padrão do código e nenhuma exceção.
-      # Valem para prebuild, build e postbuild, que rodam neste mesmo job.
-      PRERENDER_PAROQUIAS_CRITERIO: ${{ vars.PRERENDER_PAROQUIAS_CRITERIO }}
-      PRERENDER_ACEITAR_MARGEM: ${{ vars.PRERENDER_ACEITAR_MARGEM }}
+      # Critério do prerender de paróquias e exceção de margem DESTE ambiente (staging);
+      # ver docs/prerender-paroquias-criterio.md. O staging usa a base de dev, para a qual o
+      # arquivo de proteção (gerado da produção) não vale: o padrão aqui é demanda.
+      PRERENDER_PAROQUIAS_CRITERIO: ${{ vars.PRERENDER_PAROQUIAS_CRITERIO_STAGING || 'demanda' }}
+      PRERENDER_ACEITAR_MARGEM: ${{ vars.PRERENDER_ACEITAR_MARGEM_STAGING }}
     steps:
       - uses: actions/checkout@v3
         with:

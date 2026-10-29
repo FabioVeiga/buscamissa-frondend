@@ -440,8 +440,7 @@ export function registroDaSelecao(criterio, selecionadas) {
  * seleção a registrar (build:dev) e devolve null. Erros de critério (v8 sem arquivo,
  * proteção divergente) NÃO são engolidos: sobem e derrubam o prebuild.
  */
-export function gravarRegistroCriterio(base = process.cwd(), env = process.env) {
-  const selecionadas = paroquiasDoDisco(base, env);
+export function gravarRegistroCriterio(base = process.cwd(), env = process.env, selecionadas = paroquiasDoDisco(base, env)) {
   if (selecionadas === null) return null;
   const registro = registroDaSelecao(criterioAtivo(base, env), selecionadas);
   writeFileSync(join(base, ARQUIVO_REGISTRO), JSON.stringify(registro));
