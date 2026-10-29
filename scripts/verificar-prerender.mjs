@@ -8,8 +8,9 @@ import {
   conferirRegistro,
   contarCidades,
   criterioAtivo,
-  paroquiasDoDisco,
+  calcularSelecao,
   registroDaSelecao,
+  validarRegistro,
 } from './lib/selecionar-paroquias-prerender.mjs';
 import { tetoParoquias } from './lib/orcamento-arquivos.mjs';
 
@@ -382,8 +383,15 @@ function lerCache(arquivo) {
 if (lerCache('paroquias.json')) {
   let erros;
   try {
-    const registro = lerCache('criterio-prerender.json');
-    erros = conferirRegistro(registro, registroDaSelecao(criterioPostbuild, paroquiasDoDisco(ROOT)));
+    // O registro é o que os workers de prerender usaram (paroquiasDoDisco): estrutura,
+    // versão, integridade e origem conferidas antes de comparar com o recálculo.
+    const arquivoRegistro = join(ROOT, ARQUIVO_REGISTRO);
+    const { dados: registro, erro } = existsSync(arquivoRegistro)
+      ? validarRegistro(readFileSync(arquivoRegistro, 'utf-8'), readFileSync(join(ROOT, '.prerender-cache', 'paroquias.json'), 'utf-8'))
+      : { dados: null };
+    erros = erro
+      ? [`registro inválido: ${erro}`]
+      : conferirRegistro(registro, registroDaSelecao(criterioPostbuild, calcularSelecao(ROOT)));
   } catch (err) {
     erros = [err.message];
   }
@@ -463,7 +471,7 @@ if (paroquiasCache && browserDir) {
   const rotasPorCep = new Map();
 
   for (const cep of CEPS_COM_CITACAO_EXTERNA) {
-    // Replica EXATAMENTE a elegibilidade de paroquiasDoDisco (uf + cidadeSlug + slug +
+    // Replica EXATAMENTE a elegibilidade de calcularSelecao (uf + cidadeSlug + slug +
     // ≥1 missa). Sem o critério de missa, uma paróquia protegida que perde o último
     // horário viraria "destino sem HTML" e abortaria o build — quando na verdade o
     // prerender a excluiu de propósito, porque a página não teria o conteúdo que

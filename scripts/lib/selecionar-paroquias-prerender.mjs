@@ -15,6 +15,7 @@
  * nunca de `fetch`/API — a seleção é sempre derivada do cache em disco.
  */
 
+import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { tetoParoquias } from './orcamento-arquivos.mjs';
@@ -419,11 +420,17 @@ export function lerJanelaDemanda(base = process.cwd()) {
 }
 
 /**
- * Arquivo, no cache do prebuild, com o critério e a seleção que o sitemap usou. O
- * postbuild recalcula e compara: critério ou seleção diferentes entre as etapas
- * (variável de ambiente só em uma delas, arquivo trocado no meio) derrubam o build.
+ * Arquivo, no cache do prebuild, com o critério e a seleção que o prebuild calculou.
+ * É a ÚNICA fonte da seleção dentro dos workers de prerender do Angular: o
+ * `@angular/build` cria esses workers com `env: { NG_ALLOWED_HOSTS }`, sem herdar o
+ * `process.env` do build, e qualquer variável lida lá (o critério, por exemplo) vale
+ * sempre "não definida". O postbuild recalcula com o ambiente do build e compara:
+ * critério ou seleção diferentes derrubam o build.
  */
 export const ARQUIVO_REGISTRO = join('.prerender-cache', 'criterio-prerender.json');
+export const VERSAO_REGISTRO = 2;
+
+const ARQUIVO_PAROQUIAS = join('.prerender-cache', 'paroquias.json');
 
 export function assinaturaSelecao(selecionadas) {
   return selecionadas.map((s) => `${String(s.uf).toLowerCase()}/${s.cidade}/${s.slug}`).sort().join('\n');
@@ -433,16 +440,59 @@ export function registroDaSelecao(criterio, selecionadas) {
   return { criterio, paroquias: selecionadas.length, assinatura: assinaturaSelecao(selecionadas) };
 }
 
+const sha256 = (texto) => createHash('sha256').update(texto).digest('hex');
+
+/** Hash do conteúdo do registro (tudo menos o próprio campo `integridade`). */
+function integridadeRegistro({ versao, criterio, cache, selecao }) {
+  return sha256(JSON.stringify({ versao, criterio, cache, selecao }));
+}
+
+/**
+ * Registro completo: além do resumo comparado no postbuild, a seleção em si (na ordem
+ * calculada), o hash do `paroquias.json` de onde ela saiu e um hash de integridade.
+ */
+export function montarRegistro(criterio, selecionadas, conteudoCache) {
+  const selecao = selecionadas.map(({ uf, cidade, slug }) => ({ uf, cidade, slug }));
+  const corpo = { versao: VERSAO_REGISTRO, criterio, cache: sha256(conteudoCache), selecao };
+  return { ...corpo, ...registroDaSelecao(criterio, selecao), integridade: integridadeRegistro(corpo) };
+}
+
+/**
+ * Valida estrutura, versão, integridade e origem do registro. Devolve `{ dados }` ou
+ * `{ erro }`. `conteudoCache` é o `paroquias.json` atual: registro de outro cache
+ * (prebuild de outro ambiente, cache trocado depois do prebuild) é recusado.
+ */
+export function validarRegistro(texto, conteudoCache) {
+  let r;
+  try {
+    r = JSON.parse(texto);
+  } catch {
+    return { erro: 'não é JSON válido' };
+  }
+  if (!r || typeof r !== 'object') return { erro: 'não é um objeto' };
+  if (r.versao !== VERSAO_REGISTRO) return { erro: `versão ${r.versao} (esperada ${VERSAO_REGISTRO}); rode o prebuild de novo` };
+  if (!CRITERIOS.includes(r.criterio)) return { erro: `critério "${r.criterio}" inválido` };
+  const valida = (s) => s && ['uf', 'cidade', 'slug'].every((k) => typeof s[k] === 'string' && s[k]);
+  if (!Array.isArray(r.selecao) || !r.selecao.every(valida)) return { erro: 'seleção ausente ou malformada' };
+  if (r.paroquias !== r.selecao.length || r.assinatura !== assinaturaSelecao(r.selecao)) {
+    return { erro: 'resumo não confere com a seleção' };
+  }
+  if (r.integridade !== integridadeRegistro(r)) return { erro: 'hash de integridade não confere' };
+  if (r.cache !== sha256(conteudoCache)) return { erro: `gerado de outro ${ARQUIVO_PAROQUIAS}` };
+  return { dados: r };
+}
+
 /**
  * Calcula e grava o registro do prebuild. Independe do sitemap da API: precisa existir
  * mesmo quando a busca do sitemap falha e o build segue com o sitemap anterior, senão
- * o postbuild barraria todo deploy em que a API oscilou. Sem cache do prebuild não há
- * seleção a registrar (build:dev) e devolve null. Erros de critério (v8 sem arquivo,
- * proteção divergente) NÃO são engolidos: sobem e derrubam o prebuild.
+ * o prerender e o postbuild barrariam todo deploy em que a API oscilou. Sem cache do
+ * prebuild não há seleção a registrar (build:dev) e devolve null. Erros de critério (v8
+ * sem arquivo, proteção divergente) NÃO são engolidos: sobem e derrubam o prebuild.
  */
-export function gravarRegistroCriterio(base = process.cwd(), env = process.env, selecionadas = paroquiasDoDisco(base, env)) {
+export function gravarRegistroCriterio(base = process.cwd(), env = process.env, selecionadas = calcularSelecao(base, env)) {
   if (selecionadas === null) return null;
-  const registro = registroDaSelecao(criterioAtivo(base, env), selecionadas);
+  const conteudoCache = readFileSync(join(base, ARQUIVO_PAROQUIAS), 'utf-8');
+  const registro = montarRegistro(criterioAtivo(base, env), selecionadas, conteudoCache);
   writeFileSync(join(base, ARQUIVO_REGISTRO), JSON.stringify(registro));
   return registro;
 }
@@ -485,15 +535,36 @@ export function contarCidades(cidades) {
 }
 
 /**
- * Seleção do build, a partir do cache do prebuild e dos arquivos de demanda e proteção.
+ * Seleção do build lida do registro do prebuild — o que os workers de prerender usam
+ * (`app.routes.server.ts`). Não lê variável de ambiente nem recalcula nada.
  *
  * Retorna null se o cache não existe (ex.: build:dev sem prebuild) → o caller cai no
- * fallback. Em staging/prod o cache é obrigatório (ver baixar-bulk-prerender.mjs). No
- * critério V8 o teto depende de `cidades.json`; sem ele não há como respeitar o
- * orçamento, e a seleção falha em vez de adivinhar.
+ * fallback. Com cache, o registro é obrigatório: ausente ou inválido derruba o
+ * prerender, em vez de cair no `CRITERIO_PADRAO` e gerar outra seleção.
  */
-export function paroquiasDoDisco(base = process.cwd(), env = process.env) {
-  const arquivo = join(base, '.prerender-cache', 'paroquias.json');
+export function paroquiasDoDisco(base = process.cwd()) {
+  const arquivoCache = join(base, ARQUIVO_PAROQUIAS);
+  if (!existsSync(arquivoCache)) return null;
+  const arquivoRegistro = join(base, ARQUIVO_REGISTRO);
+  if (!existsSync(arquivoRegistro)) {
+    throw new Error(`[prerender-paroquias] ${ARQUIVO_REGISTRO} ausente: o prebuild (gerar-sitemap) não gravou a seleção.`);
+  }
+  const { dados, erro } = validarRegistro(readFileSync(arquivoRegistro, 'utf-8'), readFileSync(arquivoCache, 'utf-8'));
+  if (erro) throw new Error(`[prerender-paroquias] ${ARQUIVO_REGISTRO} inválido: ${erro}.`);
+  return dados.selecao;
+}
+
+/**
+ * Seleção do build, a partir do cache do prebuild, dos arquivos de demanda e proteção
+ * e do critério do ambiente. Roda no prebuild e no postbuild (processos com o
+ * `process.env` do build), nunca nos workers do Angular.
+ *
+ * Retorna null se o cache não existe (ex.: build:dev sem prebuild). No critério V8 o
+ * teto depende de `cidades.json`; sem ele não há como respeitar o orçamento, e a
+ * seleção falha em vez de adivinhar.
+ */
+export function calcularSelecao(base = process.cwd(), env = process.env) {
+  const arquivo = join(base, ARQUIVO_PAROQUIAS);
   if (!existsSync(arquivo)) return null;
   const lista = JSON.parse(readFileSync(arquivo, 'utf-8'));
   const criterio = criterioAtivo(base, env);

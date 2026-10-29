@@ -47,6 +47,8 @@ test('gerar-sitemap: API fora + critério válido → segue (exit 0) e grava o r
   const registro = JSON.parse(readFileSync(join(r, '.prerender-cache', 'criterio-prerender.json'), 'utf-8'));
   assert.equal(registro.criterio, 'demanda');
   assert.equal(registro.paroquias, 2);
+  assert.equal(registro.versao, 2);
+  assert.equal(registro.selecao.length, 2);
 });
 
 test('gerar-sitemap: proteção divergente da base → um único erro claro, sem stack trace nem registro', () => {

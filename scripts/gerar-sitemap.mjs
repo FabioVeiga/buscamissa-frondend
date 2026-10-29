@@ -53,7 +53,7 @@ import {
   lerDemanda,
   lerJanelaDemanda,
   lerProtecao,
-  paroquiasDoDisco,
+  calcularSelecao,
   VARIAVEL_CRITERIO,
 } from './lib/selecionar-paroquias-prerender.mjs';
 
@@ -89,7 +89,7 @@ function paroquiaDaLoc(loc) {
  * `<url>...</url>` é delimitado com segurança por essa regex — sem precisar de um
  * parser XML completo para um filtro deste tamanho.
  *
- * Se o cache do prebuild não existir (`paroquiasDoDisco()` retorna null — não deveria
+ * Se o cache do prebuild não existir (`calcularSelecao()` retorna null — não deveria
  * acontecer em staging/prod, onde `baixar-bulk-prerender.mjs` roda antes deste script
  * no `prebuild`), NÃO filtra: melhor publicar o sitemap sem o filtro extra do que
  * arriscar remover tudo por engano.
@@ -156,7 +156,7 @@ async function main() {
   // proteção válida, proteção divergente da base) derruba o prebuild aqui, com uma única
   // mensagem, em vez de ser capturado como "falha ao buscar o sitemap" e reaparecer
   // depois no registro. O filtro e o registro usam esta mesma seleção.
-  const selecionadas = paroquiasDoDisco(ROOT);
+  const selecionadas = calcularSelecao(ROOT);
   const base = lerApiUrl();
   const url = `${base}/sitemap.xml`;
   const inicio = Date.now();

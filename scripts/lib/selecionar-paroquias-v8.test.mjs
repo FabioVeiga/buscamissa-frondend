@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, mkdtempSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import {
@@ -17,7 +17,10 @@ import {
   gravarRegistroCriterio,
   ARQUIVO_REGISTRO,
   LIMITE_DESCARTE_PROTECAO,
+  calcularSelecao,
   paroquiasDoDisco,
+  validarRegistro,
+  VERSAO_REGISTRO,
   registroDaSelecao,
   validarProtecao,
   selecionarParoquias,
@@ -175,7 +178,7 @@ test('critério padrão é v8: com arquivo válido usa V8, sem ele falha explici
   assert.equal(criterioEsperado({}), 'v8');
   const base = montarBase({ protecao: ARQUIVO_OK, demanda: ['sp/sao-paulo/sp-b'] });
   assert.equal(criterioAtivo(base, {}), 'v8');
-  assert.deepEqual(paroquiasDoDisco(base, {}), paroquiasDoDisco(base, V8));
+  assert.deepEqual(calcularSelecao(base, {}), calcularSelecao(base, V8));
   assert.throws(() => criterioAtivo(montarBase({ demanda: ['sp/sao-paulo/sp-b'] }), {}), /exige/);
 });
 
@@ -191,7 +194,7 @@ test('v8 com arquivo válido: seleção V8 com teto dinâmico', () => {
   const base = montarBase({ protecao: ARQUIVO_OK });
   assert.equal(criterioAtivo(base, V8), 'v8');
   assert.deepEqual(
-    paroquiasDoDisco(base, V8),
+    calcularSelecao(base, V8),
     selecionarParoquiasV8(LISTA, { protecao: ARQUIVO_OK, teto: tetoParoquias({ cidades: 4 }) }),
   );
 });
@@ -210,7 +213,7 @@ test('v8 exigido e arquivo ausente, inválido ou incompatível: falha com o moti
   for (const [protecao, motivo] of casos) {
     const base = montarBase({ protecao });
     assert.throws(() => criterioAtivo(base, V8), motivo);
-    assert.throws(() => paroquiasDoDisco(base, V8), motivo);
+    assert.throws(() => calcularSelecao(base, V8), motivo);
     assert.match(validarProtecao(base).erro, motivo);
   }
 });
@@ -228,7 +231,7 @@ test('descartes: contados à parte; dentro do limite passa, acima falha sem cort
   assert.equal(conferirDescartes(LISTA, sujo, 0.6).excedeu, false);
 
   const base = montarBase({ protecao: sujo });
-  assert.throws(() => paroquiasDoDisco(base, V8), /divergente da base.*protegidas descartadas 1\/2/);
+  assert.throws(() => calcularSelecao(base, V8), /divergente da base.*protegidas descartadas 1\/2/);
   assert.equal(LIMITE_DESCARTE_PROTECAO, 0.02);
 });
 
@@ -237,9 +240,9 @@ test('reversão: =qualidade e =demanda ignoram a proteção, inclusive inválida
   const q = { [VARIAVEL_CRITERIO]: 'qualidade' };
   const d = { [VARIAVEL_CRITERIO]: 'demanda' };
   assert.equal(criterioAtivo(base, q), 'qualidade');
-  assert.deepEqual(paroquiasDoDisco(base, q), selecionarParoquias(LISTA, { demanda: null }));
+  assert.deepEqual(calcularSelecao(base, q), selecionarParoquias(LISTA, { demanda: null }));
   assert.equal(criterioAtivo(base, d), 'demanda');
-  assert.deepEqual(paroquiasDoDisco(base, d), selecionarParoquias(LISTA, { demanda: ['sp/sao-paulo/sp-b'] }));
+  assert.deepEqual(calcularSelecao(base, d), selecionarParoquias(LISTA, { demanda: ['sp/sao-paulo/sp-b'] }));
 });
 
 test('demanda sem arquivo de demanda segue o comportamento anterior (qualidade)', () => {
@@ -249,7 +252,7 @@ test('demanda sem arquivo de demanda segue o comportamento anterior (qualidade)'
 
 test('V8 sem cidades.json falha explicitamente (não adivinha o teto)', () => {
   const base = montarBase({ protecao: ARQUIVO_OK, cidades: false });
-  assert.throws(() => paroquiasDoDisco(base, V8), /cidades\.json/);
+  assert.throws(() => calcularSelecao(base, V8), /cidades\.json/);
 });
 
 test('registro prebuild × postbuild: igual passa; critério, contagem ou conjunto diferentes falham', () => {
@@ -281,7 +284,7 @@ test('registro do prebuild: gravado a partir do cache, sem depender do sitemap d
   const registro = gravarRegistroCriterio(base, {});
   assert.equal(registro.criterio, 'v8');
   assert.deepEqual(JSON.parse(readFileSync(join(base, ARQUIVO_REGISTRO), 'utf-8')), registro);
-  assert.deepEqual(conferirRegistro(registro, registroDaSelecao(criterioAtivo(base, {}), paroquiasDoDisco(base, {}))), []);
+  assert.deepEqual(conferirRegistro(registro, registroDaSelecao(criterioAtivo(base, {}), calcularSelecao(base, {}))), []);
 });
 
 test('registro do prebuild: sem cache não grava nada (build:dev)', () => {
@@ -295,4 +298,90 @@ test('registro do prebuild: erro de critério sobe (não vira aviso nem registro
   const base = montarBase({ protecao: '{ quebrado' });
   assert.throws(() => gravarRegistroCriterio(base, V8), /não é JSON/);
   assert.equal(existsSync(join(base, ARQUIVO_REGISTRO)), false);
+});
+
+// --- Registro como fonte da seleção nos workers do Angular -------------------------
+// O @angular/build cria os workers de prerender com `env: { NG_ALLOWED_HOSTS }`: lá o
+// critério do ambiente nunca chega. paroquiasDoDisco() não recebe env de propósito.
+
+const DEMANDA = { [VARIAVEL_CRITERIO]: 'demanda' };
+const lerRegistro = (base) => readFileSync(join(base, ARQUIVO_REGISTRO), 'utf-8');
+const lerCacheParoquias = (base) => readFileSync(join(base, '.prerender-cache', 'paroquias.json'), 'utf-8');
+
+test('worker sem env + registro demanda: usa a seleção demanda do prebuild, não o padrão v8', () => {
+  // Arquivo de proteção válido presente: se o worker recalculasse sem env, sairia V8.
+  const base = montarBase({ protecao: ARQUIVO_OK, demanda: ['sp/sao-paulo/sp-b'] });
+  const registro = gravarRegistroCriterio(base, DEMANDA);
+  assert.equal(registro.criterio, 'demanda');
+  const esperado = calcularSelecao(base, DEMANDA).map(({ uf, cidade, slug }) => ({ uf, cidade, slug }));
+  assert.notDeepEqual(esperado, calcularSelecao(base, {}).map(({ uf, cidade, slug }) => ({ uf, cidade, slug })));
+  assert.equal(paroquiasDoDisco.length, 0, 'paroquiasDoDisco não aceita env');
+  assert.deepEqual(paroquiasDoDisco(base), esperado);
+});
+
+test('worker com registro v8: devolve exatamente a seleção V8 do prebuild', () => {
+  const base = montarBase({ protecao: ARQUIVO_OK, demanda: ['sp/sao-paulo/sp-b'] });
+  assert.equal(gravarRegistroCriterio(base, {}).criterio, 'v8');
+  assert.deepEqual(chaves(paroquiasDoDisco(base)), chaves(calcularSelecao(base, V8)));
+});
+
+test('worker sem registro: falha explícita, sem cair no CRITERIO_PADRAO', () => {
+  const base = montarBase({ protecao: ARQUIVO_OK, demanda: ['sp/sao-paulo/sp-b'] });
+  assert.throws(() => paroquiasDoDisco(base), /criterio-prerender\.json ausente/);
+});
+
+test('worker sem cache do prebuild (build:dev): null, o caller usa o fallback', () => {
+  const base = mkdtempSync(join(tmpdir(), 'v8-sem-cache-'));
+  assert.equal(paroquiasDoDisco(base), null);
+});
+
+test('registro inválido: estrutura, versão, integridade e origem são recusadas', () => {
+  const base = montarBase({ demanda: ['sp/sao-paulo/sp-b'] });
+  gravarRegistroCriterio(base, DEMANDA);
+  const original = JSON.parse(lerRegistro(base));
+  const cache = lerCacheParoquias(base);
+  assert.ok(validarRegistro(JSON.stringify(original), cache).dados);
+  const casos = [
+    ['{ quebrado', /não é JSON/],
+    [JSON.stringify({ ...original, versao: 1 }), new RegExp(`versão 1 \\(esperada ${VERSAO_REGISTRO}\\)`)],
+    [JSON.stringify({ ...original, criterio: 'xyz' }), /critério "xyz" inválido/],
+    [JSON.stringify({ ...original, selecao: [{ uf: 'sp' }] }), /seleção ausente ou malformada/],
+    [JSON.stringify({ ...original, paroquias: original.paroquias + 1 }), /resumo não confere/],
+    // Trocar o critério E a seleção mantendo o resumo coerente: só a integridade pega.
+    [JSON.stringify({ ...original, criterio: 'v8' }), /integridade não confere/],
+  ];
+  for (const [texto, motivo] of casos) {
+    assert.match(validarRegistro(texto, cache).erro, motivo);
+    writeFileSync(join(base, ARQUIVO_REGISTRO), texto);
+    assert.throws(() => paroquiasDoDisco(base), motivo);
+  }
+  // Registro íntegro, mas o paroquias.json mudou depois do prebuild.
+  writeFileSync(join(base, ARQUIVO_REGISTRO), JSON.stringify(original));
+  writeFileSync(join(base, '.prerender-cache', 'paroquias.json'), JSON.stringify(LISTA.slice(1)));
+  assert.throws(() => paroquiasDoDisco(base), /gerado de outro/);
+});
+
+test('staging × produção: cada prebuild registra o seu critério; o worker segue o registro', () => {
+  const base = montarBase({ protecao: ARQUIVO_OK, demanda: ['sp/sao-paulo/sp-b'] });
+  // staging: workflow passa demanda
+  const staging = gravarRegistroCriterio(base, DEMANDA);
+  const selStaging = paroquiasDoDisco(base);
+  // produção: variável vazia → padrão v8
+  const producao = gravarRegistroCriterio(base, { [VARIAVEL_CRITERIO]: '' });
+  const selProducao = paroquiasDoDisco(base);
+  assert.equal(staging.criterio, 'demanda');
+  assert.equal(producao.criterio, 'v8');
+  assert.deepEqual(chaves(selStaging), chaves(calcularSelecao(base, DEMANDA)));
+  assert.deepEqual(chaves(selProducao), chaves(calcularSelecao(base, {})));
+});
+
+test('divergência prebuild × postbuild: registro demanda contra recálculo v8 é apontada', () => {
+  const base = montarBase({ protecao: ARQUIVO_OK, demanda: ['sp/sao-paulo/sp-b'] });
+  gravarRegistroCriterio(base, DEMANDA);
+  const { dados } = validarRegistro(lerRegistro(base), lerCacheParoquias(base));
+  const erros = conferirRegistro(dados, registroDaSelecao('v8', calcularSelecao(base, {})));
+  assert.match(erros[0], /critério demanda no prebuild × v8 no postbuild/);
+  assert.deepEqual(conferirRegistro(dados, registroDaSelecao('demanda', calcularSelecao(base, DEMANDA))), []);
+  rmSync(join(base, ARQUIVO_REGISTRO));
+  assert.deepEqual(conferirRegistro(null, registroDaSelecao('demanda', calcularSelecao(base, DEMANDA))), ['registro do prebuild ausente']);
 });
