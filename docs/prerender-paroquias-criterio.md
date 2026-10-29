@@ -52,7 +52,15 @@ O staging, com a base de dev e o critério `demanda`, tem margem bem acima de 15
 ## Reversão da produção
 
 1. Criar ou alterar a variável `PRERENDER_PAROQUIAS_CRITERIO_PRODUCAO` com `demanda` (ou `qualidade`). Não precisa de commit e não afeta o staging.
-2. **Hoje** a reversão também exige `PRERENDER_ACEITAR_MARGEM_PRODUCAO`: `demanda` e `qualidade` usam o teto fixo de 1.900, e com a base de 28/10/2026 (1.806 cidades) a margem fica em ~111 arquivos, abaixo da folga. Use o menor `n` que passe (ex.: `100`) e siga as regras da exceção.
+2. **Hoje** a reversão também exige `PRERENDER_ACEITAR_MARGEM_PRODUCAO`: `demanda` e `qualidade` usam o teto fixo de 1.900, que não desconta as cidades, e a margem fica abaixo da folga de 150. **Calcule o valor na hora da reversão; não copie um número antigo**, porque ele cai 1 a cada cidade nova na base:
+
+   ```
+   M = 4.200 − A − (1.900 − P)
+   ```
+
+   `A` = arquivos e `P` = paróquias do **último build de produção** (no log: `[dist-size] … <A> arquivos` e `[cobertura] "paroquia": <P>/<P>`). A conta está em `margemNaReversao` (`scripts/lib/orcamento-arquivos.mjs`), com teste. Premissa: a produção tem mais paróquias elegíveis que o teto fixo (hoje ≈7.000 × 1.900), então a reversão gera exatamente 1.900; se um dia tiver menos, troque 1.900 pelo número de elegíveis.
+
+   Exemplo com o build de 29/10/2026 (A = 4.050, P = 1.821): M = 4.200 − 4.050 − 79 = **71**. A exceção passa com qualquer `n ≤ M`; use um valor um pouco abaixo (ex.: `70`) para absorver uma cidade criada entre o último build e o da reversão. `100` (o exemplo anterior deste documento) faria o `dist-size` barrar a reversão. Siga as regras da exceção.
 3. Rodar um build de produção (push em `master`). Os workflows não têm disparo manual.
 4. Conferir no log: a linha `[prerender-paroquias] critério…`, o aviso de exceção do `dist-size` e `[criterio] seleção de paróquias igual no prebuild e no postbuild`.
 5. Desfazer: apagar as duas variáveis `_PRODUCAO` quando o problema da V8 for corrigido.

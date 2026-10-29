@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { ARQUIVOS_FIXOS, avaliarMargem, FOLGA_ARQUIVOS, MAX_FILES, medirDiretorio, projetarArquivos, tetoParoquias, VARIAVEL_EXCECAO_MARGEM } from './orcamento-arquivos.mjs';
+import { ARQUIVOS_FIXOS, avaliarMargem, FOLGA_ARQUIVOS, margemNaReversao, MAX_FILES, medirDiretorio, projetarArquivos, tetoParoquias, VARIAVEL_EXCECAO_MARGEM } from './orcamento-arquivos.mjs';
 
 test('medirDiretorio conta como o build: um index.html por rota, mais os assets', () => {
   // dist/<app>/browser sintético: 3 assets + 2 páginas de cidade + 3 de paróquia.
@@ -41,4 +41,24 @@ test('margem real: exceção explícita aceita só margem ≥ mínimo e valor v�
   for (const ruim of ['abc', '-1', '150', '10.5']) {
     assert.match(avaliarMargem({ arquivos: 4089, env: env(ruim) }).motivo, /inválido/);
   }
+});
+
+test('reversão de produção (build V8 de 29/10: 4.050 arquivos, 1.821 paróquias): margem 71', () => {
+  const margem = margemNaReversao({ arquivosV8: 4050, paroquiasV8: 1821, paroquiasReversao: 1900 });
+  assert.equal(margem, 71);
+  // Mesma conta pelo caminho do guard: o dist da reversão tem 79 páginas a mais.
+  const arquivos = 4050 + (1900 - 1821);
+  assert.equal(avaliarMargem({ arquivos, env: {} }).margem, margem);
+  // A exceção passa até o valor da margem e falha acima; o 100 do doc antigo falharia.
+  assert.equal(avaliarMargem({ arquivos, env: { [VARIAVEL_EXCECAO_MARGEM]: '70' } }).ok, true);
+  assert.equal(avaliarMargem({ arquivos, env: { [VARIAVEL_EXCECAO_MARGEM]: String(margem) } }).ok, true);
+  assert.equal(avaliarMargem({ arquivos, env: { [VARIAVEL_EXCECAO_MARGEM]: String(margem + 1) } }).ok, false);
+  assert.equal(avaliarMargem({ arquivos, env: { [VARIAVEL_EXCECAO_MARGEM]: '100' } }).ok, false);
+});
+
+test('reversão: cada cidade nova na base tira 1 da margem', () => {
+  // Build V8 com +1 cidade: o teto dinâmico corta 1 paróquia e o dist fica do mesmo tamanho.
+  const antes = margemNaReversao({ arquivosV8: 4050, paroquiasV8: 1821, paroquiasReversao: 1900 });
+  const depois = margemNaReversao({ arquivosV8: 4050, paroquiasV8: 1820, paroquiasReversao: 1900 });
+  assert.equal(depois, antes - 1);
 });

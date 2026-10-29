@@ -102,3 +102,14 @@ export function tetoParoquias({
 }) {
   return maxArquivos - folga - fixos - cidades;
 }
+
+/**
+ * Margem real que a reversão de produção (critério `demanda`/`qualidade`, teto fixo)
+ * deixaria, a partir do último build V8 medido: troca as paróquias V8 pelas do teto
+ * fixo e mantém o resto do dist. Com elegíveis acima do teto fixo, a reversão gera
+ * exatamente `paroquiasReversao` páginas. Serve para escolher a exceção de margem NA
+ * HORA da reversão: o valor cai a cada cidade nova na base.
+ */
+export function margemNaReversao({ arquivosV8, paroquiasV8, paroquiasReversao, maxArquivos = MAX_FILES }) {
+  return maxArquivos - arquivosV8 - (paroquiasReversao - paroquiasV8);
+}
