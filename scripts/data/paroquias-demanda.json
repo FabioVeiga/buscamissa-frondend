@@ -1,0 +1,2497 @@
+{
+  "versao": 1,
+  "geradoEm": "2026-10-27",
+  "fonte": "Google Search Console — impressões por página /paroquia/",
+  "janela": {
+    "inicio": "2026-09-01",
+    "fim": "2026-10-24"
+  },
+  "criterios": {
+    "minImpressoes": 300,
+    "minMeses": 2,
+    "margem": 1.5,
+    "permanenciaDias": 60,
+    "maxTrocas": 600
+  },
+  "vagas": 413,
+  "resto": [
+    {
+      "chave": "pa/belem/basilica-santuario-nossa-senhora-de-nazare-do-desterro",
+      "impressoes": 15541,
+      "cliques": 16,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/curitiba/santuario-nossa-senhora-de-guadalupe",
+      "impressoes": 12409,
+      "cliques": 90,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-nossa-senhora-do-brasil",
+      "impressoes": 10232,
+      "cliques": 20,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-santa-generosa",
+      "impressoes": 9804,
+      "cliques": 30,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "ce/fortaleza/paroquia-nossa-senhora-de-fatima",
+      "impressoes": 9370,
+      "cliques": 5,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "go/goiania/santuario-basilica-sagrada-familia",
+      "impressoes": 8581,
+      "cliques": 10,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "ce/fortaleza/paroquia-nossa-senhora-da-gloria",
+      "impressoes": 7909,
+      "cliques": 11,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "go/goiania/paroquia-nossa-senhora-aparecida-e-santa-edwiges",
+      "impressoes": 7664,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/osasco/paroquia-nossa-senhora-aparecida-jardim-padroeira-ii",
+      "impressoes": 7351,
+      "cliques": 45,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/mosteiro-de-sao-bento",
+      "impressoes": 7192,
+      "cliques": 46,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pa/belem/paroquia-santa-cruz-marco",
+      "impressoes": 7070,
+      "cliques": 62,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/curitiba/santuario-nossa-senhora-do-carmo",
+      "impressoes": 6792,
+      "cliques": 16,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/campinas/santuario-santa-rita-de-cassia",
+      "impressoes": 6670,
+      "cliques": 25,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-nossa-senhora-da-assuncao-norte-aguas-claras",
+      "impressoes": 6659,
+      "cliques": 17,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "go/goiania/paroquia-nossa-senhora-rosa-mistica",
+      "impressoes": 6657,
+      "cliques": 12,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pa/belem/basilica-nossa-senhora-de-nazare",
+      "impressoes": 6547,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-nossa-senhora-de-fatima",
+      "impressoes": 6485,
+      "cliques": 16,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-jose-dos-campos/paroquia-sagrada-familia",
+      "impressoes": 6235,
+      "cliques": 30,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "ce/fortaleza/paroquia-sao-vicente-de-paulo",
+      "impressoes": 5871,
+      "cliques": 9,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/catedral-sao-miguel-arcanjo",
+      "impressoes": 5670,
+      "cliques": 48,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/curitiba/santuario-nossa-senhora-do-perpetuo-socorro",
+      "impressoes": 5595,
+      "cliques": 2,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "ms/campo-grande/paroquia-sao-jose",
+      "impressoes": 5316,
+      "cliques": 8,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-sao-jose",
+      "impressoes": 5253,
+      "cliques": 17,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-jose-dos-campos/paroquia-nossa-senhora-de-lourdes",
+      "impressoes": 5207,
+      "cliques": 24,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rs/porto-alegre/santuario-nossa-senhora-aparecida",
+      "impressoes": 5064,
+      "cliques": 38,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "ce/fortaleza/santuario-nossa-senhora-de-fatima",
+      "impressoes": 5043,
+      "cliques": 2,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "al/maceio/paroquia-sao-pedro-apostolo",
+      "impressoes": 4994,
+      "cliques": 19,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-caetano-do-sul/paroquia-nossa-senhora-aparecida",
+      "impressoes": 4977,
+      "cliques": 50,
+      "desde": "2026-08-23"
+    },
+    {
+      "chave": "df/brasilia/santuario-nossa-senhora-da-saude",
+      "impressoes": 4934,
+      "cliques": 9,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/curitiba/santuario-de-nossa-senhora-do-sagrado-coracao",
+      "impressoes": 4856,
+      "cliques": 8,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mt/cuiaba/paroquia-nossa-senhora-mae-dos-homens",
+      "impressoes": 4713,
+      "cliques": 14,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "ms/campo-grande/paroquia-nossa-senhora-do-perpetuo-socorro",
+      "impressoes": 4684,
+      "cliques": 3,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/campinas/paroquia-nossa-senhora-aparecida",
+      "impressoes": 4669,
+      "cliques": 24,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mg/belo-horizonte/igreja-nossa-senhora-da-boa-viagem",
+      "impressoes": 4663,
+      "cliques": 15,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rs/porto-alegre/paroquia-sao-jorge",
+      "impressoes": 4622,
+      "cliques": 24,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "go/goiania/paroquia-sao-paulo-apostolo",
+      "impressoes": 4621,
+      "cliques": 15,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/santos/paroquia-nossa-senhora-aparecida",
+      "impressoes": 4466,
+      "cliques": 16,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-sao-pio-de-pietrelcina",
+      "impressoes": 4450,
+      "cliques": 10,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "ba/salvador/paroquia-nossa-senhora-da-luz",
+      "impressoes": 4435,
+      "cliques": 10,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/curitiba/paroquia-nossa-senhora-aparecida",
+      "impressoes": 4427,
+      "cliques": 22,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mg/belo-horizonte/paroquia-santo-antonio-savassi",
+      "impressoes": 4374,
+      "cliques": 47,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/basilica-santuario-sao-francisco-de-assis",
+      "impressoes": 4298,
+      "cliques": 7,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mg/belo-horizonte/santuario-sao-paulo-da-cruz",
+      "impressoes": 4298,
+      "cliques": 18,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mg/juiz-de-fora/paroquia-nossa-senhora-aparecida-nossa-senhora-aparecida",
+      "impressoes": 4286,
+      "cliques": 25,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pb/joao-pessoa/paroquia-nossa-senhora-de-fatima",
+      "impressoes": 4199,
+      "cliques": 21,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pe/recife/paroquia-nossa-senhora-de-fatima-da-boa-viagem",
+      "impressoes": 4176,
+      "cliques": 25,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-cristo-rei",
+      "impressoes": 4128,
+      "cliques": 27,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mt/cuiaba/paroquia-nossa-senhora-aparecida",
+      "impressoes": 4067,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/praia-grande/paroquia-santo-antonio",
+      "impressoes": 4047,
+      "cliques": 30,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-santuario-santa-edwiges",
+      "impressoes": 4010,
+      "cliques": 10,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "ce/fortaleza/paroquia-n-sra-de-nazare",
+      "impressoes": 4009,
+      "cliques": 19,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mg/juiz-de-fora/paroquia-sao-mateus",
+      "impressoes": 3972,
+      "cliques": 19,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pe/recife/nossa-senhora-da-boa-viagem",
+      "impressoes": 3918,
+      "cliques": 68,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/diadema/paroquia-bom-jesus-de-piraporinha",
+      "impressoes": 3867,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mt/varzea-grande/paroquia-nossa-senhora-do-carmo",
+      "impressoes": 3831,
+      "cliques": 110,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/salto/paroquia-nossa-senhora-do-monte-serrat",
+      "impressoes": 3829,
+      "cliques": 29,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-sao-joao-batista",
+      "impressoes": 3795,
+      "cliques": 22,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "go/goiania/catedral-metropolitana-paroquia-nossa-senhora-auxiliador",
+      "impressoes": 3773,
+      "cliques": 5,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "se/aracaju/paroquia-nossa-senhora-do-carmo-e-santa-teresinha-do-menino-jesus-bairro-suissa",
+      "impressoes": 3743,
+      "cliques": 12,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rn/natal/paroquia-de-santa-rita-de-cassia-dos-impossiveis",
+      "impressoes": 3735,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/santos/santuario-sagrado-coracao-de-jesus",
+      "impressoes": 3721,
+      "cliques": 20,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "ce/fortaleza/catedral-metropolitana-de-fortaleza",
+      "impressoes": 3715,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-nossa-senhora-da-assuncao",
+      "impressoes": 3707,
+      "cliques": 26,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/carapicuiba/paroquia-nossa-senhora-aparecida-carapicuiba",
+      "impressoes": 3606,
+      "cliques": 30,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/santuario-sao-joao-bosco-asa-sul",
+      "impressoes": 3605,
+      "cliques": 5,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pb/joao-pessoa/santuario-nossa-senhora-mae-rainha",
+      "impressoes": 3594,
+      "cliques": 51,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pb/joao-pessoa/paroquia-nossa-senhora-de-guadalupe",
+      "impressoes": 3579,
+      "cliques": 15,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/maua/santuario-diocesano-nossa-senhora-da-imaculada-conceicao",
+      "impressoes": 3564,
+      "cliques": 8,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "go/goiania/paroquia-sao-francisco-de-assis",
+      "impressoes": 3563,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/barueri/paroquia-nossa-senhora-de-lourdes",
+      "impressoes": 3553,
+      "cliques": 27,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sorocaba/paroquia-nossa-senhora-auxiliadora",
+      "impressoes": 3536,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-nossa-senhora-do-perpetuo-socorro-ceilandia-sul",
+      "impressoes": 3521,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-santa-rita-de-cassia",
+      "impressoes": 3509,
+      "cliques": 23,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-maria-imaculada",
+      "impressoes": 3508,
+      "cliques": 9,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mg/varginha/paroquia-nossa-senhora-aparecida",
+      "impressoes": 3497,
+      "cliques": 10,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rs/porto-alegre/paroquia-sao-francisco-de-assis",
+      "impressoes": 3482,
+      "cliques": 44,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-nossa-senhora-de-guadalupe",
+      "impressoes": 3480,
+      "cliques": 7,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/ribeirao-preto/santa-teresinha-doutora",
+      "impressoes": 3452,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "se/aracaju/paroquia-bom-jesus-dos-navegantes",
+      "impressoes": 3388,
+      "cliques": 35,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-santa-teresinha-taguatinga-norte",
+      "impressoes": 3377,
+      "cliques": 16,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-imaculado-coracao-de-maria-park-way",
+      "impressoes": 3350,
+      "cliques": 8,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sorocaba/paroquia-santuario-arquidiocesano-sao-judas-tadeu",
+      "impressoes": 3327,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-divino-espirito-santo-guara-ii",
+      "impressoes": 3264,
+      "cliques": 17,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/santuario-nossa-senhora-do-perpetuo-socorro",
+      "impressoes": 3248,
+      "cliques": 8,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pb/joao-pessoa/paroquia-nossa-senhora-aparecida",
+      "impressoes": 3245,
+      "cliques": 18,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/curitiba/santuario-sao-jose",
+      "impressoes": 3242,
+      "cliques": 24,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/santo-andre/paroquia-nossa-senhora-aparecida",
+      "impressoes": 3170,
+      "cliques": 22,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-sao-judas-tadeu-vila-gomes-cardim",
+      "impressoes": 3149,
+      "cliques": 94,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rs/sapucaia-do-sul/paroquia-nossa-senhora-da-conceicao",
+      "impressoes": 3144,
+      "cliques": 116,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pa/belem/paroquia-santa-cruz",
+      "impressoes": 3130,
+      "cliques": 18,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sorocaba/paroquia-nossa-senhora-aparecida-vila-angelica",
+      "impressoes": 3123,
+      "cliques": 18,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "go/trindade/santuario-basilica-do-divino-pai-eterno",
+      "impressoes": 3114,
+      "cliques": 3,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "ma/sao-luis/catedral-metropolitana-de-sao-luis-nossa-senhora-da-vitoria-centro",
+      "impressoes": 3102,
+      "cliques": 40,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pa/belem/paroquia-nossa-senhora-do-perpetuo-socorro",
+      "impressoes": 3088,
+      "cliques": 19,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rj/rio-de-janeiro/paroquia-sao-miguel-arcanjo-colegio",
+      "impressoes": 3082,
+      "cliques": 49,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-bernardo-do-campo/paroquia-nossa-senhora-da-assuncao",
+      "impressoes": 3081,
+      "cliques": 21,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/basilica-de-nossa-senhora-da-penha",
+      "impressoes": 3080,
+      "cliques": 7,
+      "desde": "2026-08-23"
+    },
+    {
+      "chave": "ba/vitoria-da-conquista/catedral-nossa-senhora-das-vitorias",
+      "impressoes": 3076,
+      "cliques": 34,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-sao-miguel-arcanjo",
+      "impressoes": 3070,
+      "cliques": 12,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mg/uberaba/santuario-da-medalha-milagrosa",
+      "impressoes": 3066,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rj/rio-de-janeiro/paroquia-nossa-senhora-da-paz-bonsucesso",
+      "impressoes": 3058,
+      "cliques": 8,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rj/rio-de-janeiro/paroquia-santo-afonso",
+      "impressoes": 3024,
+      "cliques": 18,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "go/goiania/paroquia-sao-joao-bosco",
+      "impressoes": 3020,
+      "cliques": 15,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-jose-dos-campos/paroquia-coracao-de-jesus-2",
+      "impressoes": 3018,
+      "cliques": 26,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-nossa-senhora-do-carmo",
+      "impressoes": 3000,
+      "cliques": 10,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "se/aracaju/paroquia-de-jesus-ressuscitado",
+      "impressoes": 2998,
+      "cliques": 11,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "es/vitoria/paroquia-sao-pedro-apostolo-praia-do-sua",
+      "impressoes": 2994,
+      "cliques": 40,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rj/rio-de-janeiro/paroquia-sao-francisco",
+      "impressoes": 2941,
+      "cliques": 16,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "se/aracaju/paroquia-nossa-senhora-aparecida",
+      "impressoes": 2920,
+      "cliques": 22,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "go/goiania/paroquia-universitaria-sao-joao-evangelista",
+      "impressoes": 2913,
+      "cliques": 8,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-sao-filipe-neri",
+      "impressoes": 2897,
+      "cliques": 43,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/botucatu/paroquia-nossa-senhora-aparecida",
+      "impressoes": 2895,
+      "cliques": 11,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pa/belem/santuario-nossa-senhora-da-conceicao-aparecida",
+      "impressoes": 2887,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/curitiba/santuario-cristo-rei",
+      "impressoes": 2885,
+      "cliques": 23,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pb/joao-pessoa/paroquia-santo-antonio-de-lisboa",
+      "impressoes": 2876,
+      "cliques": 12,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sorocaba/paroquia-santa-rosalia",
+      "impressoes": 2875,
+      "cliques": 3,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/campos-do-jordao/paroquia-sao-benedito",
+      "impressoes": 2846,
+      "cliques": 9,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/curitiba/paroquia-sagrada-familia",
+      "impressoes": 2839,
+      "cliques": 25,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/guarulhos/paroquia-santa-mena",
+      "impressoes": 2835,
+      "cliques": 8,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-sao-paulo-apostolo-guara-i",
+      "impressoes": 2822,
+      "cliques": 12,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mg/varginha/paroquia-nossa-senhora-do-rosario",
+      "impressoes": 2822,
+      "cliques": 2,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-santa-rita-de-cassia-pari",
+      "impressoes": 2822,
+      "cliques": 15,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rj/rio-de-janeiro/paroquia-nossa-senhora-de-copacabana-e-santa-rosa-de-lima",
+      "impressoes": 2819,
+      "cliques": 1,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/guarulhos/santuario-sao-judas-tadeu",
+      "impressoes": 2817,
+      "cliques": 9,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-verbo-divino",
+      "impressoes": 2806,
+      "cliques": 3,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-jose-dos-campos/paroquia-nossa-senhora-de-fatima-2",
+      "impressoes": 2805,
+      "cliques": 25,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-bernardo-do-campo/santuario-nossa-senhora-aparecida-2",
+      "impressoes": 2798,
+      "cliques": 18,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/maringa/santuario-santa-rita-de-cassia",
+      "impressoes": 2786,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pb/joao-pessoa/paroquia-santa-teresinha",
+      "impressoes": 2782,
+      "cliques": 28,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-santo-cura-d-ars-asa-sul",
+      "impressoes": 2778,
+      "cliques": 17,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pb/joao-pessoa/paroquia-sao-pedro-pescador",
+      "impressoes": 2771,
+      "cliques": 17,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-sao-jose-operario",
+      "impressoes": 2767,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "ms/campo-grande/paroquia-sagrado-coracao-de-jesus",
+      "impressoes": 2759,
+      "cliques": 12,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-jose-dos-campos/paroquia-sao-joao-bosco",
+      "impressoes": 2758,
+      "cliques": 29,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "go/goiania/paroquia-cristo-ressuscitado",
+      "impressoes": 2737,
+      "cliques": 3,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-imaculada-conceicao-de-maria",
+      "impressoes": 2713,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-jose-dos-campos/paroquia-sant-ana",
+      "impressoes": 2705,
+      "cliques": 14,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/carapicuiba/paroquia-santa-rita-de-cassia",
+      "impressoes": 2689,
+      "cliques": 30,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pe/recife/paroquia-nossa-senhora-da-conceicao-aparecida",
+      "impressoes": 2683,
+      "cliques": 30,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-santa-clara-e-sao-francisco-de-assis",
+      "impressoes": 2680,
+      "cliques": 14,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/curitiba/paroquia-nossa-senhora-da-visitacao",
+      "impressoes": 2679,
+      "cliques": 8,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "am/manaus/paroquia-sao-francisco-de-assis",
+      "impressoes": 2677,
+      "cliques": 32,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "se/aracaju/paroquia-nossa-senhora-de-guadalupe",
+      "impressoes": 2673,
+      "cliques": 51,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/maringa/paroquia-nossa-senhora-aparecida-maringa",
+      "impressoes": 2671,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "am/manaus/paroquia-nossa-senhora-de-nazare",
+      "impressoes": 2668,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-nossa-senhora-do-lago",
+      "impressoes": 2660,
+      "cliques": 23,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-jose-dos-campos/paroquia-nossa-senhora-da-soledade",
+      "impressoes": 2647,
+      "cliques": 24,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/curitiba/santuario-sao-francisco-de-assis",
+      "impressoes": 2645,
+      "cliques": 12,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/carapicuiba/paroquia-sao-lucas-evangelista",
+      "impressoes": 2637,
+      "cliques": 13,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pb/joao-pessoa/paroquia-nossa-senhora-de-nazare",
+      "impressoes": 2627,
+      "cliques": 32,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pi/teresina/paroquia-sao-jose-operario",
+      "impressoes": 2623,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rs/canoas/paroquia-nossa-senhora-das-gracas",
+      "impressoes": 2610,
+      "cliques": 19,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/maringa/paroquia-cristo-ressuscitado-maringa",
+      "impressoes": 2601,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/ribeirao-preto/jesus-misericordioso-e-santa-edwiges",
+      "impressoes": 2592,
+      "cliques": 10,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-roque/paroquia-sao-roque",
+      "impressoes": 2586,
+      "cliques": 23,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/curitiba/santuario-sagrado-coracao-de-jesus",
+      "impressoes": 2569,
+      "cliques": 9,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-sao-judas-tadeu-asa-sul",
+      "impressoes": 2558,
+      "cliques": 8,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pb/joao-pessoa/paroquia-santa-julia",
+      "impressoes": 2532,
+      "cliques": 5,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/ribeirao-preto/santuario-nossa-senhora-aparecida",
+      "impressoes": 2508,
+      "cliques": 5,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mt/cuiaba/paroquia-sao-joao-bosco",
+      "impressoes": 2506,
+      "cliques": 5,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-sao-miguel-arcanjo-2",
+      "impressoes": 2502,
+      "cliques": 19,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/maringa/paroquia-sao-francisco-de-assis-maringa",
+      "impressoes": 2497,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-santa-teresinha",
+      "impressoes": 2489,
+      "cliques": 10,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pa/belem/paroquia-reitoria-nossa-senhora-de-lourdes",
+      "impressoes": 2478,
+      "cliques": 8,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pe/jaboatao-dos-guararapes/nossa-senhora-da-piedade",
+      "impressoes": 2453,
+      "cliques": 15,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-sao-sebastiao-gama",
+      "impressoes": 2451,
+      "cliques": 31,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/curitiba/paroquia-santo-agostinho",
+      "impressoes": 2438,
+      "cliques": 12,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mg/juiz-de-fora/paroquia-santa-teresinha",
+      "impressoes": 2431,
+      "cliques": 16,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/taubate/paroquia-nossa-senhora-aparecida",
+      "impressoes": 2430,
+      "cliques": 24,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/presidente-prudente/paroquia-sao-judas-tadeu",
+      "impressoes": 2429,
+      "cliques": 11,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/presidente-prudente/catedral-sao-sebastiao",
+      "impressoes": 2427,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pb/joao-pessoa/paroquia-sao-jose",
+      "impressoes": 2424,
+      "cliques": 24,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/ribeirao-preto/capela-do-seminario-estigmatinos",
+      "impressoes": 2422,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-sagrada-familia-taguatinga",
+      "impressoes": 2420,
+      "cliques": 15,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rn/natal/paroquia-de-sao-jose-de-anchieta",
+      "impressoes": 2410,
+      "cliques": 2,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pe/recife/nossa-senhora-das-gracas",
+      "impressoes": 2406,
+      "cliques": 7,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-sao-pedro-de-alcantara",
+      "impressoes": 2405,
+      "cliques": 3,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "go/goiania/paroquia-nossa-senhora-das-gracas",
+      "impressoes": 2398,
+      "cliques": 12,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-sao-benedito",
+      "impressoes": 2398,
+      "cliques": 14,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "ms/campo-grande/paroquia-nossa-senhora-de-fatima",
+      "impressoes": 2394,
+      "cliques": 3,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mg/juiz-de-fora/paroquia-nossa-senhora-da-gloria",
+      "impressoes": 2389,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/santos/paroquia-senhor-dos-passos-e-nossa-senhora-das-dores",
+      "impressoes": 2383,
+      "cliques": 13,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rs/gramado/paroquia-sao-pedro",
+      "impressoes": 2378,
+      "cliques": 2,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/marilia/catedral-basilica-menor-sao-bento",
+      "impressoes": 2371,
+      "cliques": 5,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "ma/sao-luis/paroquia-nossa-senhora-do-perpetuo-socorro-cohab",
+      "impressoes": 2366,
+      "cliques": 12,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/guarulhos/paroquia-santa-cruz-e-nossa-senhora-do-carmo",
+      "impressoes": 2358,
+      "cliques": 11,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-nossa-senhora-do-bom-conselho",
+      "impressoes": 2355,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rs/cachoeirinha/paroquia-sao-vicente-de-paulo",
+      "impressoes": 2350,
+      "cliques": 12,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-nossa-senhora-do-bom-parto",
+      "impressoes": 2342,
+      "cliques": 9,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/colombo/paroquia-santa-teresinha-de-lisieux",
+      "impressoes": 2336,
+      "cliques": 16,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mg/passos/paroquia-nossa-senhora-aparecida",
+      "impressoes": 2315,
+      "cliques": 9,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/marilia/paroquia-sao-miguel-arcanjo",
+      "impressoes": 2309,
+      "cliques": 5,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rs/porto-alegre/paroquia-cristo-bom-pastor",
+      "impressoes": 2298,
+      "cliques": 16,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rs/porto-alegre/paroquia-santa-teresinha-do-menino-jesus",
+      "impressoes": 2280,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mg/juiz-de-fora/paroquia-sao-sebastiao",
+      "impressoes": 2279,
+      "cliques": 9,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/itapevi/paroquia-sao-judas-tadeu-itapevi",
+      "impressoes": 2276,
+      "cliques": 24,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mg/uberaba/santuario-basilica-de-nossa-senhora-d-abadia",
+      "impressoes": 2270,
+      "cliques": 10,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mg/sao-lourenco/paroquia-sao-lourenco-martir",
+      "impressoes": 2262,
+      "cliques": 21,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pa/belem/paroquia-sao-jose",
+      "impressoes": 2259,
+      "cliques": 53,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-santo-antonio-do-limao",
+      "impressoes": 2259,
+      "cliques": 53,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pb/joao-pessoa/paroquia-santo-antonio-de-padua",
+      "impressoes": 2250,
+      "cliques": 21,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "go/goiania/paroquia-nossa-senhora-da-assuncao",
+      "impressoes": 2248,
+      "cliques": 3,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rj/nova-iguacu/paroquia-nossa-senhora-aparecida",
+      "impressoes": 2246,
+      "cliques": 10,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/osasco/paroquia-sao-jose-operario-jardim-d-abril",
+      "impressoes": 2231,
+      "cliques": 48,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/curitiba/paroquia-santo-antonio-bacacheri",
+      "impressoes": 2223,
+      "cliques": 7,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-jose-do-rio-preto/paroquia-santa-rita-de-cassia",
+      "impressoes": 2222,
+      "cliques": 12,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/limeira/paroquia-nossa-senhora-aparecida",
+      "impressoes": 2215,
+      "cliques": 2,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "se/aracaju/paroquia-santa-lucia-jabotiana",
+      "impressoes": 2213,
+      "cliques": 30,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sertaozinho/paroquia-sao-joao-batista",
+      "impressoes": 2204,
+      "cliques": 25,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pa/belem/paroquia-santissima-trindade",
+      "impressoes": 2199,
+      "cliques": 21,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/santos/basilica-menor-de-santo-antonio-do-embare",
+      "impressoes": 2193,
+      "cliques": 0,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-nossa-senhora-do-rosario-de-fatima-sobradinho",
+      "impressoes": 2190,
+      "cliques": 9,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/itapetininga/paroquia-nossa-senhora-das-estrelas",
+      "impressoes": 2189,
+      "cliques": 7,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-sao-marcos-e-sao-lucas",
+      "impressoes": 2186,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "se/aracaju/paroquia-nossa-senhora-de-lourdes",
+      "impressoes": 2183,
+      "cliques": 16,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pi/teresina/paroquia-santa-teresinha-do-menino-jesus",
+      "impressoes": 2182,
+      "cliques": 10,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "ms/campo-grande/paroquia-cristo-luz-dos-povos",
+      "impressoes": 2170,
+      "cliques": 7,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pe/recife/paroquia-nossa-senhora-do-rosario-varzea",
+      "impressoes": 2167,
+      "cliques": 10,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rj/petropolis/paroquia-nossa-senhora-aparecida",
+      "impressoes": 2163,
+      "cliques": 10,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rs/porto-alegre/santuario-nossa-senhora-do-rosario-de-fatima",
+      "impressoes": 2159,
+      "cliques": 22,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/curitiba/paroquia-sao-joao-batista-reboucas",
+      "impressoes": 2155,
+      "cliques": 26,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mt/varzea-grande/paroquia-santo-antonio-de-padua",
+      "impressoes": 2142,
+      "cliques": 0,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rj/volta-redonda/santuario-nossa-senhora-das-gracas-e-da-medalha-milagrosa",
+      "impressoes": 2141,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/campinas/basilica-nossa-senhora-do-carmo",
+      "impressoes": 2138,
+      "cliques": 5,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rj/rio-de-janeiro/paroquia-nossa-senhora-das-gracas",
+      "impressoes": 2123,
+      "cliques": 9,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-nossa-senhora-mae-da-igreja",
+      "impressoes": 2117,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-jose-dos-campos/santuario-sao-judas-tadeu",
+      "impressoes": 2109,
+      "cliques": 9,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rs/porto-alegre/paroquia-nossa-senhora-de-montserrat",
+      "impressoes": 2104,
+      "cliques": 27,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/osasco/catedral-santo-antonio",
+      "impressoes": 2101,
+      "cliques": 12,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mt/cuiaba/paroquia-sao-mateus-apostolo-e-evangelista",
+      "impressoes": 2096,
+      "cliques": 7,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/santo-andre/paroquia-sao-camilo-de-lellis",
+      "impressoes": 2089,
+      "cliques": 1,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-santa-cruz-de-itaberaba",
+      "impressoes": 2076,
+      "cliques": 21,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "ms/campo-grande/paroquia-nossa-senhora-da-conceicao-aparecida",
+      "impressoes": 2060,
+      "cliques": 12,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "se/aracaju/santuario-de-nossa-senhora-aparecida",
+      "impressoes": 2058,
+      "cliques": 13,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/ribeirao-preto/comunidade-nossa-senhora-aparecida",
+      "impressoes": 2058,
+      "cliques": 18,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pa/belem/paroquia-nossa-senhora-de-fatima",
+      "impressoes": 2054,
+      "cliques": 12,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "ce/fortaleza/paroquia-sao-jose",
+      "impressoes": 2053,
+      "cliques": 7,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-santa-teresinha",
+      "impressoes": 2052,
+      "cliques": 5,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mg/juiz-de-fora/paroquia-sao-pedro",
+      "impressoes": 2046,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-rainha-da-paz-octogonal",
+      "impressoes": 2044,
+      "cliques": 7,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "ba/vitoria-da-conquista/paroquia-nossa-senhora-das-candeias",
+      "impressoes": 2043,
+      "cliques": 28,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/curitiba/paroquia-sao-miguel",
+      "impressoes": 2039,
+      "cliques": 22,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/rio-claro/comunidade-nossa-senhora-aparecida",
+      "impressoes": 2035,
+      "cliques": 5,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "se/aracaju/paroquia-nossa-senhora-do-perpetuo-do-socorro",
+      "impressoes": 2016,
+      "cliques": 10,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/guarulhos/paroquia-nossa-senhora-aparecida",
+      "impressoes": 2014,
+      "cliques": 2,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mg/alfenas/paroquia-nossa-senhora-aparecida",
+      "impressoes": 2008,
+      "cliques": 12,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-imaculado-coracao-de-maria",
+      "impressoes": 2006,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rn/natal/paroquia-de-sao-joao-batista-ponta-negra",
+      "impressoes": 1999,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "ms/campo-grande/paroquia-nossa-senhora-da-abadia",
+      "impressoes": 1996,
+      "cliques": 1,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/guarulhos/paroquia-nossa-senhora-de-fatima-jardim-tranquilidade",
+      "impressoes": 1994,
+      "cliques": 2,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pb/joao-pessoa/paroquia-sao-miguel-arcanjo",
+      "impressoes": 1993,
+      "cliques": 19,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pe/recife/nossa-senhora-do-rosario-pina",
+      "impressoes": 1993,
+      "cliques": 5,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-jose-dos-campos/paroquia-sao-bento",
+      "impressoes": 1993,
+      "cliques": 14,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/jundiai/santuario-diocesano-nossa-senhora-aparecida",
+      "impressoes": 1985,
+      "cliques": 12,
+      "desde": "2026-08-23"
+    },
+    {
+      "chave": "pb/joao-pessoa/paroquia-nossa-senhora-do-perpetuo-socorro",
+      "impressoes": 1983,
+      "cliques": 34,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pa/ananindeua/paroquia-nossa-senhora-do-amparo",
+      "impressoes": 1978,
+      "cliques": 25,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/curitiba/paroquia-sao-jorge",
+      "impressoes": 1975,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rj/rio-de-janeiro/mosteiro-de-sao-bento",
+      "impressoes": 1975,
+      "cliques": 8,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/santuario-santissimo-sacramento",
+      "impressoes": 1974,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/araraquara/basilica-maior-sao-bento",
+      "impressoes": 1965,
+      "cliques": 2,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/limeira/paroquia-sao-benedito",
+      "impressoes": 1959,
+      "cliques": 1,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pe/recife/basilica-nossa-senhora-do-carmo",
+      "impressoes": 1958,
+      "cliques": 11,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "ms/campo-grande/paroquia-imaculado-coracao-de-maria",
+      "impressoes": 1955,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "go/goiania/paroquia-sagrado-coracao-de-jesus",
+      "impressoes": 1945,
+      "cliques": 8,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rs/porto-alegre/paroquia-sao-joao-batista",
+      "impressoes": 1942,
+      "cliques": 15,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/santo-andre/paroquia-nossa-senhora-do-rosario",
+      "impressoes": 1941,
+      "cliques": 13,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-sao-camilo-de-lellis",
+      "impressoes": 1937,
+      "cliques": 1,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/santo-andre/paroquia-santo-antonio-centro",
+      "impressoes": 1937,
+      "cliques": 17,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sorocaba/paroquia-sao-jose-operario",
+      "impressoes": 1932,
+      "cliques": 7,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-nossa-senhora-da-esperanca",
+      "impressoes": 1931,
+      "cliques": 1,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mt/cuiaba/paroquia-sao-goncalo",
+      "impressoes": 1920,
+      "cliques": 7,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/guarapuava/santuario-nossa-senhora-aparecida",
+      "impressoes": 1914,
+      "cliques": 9,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mg/pocos-de-caldas/paroquia-sao-domingos",
+      "impressoes": 1913,
+      "cliques": 7,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rs/porto-alegre/santuario-santa-rita-de-cassia",
+      "impressoes": 1913,
+      "cliques": 7,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/jacarei/paroquia-imaculada-conceicao",
+      "impressoes": 1907,
+      "cliques": 18,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mg/pocos-de-caldas/paroquia-nossa-senhora-aparecida",
+      "impressoes": 1906,
+      "cliques": 11,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/pindamonhangaba/paroquia-sao-benedito",
+      "impressoes": 1904,
+      "cliques": 15,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/diadema/paroquia-nossa-senhora-das-gracas",
+      "impressoes": 1890,
+      "cliques": 5,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-coracao-eucaristico-de-jesus-e-santa-marina",
+      "impressoes": 1877,
+      "cliques": 16,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/barueri/paroquia-nossa-senhora-da-escada",
+      "impressoes": 1873,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/barueri/paroquia-nossa-senhora-mae-da-igreja",
+      "impressoes": 1860,
+      "cliques": 15,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-sao-vicente-de-paulo",
+      "impressoes": 1859,
+      "cliques": 7,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mt/cuiaba/comunidade-nossa-senhora-aparecida",
+      "impressoes": 1858,
+      "cliques": 14,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-bernardo-do-campo/paroquia-sao-joao-batista-matriz-rudge-ramos",
+      "impressoes": 1857,
+      "cliques": 0,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/marilia/capela-nossa-senhora-aparecida-vila-jardim",
+      "impressoes": 1855,
+      "cliques": 50,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-sao-paulo-da-cruz-igreja-do-calvario",
+      "impressoes": 1854,
+      "cliques": 8,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "se/aracaju/paroquia-sao-francisco-de-assis-inacio-barbosa",
+      "impressoes": 1850,
+      "cliques": 5,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rj/rio-de-janeiro/paroquia-nossa-senhora-do-desterro",
+      "impressoes": 1845,
+      "cliques": 11,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "am/manaus/paroquia-de-sao-sebastiao",
+      "impressoes": 1844,
+      "cliques": 28,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/osasco/paroquia-nossa-senhora-dos-remedios",
+      "impressoes": 1842,
+      "cliques": 9,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/santo-andre/paroquia-cristo-operario",
+      "impressoes": 1842,
+      "cliques": 5,
+      "desde": "2026-08-23"
+    },
+    {
+      "chave": "sp/americana/paroquia-sao-joao-bosco",
+      "impressoes": 1832,
+      "cliques": 2,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "ms/campo-grande/paroquia-sao-joao-bosco",
+      "impressoes": 1831,
+      "cliques": 1,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/cotia/paroquia-nossa-senhora-do-monte-serrate",
+      "impressoes": 1828,
+      "cliques": 22,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/presidente-prudente/paroquia-sao-francisco-de-assis",
+      "impressoes": 1826,
+      "cliques": 15,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/maringa/paroquia-nossa-senhora-de-lourdes-e-sao-judas-tadeu-maringa",
+      "impressoes": 1823,
+      "cliques": 2,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/campinas/paroquia-nossa-senhora-do-rosario",
+      "impressoes": 1822,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/santo-andre/paroquia-nossa-senhora-do-paraiso",
+      "impressoes": 1811,
+      "cliques": 8,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mt/varzea-grande/paroquia-sao-sebastiao",
+      "impressoes": 1803,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rj/rio-de-janeiro/santuario-basilica-santuario-de-nossa-senhora-da-penha-de-franca",
+      "impressoes": 1794,
+      "cliques": 11,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/curitiba/paroquia-nossa-senhora-aparecida-seminario",
+      "impressoes": 1791,
+      "cliques": 5,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/diadema/paroquia-nossa-senhora-dos-navegantes",
+      "impressoes": 1791,
+      "cliques": 11,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/osasco/paroquia-sao-jose",
+      "impressoes": 1791,
+      "cliques": 28,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "ms/campo-grande/catedral-nossa-senhora-da-abadia-e-santo-antonio-de-padua",
+      "impressoes": 1786,
+      "cliques": 7,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/curitiba/paroquia-sao-rafael",
+      "impressoes": 1783,
+      "cliques": 12,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/santos/santuario-sao-judas-tadeu",
+      "impressoes": 1773,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/itapevi/paroquia-sao-jose-itapevi",
+      "impressoes": 1772,
+      "cliques": 16,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-sao-luiz-gonzaga",
+      "impressoes": 1762,
+      "cliques": 14,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-santa-terezinha",
+      "impressoes": 1758,
+      "cliques": 5,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rn/natal/paroquia-de-sao-francisco-de-assis",
+      "impressoes": 1756,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "se/aracaju/paroquia-sao-jose-operario",
+      "impressoes": 1749,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "se/aracaju/paroquia-sagrada-familia",
+      "impressoes": 1746,
+      "cliques": 7,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/peruibe/paroquia-sao-joao-batista",
+      "impressoes": 1746,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-sao-sebastiao-planaltina",
+      "impressoes": 1735,
+      "cliques": 12,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/taubate/paroquia-sagrada-familia",
+      "impressoes": 1733,
+      "cliques": 7,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/maringa/paroquia-sao-mateus-apostolo-maringa",
+      "impressoes": 1730,
+      "cliques": 9,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rn/natal/paroquia-de-nossa-senhora-da-candelaria",
+      "impressoes": 1730,
+      "cliques": 5,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "go/goiania/paroquia-nossa-senhora-aparecida-3",
+      "impressoes": 1726,
+      "cliques": 14,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pe/jaboatao-dos-guararapes/paroquia-nossa-senhora-de-loreto",
+      "impressoes": 1724,
+      "cliques": 16,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/artur-nogueira/paroquia-nossa-senhora-das-dores",
+      "impressoes": 1721,
+      "cliques": 8,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/praia-grande/paroquia-nossa-senhora-aparecida",
+      "impressoes": 1720,
+      "cliques": 9,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-senhor-bom-jesus",
+      "impressoes": 1718,
+      "cliques": 9,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "ms/campo-grande/paroquia-santa-rita-de-cassia",
+      "impressoes": 1718,
+      "cliques": 8,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/guarulhos/paroquia-santo-antonio-de-padua",
+      "impressoes": 1710,
+      "cliques": 3,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rj/rio-de-janeiro/paroquia-nossa-senhora-de-fatima",
+      "impressoes": 1707,
+      "cliques": 11,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/guaruja/paroquia-santa-rosa-de-lima",
+      "impressoes": 1705,
+      "cliques": 5,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/osasco/paroquia-sao-gabriel-da-virgem-dolorosa",
+      "impressoes": 1702,
+      "cliques": 18,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-bom-jesus-dos-migrantes",
+      "impressoes": 1695,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rj/rio-de-janeiro/paroquia-nossa-senhora-da-gloria",
+      "impressoes": 1691,
+      "cliques": 12,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rj/rio-de-janeiro/paroquia-santo-agostinho",
+      "impressoes": 1682,
+      "cliques": 3,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "se/aracaju/catedral-metropolitana-nossa-senhora-da-conceicao",
+      "impressoes": 1681,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/aracatuba/paroquia-bom-jesus-da-lapa",
+      "impressoes": 1679,
+      "cliques": 9,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-roque/paroquia-nossa-senhora-aparecida",
+      "impressoes": 1679,
+      "cliques": 17,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-nossa-senhora-da-penha",
+      "impressoes": 1663,
+      "cliques": 8,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/tremembe/paroquia-sao-jose",
+      "impressoes": 1658,
+      "cliques": 16,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-caetano-do-sul/paroquia-sao-francisco-de-assis",
+      "impressoes": 1657,
+      "cliques": 5,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rs/canoas/santuario-sao-cristovao",
+      "impressoes": 1654,
+      "cliques": 19,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/santo-andre/paroquia-sao-jose-operario",
+      "impressoes": 1654,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rs/porto-alegre/paroquia-nossa-senhora-auxiliadora",
+      "impressoes": 1647,
+      "cliques": 7,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/maringa/capela-nossa-senhora-aparecida",
+      "impressoes": 1630,
+      "cliques": 11,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/araras/paroquia-de-nossa-senhora-aparecida",
+      "impressoes": 1629,
+      "cliques": 11,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "ba/salvador/paroquia-nossa-senhora-da-esperanca",
+      "impressoes": 1626,
+      "cliques": 26,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/barueri/paroquia-sao-joao-batista-barueri",
+      "impressoes": 1626,
+      "cliques": 10,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rs/porto-alegre/paroquia-nossa-senhora-aparecida-da-restinga",
+      "impressoes": 1624,
+      "cliques": 14,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mg/pocos-de-caldas/paroquia-sao-judas-tadeu",
+      "impressoes": 1623,
+      "cliques": 10,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/americana/paroquia-senhor-bom-jesus",
+      "impressoes": 1617,
+      "cliques": 10,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "go/goiania/paroquia-menino-jesus",
+      "impressoes": 1613,
+      "cliques": 12,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-nossa-senhora-de-nazare",
+      "impressoes": 1612,
+      "cliques": 29,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-sagrada-familia-vila-carrao",
+      "impressoes": 1610,
+      "cliques": 19,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-sao-pedro",
+      "impressoes": 1605,
+      "cliques": 10,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/curitiba/catedral-basilica-menor-nossa-senhora-da-luz-dos-pinhais",
+      "impressoes": 1605,
+      "cliques": 0,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pb/joao-pessoa/paroquia-sao-pedro-e-sao-paulo",
+      "impressoes": 1603,
+      "cliques": 26,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "go/aparecida-de-goiania/santuario-nossa-senhora-aparecida",
+      "impressoes": 1600,
+      "cliques": 12,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "ms/campo-grande/paroquia-sao-pedro-apostolo",
+      "impressoes": 1599,
+      "cliques": 9,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sorocaba/paroquia-nossa-senhora-de-fatima-vila-melges",
+      "impressoes": 1598,
+      "cliques": 11,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/aracatuba/catedral-nossa-senhora-aparecida",
+      "impressoes": 1583,
+      "cliques": 15,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/pindamonhangaba/paroquia-sant-ana",
+      "impressoes": 1579,
+      "cliques": 18,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "ms/campo-grande/paroquia-sao-francisco-de-assis",
+      "impressoes": 1578,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-nossa-senhora-das-dores",
+      "impressoes": 1575,
+      "cliques": 10,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/campinas/paroquia-nossa-senhora-do-perpetuo-socorro",
+      "impressoes": 1562,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-imaculada-conceicao",
+      "impressoes": 1558,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mg/pocos-de-caldas/paroquia-sao-sebastiao",
+      "impressoes": 1557,
+      "cliques": 8,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/curitiba/paroquia-de-santo-estanislau",
+      "impressoes": 1557,
+      "cliques": 7,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pa/belem/paroquia-sao-joao-paulo-ii",
+      "impressoes": 1551,
+      "cliques": 17,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rn/natal/paroquia-de-sao-sebastiao",
+      "impressoes": 1549,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/osasco/paroquia-santa-gema-galgani",
+      "impressoes": 1547,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/pinhais/paroquia-nossa-senhora-da-boa-esperanca",
+      "impressoes": 1545,
+      "cliques": 3,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/mairinque/paroquia-santa-catarina-de-alexandria",
+      "impressoes": 1544,
+      "cliques": 19,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/curitiba/paroquia-santa-candida",
+      "impressoes": 1541,
+      "cliques": 5,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/maringa/paroquia-santa-maria-goretti-maringa",
+      "impressoes": 1540,
+      "cliques": 1,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rs/porto-alegre/paroquia-santuario-nossa-senhora-do-trabalho-e-sao-luis-guanella",
+      "impressoes": 1540,
+      "cliques": 9,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-sao-joao-climaco",
+      "impressoes": 1539,
+      "cliques": 24,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/curitiba/paroquia-santo-antonio",
+      "impressoes": 1536,
+      "cliques": 9,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/taubate/paroquia-sao-pedro-apostolo",
+      "impressoes": 1532,
+      "cliques": 5,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/colombo/paroquia-nossa-senhora-do-rosario",
+      "impressoes": 1529,
+      "cliques": 3,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/osasco/paroquia-sao-paulo-da-cruz",
+      "impressoes": 1529,
+      "cliques": 20,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mg/juiz-de-fora/paroquia-nossa-senhora-de-lourdes",
+      "impressoes": 1524,
+      "cliques": 10,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "se/aracaju/paroquia-sao-francisco-de-assis",
+      "impressoes": 1518,
+      "cliques": 1,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pb/joao-pessoa/paroquia-sao-rafael",
+      "impressoes": 1515,
+      "cliques": 17,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pb/joao-pessoa/santuario-nossa-senhora-mae-dos-homens",
+      "impressoes": 1515,
+      "cliques": 22,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pa/belem/paroquia-sao-raimundo-nonato",
+      "impressoes": 1508,
+      "cliques": 18,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sc/criciuma/paroquia-santa-barbara",
+      "impressoes": 1507,
+      "cliques": 5,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/jacarei/igreja-nossa-senhora-de-guadalupe",
+      "impressoes": 1507,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rj/rio-de-janeiro/paroquia-nossa-senhora-do-carmo-vila-kosmos",
+      "impressoes": 1506,
+      "cliques": 12,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "go/aparecida-de-goiania/paroquia-santa-teresinha-do-menino-jesus",
+      "impressoes": 1501,
+      "cliques": 3,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pr/maringa/paroquia-nossa-senhora-de-guadalupe-maringa",
+      "impressoes": 1500,
+      "cliques": 2,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rj/rio-de-janeiro/paroquia-sao-marcos",
+      "impressoes": 1500,
+      "cliques": 11,
+      "desde": "2026-08-23"
+    },
+    {
+      "chave": "sc/criciuma/paroquia-nossa-senhora-da-salete",
+      "impressoes": 1500,
+      "cliques": 7,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "go/goiania/paroquia-nossa-senhora-de-fatima",
+      "impressoes": 1499,
+      "cliques": 4,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/aracatuba/santuario-sao-joao-batista-e-sao-judas-tadeu",
+      "impressoes": 1495,
+      "cliques": 19,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/santos/paroquia-nossa-senhora-do-carmo",
+      "impressoes": 1493,
+      "cliques": 8,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/itu/paroquia-nossa-senhora-aparecida",
+      "impressoes": 1492,
+      "cliques": 3,
+      "desde": "2026-08-23"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-santa-terezinha-2",
+      "impressoes": 1490,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rj/rio-de-janeiro/paroquia-santa-luzia-gardenia-azul",
+      "impressoes": 1487,
+      "cliques": 13,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sorocaba/santuario-arquidiocesano-nossa-senhora-da-conceicao-aparecida",
+      "impressoes": 1485,
+      "cliques": 15,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mg/juiz-de-fora/paroquia-santa-rita-de-cassia",
+      "impressoes": 1484,
+      "cliques": 5,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "pb/joao-pessoa/paroquia-nossa-senhora-aparecida-cristo-redentor",
+      "impressoes": 1483,
+      "cliques": 9,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "rs/porto-alegre/paroquia-nossa-senhora-da-piedade",
+      "impressoes": 1480,
+      "cliques": 6,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "mt/cuiaba/paroquia-sao-sebastiao-3-barras-cuiaba",
+      "impressoes": 1478,
+      "cliques": 1,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-nossa-senhora-do-carmo-vila-alpina",
+      "impressoes": 1477,
+      "cliques": 2,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/sao-paulo/paroquia-nossa-senhora-do-monte-serrate",
+      "impressoes": 1476,
+      "cliques": 3,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/boituva/paroquia-sao-francisco-de-assis-boituva-sp",
+      "impressoes": 1473,
+      "cliques": 10,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/diadema/paroquia-imaculada-conceicao",
+      "impressoes": 1472,
+      "cliques": 2,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "df/brasilia/paroquia-sao-joao-paulo-ii",
+      "impressoes": 1466,
+      "cliques": 3,
+      "desde": "2026-10-27"
+    },
+    {
+      "chave": "sp/santo-andre/paroquia-santa-rita-de-cassia",
+      "impressoes": 1412,
+      "cliques": 7,
+      "desde": "2026-08-23"
+    },
+    {
+      "chave": "sp/sao-bernardo-do-campo/paroquia-santa-maria",
+      "impressoes": 1325,
+      "cliques": 6,
+      "desde": "2026-08-23"
+    },
+    {
+      "chave": "sp/jundiai/paroquia-santo-antonio",
+      "impressoes": 1249,
+      "cliques": 4,
+      "desde": "2026-08-23"
+    },
+    {
+      "chave": "sc/joinville/paroquia-santo-antonio",
+      "impressoes": 1199,
+      "cliques": 3,
+      "desde": "2026-08-23"
+    },
+    {
+      "chave": "sp/sao-vicente/paroquia-nossa-senhora-das-gracas",
+      "impressoes": 1195,
+      "cliques": 3,
+      "desde": "2026-08-23"
+    },
+    {
+      "chave": "sp/salto/paroquia-nossa-senhora-aparecida",
+      "impressoes": 1166,
+      "cliques": 4,
+      "desde": "2026-08-23"
+    },
+    {
+      "chave": "sp/sao-bernardo-do-campo/paroquia-santa-edwiges",
+      "impressoes": 1064,
+      "cliques": 10,
+      "desde": "2026-08-23"
+    },
+    {
+      "chave": "sp/santo-andre/paroquia-nossa-senhora-da-salete",
+      "impressoes": 1062,
+      "cliques": 1,
+      "desde": "2026-08-23"
+    },
+    {
+      "chave": "sp/jundiai/paroquia-sao-joao-bosco",
+      "impressoes": 996,
+      "cliques": 2,
+      "desde": "2026-08-23"
+    }
+  ]
+}

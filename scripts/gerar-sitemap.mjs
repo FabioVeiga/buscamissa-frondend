@@ -44,7 +44,18 @@ import { writeFileSync, mkdirSync, readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { normalizarBaseUrl } from './lib/seo-routes.mjs';
-import { paroquiasDoDisco } from './lib/selecionar-paroquias-prerender.mjs';
+import {
+  ARQUIVO_DEMANDA,
+  ARQUIVO_PROTECAO,
+  ARQUIVO_REGISTRO,
+  avaliarJanelas,
+  gravarRegistroCriterio,
+  lerDemanda,
+  lerJanelaDemanda,
+  lerProtecao,
+  calcularSelecao,
+  VARIAVEL_CRITERIO,
+} from './lib/selecionar-paroquias-prerender.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -78,13 +89,12 @@ function paroquiaDaLoc(loc) {
  * `<url>...</url>` é delimitado com segurança por essa regex — sem precisar de um
  * parser XML completo para um filtro deste tamanho.
  *
- * Se o cache do prebuild não existir (`paroquiasDoDisco()` retorna null — não deveria
+ * Se o cache do prebuild não existir (`calcularSelecao()` retorna null — não deveria
  * acontecer em staging/prod, onde `baixar-bulk-prerender.mjs` roda antes deste script
  * no `prebuild`), NÃO filtra: melhor publicar o sitemap sem o filtro extra do que
  * arriscar remover tudo por engano.
  */
-function filtrarParoquiasSemHtml(xml) {
-  const selecionadas = paroquiasDoDisco();
+function filtrarParoquiasSemHtml(xml, selecionadas) {
   if (selecionadas === null) {
     return { xml, removidas: 0, semCache: true };
   }
@@ -142,6 +152,11 @@ function adicionarLandingsDeIntencao(xml, baseUrl) {
 }
 
 async function main() {
+  // Seleção calculada UMA vez, antes da busca do sitemap: um erro de critério (v8 sem
+  // proteção válida, proteção divergente da base) derruba o prebuild aqui, com uma única
+  // mensagem, em vez de ser capturado como "falha ao buscar o sitemap" e reaparecer
+  // depois no registro. O filtro e o registro usam esta mesma seleção.
+  const selecionadas = calcularSelecao(ROOT);
   const base = lerApiUrl();
   const url = `${base}/sitemap.xml`;
   const inicio = Date.now();
@@ -154,7 +169,7 @@ async function main() {
     if (!xmlBruto.includes('<urlset')) throw new Error('resposta não parece um sitemap XML válido');
 
     const totalBruto = (xmlBruto.match(/<loc>/g) ?? []).length;
-    const { xml: xmlFiltrado, removidas, semCache } = filtrarParoquiasSemHtml(xmlBruto);
+    const { xml: xmlFiltrado, removidas, semCache } = filtrarParoquiasSemHtml(xmlBruto, selecionadas);
 
     // Base do XML (não hardcoded): staging e prod usam hosts diferentes, e o
     // SitemapController já resolveu isso via FrontendBaseUrl. Reaproveitamos a mesma.
@@ -179,6 +194,43 @@ async function main() {
   } finally {
     clearTimeout(timer);
   }
+  // Fora do try: o registro do critério não depende do sitemap da API, e um erro de
+  // critério (v8 sem proteção válida) deve derrubar o prebuild, não virar aviso.
+  registrarCriterio(selecionadas);
 }
 
-main();
+/** Grava o registro do prebuild e loga critério e janelas (ver gravarRegistroCriterio). */
+function registrarCriterio(selecionadas) {
+  const registro = gravarRegistroCriterio(ROOT, process.env, selecionadas);
+  if (!registro) return;
+  const { criterio } = registro;
+  const demanda = lerDemanda(ROOT);
+  console.log(
+    criterio === 'v8'
+      ? `[prerender-paroquias] critério: V8 (${ARQUIVO_PROTECAO} + ${ARQUIVO_DEMANDA}, teto dinâmico, ${registro.paroquias} paróquias).`
+      : criterio === 'demanda'
+        ? `[prerender-paroquias] critério do resto: DEMANDA (${ARQUIVO_DEMANDA}, ${demanda.length} paróquias).`
+        : `[prerender-paroquias] critério do resto: QUALIDADE (sem ${ARQUIVO_DEMANDA} ou ${VARIAVEL_CRITERIO}=qualidade).`,
+  );
+  console.log(`[prerender-paroquias] registro do critério → ${ARQUIVO_REGISTRO}.`);
+  const janelaDemanda = lerJanelaDemanda(ROOT);
+  const protecao = criterio === 'v8' ? lerProtecao(ROOT) : null;
+  if (janelaDemanda) console.log(`[prerender-paroquias] janela da demanda: ${janelaDemanda.inicio} a ${janelaDemanda.fim}.`);
+  if (protecao) {
+    const { sitemap, searchConsole } = protecao.fontes;
+    console.log(`[prerender-paroquias] proteção: Search Console ${searchConsole.inicio} a ${searchConsole.fim}; sitemap ${sitemap.url} de ${sitemap.data}.`);
+  }
+  const avisos = avaliarJanelas({
+    demanda: janelaDemanda,
+    protecao: protecao?.fontes.searchConsole,
+    hoje: new Date().toISOString().slice(0, 10),
+  });
+  for (const aviso of avisos) console.warn(`⚠ [prerender-paroquias] ${aviso}.`);
+}
+
+// Erro fora da busca do sitemap (critério, proteção, registro): uma mensagem e exit 1,
+// sem stack trace — a busca do sitemap continua tolerante a falha, tratada dentro de main.
+main().catch((err) => {
+  console.error(`\n❌ ${err?.message ?? err}`);
+  process.exit(1);
+});
