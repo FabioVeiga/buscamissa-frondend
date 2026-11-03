@@ -1,6 +1,7 @@
 import { Injectable, inject } from '@angular/core';
 import { Title, Meta } from '@angular/platform-browser';
 import { DOCUMENT } from '@angular/common';
+import { serializarJsonLd } from '../../shared/utils/json-ld.utils';
 
 export interface SeoData {
   title: string;
@@ -114,6 +115,7 @@ export class SeoService {
   /**
    * Injeta (ou substitui) um bloco de dados estruturados Schema.org (JSON-LD).
    * O `id` identifica o bloco para permitir atualização/remoção entre navegações.
+   * O conteúdo passa por `serializarJsonLd`: nenhum dado consegue fechar o script.
    */
   setJsonLd(id: string, data: unknown): void {
     const elId = `ld-${id}`;
@@ -124,7 +126,7 @@ export class SeoService {
       script.type = 'application/ld+json';
       this._doc.head.appendChild(script);
     }
-    script.textContent = JSON.stringify(data);
+    script.textContent = serializarJsonLd(data);
   }
 
   removeJsonLd(id: string): void {
