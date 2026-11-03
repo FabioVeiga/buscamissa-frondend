@@ -67,7 +67,7 @@ export interface MapChurch {
     }
     .city-map-footer__link {
       font-size: 0.75rem;
-      color: #bc5d10;
+      color: #ad540c;
       font-weight: 600;
       text-decoration: none;
       &:hover { text-decoration: underline; }
@@ -164,7 +164,7 @@ export class CityMapComponent implements AfterViewInit, OnChanges, OnDestroy {
       html: `
         <div style="
           width:32px;height:32px;
-          background:#bc5d10;
+          background:#ad540c;
           border:2.5px solid #fff;
           border-radius:50% 50% 50% 0;
           transform:rotate(-45deg);

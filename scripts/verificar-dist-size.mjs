@@ -1,6 +1,7 @@
 import { readdirSync, statSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { avaliarMargem, MAX_FILES, medirDiretorio, VARIAVEL_EXCECAO_MARGEM } from './lib/orcamento-arquivos.mjs';
 
 /**
  * Guard-rail da ESTEIRA de build (Auditoria2 / Fase 3). Roda no postbuild, depois
@@ -81,7 +82,8 @@ const SEGUNDOS_POR_ARQUIVO = 0.074;
 const TETO_DISTRIBUICAO_S = 200;
 // Rede de segurança contra geração em massa acidental (um getPrerenderParams sem filtro),
 // independente da estimativa de tempo. 4.200 arquivos projetam ~162 s — 81% do teto.
-const MAX_FILES = 4200;
+// MAX_FILES mora em lib/orcamento-arquivos.mjs: o teto dinâmico de paróquias do
+// prerender usa o mesmo número para não gerar mais páginas do que este guard aceita.
 
 /**
  * Tempo estimado de distribuição. Ancorado na medição de 31/08 e 02/09 (3.276 arquivos
@@ -104,25 +106,6 @@ function acharBrowserDir(base) {
   return null;
 }
 
-/** Soma recursiva de bytes e contagem de arquivos. */
-function medir(dir) {
-  let bytes = 0;
-  let arquivos = 0;
-  for (const nome of readdirSync(dir)) {
-    const full = join(dir, nome);
-    const st = statSync(full);
-    if (st.isDirectory()) {
-      const sub = medir(full);
-      bytes += sub.bytes;
-      arquivos += sub.arquivos;
-    } else {
-      bytes += st.size;
-      arquivos++;
-    }
-  }
-  return { bytes, arquivos };
-}
-
 const distBase = join(ROOT, 'dist');
 const browserDir = acharBrowserDir(distBase);
 
@@ -131,7 +114,7 @@ if (!browserDir) {
   process.exit(0);
 }
 
-const { bytes, arquivos } = medir(browserDir);
+const { bytes, arquivos } = medirDiretorio(browserDir);
 const mb = (bytes / (1024 * 1024)).toFixed(1);
 
 const distribuicaoS = Math.round(estimarDistribuicao(arquivos));
@@ -162,6 +145,19 @@ if (arquivos > MAX_FILES) {
   console.error(`\n❌ [dist-size] ${arquivos} arquivos excede o limite de ${MAX_FILES}.`);
   console.error('   Provável prerender em massa não intencional — confira os getPrerenderParams');
   console.error('   em app.routes.server.ts.');
+}
+
+// O teto dinâmico de paróquias reserva a folga abaixo de MAX_FILES a partir de uma
+// estimativa dos arquivos fixos. Margem real menor que a folga = a estimativa ficou
+// velha (mais chunks, mais rotas estáticas): falha, salvo exceção explícita.
+const margem = avaliarMargem({ arquivos });
+if (!margem.ok && arquivos <= MAX_FILES) {
+  falhou = true;
+  console.error(`\n❌ [dist-size] ${margem.motivo}.`);
+  console.error('   Remeça os arquivos fixos (ARQUIVOS_FIXOS em lib/orcamento-arquivos.mjs) ou, para');
+  console.error(`   uma correção urgente, defina ${VARIAVEL_EXCECAO_MARGEM}=<mínimo aceito>.`);
+} else if (margem.excecao !== undefined) {
+  console.warn(`⚠ [dist-size] EXCEÇÃO ${VARIAVEL_EXCECAO_MARGEM}=${margem.excecao}: margem real de ${margem.margem} arquivos aceita abaixo da folga.`);
 }
 
 if (falhou) {

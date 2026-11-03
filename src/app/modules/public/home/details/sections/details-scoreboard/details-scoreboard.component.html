@@ -2,7 +2,7 @@
   <ng-container *ngIf="proximaMissa; else semProximaMissa">
     <div class="flex items-start gap-4">
       <div class="w-10 h-10 rounded-full bg-white flex items-center justify-center shadow-sm shrink-0">
-        <i class="pi pi-clock" style="color: #bc5d10;"></i>
+        <i class="pi pi-clock" style="color: #ad540c;"></i>
       </div>
       <div class="flex-1">
         <span class="scoreboard-label">Próxima missa</span>
@@ -21,7 +21,7 @@
       <span class="scoreboard-data text-sm text-gray-500 capitalize sm:hidden">{{ proximaMissaData }}</span>
       <button (click)="verTodas.emit()"
         class="flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg bg-white/70 hover:bg-white transition-colors ml-auto"
-        style="color: #bc5d10;">
+        style="color: #ad540c;">
         Ver todas as missas <i class="pi pi-chevron-right text-xs"></i>
       </button>
     </div>

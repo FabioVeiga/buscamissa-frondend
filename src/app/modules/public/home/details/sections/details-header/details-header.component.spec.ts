@@ -107,3 +107,41 @@ describe('DetailsHeaderComponent — prioridade da imagem LCP', () => {
       .not.toBeNull();
   });
 });
+
+describe('DetailsHeaderComponent — Enviar no WhatsApp', () => {
+  let fixture: ComponentFixture<DetailsHeaderComponent>;
+
+  const botao = () => fixture.nativeElement.querySelector('a.action-btn--whatsapp') as HTMLAnchorElement | null;
+
+  const montar = (whatsappUrl: string) => {
+    fixture = TestBed.createComponent(DetailsHeaderComponent);
+    fixture.componentInstance.igreja = { nome: 'Paróquia X', imagemUrl: null, endereco: { localidade: 'São Paulo', uf: 'SP' } };
+    fixture.componentInstance.whatsappUrl = whatsappUrl;
+    fixture.detectChanges();
+  };
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [DetailsHeaderComponent],
+      providers: [provideRouter([])],
+    }).compileComponents();
+  });
+
+  it('abre o wa.me em nova aba e emite whatsappClick', () => {
+    montar('https://wa.me/?text=oi');
+    const a = botao()!;
+    expect(a.getAttribute('href')).toBe('https://wa.me/?text=oi');
+    expect(a.getAttribute('target')).toBe('_blank');
+
+    const spy = jasmine.createSpy('whatsappClick');
+    fixture.componentInstance.whatsappClick.subscribe(spy);
+    a.addEventListener('click', (e) => e.preventDefault());
+    a.click();
+    expect(spy).toHaveBeenCalled();
+  });
+
+  it('sem link: não renderiza o botão', () => {
+    montar('');
+    expect(botao()).toBeNull();
+  });
+});

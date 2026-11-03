@@ -29,7 +29,7 @@ import { RouterModule } from "@angular/router";
       left: -9999px;
       top: 0;
       z-index: 1000;
-      background: #bc5d10;
+      background: #ad540c;
       color: #fff;
       padding: 0.5rem 1rem;
       border-radius: 0 0 0.5rem 0;

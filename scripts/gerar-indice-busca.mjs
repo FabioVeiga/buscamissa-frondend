@@ -47,6 +47,7 @@
  * silêncio para dev o cache que o prerender local usa.
  */
 import { readFileSync, writeFileSync, existsSync, mkdirSync } from 'fs';
+import { headersChaveBuild } from './lib/seo-routes.mjs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -83,7 +84,7 @@ function lerApiDoArgumento() {
 async function baixarBulk(api) {
   const url = `${api}/v2/seo/paroquias`;
   console.log(`[indice-busca] baixando ${url} ...`);
-  const res = await fetch(url);
+  const res = await fetch(url, { headers: headersChaveBuild() });
   if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText} em ${url}`);
   const dados = await res.json();
   if (!Array.isArray(dados)) throw new Error(`resposta de ${url} não é um array`);

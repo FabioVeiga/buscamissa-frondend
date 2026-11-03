@@ -199,7 +199,8 @@ function descreverExcecao(regra: RegraRecorrencia): string {
   return ` (exceto ${lista})`;
 }
 
-function formatarHora(horario: string): string {
+/** "19:00:00" → "19h" · "07:30" → "7h30". */
+export function formatarHora(horario: string): string {
   const [h, m] = (horario ?? '').split(':').map(Number);
   if (Number.isNaN(h)) return horario ?? '';
   return !m ? `${h}h` : `${h}h${String(m).padStart(2, '0')}`;

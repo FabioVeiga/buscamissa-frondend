@@ -4,21 +4,31 @@ import { isPlatformBrowser } from '@angular/common';
 import type * as CookieConsentApi from 'vanilla-cookieconsent';
 import { LoggerService } from './logger.service';
 
-type Cc = typeof CookieConsentApi;
+interface DecisaoConsentimento {
+  cookie: CookieConsentApi.CookieValue;
+  tipo: 'primeira' | 'alterou';
+}
 
 declare global {
   interface Window {
     gtag?: (...args: unknown[]) => void;
     clarity?: (...args: unknown[]) => void;
     __bmIniciarClarity?: () => void;
+    __bmConsentFila?: DecisaoConsentimento[];
+    __bmConsentPronto?: boolean;
   }
 }
 
 /**
  * Consentimento de cookies (LGPD) com a biblioteca open source vanilla-cookieconsent (MIT).
- * Categorias: "necessary" (sempre ativa) e "analytics" (GA4 + Microsoft Clarity).
- * O Consent Mode do Google fica "denied" por padrão (index.html) e é atualizado aqui;
- * o Clarity só carrega após o consentimento de "analytics".
+ *
+ * O banner NÃO é aberto aqui: roda em public/consentimento.js, script async do
+ * index.html, para pintar junto com o conteúdo em vez de depois da hidratação
+ * (aberto pelo Angular, era o LCP tardio das páginas de cidade). Aquele script
+ * também aplica o Consent Mode do Google e o Clarity.
+ *
+ * Aqui fica o que depende do Angular: o registro da prova de consentimento no
+ * backend (o HttpClient conhece a URL da API) e reabrir o painel de preferências.
  */
 @Injectable({ providedIn: 'root' })
 export class ConsentService {
@@ -26,104 +36,36 @@ export class ConsentService {
   private readonly _http = inject(HttpClient);
   private readonly _logger = inject(LoggerService);
   private readonly _zone = inject(NgZone);
-  private _cc: Cc | null = null;
   private _iniciado = false;
 
-  /** Carrega a biblioteca fora do caminho crítico (idle) e exibe o banner se ainda não houve decisão. */
+  /** Passa a registrar as decisões do banner, inclusive as tomadas antes do bootstrap. */
   iniciar(): void {
     if (!this._isBrowser || this._iniciado) return;
     this._iniciado = true;
 
-    const carregar = () => void this._aguardarPoppins().then(() => this._carregar());
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(carregar, { timeout: 2500 });
-    } else {
-      setTimeout(carregar, 1500);
-    }
+    window.__bmConsentFila = window.__bmConsentFila ?? [];
+    this._zone.runOutsideAngular(() =>
+      window.addEventListener('bm-consentimento', () => this._drenarFila()),
+    );
+    this._drenarFila();
   }
 
   /** Reabre o painel de preferências (revogação/alteração do consentimento). */
   abrirPreferencias(): void {
-    if (this._cc) {
-      this._cc.showPreferences();
+    if (!this._isBrowser) return;
+    if (window.__bmConsentPronto) {
+      window.CookieConsent?.showPreferences();
     } else {
-      void this._carregar().then(() => this._cc?.showPreferences());
+      window.addEventListener('bm-consent-pronto', () => window.CookieConsent?.showPreferences(), { once: true });
     }
   }
 
-  /**
-   * O banner é grande e fixo no rodapé: se a Poppins (carregada fora do caminho
-   * crítico) chega DEPOIS dele, o texto reflui no fallback→Poppins, o banner ganha
-   * uma linha e o topo sobe — layout shift de ~0,12 medido em 375px. Espera os pesos
-   * que o banner usa (400/600 do vanilla-cookieconsent, 700 do <strong>) — o 400 do
-   * corpo da página chega antes e não basta. O teto evita segurar o banner se a
-   * fonte nunca vier (Google Fonts bloqueado, rede ruim).
-   */
-  private async _aguardarPoppins(limiteMs = 3000): Promise<void> {
-    const fonts = document.fonts;
-    if (!fonts) return;
-    const temPoppins = () => [...fonts].some((f) => f.family.replace(/["']/g, '') === 'Poppins');
-    const carregar = async () => {
-      // As @font-face só existem depois que o CSS do Google Fonts aplica (preload →
-      // stylesheet no onload); até lá, fonts.load() resolveria vazio na hora.
-      while (!temPoppins()) {
-        await new Promise((r) => fonts.addEventListener('loadingdone', r, { once: true }));
-      }
-      await Promise.all(['400', '600', '700'].map((peso) => fonts.load(`${peso} 1em Poppins`)));
-    };
-    let teto: ReturnType<typeof setTimeout> | undefined;
-    // Fora da zona: um timer pendente na zona segura a estabilidade da app (NG0506).
-    const limite = new Promise<void>((r) => {
-      teto = this._zone.runOutsideAngular(() => setTimeout(r, limiteMs));
-    });
-    await Promise.race([carregar(), limite]);
-    clearTimeout(teto);
-  }
-
-  private async _carregar(): Promise<void> {
-    if (this._cc) return;
-    const cc = (await import('vanilla-cookieconsent')) as Cc;
-    this._cc = cc;
-
-    await cc.run({
-      mode: 'opt-in',
-      revision: 1,
-      autoClearCookies: true,
-      hideFromBots: true,
-      cookie: { name: 'bm_consent', expiresAfterDays: 365, sameSite: 'Lax' },
-      guiOptions: {
-        consentModal: { layout: 'box inline', position: 'bottom left', equalWeightButtons: true, flipButtons: false },
-        preferencesModal: { layout: 'box', equalWeightButtons: true, flipButtons: false },
-      },
-      categories: {
-        necessary: { enabled: true, readOnly: true },
-        analytics: {
-          autoClear: {
-            cookies: [
-              { name: /^_ga/ },
-              { name: '_gid' },
-              { name: '_clck' },
-              { name: '_clsk' },
-              { name: 'CLID' },
-              { name: 'MUID' },
-              { name: 'SM' },
-              { name: 'ANONCHK' },
-            ],
-          },
-        },
-      },
-      // onConsent roda também a cada carga com consentimento já dado; só registramos decisões
-      // novas (primeira escolha e alterações), via onFirstConsent/onChange.
-      onConsent: () => this._aplicar(),
-      onFirstConsent: ({ cookie }) => this._registrar(cookie, 'primeira'),
-      onChange: ({ cookie }) => this._registrar(cookie, 'alterou'),
-      language: {
-        default: 'pt-BR',
-        translations: { 'pt-BR': TEXTOS_PT_BR },
-      },
-    });
-
-    this._aplicar();
+  private _drenarFila(): void {
+    const fila = window.__bmConsentFila ?? [];
+    while (fila.length) {
+      const { cookie, tipo } = fila.shift()!;
+      this._registrar(cookie, tipo);
+    }
   }
 
   /** Prova de consentimento (LGPD): registro anônimo no backend, fire-and-forget. */
@@ -141,69 +83,4 @@ export class ConsentService {
       })
       .subscribe({ error: (err) => this._logger.logError(err, 'consentimento') });
   }
-
-  private _aplicar(): void {
-    if (!this._cc) return;
-    const analitico = this._cc.acceptedCategory('analytics');
-
-    window.gtag?.('consent', 'update', {
-      analytics_storage: analitico ? 'granted' : 'denied',
-    });
-
-    if (analitico) {
-      window.__bmIniciarClarity?.();
-    } else {
-      window.clarity?.('consent', false);
-    }
-  }
 }
-
-const TEXTOS_PT_BR: CookieConsentApi.Translation = {
-  consentModal: {
-    title: 'Sua privacidade importa',
-    description:
-      'Usamos cookies necessários para o site funcionar e, com a sua permissão, cookies de análise para entender como o BuscaMissa é usado e melhorá-lo. Você pode aceitar, recusar ou escolher quais categorias permitir. Saiba mais na <a href="/cookies">Política de Cookies</a>.',
-    acceptAllBtn: 'Aceitar todos',
-    acceptNecessaryBtn: 'Recusar não essenciais',
-    showPreferencesBtn: 'Escolher cookies',
-  },
-  preferencesModal: {
-    title: 'Preferências de cookies',
-    acceptAllBtn: 'Aceitar todos',
-    acceptNecessaryBtn: 'Recusar não essenciais',
-    savePreferencesBtn: 'Salvar minhas escolhas',
-    closeIconLabel: 'Fechar',
-    sections: [
-      {
-        title: 'Como usamos cookies',
-        description:
-          'Cookies são pequenos arquivos guardados no seu dispositivo. Você pode escolher o que permitir e mudar de ideia a qualquer momento. Detalhes na <a href="/cookies">Política de Cookies</a>.',
-      },
-      {
-        title: 'Estritamente necessários',
-        description:
-          'Garantem o funcionamento do site e guardam a sua escolha de cookies. Não podem ser desativados.',
-        linkedCategory: 'necessary',
-        cookieTable: {
-          caption: 'Cookies necessários',
-          headers: { name: 'Nome', desc: 'Finalidade', exp: 'Validade' },
-          body: [{ name: 'bm_consent', desc: 'Guarda a sua escolha de cookies.', exp: '12 meses' }],
-        },
-      },
-      {
-        title: 'Análise e desempenho',
-        description:
-          'Nos ajudam a entender quais páginas são mais usadas e onde o site pode melhorar (Google Analytics e Microsoft Clarity). Só são ativados se você permitir.',
-        linkedCategory: 'analytics',
-        cookieTable: {
-          caption: 'Cookies de análise',
-          headers: { name: 'Nome', domain: 'Serviço', desc: 'Finalidade', exp: 'Validade' },
-          body: [
-            { name: '_ga, _ga_*', domain: 'Google Analytics', desc: 'Distingue visitantes e sessões para estatísticas de uso.', exp: 'até 2 anos' },
-            { name: '_clck, _clsk, CLID', domain: 'Microsoft Clarity', desc: 'Identifica a sessão para análise de uso e mapas de calor.', exp: 'até 1 ano' },
-          ],
-        },
-      },
-    ],
-  },
-};

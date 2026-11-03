@@ -35,6 +35,10 @@ export class CityCardComponent {
 
   imagemQuebrada = false;
 
+  get temFoto(): boolean {
+    return !!this.igreja?.imagemUrl && !this.imagemQuebrada;
+  }
+
   /**
    * Falso no prerender. Separa a informação temporal ESTÁVEL (que o server assa e o
    * Google indexa) da RELATIVA (que só faz sentido contra o relógio de quem está

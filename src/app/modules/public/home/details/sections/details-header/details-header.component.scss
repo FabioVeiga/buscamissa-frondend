@@ -65,3 +65,8 @@
     font-size: 0.8rem;
   }
 }
+
+// Botão "Enviar no WhatsApp": mesmo .action-btn, só o ícone na cor da marca.
+.action-btn--whatsapp .pi-whatsapp {
+  color: #128c7e;
+}

@@ -16,7 +16,7 @@
 import { writeFileSync, mkdirSync, readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { normalizarBaseUrl } from './lib/seo-routes.mjs';
+import { headersChaveBuild, normalizarBaseUrl } from './lib/seo-routes.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -82,7 +82,7 @@ async function baixar(base, rota, arquivo, tipo = 'array') {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
-    const res = await fetch(url, { signal: controller.signal });
+    const res = await fetch(url, { signal: controller.signal, headers: headersChaveBuild() });
     if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
     const dados = await res.json();
     if (tipo === 'array' && !Array.isArray(dados)) throw new Error('resposta não é um array');

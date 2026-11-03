@@ -10,6 +10,9 @@ import { Observable, from, of, switchMap } from 'rxjs';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { environment } from '../../../environments/environment';
+// Chave de build dos bulks /v2/seo/* (só Node; ver o helper).
+// @ts-expect-error — módulo JS sem tipos; contrato garantido pelo próprio helper.
+import { headersChaveBuild } from '../../../../scripts/lib/seo-routes.mjs';
 import { chaveCidade, stateKeyCidade } from './prerender-state-keys';
 
 /**
@@ -64,7 +67,7 @@ async function carregarMapa(): Promise<Map<string, CidadePayload>> {
   let lista = lerDoDisco();
   const origem = lista ? 'disco (.prerender-cache)' : 'bulk /v2/seo/cidades';
   if (!lista) {
-    const res = await fetch(`${baseUrl()}/v2/seo/cidades`);
+    const res = await fetch(`${baseUrl()}/v2/seo/cidades`, { headers: headersChaveBuild() });
     if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
     lista = (await res.json()) as CidadePayload[];
   }

@@ -29,6 +29,18 @@ export interface SeoData {
   seguirLinks?: boolean;
 }
 
+/**
+ * Imagem de compartilhamento padrão, usada quando a rota não informa a sua.
+ * Dimensões reais do arquivo em src/assets/images/og-image.jpg (1200×630, arte com a foto da home) —
+ * se o arquivo for trocado, atualize aqui e no src/index.html.
+ */
+export const OG_IMAGE_PADRAO = {
+  url: 'https://buscamissa.com.br/assets/images/og-image.jpg',
+  width: '1200',
+  height: '630',
+  alt: 'Busca Missa — horários de missa perto de você, em paróquias de todo o Brasil',
+} as const;
+
 @Injectable({ providedIn: 'root' })
 export class SeoService {
   private _title = inject(Title);
@@ -74,19 +86,28 @@ export class SeoService {
       this._meta.updateTag({ property: 'og:url', content: canonicalUrl });
     }
 
-    // og:image/twitter:image específicos da rota, quando informados.
+    // og:image/twitter:image: a da rota quando informada, senão a imagem padrão.
     //
-    // O `else` é essencial na navegação SPA: sem ele a imagem da rota ANTERIOR
-    // sobrevive. Como vários payloads de SEO trazem ogImage nulo (hubs de estado,
-    // cidade, intenção), uma paróquia visitada antes emprestava a própria foto ao
-    // compartilhamento da página seguinte. No prerender o bug não aparece — cada
-    // página é um documento novo —, só na navegação client-side.
+    // Nunca remover: no prerender, a página sem imagem própria (home, cidade,
+    // intenção, paróquia sem foto) saía SEM og:image e o WhatsApp/Facebook montava a
+    // prévia sem imagem. E a troca explícita continua essencial na navegação SPA: sem
+    // ela a foto de uma paróquia visitada antes sobreviveria na página seguinte.
+    //
+    // A URL é sempre absoluta — os crawlers de prévia não resolvem caminho relativo.
     if (data.image) {
       this._meta.updateTag({ property: 'og:image', content: data.image });
       this._meta.updateTag({ name: 'twitter:image', content: data.image });
+      // Dimensões da foto da rota são desconhecidas: declarar as da imagem padrão
+      // seria mentir para o crawler. Sem elas, ele mede a imagem sozinho.
+      this._meta.removeTag("property='og:image:width'");
+      this._meta.removeTag("property='og:image:height'");
+      this._meta.updateTag({ property: 'og:image:alt', content: data.title });
     } else {
-      this._meta.removeTag("property='og:image'");
-      this._meta.removeTag("name='twitter:image'");
+      this._meta.updateTag({ property: 'og:image', content: OG_IMAGE_PADRAO.url });
+      this._meta.updateTag({ name: 'twitter:image', content: OG_IMAGE_PADRAO.url });
+      this._meta.updateTag({ property: 'og:image:width', content: OG_IMAGE_PADRAO.width });
+      this._meta.updateTag({ property: 'og:image:height', content: OG_IMAGE_PADRAO.height });
+      this._meta.updateTag({ property: 'og:image:alt', content: OG_IMAGE_PADRAO.alt });
     }
   }
 

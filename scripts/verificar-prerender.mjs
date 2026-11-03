@@ -4,7 +4,15 @@ import { dirname, join } from 'path';
 import {
   MAX_PAROQUIAS_PRERENDER,
   CEPS_COM_CITACAO_EXTERNA,
+  ARQUIVO_REGISTRO,
+  conferirRegistro,
+  contarCidades,
+  criterioAtivo,
+  calcularSelecao,
+  registroDaSelecao,
+  validarRegistro,
 } from './lib/selecionar-paroquias-prerender.mjs';
+import { tetoParoquias } from './lib/orcamento-arquivos.mjs';
 
 /**
  * Guard-rail do prerender (Auditoria2 / Fases 2, 2.5 e 3). Roda no postbuild, depois
@@ -314,6 +322,17 @@ if (estadosDoCache && dirEstados) {
 // tem que barrar o deploy, não liberá-lo.
 const COBERTURA_MINIMA = 0.9;
 
+// Critério do postbuild, calculado uma vez. Configuração inválida (valor desconhecido na
+// variável, v8 sem arquivo de proteção válido) encerra aqui com a mensagem do erro, em
+// vez de estourar com stack trace no meio da verificação de cobertura.
+let criterioPostbuild;
+try {
+  criterioPostbuild = criterioAtivo(ROOT);
+} catch (err) {
+  console.error(`\n❌ [criterio] configuração do prerender de paróquias inválida: ${err.message}`);
+  process.exit(1);
+}
+
 /** Espelha exatamente o universo de app.routes.server.ts (paroquiasDoDisco/cidadesDoDisco). */
 const esperadoPorSecao = {
   missas: () => {
@@ -333,13 +352,18 @@ const esperadoPorSecao = {
   // basta `min(elegíveis, teto)` para saber quantas páginas deveriam existir — e
   // assim não há um segundo lugar com o critério de ranking, que poderia divergir em
   // silêncio do original.
+  // No critério V8 o teto é o do orçamento de arquivos (depende do nº de cidades), não
+  // a constante: contar contra 1.900 deixaria passar até 10% de paróquias faltando.
   paroquia: () => {
     const lista = lerCache('paroquias.json');
     if (!lista) return null;
     const elegiveis = lista.filter(
       (p) => p?.uf && p?.cidadeSlug && p?.slug && (p?.igreja?.missas?.length ?? 0) > 0,
     ).length;
-    return Math.min(elegiveis, MAX_PAROQUIAS_PRERENDER);
+    if (criterioPostbuild !== 'v8') return Math.min(elegiveis, MAX_PAROQUIAS_PRERENDER);
+    const cidades = lerCache('cidades.json');
+    if (!cidades) return null;
+    return Math.min(elegiveis, tetoParoquias({ cidades: contarCidades(cidades) }));
   },
 };
 
@@ -350,6 +374,33 @@ function lerCache(arquivo) {
     return JSON.parse(readFileSync(caminho, 'utf-8'));
   } catch {
     return null;
+  }
+}
+
+// Consistência entre etapas: o sitemap (prebuild) registrou critério e seleção; aqui
+// recalculamos com o ambiente do postbuild. Divergência = HTML e sitemap gerados com
+// critérios diferentes (variável só em uma etapa, arquivo trocado no meio do build).
+if (lerCache('paroquias.json')) {
+  let erros;
+  try {
+    // O registro é o que os workers de prerender usaram (paroquiasDoDisco): estrutura,
+    // versão, integridade e origem conferidas antes de comparar com o recálculo.
+    const arquivoRegistro = join(ROOT, ARQUIVO_REGISTRO);
+    const { dados: registro, erro } = existsSync(arquivoRegistro)
+      ? validarRegistro(readFileSync(arquivoRegistro, 'utf-8'), readFileSync(join(ROOT, '.prerender-cache', 'paroquias.json'), 'utf-8'))
+      : { dados: null };
+    erros = erro
+      ? [`registro inválido: ${erro}`]
+      : conferirRegistro(registro, registroDaSelecao(criterioPostbuild, calcularSelecao(ROOT)));
+  } catch (err) {
+    erros = [err.message];
+  }
+  if (erros.length) {
+    algumFalhou = true;
+    console.error(`\n❌ [criterio] seleção de paróquias inconsistente entre prebuild e postbuild (${ARQUIVO_REGISTRO}):`);
+    for (const e of erros) console.error(`   - ${e}`);
+  } else {
+    console.log(`[criterio] seleção de paróquias igual no prebuild e no postbuild (${criterioPostbuild}).`);
   }
 }
 
@@ -420,7 +471,7 @@ if (paroquiasCache && browserDir) {
   const rotasPorCep = new Map();
 
   for (const cep of CEPS_COM_CITACAO_EXTERNA) {
-    // Replica EXATAMENTE a elegibilidade de paroquiasDoDisco (uf + cidadeSlug + slug +
+    // Replica EXATAMENTE a elegibilidade de calcularSelecao (uf + cidadeSlug + slug +
     // ≥1 missa). Sem o critério de missa, uma paróquia protegida que perde o último
     // horário viraria "destino sem HTML" e abortaria o build — quando na verdade o
     // prerender a excluiu de propósito, porque a página não teria o conteúdo que

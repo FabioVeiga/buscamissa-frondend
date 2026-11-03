@@ -61,6 +61,11 @@
   transition: background 0.15s, border-color 0.15s, color 0.15s;
   white-space: nowrap;
 
+  // Largura do glifo real desde o 1º quadro: no fallback da primeicons o ícone sai
+  // ~4px mais estreito e, em 320px, "Fim de semana" cabia na 1ª linha e descia
+  // quando a fonte chegava (mesmo mecanismo do Compartilhar no city.component).
+  .pi { width: 1em; flex-shrink: 0; }
+
   &:hover {
     border-color: $primary;
     color: $primary;
