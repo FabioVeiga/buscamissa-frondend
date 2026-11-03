@@ -28,8 +28,9 @@ export const FOLGA_ARQUIVOS = 150;
 /**
  * Arquivos do dist que não são página de cidade nem de paróquia: assets (JS, CSS,
  * fontes, imagens), páginas estáticas, /missas/{uf}, a árvore /missa-{dia}[/{uf}] e o
- * 404. É uma medição, não uma derivação — o número de chunks JS depende do código —,
- * e o guard do postbuild mede o valor real a cada build (`medirFixos`).
+ * 404. É uma medição, não uma derivação: os chunks JS dependem do código, e os hubs
+ * `/missas/{uf}` e `/missa-{dia}/{uf}` dependem dos dados. O guard do postbuild mede o
+ * valor real a cada build (`medirFixos`) e o mostra quando a margem falha.
  *
  * Histórico:
  *   - 383 — build de produção de 26/10/2026 (run 40231569289):

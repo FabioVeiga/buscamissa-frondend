@@ -152,10 +152,9 @@ if (arquivos > MAX_FILES) {
 // velha (mais chunks, mais rotas estáticas): falha, salvo exceção explícita.
 const margem = avaliarMargem({ arquivos });
 const medidos = medirFixos(browserDir);
-console.log(`[dist-size] fixos reais: ${medidos.fixos} (= ${arquivos} − ${medidos.cidades} cidades − ${medidos.paroquias} paróquias) | ARQUIVOS_FIXOS: ${ARQUIVOS_FIXOS}`);
-if (medidos.fixos !== ARQUIVOS_FIXOS) {
-  console.warn(`⚠ [dist-size] fixos reais (${medidos.fixos}) diferentes de ARQUIVOS_FIXOS (${ARQUIVOS_FIXOS}): a seleção de paróquias está projetando errado.`);
-}
+// Informativo: ARQUIVOS_FIXOS é a projeção do teto dinâmico de PRODUÇÃO. Em staging
+// (outra base, outro critério) os fixos reais são outros e não há o que comparar.
+console.log(`[dist-size] fixos reais: ${medidos.fixos} (= ${arquivos} − ${medidos.cidades} cidades − ${medidos.paroquias} paróquias) | ARQUIVOS_FIXOS (teto de produção): ${ARQUIVOS_FIXOS}`);
 if (!margem.ok && arquivos <= MAX_FILES) {
   falhou = true;
   console.error(`\n❌ [dist-size] ${margem.motivo}.`);
