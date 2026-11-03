@@ -1,7 +1,7 @@
 import { readdirSync, statSync, existsSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
-import { avaliarMargem, MAX_FILES, medirDiretorio, VARIAVEL_EXCECAO_MARGEM } from './lib/orcamento-arquivos.mjs';
+import { ARQUIVOS_FIXOS, avaliarMargem, MAX_FILES, medirDiretorio, medirFixos, VARIAVEL_EXCECAO_MARGEM } from './lib/orcamento-arquivos.mjs';
 
 /**
  * Guard-rail da ESTEIRA de build (Auditoria2 / Fase 3). Roda no postbuild, depois
@@ -151,10 +151,16 @@ if (arquivos > MAX_FILES) {
 // estimativa dos arquivos fixos. Margem real menor que a folga = a estimativa ficou
 // velha (mais chunks, mais rotas estáticas): falha, salvo exceção explícita.
 const margem = avaliarMargem({ arquivos });
+const medidos = medirFixos(browserDir);
+console.log(`[dist-size] fixos reais: ${medidos.fixos} (= ${arquivos} − ${medidos.cidades} cidades − ${medidos.paroquias} paróquias) | ARQUIVOS_FIXOS: ${ARQUIVOS_FIXOS}`);
+if (medidos.fixos !== ARQUIVOS_FIXOS) {
+  console.warn(`⚠ [dist-size] fixos reais (${medidos.fixos}) diferentes de ARQUIVOS_FIXOS (${ARQUIVOS_FIXOS}): a seleção de paróquias está projetando errado.`);
+}
 if (!margem.ok && arquivos <= MAX_FILES) {
   falhou = true;
   console.error(`\n❌ [dist-size] ${margem.motivo}.`);
-  console.error('   Remeça os arquivos fixos (ARQUIVOS_FIXOS em lib/orcamento-arquivos.mjs) ou, para');
+  console.error(`   Fixos reais medidos neste build: ${medidos.fixos} (ARQUIVOS_FIXOS = ${ARQUIVOS_FIXOS}).`);
+  console.error('   Atualize ARQUIVOS_FIXOS em lib/orcamento-arquivos.mjs com a causa no histórico, ou, para');
   console.error(`   uma correção urgente, defina ${VARIAVEL_EXCECAO_MARGEM}=<mínimo aceito>.`);
 } else if (margem.excecao !== undefined) {
   console.warn(`⚠ [dist-size] EXCEÇÃO ${VARIAVEL_EXCECAO_MARGEM}=${margem.excecao}: margem real de ${margem.margem} arquivos aceita abaixo da folga.`);

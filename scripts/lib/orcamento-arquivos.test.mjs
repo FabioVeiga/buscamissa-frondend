@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, mkdirSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { ARQUIVOS_FIXOS, avaliarMargem, FOLGA_ARQUIVOS, margemNaReversao, MAX_FILES, medirDiretorio, projetarArquivos, tetoParoquias, VARIAVEL_EXCECAO_MARGEM } from './orcamento-arquivos.mjs';
+import { ARQUIVOS_FIXOS, avaliarMargem, FOLGA_ARQUIVOS, margemNaReversao, MAX_FILES, medirDiretorio, medirFixos, projetarArquivos, tetoParoquias, VARIAVEL_EXCECAO_MARGEM } from './orcamento-arquivos.mjs';
 
 test('medirDiretorio conta como o build: um index.html por rota, mais os assets', () => {
   // dist/<app>/browser sintético: 3 assets + 2 páginas de cidade + 3 de paróquia.
@@ -17,9 +17,61 @@ test('medirDiretorio conta como o build: um index.html por rota, mais os assets'
   assert.equal(arquivos, projetarArquivos({ cidades: 2, paroquias: 3, fixos: 3 }));
 });
 
-test('build de 26/10 reconstruído: 1.900 paróquias + 1.640 cidades + fixos = 3.923', () => {
-  assert.equal(projetarArquivos({ cidades: 1640, paroquias: 1900 }), 3923);
-  assert.equal(ARQUIVOS_FIXOS, 383);
+test('build de 26/10 reconstruído com os fixos da época: 1.900 + 1.640 + 383 = 3.923', () => {
+  assert.equal(projetarArquivos({ cidades: 1640, paroquias: 1900, fixos: 383 }), 3923);
+});
+
+test('build de produção de 03/11 (PR #275): 1.734 paróquias + 1.933 cidades + 384 fixos = 4.051', () => {
+  assert.equal(ARQUIVOS_FIXOS, 384);
+  assert.equal(projetarArquivos({ cidades: 1933, paroquias: 1734 }), 4051);
+});
+
+test('com 384 fixos e os dados de 03/11, o teto volta a deixar exatamente a folga', () => {
+  // Com 383 a seleção pegou 1.734 paróquias e o dist real (384 fixos) ficou com margem 149.
+  assert.equal(tetoParoquias({ cidades: 1933, fixos: 383 }), 1734);
+  assert.equal(avaliarMargem({ arquivos: 4051, env: {} }).ok, false);
+  const teto = tetoParoquias({ cidades: 1933 });
+  assert.equal(teto, 1733);
+  const arquivos = projetarArquivos({ cidades: 1933, paroquias: teto });
+  assert.deepEqual(avaliarMargem({ arquivos, env: {} }), { ok: true, margem: FOLGA_ARQUIVOS });
+});
+
+test('margem: exatamente 150 passa, 149 falha, acima de MAX_FILES falha', () => {
+  assert.equal(avaliarMargem({ arquivos: MAX_FILES - FOLGA_ARQUIVOS, env: {} }).ok, true);
+  assert.equal(avaliarMargem({ arquivos: MAX_FILES - FOLGA_ARQUIVOS + 1, env: {} }).ok, false);
+  assert.equal(avaliarMargem({ arquivos: MAX_FILES + 1, env: {} }).ok, false);
+});
+
+function distSintetico({ assets, cidades, paroquias, extras = [] }) {
+  const dir = mkdtempSync(join(tmpdir(), 'dist-fixos-'));
+  for (let i = 0; i < assets; i++) writeFileSync(join(dir, `chunk-${i}.js`), 'x');
+  const pagina = (rota) => {
+    mkdirSync(join(dir, rota), { recursive: true });
+    writeFileSync(join(dir, rota, 'index.html'), '<html></html>');
+  };
+  for (let i = 0; i < cidades; i++) pagina(`missas/sp/cidade-${i}`);
+  for (let i = 0; i < paroquias; i++) pagina(`paroquia/sp/cidade-0/paroquia-${i}`);
+  for (const rota of extras) pagina(rota);
+  return dir;
+}
+
+test('medirFixos separa cidade e paróquia do resto (hubs, estáticas, assets)', () => {
+  // Fixos: 4 assets + /missas/sp (hub UF) + /missa-domingo/sp + /cidades + index.html da raiz = 8.
+  const dir = distSintetico({ assets: 4, cidades: 3, paroquias: 5, extras: ['missas/sp', 'missa-domingo/sp', 'cidades', '.'] });
+  assert.deepEqual(medirFixos(dir), { arquivos: 16, cidades: 3, paroquias: 5, fixos: 8 });
+});
+
+test('medirFixos: um chunk a mais no pós-build vira um fixo a mais, não página', () => {
+  const antes = medirFixos(distSintetico({ assets: 4, cidades: 2, paroquias: 2 }));
+  const depois = medirFixos(distSintetico({ assets: 5, cidades: 2, paroquias: 2 }));
+  assert.equal(depois.fixos - antes.fixos, 1);
+  assert.equal(depois.cidades, antes.cidades);
+  assert.equal(depois.paroquias, antes.paroquias);
+});
+
+test('medirFixos: página fora do formato (folha /missa-{dia}/{uf}/{cidade}, nível extra) conta como fixo', () => {
+  const dir = distSintetico({ assets: 0, cidades: 1, paroquias: 1, extras: ['missa-sabado/mg/uberaba', 'missas/sp/cidade-0/extra'] });
+  assert.deepEqual(medirFixos(dir), { arquivos: 4, cidades: 1, paroquias: 1, fixos: 2 });
 });
 
 test('teto pode ficar sem espaço: zero ou negativo, quem chama decide falhar', () => {
