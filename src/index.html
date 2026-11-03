@@ -4,6 +4,18 @@
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- A7: ?dia= da cidade já na 1ª pintura (CSS em city.component.scss). Só marca um
+         índice 0–6 de lista fixa; nunca põe texto da URL no DOM. -->
+    <script id="bm-dia">
+      (function () {
+        try {
+          var q = new URLSearchParams(location.search), d = q.getAll('dia');
+          if (d.length !== 1 || q.has('periodo') || !/^\/missas\/[^/]+\/[^/]+\/?$/.test(location.pathname)) return;
+          var i = ['domingo', 'segunda', 'terca', 'quarta', 'quinta', 'sexta', 'sabado'].indexOf(d[0].toLowerCase());
+          if (i > -1) document.documentElement.setAttribute('data-dia', String(i));
+        } catch (e) {}
+      })();
+    </script>
 
     <!-- NOTA: o hero-igreja.webp é usado SÓ na home. O <img> da home já tem
          fetchpriority="high" + width/height, então NÃO preloadamos aqui — um preload

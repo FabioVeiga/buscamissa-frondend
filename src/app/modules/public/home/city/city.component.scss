@@ -348,3 +348,26 @@ $primary-light: #fff4ed;
   }
 }
 
+
+// ── A7: ?dia= já na 1ª pintura ──────────────────────────────────────────────
+// O HTML prerenderizado não tem filtro. O script inline de src/index.html marca
+// <html data-dia="N"> (N = 0–6, só para slug válido) e estas regras escondem o que o
+// Angular vai esconder na hidratação; logo depois ele remove o atributo e passa a
+// mandar sozinho (city-item--oculto, city-vazio--oculto, *ngIf). Sem JS, nada disto
+// se aplica e a lista fica completa. display:none tira do foco e do leitor de tela.
+.city-item--oculto,
+.city-vazio--oculto,
+.city-header__sub-dia { display: none !important; }
+
+@for $d from 0 through 6 {
+  :host-context(html[data-dia="#{$d}"]) {
+    app-city-card:not([data-dias~="#{$d}"]) { display: none !important; }
+    .city-header__sub-total { display: none; }
+    .city-header__sub-dia { display: inline !important; }
+    .city-header__sub-dia::before { content: attr(data-c#{$d}); }
+    .city-lista:not([data-dias-com-igreja~="#{$d}"]) {
+      app-convite-anuncie { display: none; }
+      .city-vazio--filtro { display: flex !important; }
+    }
+  }
+}

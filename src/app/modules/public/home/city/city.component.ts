@@ -1,7 +1,7 @@
-import { ehSemanal, ocorreNoDia, ocorreNoFimDeSemana } from '../../../../shared/utils/recorrencia-missa';
-import { Component, DestroyRef, inject, OnDestroy, OnInit, PLATFORM_ID } from "@angular/core";
+import { ocorreNoDia, ocorreNoFimDeSemana } from '../../../../shared/utils/recorrencia-missa';
+import { afterNextRender, Component, DestroyRef, inject, OnDestroy, OnInit, PLATFORM_ID } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
-import { CommonModule, isPlatformBrowser } from "@angular/common";
+import { CommonModule, DOCUMENT, isPlatformBrowser } from "@angular/common";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { finalize } from "rxjs/operators";
 import { SkeletonModule } from "primeng/skeleton";
@@ -16,6 +16,7 @@ import { ClarityService } from "../../../../core/services/clarity.service";
 import { MetricasService, PaginaMetrica } from "../../../../core/services/metricas.service";
 import { CityMapComponent, MapChurch } from "../../../../shared/components/city-map/city-map.component";
 import { DIAS, PERIODOS } from "./city.constants";
+import { igrejaNoDiaDaSemana, intercalarComServidor, ItemLista, itensVisiveis, missaNoDiaDaSemana } from "./city-filtro-dia";
 import { CityFiltrosComponent, Ordenacao, QuickFilter } from "./sections/city-filtros/city-filtros.component";
 import { CityCardComponent } from "./sections/city-card/city-card.component";
 import { ChurchPlaceholderSpriteComponent } from "../../../../shared/components/church-placeholder/church-placeholder-sprite.component";
@@ -57,6 +58,7 @@ export class CityComponent implements OnInit, OnDestroy {
   private _favorites = inject(FavoritesService);
   private _clarity = inject(ClarityService);
   private _metricas = inject(MetricasService);
+  private _doc = inject(DOCUMENT);
 
   /** Falso durante o prerender (Node). Guarda browser-APIs (geoloc, localStorage). */
   /** protected (não private): o template usa para não prerenderizar o mapa. */
@@ -68,7 +70,14 @@ export class CityComponent implements OnInit, OnDestroy {
   cidadeNome = "";
   igrejas: any[] = [];
   igrejasFiltradas: any[] = [];
-  trackByIgrejaId = (_: number, igreja: any): number => igreja.id;
+  /** O que o *ngFor desenha: as filtradas, ou (só na hidratação com ?dia=) todas, com as de fora ocultas. */
+  itensLista: ItemLista[] = [];
+  trackByItem = (_: number, item: ItemLista): number => item.igreja.id;
+  /** Contagem por dia (índice 0–6) e dias com ao menos uma igreja — para a 1ª pintura com ?dia= (A7). */
+  contagemPorDia: number[] = [];
+  diasComIgreja = "";
+  /** A lista intercalada com o DOM do servidor só vale na 1ª aplicação de filtros (hidratação). */
+  private _hidratacaoPendente = true;
   naoEncontrado = false;
   /** Erro de rede/API ao carregar — mostra estado com "Tentar novamente" (≠ cidade sem paróquias) */
   erroCarregar = false;
@@ -101,6 +110,13 @@ export class CityComponent implements OnInit, OnDestroy {
       lng: ig.endereco?.longitude ?? null,
     }));
   }
+  constructor() {
+    // A7: o <html data-dia> do script inline só serve para a 1ª pintura. Depois da
+    // hidratação o Angular já mostra o mesmo estado, e daí em diante só ele manda
+    // (filtros no SPA, voltar/avançar): o atributo sai para o CSS não conflitar.
+    afterNextRender(() => { delete this._doc.documentElement.dataset["dia"]; });
+  }
+
   get diaHoje(): number { return new Date().getDay(); }
   get diaAmanha(): number { return (new Date().getDay() + 1) % 7; }
 
@@ -175,6 +191,8 @@ export class CityComponent implements OnInit, OnDestroy {
         this.cidadeNome = data?.cidade ?? this.cidade;
         const seo = data?.seo;
 
+        this.contagemPorDia = DIAS.map((d) => this.igrejas.filter((ig) => igrejaNoDiaDaSemana(ig, d.idx)).length);
+        this.diasComIgreja = DIAS.filter((d) => this.contagemPorDia[d.idx] > 0).map((d) => d.idx).join(" ");
         this.aplicarFiltros();
 
         // Tags Clarity de contexto (idempotente — só sobrescreve valores)
@@ -289,6 +307,12 @@ export class CityComponent implements OnInit, OnDestroy {
     this.aplicarFiltros();
   }
 
+  /** "2 de 7 igrejas encontradas" — mesmo texto do subtítulo com filtro ativo. */
+  textoContagem(n: number): string {
+    const s = n !== 1 ? "s" : "";
+    return `${n} de ${this.igrejas.length} igreja${s} encontrada${s}`;
+  }
+
   get temFiltroAtivo(): boolean {
     return this.diaAtivo !== null || this.periodoAtivo !== null || this.quickFilter !== null;
   }
@@ -308,7 +332,8 @@ export class CityComponent implements OnInit, OnDestroy {
     // Filtro por dia manual
     if (this.diaAtivo !== null) {
       // Filtro por dia da semana considera só missas semanais (dia fixo do mês não tem dia da semana).
-      lista = lista.filter(ig => ig.missas?.some((m: any) => ehSemanal(m) && m.diaSemana === this.diaAtivo));
+      const dia = this.diaAtivo;
+      lista = lista.filter(ig => igrejaNoDiaDaSemana(ig, dia));
     }
 
     // Filtro por período
@@ -325,7 +350,31 @@ export class CityComponent implements OnInit, OnDestroy {
 
     lista = this._ordenar(lista);
     this.igrejasFiltradas = lista;
+    this.itensLista = this._montarItensLista(lista);
     if (!this.isLoading) this.naoEncontrado = lista.length === 0 && this.igrejas.length > 0;
+  }
+
+  /**
+   * Na hidratação com `?dia=` (o script inline marcou `<html data-dia>` e o CSS já
+   * escondeu os cards de fora), o *ngFor precisa casar posição a posição com os cards do
+   * servidor — ver intercalarComServidor. Fora desse caso, a lista é a filtrada.
+   */
+  private _montarItensLista(filtradas: any[]): ItemLista[] {
+    const hidratacao = this._hidratacaoPendente;
+    this._hidratacaoPendente = false;
+    if (
+      hidratacao && this._isBrowser && this.diaAtivo !== null &&
+      this.periodoAtivo === null && this.quickFilter === null &&
+      this._doc.documentElement.dataset["dia"] === String(this.diaAtivo)
+    ) {
+      const diasServidor = Array.from(
+        this._doc.querySelectorAll(".city-lista > app-city-card"),
+        (el) => el.getAttribute("data-dias") ?? "",
+      );
+      const intercalada = intercalarComServidor(this.igrejas, filtradas, diasServidor, this.diaAtivo);
+      if (intercalada) return intercalada;
+    }
+    return itensVisiveis(filtradas);
   }
 
   private _ordenar(lista: any[]): any[] {
@@ -359,7 +408,7 @@ export class CityComponent implements OnInit, OnDestroy {
     if (this.quickFilter === 'hoje') return ocorreNoDia(m, 0);
     if (this.quickFilter === 'amanha') return ocorreNoDia(m, 1);
     if (this.quickFilter === 'fds') return ocorreNoFimDeSemana(m);
-    if (this.diaAtivo !== null) return ehSemanal(m) && m.diaSemana === this.diaAtivo;
+    if (this.diaAtivo !== null) return missaNoDiaDaSemana(m, this.diaAtivo);
     return true;
   }
 
@@ -478,8 +527,9 @@ export class CityComponent implements OnInit, OnDestroy {
 
   // ── SEO ───────────────────────────────────────────────────────────────────
 
-  private parseDiaSlug(slug?: string): number | null {
-    if (!slug) return null;
+  /** Só um `?dia=` texto vale (repetido vira array no Angular) — a mesma regra do script inline. */
+  private parseDiaSlug(slug?: unknown): number | null {
+    if (typeof slug !== "string" || !slug) return null;
     return DIAS.find((d) => d.slug === slug.toLowerCase())?.idx ?? null;
   }
 
