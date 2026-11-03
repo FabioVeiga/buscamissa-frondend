@@ -194,4 +194,43 @@ describe('CityCardComponent — foto e fallback num nó só', () => {
     expect(img().hidden).toBeTrue();
     expect(ph().hidden).toBeFalse();
   });
+
+  // A2: a arte só existe quando o fallback aparece; com foto o host vem vazio.
+  const arte = () => ph().querySelector('svg.church-ph__art');
+
+  it('com foto: o host do fallback fica, mas sem a arte', () => {
+    fixture.componentInstance.igreja = { ...base, imagemUrl: 'https://x/a.png' };
+    fixture.detectChanges();
+    expect(ph()).not.toBeNull();
+    expect(arte()).toBeNull();
+  });
+
+  it('sem foto: a arte aparece, via <use> do sprite da página', () => {
+    fixture.componentInstance.igreja = { ...base, imagemUrl: null };
+    fixture.detectChanges();
+    expect(arte()).not.toBeNull();
+    expect(arte()!.getAttribute('aria-hidden')).toBe('true');
+    expect(arte()!.querySelector('use')?.getAttribute('href')).toBe('#church-ph-art');
+  });
+
+  it('foto que falha: a arte aparece no mesmo host', () => {
+    fixture.componentInstance.igreja = { ...base, imagemUrl: 'https://x/quebrada.png' };
+    fixture.detectChanges();
+    const host = ph();
+    expect(arte()).toBeNull();
+    img().dispatchEvent(new Event('error'));
+    fixture.detectChanges();
+    expect(ph()).toBe(host);
+    expect(arte()).not.toBeNull();
+  });
+
+  it('igreja trocada de sem foto para com foto: a arte some e o host esconde', () => {
+    fixture.componentInstance.igreja = { ...base, imagemUrl: null };
+    fixture.detectChanges();
+    expect(arte()).not.toBeNull();
+    fixture.componentRef.setInput('igreja', { ...base, id: 2, imagemUrl: 'https://x/b.png' });
+    fixture.detectChanges();
+    expect(ph().hidden).toBeTrue();
+    expect(arte()).toBeNull();
+  });
 });

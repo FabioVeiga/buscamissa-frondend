@@ -26,7 +26,9 @@
       (error)="imagemQuebrada = true"
       loading="lazy"
       class="city-card__img">
-    <app-church-placeholder class="city-card__img" [hidden]="temFoto" [showLabel]="false" [spriteId]="spritePlaceholder" />
+    <!-- O host fica sempre (o [hidden] alterna, como no <img>); só a arte é condicional,
+         para os cards com foto não carregarem o fallback escondido (A2). -->
+    <app-church-placeholder class="city-card__img" [hidden]="temFoto" [conteudo]="!temFoto" [showLabel]="false" [spriteId]="spritePlaceholder" />
   </a>
 
   <!-- Corpo do card -->

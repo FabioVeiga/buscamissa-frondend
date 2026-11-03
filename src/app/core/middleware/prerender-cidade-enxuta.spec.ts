@@ -7,12 +7,14 @@ import { ActivatedRoute, provideRouter } from '@angular/router';
 import { of } from 'rxjs';
 
 import {
+  CAMPOS_ENDERECO_DA_CIDADE,
   CAMPOS_IGREJA_FORA_DA_CIDADE,
   CAMPOS_MISSA_FORA_DA_CIDADE,
   enxugarIgrejasCidade,
 } from './prerender-cidade-enxuta';
 import { CityComponent } from '../../modules/public/home/city/city.component';
 import { ChurchesService } from '../services/churches.service';
+import { chaveCidade } from './prerender-state-keys';
 
 /**
  * Base fictícia no formato real do bulk /v2/seo/cidades (conferido no ng-state de
@@ -156,9 +158,26 @@ describe('enxugarIgrejasCidade', () => {
   });
 
   it('com semNulos: false mantém os null', () => {
-    const [alfa] = enxugarIgrejasCidade(baseFicticia(), { semNulos: false }) as any[];
+    const [alfa, beta] = enxugarIgrejasCidade(baseFicticia(), { semNulos: false }) as any[];
     expect(alfa.missas[0].observacao).toBeNull();
-    expect(alfa.endereco.complemento).toBeNull();
+    expect(beta.endereco.latitude).toBeNull();
+  });
+
+  it('endereço fica só com bairro, coordenadas, uf e cidadeSlug', () => {
+    const [alfa, beta] = enxugarIgrejasCidade(baseFicticia()) as any[];
+    expect(Object.keys(alfa.endereco).sort()).toEqual([...CAMPOS_ENDERECO_DA_CIDADE].sort());
+    expect(alfa.endereco).toEqual({ bairro: 'Centro', latitude: -23.55, longitude: -46.63, uf: 'SP', cidadeSlug: 'cidade-ficticia' });
+    // Coordenadas nulas somem com semNulos; o resto fica.
+    expect(beta.endereco).toEqual({ bairro: 'Vila Nova', uf: 'SP', cidadeSlug: 'cidade-ficticia' });
+  });
+
+  it('endereço ausente ou sem algum campo permitido não ganha chaves', () => {
+    const base = baseFicticia();
+    delete base[0].endereco;
+    delete base[1].endereco.bairro;
+    const [alfa, beta] = enxugarIgrejasCidade(base) as any[];
+    expect('endereco' in alfa).toBeFalse();
+    expect('bairro' in beta.endereco).toBeFalse();
   });
 
   it('não altera a entrada (o bulk em memória é compartilhado entre rotas)', () => {
@@ -166,6 +185,21 @@ describe('enxugarIgrejasCidade', () => {
     const copia = JSON.parse(JSON.stringify(base));
     enxugarIgrejasCidade(base);
     expect(base).toEqual(copia);
+  });
+
+  it('só a rota de CIDADE é enxugada: detalhe, home e /missa-agora seguem com a resposta completa', () => {
+    // O PrerenderCidadeInterceptor só age quando chaveCidade casa; o resto vai inteiro.
+    expect(chaveCidade('v2/Igreja/cidade/sp/sao-paulo')).toBe('sp/sao-paulo');
+    for (const url of [
+      'v2/Igreja/paroquia/sp/sao-paulo/paroquia-x', // detalhe da paróquia
+      'v2/Igreja/paroquia-x', // detalhe por nomeUnico
+      'v2/Igreja/proximas-missas', // home e /missa-agora
+      'v1/Igreja/buscar-por-filtro', // busca
+      'v1/Igreja/buscar-por-cep?cep=01000000',
+      'v2/Confiabilidade/1/resumo',
+    ]) {
+      expect(chaveCidade(url)).withContext(url).toBeNull();
+    }
   });
 
   it('entrada que não é lista passa intacta', () => {
@@ -278,9 +312,15 @@ describe('CityComponent — paridade de render com o estado enxuto (A2)', () => 
     const el = f.nativeElement as HTMLElement;
     const simbolos = el.querySelectorAll('symbol');
     expect(simbolos.length).toBe(1);
+    // Só os 2 cards sem foto (Beta: imagemUrl vazia; Épsilon: sem imagemUrl) têm a arte.
     const usos = Array.from(el.querySelectorAll('app-city-card use'));
-    expect(usos.length).toBe(5);
+    expect(usos.length).toBe(2);
     for (const u of usos) expect(u.getAttribute('href')).toBe(`#${simbolos[0].id}`);
+    // Todo card tem o host do placeholder (o [hidden] alterna); com foto ele vem vazio.
+    const hosts = Array.from(el.querySelectorAll('app-city-card app-church-placeholder'));
+    expect(hosts.length).toBe(5);
+    expect(hosts.filter((h) => h.hasAttribute('hidden')).length).toBe(3);
+    for (const h of hosts.filter((h) => h.hasAttribute('hidden'))) expect(h.querySelector('svg')).toBeNull();
     // Nenhuma cópia da arte inline nos cards.
     expect(el.querySelectorAll('app-city-card svg ellipse').length).toBe(0);
     const ids = Array.from(el.querySelectorAll('[id]')).map((n) => n.id);

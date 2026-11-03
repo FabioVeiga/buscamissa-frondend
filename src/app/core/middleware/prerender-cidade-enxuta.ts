@@ -35,6 +35,13 @@ export const CAMPOS_MISSA_FORA_DA_CIDADE = [
   'scoreConfianca',
 ] as const;
 
+/**
+ * Do `endereco`, a página de cidade lê só estes (bairro no card; coordenadas na
+ * distância, no "Como chegar" e no mapa; uf e cidadeSlug no link da paróquia). Aqui é
+ * lista de PERMISSÃO: o objeto é pequeno e todo o uso está mapeado.
+ */
+export const CAMPOS_ENDERECO_DA_CIDADE = ['bairro', 'latitude', 'longitude', 'uf', 'cidadeSlug'] as const;
+
 type Objeto = Record<string, unknown>;
 
 const ehObjeto = (v: unknown): v is Objeto => typeof v === 'object' && v !== null && !Array.isArray(v);
@@ -54,11 +61,22 @@ function enxugarObjeto(o: Objeto, remover: readonly string[], semNulos: boolean)
   return saida;
 }
 
+function enderecoDaCidade(endereco: Objeto, semNulos: boolean): Objeto {
+  const saida: Objeto = {};
+  for (const chave of CAMPOS_ENDERECO_DA_CIDADE) {
+    if (!(chave in endereco)) continue;
+    if (semNulos && endereco[chave] === null) continue;
+    saida[chave] = endereco[chave];
+  }
+  return saida;
+}
+
 /**
  * Igrejas para o prerender da página de cidade. Não altera a entrada (o bulk em
  * memória é compartilhado entre as rotas do build).
  *
- * `semNulos` tira as chaves `null` da igreja, de `endereco` e de cada missa. A página
+ * `endereco` fica só com CAMPOS_ENDERECO_DA_CIDADE. `semNulos` tira as chaves `null`
+ * da igreja, de `endereco` e de cada missa. A página
  * trata `null` e ausente do mesmo jeito (`!= null`, `??`, truthiness; o único `!==
  * undefined`, em mass-time.utils, cai em `false` nos dois casos) — o spec de paridade
  * (`prerender-cidade-enxuta.spec.ts`) compara o DOM renderizado nos três formatos.
@@ -68,7 +86,7 @@ export function enxugarIgrejasCidade(igrejas: unknown, { semNulos = true }: { se
   return igrejas.map((igreja) => {
     if (!ehObjeto(igreja)) return igreja;
     const saida = enxugarObjeto(igreja, CAMPOS_IGREJA_FORA_DA_CIDADE, semNulos);
-    if (ehObjeto(saida['endereco'])) saida['endereco'] = enxugarObjeto(saida['endereco'], [], semNulos);
+    if (ehObjeto(saida['endereco'])) saida['endereco'] = enderecoDaCidade(saida['endereco'], semNulos);
     if (Array.isArray(saida['missas'])) {
       saida['missas'] = saida['missas'].map((m) => (ehObjeto(m) ? enxugarObjeto(m, CAMPOS_MISSA_FORA_DA_CIDADE, semNulos) : m));
     }

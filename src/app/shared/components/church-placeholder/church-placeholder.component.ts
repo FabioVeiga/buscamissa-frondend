@@ -22,4 +22,13 @@ export class ChurchPlaceholderComponent {
    * (listas longas: página de cidade); sem ele, a arte vai inline (demais páginas).
    */
   @Input() spriteId: string | null = null;
+
+  /**
+   * `false` deixa o host VAZIO (sem a arte). A página de cidade passa `!temFoto`: a
+   * maioria dos cards tem foto, e a arte escondida em cada um pesava no HTML. O host
+   * fica sempre no DOM — quem esconde é o `[hidden]` do card, aplicado por binding —,
+   * então um resto do render do servidor numa hidratação fora de ordem fica invisível
+   * (ver o comentário do <img> em city-card.component.html).
+   */
+  @Input() conteudo = true;
 }

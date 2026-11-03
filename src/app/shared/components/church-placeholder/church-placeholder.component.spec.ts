@@ -32,6 +32,17 @@ describe('ChurchPlaceholderComponent — sprite (A2)', () => {
     expect(svg.querySelectorAll('rect, ellipse, polygon, path, circle').length).toBe(0);
   });
 
+  it('conteudo=false: host vazio (nem arte, nem rótulo); padrão true mantém as outras páginas', () => {
+    const f = TestBed.createComponent(ChurchPlaceholderComponent);
+    f.componentRef.setInput('conteudo', false);
+    f.componentRef.setInput('showLabel', true);
+    f.detectChanges();
+    expect((f.nativeElement as HTMLElement).querySelector('.church-ph')).toBeNull();
+    const padrao = TestBed.createComponent(ChurchPlaceholderComponent);
+    padrao.detectChanges();
+    expect((padrao.nativeElement as HTMLElement).querySelector('.church-ph svg')).not.toBeNull();
+  });
+
   it('o <symbol> tem exatamente a mesma arte do placeholder inline', () => {
     const inline = TestBed.createComponent(ChurchPlaceholderComponent);
     inline.detectChanges();
