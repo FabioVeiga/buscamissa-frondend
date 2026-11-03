@@ -14,6 +14,7 @@ import { environment } from '../../../environments/environment';
 // @ts-expect-error — módulo JS sem tipos; contrato garantido pelo próprio helper.
 import { headersChaveBuild } from '../../../../scripts/lib/seo-routes.mjs';
 import { chaveCidade, stateKeyCidade } from './prerender-state-keys';
+import { enxugarIgrejasCidade } from './prerender-cidade-enxuta';
 
 /**
  * Interceptor SÓ-SERVER (registrado apenas em app.config.server.ts) — resolve o
@@ -110,8 +111,10 @@ export class PrerenderCidadeInterceptor implements HttpInterceptor {
       switchMap((mapa) => {
         const c = mapa.get(chave);
         if (!c) return next.handle(req); // bulk fora ou cidade ausente → chamada normal
+        // Igrejas sem o que a página de cidade não lê (A2: bytes do ng-state de SP/RJ).
+        // O mesmo objeto vai para o render e para o TransferState — HTML e hidratação iguais.
         const body = {
-          data: { cidade: c.cidade, uf: c.uf.toUpperCase(), igrejas: c.igrejas, seo: c.seo },
+          data: { cidade: c.cidade, uf: c.uf.toUpperCase(), igrejas: enxugarIgrejasCidade(c.igrejas), seo: c.seo },
         };
         // Transfere pro cliente (evita re-fetch/CLS na hidratação).
         this._transferState.set(stateKeyCidade(chave), body);
