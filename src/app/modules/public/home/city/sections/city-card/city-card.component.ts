@@ -3,6 +3,7 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { ConfidenceBadgeComponent } from '../../../../../../shared/components/confidence-badge/confidence-badge.component';
 import { ChurchPlaceholderComponent } from '../../../../../../shared/components/church-placeholder/church-placeholder.component';
+import { SPRITE_PLACEHOLDER_IGREJA } from '../../../../../../shared/components/church-placeholder/church-placeholder-sprite.component';
 import { getNextOccurrenceMinutes, formatMassTime, getCountdownLabel, getDiaLabel } from '../../../../../../shared/utils/mass-time.utils';
 import { distanciaMetrosAte } from '../../../../../../shared/utils/distance.utils';
 import { linkParoquia as buildLinkParoquia } from '../../../../../../shared/utils/church-link.utils';
@@ -19,6 +20,9 @@ import { linkParoquia as buildLinkParoquia } from '../../../../../../shared/util
 export class CityCardComponent {
   @Input({ required: true }) igreja: any;
   /** Próxima missa considerando os filtros ativos — calculada pelo pai */
+  /** A arte do placeholder vem do sprite da página (app-church-placeholder-sprite no CityComponent). */
+  readonly spritePlaceholder = SPRITE_PLACEHOLDER_IGREJA;
+
   @Input() proximaMissa: any | null = null;
   @Input() destaque = false;
   @Input() mostrarBadgeDestaque = false;

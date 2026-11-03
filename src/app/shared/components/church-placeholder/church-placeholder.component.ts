@@ -16,4 +16,10 @@ import { CommonModule } from '@angular/common';
 export class ChurchPlaceholderComponent {
   /** Exibe o rótulo "Sem imagem cadastrada" (use em contextos grandes) */
   @Input() showLabel = false;
+
+  /**
+   * Id do `<symbol>` de app-church-placeholder-sprite. Com ele, a arte vira um `<use>`
+   * (listas longas: página de cidade); sem ele, a arte vai inline (demais páginas).
+   */
+  @Input() spriteId: string | null = null;
 }

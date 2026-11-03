@@ -1,4 +1,10 @@
 <div class="church-ph">
+  @if (spriteId) {
+    <!-- Sprite: a arte vem do <symbol> de app-church-placeholder-sprite (uma vez por página). -->
+    <svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg" class="church-ph__art" aria-hidden="true" focusable="false">
+      <use [attr.href]="'#' + spriteId"></use>
+    </svg>
+  } @else {
   <svg viewBox="0 0 240 200" xmlns="http://www.w3.org/2000/svg" class="church-ph__art" aria-hidden="true">
     <!-- nuvens -->
     <ellipse cx="52" cy="56" rx="26" ry="13" fill="#ffffff" opacity="0.55" />
@@ -21,6 +27,7 @@
     <rect x="88" y="120" width="10" height="18" rx="5" fill="#d2c0a8" />
     <rect x="142" y="120" width="10" height="18" rx="5" fill="#d2c0a8" />
   </svg>
+  }
 
   <span *ngIf="showLabel" class="church-ph__label">
     <i class="pi pi-image"></i> Sem imagem cadastrada

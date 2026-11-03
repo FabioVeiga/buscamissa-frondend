@@ -18,6 +18,7 @@ import { CityMapComponent, MapChurch } from "../../../../shared/components/city-
 import { DIAS, PERIODOS } from "./city.constants";
 import { CityFiltrosComponent, Ordenacao, QuickFilter } from "./sections/city-filtros/city-filtros.component";
 import { CityCardComponent } from "./sections/city-card/city-card.component";
+import { ChurchPlaceholderSpriteComponent } from "../../../../shared/components/church-placeholder/church-placeholder-sprite.component";
 import { AnuncioComponent } from "../../../../shared/components/anuncio/anuncio.component";
 import { ConviteAnuncieComponent } from "../../../../shared/components/convite-anuncie/convite-anuncie.component";
 import { CityFaqComponent } from "./sections/city-faq/city-faq.component";
@@ -32,6 +33,7 @@ import { CityOutrasComponent } from "./sections/city-outras/city-outras.componen
   standalone: true,
   imports: [
     CommonModule,
+    ChurchPlaceholderSpriteComponent,
     RouterLink,
     SkeletonModule,
     CityMapComponent,
