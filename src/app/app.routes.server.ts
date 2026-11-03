@@ -6,7 +6,7 @@ import { environment } from '../environments/environment';
 // É um módulo .mjs plano (roda também como script Node standalone), por isso o
 // type-checker não tem declaração — o esbuild do build server o empacota normalmente.
 // @ts-expect-error — módulo JS sem tipos; contrato garantido pelo próprio helper.
-import { buscarRotasSeo, normalizarBaseUrl } from '../../scripts/lib/seo-routes.mjs';
+import { buscarRotasSeo, headersChaveBuild, normalizarBaseUrl } from '../../scripts/lib/seo-routes.mjs';
 // Fonte única da SELEÇÃO de paróquias prerenderizadas, compartilhada com
 // scripts/gerar-sitemap.mjs (que a usa para filtrar o sitemap pela cobertura real).
 // @ts-expect-error — módulo JS sem tipos; contrato garantido pelo próprio helper.
@@ -87,7 +87,7 @@ async function ufsParaPrerender(): Promise<Array<{ uf: string }>> {
   if (!lista) {
     const base = normalizarBaseUrl(environment.config.apiURL);
     try {
-      const res = await fetch(`${base}/v2/seo/estados`);
+      const res = await fetch(`${base}/v2/seo/estados`, { headers: headersChaveBuild() });
       lista = res.ok ? ((await res.json()) as Array<{ uf: string }>) : [];
     } catch {
       lista = [];
@@ -106,7 +106,7 @@ async function arvoreDoDia(dia: string): Promise<ArvoreDia> {
   if (cache) return cache;
   const base = normalizarBaseUrl(environment.config.apiURL);
   try {
-    const res = await fetch(`${base}/v2/seo/missa-dia/${dia}`);
+    const res = await fetch(`${base}/v2/seo/missa-dia/${dia}`, { headers: headersChaveBuild() });
     return res.ok ? ((await res.json()) as ArvoreDia) : {};
   } catch {
     return {};

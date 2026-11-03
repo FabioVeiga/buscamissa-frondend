@@ -27,6 +27,21 @@
 const TIMEOUT_MS = 8000;
 
 /** Remove o sufixo `/api` e barra final — `/v2/seo/routes` é rota absoluta. */
+/**
+ * Header da chave de build exigida pela API nos bulks /v2/seo/* (auditoria de
+ * segurança 02/11/2026, anti-scraping). A chave vem SÓ do ambiente do build
+ * (secret BUSCAMISSA_CHAVE_BUILD do GitHub Actions) e é lida em tempo de execução
+ * no Node — scripts do prebuild e prerender (código só-server). Nunca vai para o
+ * bundle do navegador nem para o HTML gerado. Sem a variável, não envia nada
+ * (build local / API sem a chave configurada continuam funcionando).
+ *
+ * @returns {Record<string, string>}
+ */
+export function headersChaveBuild() {
+  const chave = globalThis.process?.env?.BUSCAMISSA_CHAVE_BUILD;
+  return chave ? { 'X-Chave-Build': chave } : {};
+}
+
 export function normalizarBaseUrl(raw) {
   return String(raw ?? '')
     .replace(/\/api\/?$/, '')
@@ -62,7 +77,7 @@ async function _buscar(apiBase) {
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   let bruto;
   try {
-    const res = await fetch(url, { signal: controller.signal });
+    const res = await fetch(url, { signal: controller.signal, headers: headersChaveBuild() });
     if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
     bruto = await res.json();
   } finally {

@@ -10,6 +10,9 @@ import { Observable, from, of, switchMap } from 'rxjs';
 import { existsSync, readFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { environment } from '../../../environments/environment';
+// Chave de build dos bulks /v2/seo/* (só Node; ver o helper).
+// @ts-expect-error — módulo JS sem tipos; contrato garantido pelo próprio helper.
+import { headersChaveBuild } from '../../../../scripts/lib/seo-routes.mjs';
 import {
   chaveIntencao,
   chaveIntencaoArvore,
@@ -63,7 +66,7 @@ function lerDoDisco(dia: string): ArvoreDia | null {
 async function carregarArvore(dia: string): Promise<ArvoreDia> {
   const disco = lerDoDisco(dia);
   if (disco) return disco;
-  const res = await fetch(`${baseUrl()}/v2/seo/missa-dia/${dia}`);
+  const res = await fetch(`${baseUrl()}/v2/seo/missa-dia/${dia}`, { headers: headersChaveBuild() });
   if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
   return (await res.json()) as ArvoreDia;
 }
