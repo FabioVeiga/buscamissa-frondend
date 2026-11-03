@@ -28,15 +28,22 @@ export const FOLGA_ARQUIVOS = 150;
 /**
  * Arquivos do dist que não são página de cidade nem de paróquia: assets (JS, CSS,
  * fontes, imagens), páginas estáticas, /missas/{uf}, a árvore /missa-{dia}[/{uf}] e o
- * 404. Medido no build de produção de 26/10/2026 (run 40231569289):
+ * 404. É uma medição, não uma derivação: os chunks JS dependem do código, e os hubs
+ * `/missas/{uf}` e `/missa-{dia}/{uf}` dependem dos dados. O guard do postbuild mede o
+ * valor real a cada build (`medirFixos`) e o mostra quando a margem falha.
  *
- *   3.923 arquivos = 1.900 paróquias + 1.640 cidades + 383 fixos
- *
- * É uma medição, não uma derivação: os chunks variam um pouco de build para build.
- * Por isso o guard do postbuild compara a projeção com a contagem real e avisa quando
- * divergem (ver `verificar-dist-size.mjs`).
+ * Histórico:
+ *   - 383 — build de produção de 26/10/2026 (run 40231569289):
+ *           3.923 = 1.900 paróquias + 1.640 cidades + 383 fixos.
+ *   - 384 — build de produção do PR #275 em 03/11/2026 (run 41640941772):
+ *           4.051 = 1.734 paróquias + 1.933 cidades + 384 fixos
+ *           (237 rotas fixas + 147 arquivos que não são rota). Mesmos dados e mesmas
+ *           3.904 rotas do build anterior (run 41558988041, 383 fixos); a unidade a
+ *           mais é um chunk JS: o #257 passou a importar `city/city.constants.ts` em
+ *           `intencao.component.ts`, e o esbuild separou o módulo, agora usado por dois
+ *           chunks lazy, num chunk próprio (51 → 52 chunks lazy).
  */
-export const ARQUIVOS_FIXOS = 383;
+export const ARQUIVOS_FIXOS = 384;
 
 /**
  * Exceção à folga mínima: `PRERENDER_ACEITAR_MARGEM=<n>` aceita UMA margem real entre
@@ -83,6 +90,32 @@ export function medirDiretorio(dir) {
     }
   }
   return { bytes, arquivos };
+}
+
+/**
+ * Fixos REAIS de um dist já gerado: tudo o que não é `missas/{uf}/{cidade}/index.html`
+ * nem `paroquia/{uf}/{cidade}/{slug}/index.html`. O hub `/missas/{uf}` é fixo. É o
+ * número a comparar com ARQUIVOS_FIXOS quando a margem real diverge da projetada.
+ */
+export function medirFixos(dir) {
+  const { arquivos } = medirDiretorio(dir);
+  const cidades = contarPaginas(join(dir, 'missas'), 2);
+  const paroquias = contarPaginas(join(dir, 'paroquia'), 3);
+  return { arquivos, cidades, paroquias, fixos: arquivos - cidades - paroquias };
+}
+
+/** `index.html` exatamente `niveis` diretórios abaixo de `base` (0 se não existir). */
+function contarPaginas(base, niveis) {
+  let entradas;
+  try {
+    entradas = readdirSync(base, { withFileTypes: true });
+  } catch {
+    return 0;
+  }
+  if (niveis === 0) return entradas.some((e) => e.isFile() && e.name === 'index.html') ? 1 : 0;
+  return entradas
+    .filter((e) => e.isDirectory())
+    .reduce((total, e) => total + contarPaginas(join(base, e.name), niveis - 1), 0);
 }
 
 /** Arquivos que o dist terá: uma página por cidade e por paróquia, mais os fixos. */
