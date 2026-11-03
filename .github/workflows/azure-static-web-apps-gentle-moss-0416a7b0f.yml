@@ -35,6 +35,10 @@ jobs:
       # nenhuma exceção. Valem para prebuild, build e postbuild, que rodam neste job.
       PRERENDER_PAROQUIAS_CRITERIO: ${{ vars.PRERENDER_PAROQUIAS_CRITERIO_PRODUCAO }}
       PRERENDER_ACEITAR_MARGEM: ${{ vars.PRERENDER_ACEITAR_MARGEM_PRODUCAO }}
+      # Chave que a API exige nos bulks /v2/seo/* (anti-scraping). Lida só no Node
+      # (prebuild e prerender) — ver headersChaveBuild() em scripts/lib/seo-routes.mjs.
+      # PR de fork não recebe secrets: o build dele fica sem a chave.
+      BUSCAMISSA_CHAVE_BUILD: ${{ secrets.BUSCAMISSA_CHAVE_BUILD_PRODUCAO }}
     steps:
       - uses: actions/checkout@v3
         with:
