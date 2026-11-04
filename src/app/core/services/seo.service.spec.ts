@@ -77,6 +77,89 @@ describe('SeoService — canonical e robots', () => {
 });
 
 /**
+ * Contrato do JSON-LD: nenhum dado fecha o `<script>`, e o JSON lido de volta é o
+ * mesmo objeto. Nome de igreja, pároco e FAQ vêm de cadastro público.
+ * A prova contra o serializador do prerender está em scripts/json-ld-ssr.test.mjs.
+ */
+describe('SeoService — JSON-LD', () => {
+  let seo: SeoService;
+  let doc: Document;
+
+  const scripts = () => Array.from(doc.querySelectorAll<HTMLScriptElement>('script[type="application/ld+json"]'));
+  const bloco = (id: string) => doc.getElementById(`ld-${id}`) as HTMLScriptElement | null;
+  const limparHead = () => scripts().forEach((el) => el.remove());
+
+  const HOSTIS = [
+    '</script><img src=x onerror=alert(1)>',
+    '</ScRiPt >depois',
+    '<!--<script>',
+    '<script>alert(1)</script>',
+    'aspas "duplas" e \'simples\'',
+    'barra \\ invertida e \\u003c literal',
+    'Paróquia São João — Coração de Jesus 🙏',
+    '',
+  ];
+
+  beforeEach(() => {
+    TestBed.configureTestingModule({});
+    seo = TestBed.inject(SeoService);
+    doc = TestBed.inject(DOCUMENT);
+    limparHead();
+  });
+
+  afterEach(limparHead);
+
+  HOSTIS.forEach((valor) => {
+    it(`valor ${JSON.stringify(valor)}: sem "<" no script e JSON.parse devolve o mesmo objeto`, () => {
+      const dados = { '@type': 'Church', name: valor, description: `Pároco: ${valor}` };
+
+      seo.setJsonLd('place', dados);
+
+      const texto = bloco('place')!.textContent!;
+      expect(texto).not.toContain('<');
+      expect(JSON.parse(texto)).toEqual(dados);
+    });
+  });
+
+  it('nulos e campos ausentes continuam JSON válido e equivalente', () => {
+    const dados = { '@type': 'Church', name: 'X', telephone: null, image: undefined, itens: [null, ''] };
+
+    seo.setJsonLd('place', dados);
+
+    expect(JSON.parse(bloco('place')!.textContent!)).toEqual(JSON.parse(JSON.stringify(dados)));
+  });
+
+  it('schema normal: mesmo texto de antes (sem "<" o escape não muda nada)', () => {
+    const dados = {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Início', item: 'https://buscamissa.com.br/' }],
+    };
+
+    seo.setJsonLd('breadcrumb', dados);
+
+    expect(bloco('breadcrumb')!.textContent).toBe(JSON.stringify(dados));
+  });
+
+  it('vários schemas na mesma página: cada um no seu script, todos válidos', () => {
+    seo.setJsonLd('place', { name: '<!--<script>' });
+    seo.setJsonLd('breadcrumb', { name: '</script>' });
+    seo.setJsonLd('faq', { name: 'normal' });
+
+    expect(scripts().map((s) => s.id).sort()).toEqual(['ld-breadcrumb', 'ld-faq', 'ld-place']);
+    expect(scripts().map((s) => JSON.parse(s.textContent!).name)).toEqual(['<!--<script>', '</script>', 'normal']);
+  });
+
+  it('reaplicar o mesmo id substitui o conteúdo sem duplicar o script', () => {
+    seo.setJsonLd('place', { name: 'A' });
+    seo.setJsonLd('place', { name: '</script>B' });
+
+    expect(scripts().length).toBe(1);
+    expect(JSON.parse(bloco('place')!.textContent!).name).toBe('</script>B');
+  });
+});
+
+/**
  * Contrato de og:image: toda página termina com uma imagem de compartilhamento
  * ABSOLUTA. Antes, a rota sem imagem própria removia a tag e o HTML prerenderizado
  * de home/cidade/intenção saía sem og:image — prévia sem imagem no WhatsApp.
