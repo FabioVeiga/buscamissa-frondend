@@ -355,6 +355,12 @@ $primary-light: #fff4ed;
 // Angular vai esconder na hidratação; logo depois ele remove o atributo e passa a
 // mandar sozinho (city-item--oculto, city-vazio--oculto, *ngIf). Sem JS, nada disto
 // se aplica e a lista fica completa. display:none tira do foco e do leitor de tela.
+// O host do anúncio sem campanha fica vazio (0 px), mas ocupava o gap de 10 px da
+// lista. Com ?dia= o servidor o põe após o 3º card sem filtro e o cliente após o 3º
+// visível: o par trocava de lugar na hidratação (±9 px em convite/FAQ). Com campanha
+// ele tem conteúdo e volta ao fluxo normalmente.
+.city-lista > app-anuncio:empty { display: none; }
+
 .city-item--oculto,
 .city-vazio--oculto,
 .city-header__sub-dia { display: none !important; }

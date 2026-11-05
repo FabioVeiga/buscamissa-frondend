@@ -191,6 +191,15 @@ describe('A7 — CSS × igrejasFiltradas na página de cidade', () => {
     expect(visivel(botao)).toBeFalse();
   });
 
+  it('host vazio do anúncio não ocupa o gap da lista (sem salto de ±10 px na hidratação)', () => {
+    const f = montar({});
+    f.detectChanges();
+    const anuncio = f.nativeElement.querySelector('.city-lista > app-anuncio') as HTMLElement;
+    expect(anuncio).withContext('anúncio após o 3º card').not.toBeNull();
+    expect(anuncio.childElementCount).toBe(0);
+    expect(visivel(anuncio)).toBeFalse();
+  });
+
   it('?dia= inválido, ausente ou repetido: sem filtro', () => {
     for (const qp of [{}, { dia: 'feriado' }, { dia: ['sabado', 'domingo'] }]) {
       const f = montar(qp);
