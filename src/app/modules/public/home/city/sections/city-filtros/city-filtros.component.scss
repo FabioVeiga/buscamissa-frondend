@@ -28,6 +28,14 @@
     white-space: nowrap;
     &:hover { color: #ef4444; }
   }
+
+  &__limpar--oculto { display: none; }
+}
+
+// A7: com ?dia= válido na URL (script inline de src/index.html), o filtro estará ativo
+// depois da hidratação — o botão já ocupa o lugar na 1ª pintura.
+:host-context(html[data-dia]) .city-filtros {
+  .city-filtros__limpar--oculto { display: inline-flex; }
 }
 
 // ── Período + Ordenar row ──────────────────────────────────────────────────────
