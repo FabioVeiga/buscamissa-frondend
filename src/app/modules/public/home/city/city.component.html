@@ -149,7 +149,10 @@
         </div>
 
         <!-- Convite Anuncie -->
-        <app-convite-anuncie *ngIf="igrejasFiltradas.length" origem="cidade" />
+        <!-- Nó sempre presente (A7): com *ngIf, num ?dia= sem igreja o convite do
+             servidor ficava como view desidratada até a app estabilizar e reaparecia
+             quando o <html data-dia> saía (±93 px no FAQ). -->
+        <app-convite-anuncie [class.city-item--oculto]="!igrejasFiltradas.length" origem="cidade" />
 
         <!-- FAQ -->
         <app-city-faq [faqs]="faqs" />

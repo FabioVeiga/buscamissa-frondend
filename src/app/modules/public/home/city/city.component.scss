@@ -358,8 +358,11 @@ $primary-light: #fff4ed;
 // O host do anúncio sem campanha fica vazio (0 px), mas ocupava o gap de 10 px da
 // lista. Com ?dia= o servidor o põe após o 3º card sem filtro e o cliente após o 3º
 // visível: o par trocava de lugar na hidratação (±9 px em convite/FAQ). Com campanha
-// ele tem conteúdo e volta ao fluxo normalmente.
-.city-lista > app-anuncio:empty { display: none; }
+// ele tem conteúdo e volta ao fluxo normalmente. Sem combinador de propósito: o
+// dedupe-prerender-css encurta o atributo de encapsulamento no HTML do servidor
+// (_ngc-t) e o nó criado no cliente recebe o real (_ngcontent-ng-c…); um seletor
+// pai > filho com um nó de cada lado não casa com nenhuma das duas versões.
+app-anuncio:empty { display: none; }
 
 .city-item--oculto,
 .city-vazio--oculto,

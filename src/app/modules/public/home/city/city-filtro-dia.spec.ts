@@ -191,6 +191,23 @@ describe('A7 — CSS × igrejasFiltradas na página de cidade', () => {
     expect(visivel(botao)).toBeFalse();
   });
 
+  it('convite é nó único: some por classe num dia sem igreja e volta ao limpar', () => {
+    const f = montar({});
+    f.detectChanges();
+    const convite = f.nativeElement.querySelector('app-convite-anuncie') as HTMLElement;
+    expect(visivel(convite)).toBeTrue();
+    f.componentInstance.setDia(1);
+    f.componentInstance.setDia(1); // alterna: liga e desliga segunda (Rosário tem)
+    f.componentInstance.setDia(5); // sexta: nenhuma semanal na base de teste
+    f.detectChanges();
+    expect(f.componentInstance.igrejasFiltradas.length).toBe(0);
+    expect(f.nativeElement.querySelector('app-convite-anuncie')).withContext('mesmo nó').toBe(convite);
+    expect(visivel(convite)).toBeFalse();
+    f.componentInstance.limparFiltros();
+    f.detectChanges();
+    expect(visivel(convite)).toBeTrue();
+  });
+
   it('host vazio do anúncio não ocupa o gap da lista (sem salto de ±10 px na hidratação)', () => {
     const f = montar({});
     f.detectChanges();
