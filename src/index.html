@@ -45,7 +45,7 @@
         analytics_storage: window.__bmConsentimentoAnalitico() ? 'granted' : 'denied'
       });
       gtag('js', new Date());
-      gtag('config', 'G-CGY94P6KSN');
+      gtag('config', 'G-CGY94P6KSN', { send_page_view: false });
     </script>
     <!-- Banner de cookies fora do Angular (public/consentimento.js): aberto pelo
          ConsentService ele só pintava após a hidratação e virava o LCP tardio. -->
