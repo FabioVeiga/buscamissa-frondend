@@ -511,8 +511,12 @@ export class DetailsComponent implements OnInit {
       nav.share({ title: this.churchInfo?.nome, text: `Horários de missa — ${this.churchInfo?.nome}`, url }).catch(() => {});
     } else {
       this.trackShare('copy_link');
-      navigator.clipboard?.writeText(url);
-      this._toast.add({ severity: "success", summary: "Link copiado!", detail: "Cole onde quiser para compartilhar." });
+      const falhou = () => this._toast.add({ severity: "warn", summary: "Não foi possível copiar", detail: url });
+      if (!navigator.clipboard?.writeText) { falhou(); return; }
+      navigator.clipboard.writeText(url).then(
+        () => this._toast.add({ severity: "success", summary: "Link copiado!", detail: "Cole onde quiser para compartilhar." }),
+        falhou,
+      );
     }
   }
 

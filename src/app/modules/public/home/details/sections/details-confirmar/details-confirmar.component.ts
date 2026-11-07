@@ -93,6 +93,8 @@ export class DetailsConfirmarComponent implements OnChanges {
         this._cdr.markForCheck();
       },
       error: (err) => {
+        // `complete` não roda em erro — sem isto o botão ficava preso em loading.
+        this.confirmandoHorarios = false;
         if (err.status === 409) {
           localStorage.setItem(this._localKey, '1');
           this.confirmacaoEnviada = true;
