@@ -18,49 +18,78 @@
   </div>
 
   <!-- Info -->
-  <div class="church-info flex flex-col justify-center gap-2 p-4 sm:p-5 flex-1 min-w-0">
-    <h1 class="text-base sm:text-lg font-extrabold text-gray-900 leading-snug">
-      {{ igreja.nome }}
+  <div class="church-info">
+    <!-- Selo fora do <h1>: o título indexado/anunciado é só o nome da igreja. -->
+    <div class="flex flex-wrap items-center gap-y-1">
+      <h1 class="text-gray-900 font-extrabold m-0">{{ igreja.nome }}</h1>
       <span *ngIf="verificada" class="selo-verificado"
             title="As informações desta igreja são mantidas por um responsável verificado (pároco ou secretaria).">
         <i class="pi pi-verified"></i> Responsável Verificado
       </span>
-    </h1>
-    <p *ngIf="igreja.endereco?.logradouro" class="flex items-center gap-1.5 text-sm text-gray-500">
-      <i class="pi pi-home text-gray-400 shrink-0"></i>
-      {{ igreja.endereco?.logradouro }}<span *ngIf="igreja.endereco?.numero && igreja.endereco?.numero !== 0">, {{ igreja.endereco?.numero }}</span><span *ngIf="igreja.endereco?.complemento"> — {{ igreja.endereco?.complemento }}</span>
+    </div>
+
+    <!-- Endereço: linha da rua + linha da cidade, sem ícone repetido -->
+    <div class="church-endereco">
+      <p *ngIf="linhaRua">{{ linhaRua }}</p>
+      <p>{{ linhaCidade }}</p>
+    </div>
+
+    <p *ngIf="igreja.paroco || dioceseNome" class="church-meta">
+      <span *ngIf="igreja.paroco"><i class="pi pi-user"></i> {{ igreja.paroco }}</span>
+      <span *ngIf="dioceseNome"><i class="pi pi-sitemap"></i> {{ dioceseNome }}</span>
     </p>
-    <p class="flex items-center gap-1.5 text-sm text-gray-500">
-      <i class="pi pi-map-marker text-gray-400 shrink-0"></i>
-      <span *ngIf="igreja.endereco?.bairro">{{ igreja.endereco?.bairro }}, </span>{{ igreja.endereco?.localidade }}/{{ igreja.endereco?.uf }}
-    </p>
-    <p *ngIf="igreja.paroco" class="flex items-center gap-1.5 text-sm text-gray-500">
-      <i class="pi pi-user text-gray-400 shrink-0"></i>
-      {{ igreja.paroco }}
-    </p>
-    <p *ngIf="igreja.circunscricao?.dioceseNome || igreja.circunscricao?.arquidioceseNome"
-       class="flex items-center gap-1.5 text-sm text-gray-500">
-      <i class="pi pi-sitemap text-gray-400 shrink-0"></i>
-      {{ igreja.circunscricao?.dioceseNome || igreja.circunscricao?.arquidioceseNome }}
-    </p>
+
     <div *ngIf="proximaMissa">
       <app-confidence-badge [mass]="proximaMissa" />
     </div>
-    <div class="flex gap-2 flex-wrap mt-1">
-      <a [href]="linkGoogleMaps" target="_blank" rel="noopener" class="action-btn" (click)="direcoesClick.emit()">
-        <i class="pi pi-map"></i> Google Maps
+
+    <!-- Ações principais: chegar e falar com a igreja -->
+    <div class="church-contatos flex gap-2 flex-wrap mt-2">
+      <a [href]="linkGoogleMaps" target="_blank" rel="noopener" class="action-btn action-btn--primary" (click)="direcoesClick.emit()">
+        <i class="pi pi-map-marker"></i> Como chegar
       </a>
       <a [href]="linkWaze" target="_blank" rel="noopener" class="action-btn" (click)="direcoesClick.emit()">
         <i class="pi pi-car"></i> Waze
       </a>
-      <button (click)="compartilharClick.emit()" class="action-btn">
+      <a *ngIf="igreja.contato?.telefoneWhatsApp"
+         [href]="'https://wa.me/55' + igreja.contato.dddWhatsApp + igreja.contato.telefoneWhatsApp"
+         target="_blank" rel="noopener" class="action-btn action-btn--contato-whatsapp"
+         aria-label="Conversar com a igreja pelo WhatsApp"
+         (click)="objetivoClick.emit('whatsapp'); telefoneClick.emit()">
+        <i class="pi pi-whatsapp"></i> WhatsApp
+      </a>
+      <a *ngIf="igreja.contato?.telefone"
+         [href]="'tel:' + igreja.contato.ddd + igreja.contato.telefone" class="action-btn"
+         [attr.aria-label]="'Ligar para (' + igreja.contato.ddd + ') ' + igreja.contato.telefone"
+         (click)="objetivoClick.emit('ligar'); telefoneClick.emit()">
+        <i class="pi pi-phone"></i> Ligar
+      </a>
+      <a *ngIf="siteUrl" [href]="siteUrl" target="_blank" rel="noopener" class="action-btn"
+         [attr.aria-label]="'Site: ' + siteLabel" (click)="objetivoClick.emit('site')">
+        <i class="pi pi-globe"></i> Site
+      </a>
+      <a *ngIf="igreja.contato?.emailContato" [href]="'mailto:' + igreja.contato.emailContato"
+         class="action-btn action-btn--icon" [attr.aria-label]="'E-mail: ' + igreja.contato.emailContato">
+        <i class="pi pi-envelope"></i>
+      </a>
+      <a *ngFor="let rede of igreja.redesSociais" [href]="rede.url" target="_blank" rel="noopener"
+         class="action-btn action-btn--icon" [attr.aria-label]="rede.nomeRedeSocial || 'Rede social'"
+         (click)="socialClick.emit(rede.url)">
+        <i [ngClass]="getSocialIcon(rede.url)"></i>
+      </a>
+    </div>
+
+    <!-- Ações secundárias (3 colunas compactas no celular) -->
+    <div class="church-secundarias">
+      <button type="button" (click)="compartilharClick.emit()" class="action-btn action-btn--ghost"
+              aria-haspopup="dialog" title="Envie os horários de missa para um amigo">
         <i class="pi pi-share-alt"></i> Compartilhar
       </button>
-      <a *ngIf="whatsappUrl" [href]="whatsappUrl" target="_blank" rel="noopener"
-         class="action-btn action-btn--whatsapp" (click)="whatsappClick.emit()">
-        <i class="pi pi-whatsapp"></i> Enviar no WhatsApp
-      </a>
-      <button (click)="favoritarClick.emit()" class="action-btn action-btn--fav"
+      <button *ngIf="temMissas" type="button" (click)="agendaClick.emit()" class="action-btn action-btn--ghost"
+              aria-haspopup="dialog" title="Salve a missa na sua agenda, com repetição">
+        <i class="pi pi-calendar-plus"></i> Agenda
+      </button>
+      <button type="button" (click)="favoritarClick.emit()" class="action-btn action-btn--ghost action-btn--fav"
               [class.action-btn--fav-ativo]="isFavorita"
               [attr.aria-pressed]="isFavorita"
               [attr.aria-label]="isFavorita ? 'Remover dos favoritos' : 'Adicionar aos favoritos'">
@@ -68,5 +97,8 @@
         {{ isFavorita ? 'Favoritada' : 'Favoritar' }}
       </button>
     </div>
+    <button *ngIf="!temContato" type="button" class="church-add-contato" (click)="adicionarContato.emit()">
+      <i class="pi pi-plus"></i> Adicionar telefone ou redes
+    </button>
   </div>
 </header>

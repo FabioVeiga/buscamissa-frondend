@@ -1,0 +1,56 @@
+.agenda__missas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  max-height: 11rem;
+  overflow-y: auto;
+  margin-bottom: 0.75rem;
+}
+
+.agenda__missa {
+  min-height: 2.25rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #374151;
+  cursor: pointer;
+
+  &--ativa {
+    background: #ad540c;
+    border-color: #ad540c;
+    color: #fff;
+  }
+}
+
+.agenda__repetir {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+  margin: 0 0 1rem;
+  padding: 0.625rem 0.75rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  cursor: pointer;
+
+  input {
+    width: 1.125rem;
+    height: 1.125rem;
+    margin-top: 0.125rem;
+    accent-color: #ad540c;
+    flex-shrink: 0;
+    cursor: pointer;
+  }
+
+  span { display: flex; flex-direction: column; }
+  strong { font-size: 0.875rem; font-weight: 600; color: #1f2937; }
+  small { font-size: 0.75rem; color: #6b7280; }
+}
+
+.agenda__desativada {
+  pointer-events: none;
+  opacity: 0.5;
+}

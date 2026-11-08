@@ -38,7 +38,7 @@
     align-items: center;
     gap: 0.25rem;
 
-    @media (max-width: 640px) {
+    @media (max-width: 1023px) {
       display: none;
     }
   }
@@ -121,9 +121,9 @@
       pointer-events: auto;
     }
 
-    // Abaixo de 640px a nav desktop já é display:none; garante que o painel
+    // Abaixo de 1024px a nav desktop já é display:none; garante que o painel
     // não vaze caso o breakpoint mude.
-    @media (max-width: 640px) {
+    @media (max-width: 1023px) {
       display: none;
     }
   }
@@ -180,7 +180,7 @@
     color: #374151;
     padding: 0.25rem;
 
-    @media (max-width: 640px) {
+    @media (max-width: 1023px) {
       display: flex;
     }
   }
@@ -192,7 +192,7 @@
     background: #fff;
     padding: 0.5rem 1.25rem 1rem;
 
-    @media (min-width: 641px) {
+    @media (min-width: 1024px) {
       display: none;
     }
   }

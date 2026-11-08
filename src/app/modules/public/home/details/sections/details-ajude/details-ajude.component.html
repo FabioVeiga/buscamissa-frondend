@@ -1,0 +1,41 @@
+<section class="ajude" aria-labelledby="ajude-titulo">
+
+  <!-- Linha 1: pergunta + confirmação (a contribuição de 1 clique) -->
+  <div class="ajude__principal">
+    <div class="min-w-0">
+      <h2 id="ajude-titulo" class="ajude__titulo">
+        {{ temMissas ? 'Os horários estão certos?' : 'Ajude a manter esta página' }}
+      </h2>
+      <p class="ajude__texto">
+        <ng-container *ngIf="temMissas && ultimaConfirmacao">Última confirmação {{ ultimaConfirmacaoLabel }}. </ng-container>
+        {{ temMissas ? 'Sua resposta ajuda quem vai à missa.' : 'Informações corretas ajudam a comunidade a encontrar a missa.' }}
+      </p>
+    </div>
+    <button *ngIf="temMissas" pButton type="button"
+      [icon]="confirmacaoEnviada || jaConfirmou() ? 'pi pi-check' : 'pi pi-thumbs-up'"
+      [label]="confirmacaoEnviada || jaConfirmou() ? 'Confirmado, obrigado!' : 'Sim, estão certos'"
+      [disabled]="confirmacaoEnviada || jaConfirmou() || confirmandoHorarios"
+      [loading]="confirmandoHorarios"
+      class="ajude__confirmar p-button-sm"
+      (click)="confirmarHorarios()">
+    </button>
+  </div>
+
+  <!-- Linha 2: demais contribuições, como links discretos. Igreja com responsável
+       verificado: só ele edita, então "Sugerir correção" e o convite não aparecem. -->
+  <div class="ajude__acoes">
+    <button *ngIf="!verificada" type="button" class="ajude__acao" (click)="sugerirCorrecao.emit()">
+      <i class="pi pi-pencil"></i> Sugerir correção
+    </button>
+    <button type="button" class="ajude__acao" (click)="reportarProblema.emit()">
+      <i class="pi pi-flag"></i> Reportar problema
+    </button>
+    <span *ngIf="!verificada" class="ajude__convite">
+      <button type="button" class="ajude__acao" (click)="souResponsavel.emit()"
+              title="Párocos, secretarias e voluntários da paróquia podem assumir a página e mantê-la atualizada.">
+        <i class="pi pi-verified"></i> Sou da paróquia: quero cuidar desta página
+      </button>
+      <a routerLink="/guia-responsavel" class="ajude__saiba">Saiba como funciona</a>
+    </span>
+  </div>
+</section>

@@ -1,7 +1,106 @@
-.footer {
-  width: 100%;
-  padding: 10px;
+.footer-home {
+  margin-top: 2rem;
+  padding: 2rem 1rem 1.5rem;
+
+  // O tema global dá margem a <p> e vence o Tailwind v4 (layered).
+  p { margin: 0; }
+}
+
+.footer-home__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem 1rem;
+  max-width: 64rem;
+  margin: 0 auto;
+
+  @media (min-width: 768px) {
+    grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 2rem;
+  }
+}
+
+.footer-home__marca {
+  grid-column: 1 / -1;
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+
+  @media (min-width: 768px) { grid-column: auto; }
+}
+
+.footer-home__frase {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.footer-home__instagram {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  margin-top: 0.25rem;
+  padding: 0 1rem;
+  border-radius: 0.5rem;
+  background: #ad540c;
+  color: #fff;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  transition: background 0.15s;
+
+  &:hover { background: #8a4310; color: #fff; }
+
+  .pi { font-size: 1.125rem; }
+}
+
+.footer-home__coluna {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+
+  a {
+    padding: 0.3rem 0;
+    font-size: 0.875rem;
+    color: #374151;
+
+    &:hover { color: #ad540c; text-decoration: underline; }
+  }
+}
+
+.footer-home__titulo {
+  margin-bottom: 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #6b7280;
+}
+
+.footer-home__legal {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  max-width: 64rem;
+  margin: 1.5rem auto 0;
+  padding-top: 1rem;
+  border-top: 1px solid #f1f1f1;
+  font-size: 0.75rem;
+  color: #6b7280;
+  text-align: center;
+
+  a:hover, button:hover { text-decoration: underline; }
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+    justify-content: space-between;
+    text-align: left;
+  }
+}
+
+.footer-home__legal-links {
+  display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 10px;
+  gap: 0.25rem 0.875rem;
+
+  a, button { padding: 0.25rem 0; color: inherit; }
 }

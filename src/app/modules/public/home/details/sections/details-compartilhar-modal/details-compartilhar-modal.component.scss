@@ -1,0 +1,64 @@
+// Estilos compartilhados pelos modais de compartilhar e de agenda.
+.comp__rotulo {
+  margin: 0 0 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.comp__previa {
+  margin: 0 0 1rem;
+  padding: 0.75rem;
+  border-radius: 0.625rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  font-size: 0.8125rem;
+  line-height: 1.45;
+  color: #374151;
+  word-break: break-word;
+}
+
+.comp__opcoes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.comp__opcao {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  min-height: 3.25rem;
+  padding: 0.625rem 0.875rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #1f2937;
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+
+  &:hover { background: #fff4ea; border-color: #f3d3b3; }
+
+  > .pi { font-size: 1.25rem; color: #ad540c; flex-shrink: 0; }
+
+  > span { display: flex; flex-direction: column; min-width: 0; }
+
+  strong { font-size: 0.875rem; font-weight: 600; }
+
+  small {
+    font-size: 0.75rem;
+    color: #6b7280;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  &--whatsapp {
+    border-color: #b7e4c7;
+    > .pi { color: #128c7e; }
+    &:hover { background: #f0fbf4; border-color: #8fd3a8; }
+  }
+}

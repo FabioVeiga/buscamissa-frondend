@@ -21,12 +21,26 @@ interface MissaNaGrade extends Mass {
 })
 export class DetailsHorariosComponent {
   @Input({ required: true }) missas: Mass[] = [];
+  /** Falso quando a igreja tem responsável verificado: só ele edita os horários. */
+  @Input() podeSugerir = true;
 
   @Output() adicionarHorarios = new EventEmitter<void>();
 
-  /** Semana completa (7 dias) — dias sem missa entram vazios para mostrar "—" */
+  /** Só os dias que têm missa — a grade fica compacta e com linhas da mesma altura. */
+  get diasComMissa(): { dia: number; label: string; missas: MissaNaGrade[] }[] {
+    return this.agendaSemana.filter((g) => g.missas.length);
+  }
+
+  /** "Segunda, Terça e Sábado" — dias sem nenhuma missa, numa linha só. */
+  get diasSemMissa(): string {
+    const dias = this.agendaSemana.filter((g) => !g.missas.length).map((g) => g.label);
+    if (dias.length <= 1) return dias.join('');
+    return `${dias.slice(0, -1).join(', ')} e ${dias[dias.length - 1]}`;
+  }
+
+  /** Semana completa (7 dias), incluindo os dias sem missa. */
   get agendaSemana(): { dia: number; label: string; missas: MissaNaGrade[] }[] {
-    const labels = ['Domingo','Segunda-feira','Terça-feira','Quarta-feira','Quinta-feira','Sexta-feira','Sábado'];
+    const labels = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
     const grupos: Record<number, MissaNaGrade[]> = {};
     (this.missas ?? []).filter((m) => ehSemanal(m)).forEach((m) => {
       if (m.diaSemana !== undefined && m.diaSemana !== null) {
@@ -80,7 +94,27 @@ export class DetailsHorariosComponent {
     return (this.missas ?? [])
       .filter((m) => !ehSemanal(m) && !this._estaNaGrade(m))
       .sort((a, b) => (a.diaDoMes ?? 0) - (b.diaDoMes ?? 0) || a.horario.localeCompare(b.horario))
-      .map((m) => ({ descricao: m.descricaoRecorrencia || descrever(m), observacao: m.observacao }));
+      .map((m) => ({ descricao: m.descricaoRecorrencia || descrever(m), observacao: this.notaDaMissa(m) }));
+  }
+
+  /** Só as missas de dia fixo que têm observação a mostrar. */
+  get notasDiaFixo(): { descricao: string; observacao?: string }[] {
+    return this.missasDiaFixo.filter((m) => m.observacao);
+  }
+
+  /** Observações do dia, uma por missa, para a linha abaixo dos chips. */
+  notasDoDia(missas: MissaNaGrade[]): { horario: string; texto: string }[] {
+    return missas
+      .filter((m) => this.notaDaMissa(m))
+      .map((m) => ({ horario: this.formatarHorario(m.horario), texto: this.notaDaMissa(m) }));
+  }
+
+  /** Observação da missa, ou '' se só repete a regra já exibida (ex.: "1ª sexta do mês"). */
+  notaDaMissa(m: Mass): string {
+    const obs = (m.observacao ?? '').trim();
+    if (!obs) return '';
+    const regra = (m.descricaoRecorrencia || descrever(m)).toLowerCase();
+    return regra.includes(obs.toLowerCase()) ? '' : obs;
   }
 
   /** Falso no prerender: separa informação temporal estável da relativa. */
