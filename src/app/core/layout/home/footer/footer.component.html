@@ -1,83 +1,49 @@
-<footer class="py-6 px-4 mt-8">
-  <div
-    class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4"
-  >
-    <!-- Logo -->
-    <div class="flex items-center gap-2">
-      <a [routerLink]="['/']" class="flex items-center gap-2">
+<footer class="footer-home">
+  <div class="footer-home__grid">
+    <div class="footer-home__marca">
+      <a [routerLink]="['/']" class="flex items-center gap-2" aria-label="Busca Missa: início">
         <!-- width/height intrínsecos (73x71) reservam o espaço antes do download (anti-CLS) -->
-        <img src="assets/logo.png" alt="Busca Missa" width="73" height="71" class="h-7 w-auto" />
-        <h5 class="text-lg font-semibold">Busca Missa</h5>
+        <img src="assets/logo.png" alt="" width="73" height="71" class="h-7 w-auto" />
+        <span class="text-lg font-semibold">Busca Missa</span>
       </a>
-    </div>
-
-    <!-- Navegação -->
-    <nav class="flex flex-wrap gap-4 text-sm font-medium">
-      <a routerLink="/" class="hover:underline transition">INÍCIO</a>
-      <a routerLink="/solicitar" class="hover:underline transition"
-        >ENTRE EM CONTATO</a
-      >
-      <a routerLink="/nova" class="hover:underline transition"
-        >CADASTRAR MISSA</a
-      >
-      <a routerLink="/anuncie" class="hover:underline transition" (click)="registrarCliqueAnuncie()"
-        >ANUNCIE NO BUSCAMISSA</a
-      >
-      <a routerLink="/contribuir" class="hover:underline transition"
-        >CONTRIBUIR</a
-      >
-      <a routerLink="/meu-painel" class="hover:underline transition"
-        >MEU PAINEL</a
-      >
-    </nav>
-    
-
-    <!-- Redes sociais + Créditos -->
-    <div class="flex flex-col items-center md:items-end gap-2 mt-4 md:mt-0">
+      <p class="footer-home__frase">Encontre missas perto de você.</p>
       <a href="https://www.instagram.com/buscamissa/" target="_blank" rel="noopener noreferrer"
-        aria-label="Instagram do BuscaMissa"
-        class="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition">
+        class="footer-home__instagram">
         <i class="pi pi-instagram" aria-hidden="true"></i>
-        <span>&#64;buscamissa</span>
+        Siga &#64;buscamissa
       </a>
-      <div class="text-xs text-gray-400 text-center md:text-right">
-        © {{ currentYear }} BuscaMissa. Todos os direitos reservados.
-      </div>
-      <div class="text-xs text-gray-400 text-center md:text-right">
-        Desenvolvido por
-        <a href="https://petratech.dev/" target="_blank" rel="noopener noreferrer"
-          class="hover:underline transition text-gray-500">PetraTech</a>
-      </div>
     </div>
-    
+
+    <!-- Hubs de navegação: vivem no footer de todas as páginas para manter a
+         linkagem interna que saiu da home junto com os chips de estado. -->
+    <nav class="footer-home__coluna" aria-label="Encontrar missa">
+      <p class="footer-home__titulo">Encontrar missa</p>
+      <a routerLink="/missa-agora">Missa agora</a>
+      <a routerLink="/cidades">Cidades</a>
+      <a routerLink="/estados">Estados</a>
+      <a routerLink="/dias">Dias da semana</a>
+    </nav>
+
+    <nav class="footer-home__coluna" aria-label="Participe">
+      <p class="footer-home__titulo">Participe</p>
+      <a routerLink="/nova">Cadastrar missa</a>
+      <a routerLink="/contribuir">Contribuir</a>
+      <a routerLink="/anuncie" (click)="registrarCliqueAnuncie()">Anuncie</a>
+      <a routerLink="/meu-painel">Meu painel</a>
+      <a routerLink="/solicitar">Entre em contato</a>
+    </nav>
   </div>
 
-    <!-- Explorar: hubs de navegação. Vive no footer de todas as páginas para
-         manter a linkagem interna que saiu da home junto com os chips de estado. -->
-    <nav
-      class="max-w-7xl mx-auto mt-6 pt-4 border-t border-gray-100 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-sm"
-      aria-label="Explorar"
-    >
-      <span class="text-xs font-semibold uppercase tracking-wide text-gray-400">Explorar</span>
-      <a routerLink="/cidades" class="text-gray-600 hover:underline transition">Cidades</a>
-      <a routerLink="/estados" class="text-gray-600 hover:underline transition">Estados</a>
-      <a routerLink="/dias" class="text-gray-600 hover:underline transition">Dias da semana</a>
-      <a routerLink="/missa-agora" class="text-gray-600 hover:underline transition">Missa agora</a>
-    </nav>
-
-      <!-- Links menores abaixo -->
-    <div
-      class="flex flex-wrap gap-3 text-xs text-gray-500 justify-center md:justify-center"
-    >
-      <a routerLink="/cookies" class="hover:underline transition">Cookies</a>
-      <button type="button" class="hover:underline transition" (click)="abrirPreferenciasCookies()">
-        Preferências de cookies
-      </button>
-      <a routerLink="/termos" class="hover:underline transition"
-        >Termos de Uso</a
-      >
-      <a routerLink="/privacidade" class="hover:underline transition"
-        >Política de Privacidade</a
-      >
-    </div>
+  <div class="footer-home__legal">
+    <span>
+      © {{ currentYear }} BuscaMissa. Todos os direitos reservados. Desenvolvido por
+      <a href="https://petratech.dev/" target="_blank" rel="noopener noreferrer">PetraTech</a>
+    </span>
+    <span class="footer-home__legal-links">
+      <a routerLink="/termos">Termos de Uso</a>
+      <a routerLink="/privacidade">Política de Privacidade</a>
+      <a routerLink="/cookies">Cookies</a>
+      <button type="button" (click)="abrirPreferenciasCookies()">Preferências de cookies</button>
+    </span>
+  </div>
 </footer>
