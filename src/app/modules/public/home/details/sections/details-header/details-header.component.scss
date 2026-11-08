@@ -83,6 +83,21 @@
   .pi { font-size: 0.75rem; color: #9ca3af; margin-right: 0.2rem; }
 }
 
+// Celular: os contatos preenchem a linha, sem botão sozinho nem sobra à direita.
+.church-contatos {
+  @media (max-width: 639px) {
+    gap: 0.375rem;
+
+    .action-btn:not(.action-btn--primary) {
+      flex: 1 1 auto;
+      justify-content: center;
+      min-width: 44px;
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
+  }
+}
+
 // Celular: 3 colunas iguais, ícone sobre o texto. Desktop: linha simples.
 .church-secundarias {
   display: grid;
@@ -176,9 +191,6 @@
 
 // Ações secundárias: sem fundo, para não competir com as principais.
 .action-btn--ghost {
-  background: #fff;
-  border-color: #d1d5db;
-  color: #374151;
   padding-left: 0.75rem;
   padding-right: 0.75rem;
 }
