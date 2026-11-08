@@ -1,6 +1,6 @@
 <p-toast></p-toast>
 
-<div class="paroquia-page max-w-5xl mx-auto px-3 sm:px-4 pb-10">
+<div class="paroquia-page mx-auto px-3 sm:px-4 pb-10">
 
   <!-- Skeleton -->
   <div *ngIf="isLoading" class="flex flex-col gap-4 pt-4">
@@ -47,114 +47,54 @@
       <span class="text-gray-600 font-medium truncate">{{ churchInfo.nome }}</span>
     </nav>
 
-    <!-- ══ HEADER CLEAN (largura total) ══ -->
+    <!-- ══ HEADER: foto, endereço, rota e contato ══ -->
     <app-details-header
       [igreja]="churchInfo"
       [verificada]="igrejaVerificada"
       [proximaMissa]="proximaMissa"
       [isFavorita]="isFavorita"
-      [whatsappUrl]="whatsappUrl"
-      (compartilharClick)="compartilhar()"
-      (whatsappClick)="compartilharWhatsapp()"
+      [tiposRedeSocial]="tiposRedeSocial"
+      [temMissas]="!!churchInfo.missas?.length"
+      (compartilharClick)="modalCompartilharVisible = true"
+      (agendaClick)="modalAgendaVisible = true"
       (favoritarClick)="toggleFavorita()"
       (direcoesClick)="trackDirections()"
+      (objetivoClick)="trackObjetivoAlcancado($event)"
+      (telefoneClick)="trackCliqueTelefone()"
+      (socialClick)="trackSocialClick($event)"
+      (adicionarContato)="abrirModalReportarProblema()"
     />
 
-    <!-- ══ SCOREBOARD (largura total) ══ -->
-    <app-details-scoreboard
-      [proximaMissa]="proximaMissa"
-      (verTodas)="scrollToHorarios()"
-    />
+    <!-- ══ PLACAR + HORÁRIOS (lado a lado no desktop) ══ -->
+    <div class="missas-grid mt-4" [class.missas-grid--sem-placar]="!proximaMissa">
+      <app-details-scoreboard
+        *ngIf="proximaMissa"
+        [proximaMissa]="proximaMissa"
+        [missas]="churchInfo.missas ?? []"
+      />
+      <app-details-horarios
+        [missas]="churchInfo.missas ?? []"
+        [podeSugerir]="!igrejaVerificada"
+        (adicionarHorarios)="reportarErro()"
+      />
+    </div>
 
-    <!-- HORÁRIOS (largura total) -->
-    <app-details-horarios
-      [missas]="churchInfo.missas ?? []"
-      (adicionarHorarios)="reportarErro()"
-    />
-
-    <!-- ATENDIMENTO E CONFISSÃO (Feature B) — só aparece se o responsável cadastrou -->
-    <section *ngIf="churchInfo.sessoes?.length" class="mt-6 rounded-xl border border-surface-100 bg-white px-4 py-4">
-      <h2 class="text-sm font-bold text-gray-700 flex items-center gap-2 mt-0 mb-3">
-        <i class="pi pi-calendar text-gray-400"></i> Atendimento e Confissão
-      </h2>
-      <div class="grid gap-4 sm:grid-cols-2">
-        <div *ngIf="sessoesSecretaria.length">
-          <p class="text-xs font-semibold text-gray-500 uppercase mb-1.5">Secretaria</p>
-          <p *ngFor="let s of sessoesSecretaria" class="text-sm text-gray-600 my-0.5">
-            {{ s.diasLabel }} — {{ s.horarioInicio }} às {{ s.horarioFim }}
-            <span *ngIf="s.observacao" class="text-xs text-gray-400">({{ s.observacao }})</span>
-          </p>
-        </div>
-        <div *ngIf="sessoesConfissao.length">
-          <p class="text-xs font-semibold text-gray-500 uppercase mb-1.5">Confissão</p>
-          <p *ngFor="let s of sessoesConfissao" class="text-sm text-gray-600 my-0.5">
-            {{ s.diasLabel }} — {{ s.horarioInicio }} às {{ s.horarioFim }}
-            <span *ngIf="s.observacao" class="text-xs text-gray-400">({{ s.observacao }})</span>
-          </p>
-        </div>
-      </div>
-    </section>
-
-    <!-- CONFIRMAR (largura total) -->
-    <app-details-confirmar
-      *ngIf="churchInfo.missas?.length"
+    <!-- ══ AJUDE A MANTER (confirmar, sugerir, reportar, responsável) ══ -->
+    <app-details-ajude
+      class="block mt-4"
       [igrejaId]="churchInfo.id"
       [igrejaNome]="churchInfo.nome"
+      [temMissas]="!!churchInfo.missas?.length"
+      [verificada]="igrejaVerificada"
+      (sugerirCorrecao)="reportarErro()"
+      (reportarProblema)="abrirModalReportarProblema()"
+      (souResponsavel)="abrirSolicitacaoResponsavel()"
     />
 
-    <!-- ══ ANÚNCIO acima de "Como chegar" (depois dos horários/confirmar; com aviso de isenção) ══ -->
+    <!-- ══ ANÚNCIO (depois do conteúdo principal; com aviso de isenção) ══ -->
     <div class="mt-6">
       <app-anuncio posicao="detalhe_igreja" />
     </div>
-
-    <!-- ══ GRID DUAS COLUNAS: Como chegar (esquerda) | Informações da comunidade (direita) ══ -->
-    <div class="page-grid mt-6">
-
-      <!-- ── Coluna principal ── -->
-      <div class="min-w-0">
-        <app-details-como-chegar
-          [igreja]="churchInfo"
-          (direcoesClick)="trackDirections()"
-        />
-      </div>
-
-      <!-- ── Sidebar ── -->
-      <aside class="flex flex-col gap-4">
-        <app-details-contato
-          [igreja]="churchInfo"
-          [tiposRedeSocial]="tiposRedeSocial"
-          (objetivoClick)="trackObjetivoAlcancado($event)"
-          (telefoneClick)="trackCliqueTelefone()"
-          (socialClick)="trackSocialClick($event)"
-          (adicionarInformacoes)="abrirModalReportarProblema()"
-        />
-      </aside>
-    </div>
-
-    <!-- ══ SOU O RESPONSÁVEL (Fase 4 + 5) ══ -->
-    <section *ngIf="!igrejaVerificada"
-             class="mt-6 rounded-xl bg-blue-50 border border-blue-100 px-4 py-3
-                    flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-      <div class="flex items-start gap-2">
-        <i class="pi pi-verified text-blue-400 mt-0.5"></i>
-        <div>
-          <div class="flex items-center gap-2 flex-wrap">
-            <p class="text-sm font-medium text-gray-700 m-0">Você é o responsável por esta igreja?</p>
-            <a routerLink="/guia-responsavel" class="text-xs text-blue-600 hover:text-blue-700 font-medium underline">
-              Saiba como funciona
-            </a>
-          </div>
-          <p class="text-xs text-gray-400">Párocos e secretarias podem assumir a gestão da página e manter as informações sempre atualizadas.</p>
-        </div>
-      </div>
-      <div class="shrink-0">
-        <button pButton type="button"
-          icon="pi pi-plus" label="Solicitar Responsabilidade"
-          class="p-button-sm p-button-success"
-          (click)="abrirSolicitacaoResponsavel()">
-        </button>
-      </div>
-    </section>
 
     <!-- ══ MODAL SOLICITAR RESPONSABILIDADE ══ -->
     <p-dialog header="Solicitar gestão da página" [(visible)]="modalResponsavelVisible"
@@ -182,27 +122,25 @@
       </ng-template>
     </p-dialog>
 
-    <!-- ══ REPORTAR (largura total) ══ -->
-    <section class="mt-6 rounded-xl bg-surface-50 border border-surface-100 px-4 py-3
-                    flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-      <div class="flex items-start gap-2">
-        <i class="pi pi-exclamation-triangle text-gray-400 mt-0.5"></i>
-        <div>
-          <p class="text-sm font-medium text-gray-700">Horário incorreto ou desatualizado?</p>
-          <p class="text-xs text-gray-400">Nos ajude a manter as informações corretas para toda a comunidade.</p>
-        </div>
-      </div>
-      <div class="flex gap-2 shrink-0">
-        <button *ngIf="!igrejaVerificada" pButton type="button" icon="pi pi-pencil" label="Realizar alteração"
-          class="p-button-outlined p-button-secondary p-button-sm"
-          (click)="reportarErro()">
-        </button>
-        <button pButton type="button" icon="pi pi-flag" label="Reportar problema"
-          class="p-button-outlined p-button-danger p-button-sm"
-          (click)="abrirModalReportarProblema()">
-        </button>
-      </div>
-    </section>
+    <!-- ══ MODAIS COMPARTILHAR / AGENDA ══ -->
+    <app-details-compartilhar-modal
+      [(visible)]="modalCompartilharVisible"
+      [igrejaNome]="churchInfo.nome"
+      [url]="shareUrl"
+      [mensagem]="mensagemCompartilhar"
+      [whatsappUrl]="whatsappUrl"
+      (compartilhado)="onCompartilhado($event)"
+    />
+    <app-details-agenda-modal
+      [(visible)]="modalAgendaVisible"
+      [missas]="churchInfo.missas ?? []"
+      [proximaMissa]="proximaMissa"
+      [igrejaId]="churchInfo.id"
+      [igrejaNome]="churchInfo.nome"
+      [endereco]="enderecoTexto"
+      [url]="shareUrl"
+      (adicionado)="onAgendaAdicionada($event)"
+    />
 
     <!-- ══ MODAL REPORTAR PROBLEMA ══ -->
     <app-details-reportar-modal

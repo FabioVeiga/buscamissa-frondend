@@ -15,9 +15,8 @@ import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { Mass } from "../../church/models/church.model";
 import { getNextOccurrenceMinutes } from "../../../../shared/utils/mass-time.utils";
-import { agruparSessoesPorDiasConsecutivos, SessaoAgrupada } from "../../../../shared/utils/sessao-horario.utils";
 import { AnalyticsService, ShareMethod } from "../../../../core/services/analytics.service";
-import { linkWhatsappIgreja } from "../../../../shared/utils/compartilhar-whatsapp.utils";
+import { linkWhatsappIgreja, mensagemCompartilharIgreja } from "../../../../shared/utils/compartilhar-whatsapp.utils";
 import { ClarityService } from "../../../../core/services/clarity.service";
 import { RedesSociaisService, TipoRedeSocial } from "../../../../core/services/redes-sociais.service";
 import { MetricasService } from "../../../../core/services/metricas.service";
@@ -26,9 +25,9 @@ import { NavigationHistoryService } from "../../../../core/services/navigation-h
 import { DetailsHeaderComponent } from "./sections/details-header/details-header.component";
 import { DetailsScoreboardComponent } from "./sections/details-scoreboard/details-scoreboard.component";
 import { DetailsHorariosComponent } from "./sections/details-horarios/details-horarios.component";
-import { DetailsConfirmarComponent } from "./sections/details-confirmar/details-confirmar.component";
-import { DetailsComoChegarComponent } from "./sections/details-como-chegar/details-como-chegar.component";
-import { DetailsContatoComponent } from "./sections/details-contato/details-contato.component";
+import { DetailsAjudeComponent } from "./sections/details-ajude/details-ajude.component";
+import { DetailsCompartilharModalComponent } from "./sections/details-compartilhar-modal/details-compartilhar-modal.component";
+import { DetailsAgendaModalComponent, DestinoAgenda } from "./sections/details-agenda-modal/details-agenda-modal.component";
 import { DetailsReportarModalComponent } from "./sections/details-reportar-modal/details-reportar-modal.component";
 import { ResponsavelService } from "../../../../core/services/responsavel.service";
 import { AuthService } from "../../../../core/services/auth.service";
@@ -49,9 +48,9 @@ import { LoggerService } from "../../../../core/services/logger.service";
     DetailsHeaderComponent,
     DetailsScoreboardComponent,
     DetailsHorariosComponent,
-    DetailsConfirmarComponent,
-    DetailsComoChegarComponent,
-    DetailsContatoComponent,
+    DetailsAjudeComponent,
+    DetailsCompartilharModalComponent,
+    DetailsAgendaModalComponent,
     DetailsReportarModalComponent,
     AnuncioComponent,
   ],
@@ -97,15 +96,6 @@ export class DetailsComponent implements OnInit {
 
   // Reportar problema
   modalReportarProblemaVisible = false;
-
-  // Sessões de atendimento/confissão (Feature B) — dias consecutivos com o
-  // mesmo horário são agrupados numa faixa só ("Ter a Sex — 08:00 às 11:30").
-  get sessoesSecretaria(): SessaoAgrupada[] {
-    return agruparSessoesPorDiasConsecutivos((this.churchInfo?.sessoes ?? []).filter((s: any) => s.tipo === 1));
-  }
-  get sessoesConfissao(): SessaoAgrupada[] {
-    return agruparSessoesPorDiasConsecutivos((this.churchInfo?.sessoes ?? []).filter((s: any) => s.tipo === 2));
-  }
 
   // Responsável Verificado (Fase 5)
   igrejaVerificada = false;
@@ -174,13 +164,6 @@ export class DetailsComponent implements OnInit {
     this.solicitacaoCargo = "";
     this.solicitacaoObservacao = "";
     this.modalResponsavelVisible = true;
-  }
-
-  /** Fase 4: Redireciona usuário logado para formulário de cadastro com dados pré-preenchidos */
-  solicitarResponsabilidadeLogado(): void {
-    if (this.nomeUnico) {
-      this._router.navigate(["/nova"], { queryParams: { nomeUnico: this.nomeUnico } });
-    }
   }
 
   enviarSolicitacaoResponsavel(): void {
@@ -500,37 +483,42 @@ export class DetailsComponent implements OnInit {
     this._router.navigateByUrl(anterior ?? "/");
   }
 
-  /** Compartilhar: usa a API nativa quando disponível, senão copia o link */
-  compartilhar(): void {
-    const url = this.shareUrl;
-    const nav = navigator as any;
-    this.trackObjetivoAlcancado('compartilhar');
-    if (this.churchInfo?.id) this._metricas.registrarCompartilhamento(this.churchInfo.id);
-    if (nav.share) {
-      this.trackShare('native');
-      nav.share({ title: this.churchInfo?.nome, text: `Horários de missa — ${this.churchInfo?.nome}`, url }).catch(() => {});
-    } else {
-      this.trackShare('copy_link');
-      const falhou = () => this._toast.add({ severity: "warn", summary: "Não foi possível copiar", detail: url });
-      if (!navigator.clipboard?.writeText) { falhou(); return; }
-      navigator.clipboard.writeText(url).then(
-        () => this._toast.add({ severity: "success", summary: "Link copiado!", detail: "Cole onde quiser para compartilhar." }),
-        falhou,
-      );
-    }
-  }
+  // ── Compartilhar / agenda (janelas únicas) ────────────────────────────────────
 
-  /** Link do botão "Enviar no WhatsApp": horários resumidos + shareUrl com UTM (a canonical segue sem UTM). */
+  modalCompartilharVisible = false;
+  modalAgendaVisible = false;
+
+  /** Link `wa.me`: horários resumidos + shareUrl com UTM (a canonical segue sem UTM). */
   get whatsappUrl(): string {
     const ig = this.churchInfo;
     if (!ig?.nome) return '';
     return linkWhatsappIgreja(ig.nome, ig.missas ?? [], this.proximaMissa, this.shareUrl);
   }
 
-  compartilharWhatsapp(): void {
-    this.trackShare('whatsapp');
-    this.trackObjetivoAlcancado('compartilhar_whatsapp');
+  /** Mesma mensagem do WhatsApp, com o link limpo — para "Copiar mensagem" e "Outros apps". */
+  get mensagemCompartilhar(): string {
+    const ig = this.churchInfo;
+    if (!ig?.nome) return '';
+    return mensagemCompartilharIgreja(ig.nome, ig.missas ?? [], this.proximaMissa, this.shareUrl);
+  }
+
+  /** "Rua X, 50 - Bairro, Cidade/UF" para o campo local do evento na agenda. */
+  get enderecoTexto(): string {
+    const e = this.churchInfo?.endereco ?? {};
+    const rua = [(e.logradouro ?? '').trim(), e.numero && e.numero !== 0 ? e.numero : null].filter(Boolean).join(', ');
+    const cidade = [e.localidade, e.uf].filter(Boolean).join('/');
+    return [rua, (e.bairro ?? '').trim(), cidade].filter(Boolean).join(' - ');
+  }
+
+  /** Tracking de qualquer opção do modal de compartilhar (mantém os eventos de antes). */
+  onCompartilhado(metodo: ShareMethod): void {
+    this.trackShare(metodo);
+    this.trackObjetivoAlcancado(metodo === 'whatsapp' ? 'compartilhar_whatsapp' : 'compartilhar');
     if (this.churchInfo?.id) this._metricas.registrarCompartilhamento(this.churchInfo.id);
+  }
+
+  onAgendaAdicionada(destino: DestinoAgenda): void {
+    this.trackObjetivoAlcancado(destino === 'google' ? 'agenda_google' : 'agenda_ics');
   }
 
   /** Evento `share` do GA4 para a paróquia (item_id = slug da igreja). */
@@ -543,10 +531,6 @@ export class DetailsComponent implements OnInit {
       ig?.endereco?.uf ?? '',
       ig?.slug ?? ig?.nomeUnico ?? '',
     );
-  }
-
-  scrollToHorarios(): void {
-    document.getElementById("horarios")?.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   reportarErro(): void {

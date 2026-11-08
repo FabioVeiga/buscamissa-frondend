@@ -1,0 +1,28 @@
+<p-dialog header="Compartilhar" [visible]="visible" (visibleChange)="visibleChange.emit($event)"
+          [modal]="true" [dismissableMask]="true" [draggable]="false"
+          [style]="{ width: '26rem', maxWidth: '95vw' }">
+
+  <!-- Prévia do que vai junto -->
+  <p class="comp__rotulo">Mensagem que será enviada</p>
+  <p class="comp__previa">{{ mensagem }}</p>
+
+  <div class="comp__opcoes">
+    <a *ngIf="whatsappUrl" [href]="whatsappUrl" target="_blank" rel="noopener"
+       class="comp__opcao comp__opcao--whatsapp" (click)="enviarWhatsapp()">
+      <i class="pi pi-whatsapp"></i>
+      <span><strong>Enviar pelo WhatsApp</strong><small>Mensagem com os horários e o link</small></span>
+    </a>
+    <button type="button" class="comp__opcao" (click)="copiarMensagem()">
+      <i class="pi pi-copy"></i>
+      <span><strong>Copiar mensagem</strong><small>Para colar em outro app ou grupo</small></span>
+    </button>
+    <button type="button" class="comp__opcao" (click)="copiarLink()">
+      <i class="pi pi-link"></i>
+      <span><strong>Copiar só o link</strong><small>{{ url }}</small></span>
+    </button>
+    <button *ngIf="temShareNativo" type="button" class="comp__opcao" (click)="outrosApps()">
+      <i class="pi pi-share-alt"></i>
+      <span><strong>Outros apps</strong><small>Telegram, e-mail, SMS…</small></span>
+    </button>
+  </div>
+</p-dialog>

@@ -1,23 +1,26 @@
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnChanges, PLATFORM_ID, SimpleChanges, inject } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, PLATFORM_ID, SimpleChanges, inject } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
+import { RouterLink } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ChurchesService } from '../../../../../../core/services/churches.service';
 import { AnalyticsService } from '../../../../../../core/services/analytics.service';
 
 /**
- * Bloco "Os horários estão corretos?" — dono do fluxo completo de confirmação
- * (resumo de prova social + envio), extraído do DetailsComponent (auditoria 2.x).
- * OnPush: estado atualizado em subscribe → sempre chamar markForCheck().
+ * Bloco único "Ajude a manter esta página" (redesenho de 2026-11). Junta o que
+ * eram 3 blocos: confirmar horários (fluxo completo fica aqui), sugerir correção,
+ * reportar problema e "sou o responsável" (esses três só emitem; o pai abre o
+ * formulário/modal). OnPush: estado atualizado em subscribe → markForCheck().
  */
 @Component({
-  selector: 'app-details-confirmar',
+  selector: 'app-details-ajude',
   standalone: true,
-  imports: [CommonModule, ButtonModule],
-  templateUrl: './details-confirmar.component.html',
+  imports: [CommonModule, ButtonModule, RouterLink],
+  templateUrl: './details-ajude.component.html',
+  styleUrls: ['./details-ajude.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class DetailsConfirmarComponent implements OnChanges {
+export class DetailsAjudeComponent implements OnChanges {
   private _church = inject(ChurchesService);
   private _toast = inject(MessageService);
   private _analytics = inject(AnalyticsService);
@@ -27,6 +30,14 @@ export class DetailsConfirmarComponent implements OnChanges {
 
   @Input({ required: true }) igrejaId!: number;
   @Input() igrejaNome = '';
+  /** Sem horários não há o que confirmar: o bloco mostra só as outras ações. */
+  @Input() temMissas = false;
+  /** Igreja com responsável verificado: esconde "Sugerir correção" e "Sou o responsável". */
+  @Input() verificada = false;
+
+  @Output() sugerirCorrecao = new EventEmitter<void>();
+  @Output() reportarProblema = new EventEmitter<void>();
+  @Output() souResponsavel = new EventEmitter<void>();
 
   confirmacaoEnviada = false;
   confirmandoHorarios = false;

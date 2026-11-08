@@ -1,0 +1,93 @@
+// ── Bloco "Os horários estão certos?" ──────────────────────────────────────────
+// Compacto: linha 1 = pergunta + botão de confirmar; linha 2 = links discretos.
+.ajude {
+  border-radius: 1rem;
+  background: #fff4ea;
+  border: 1px solid #f3d3b3;
+  padding: 0.875rem 1.125rem;
+
+  p, h2 { margin: 0; }
+}
+
+.ajude__principal {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.625rem;
+
+  @media (min-width: 640px) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+}
+
+.ajude__titulo {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #5a2f0b;
+}
+
+.ajude__texto {
+  font-size: 0.8125rem;
+  color: #8a4a12;
+}
+
+// Único botão cheio do bloco. Largura total no celular.
+:host ::ng-deep .ajude__confirmar.p-button {
+  flex-shrink: 0;
+  justify-content: center;
+  background: #ad540c;
+  border-color: #ad540c;
+
+  &:enabled:hover { background: #8a4310; border-color: #8a4310; }
+}
+
+.ajude__acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1.25rem;
+  margin-top: 0.75rem;
+  padding-top: 0.625rem;
+  border-top: 1px solid #f3d3b3;
+}
+
+.ajude__acao {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  min-height: 2.25rem;
+  padding: 0;
+  background: transparent;
+  border: 0;
+  color: #8a4a12;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+
+  &:hover { color: #5a2f0b; text-decoration: underline; }
+
+  .pi { font-size: 0.875rem; color: #ad540c; }
+
+}
+
+// Convite ao responsável + link para o guia; à direita no desktop.
+.ajude__convite {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.25rem 0.625rem;
+
+  @media (min-width: 640px) { margin-left: auto; }
+}
+
+.ajude__saiba {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #2563eb;
+  text-decoration: underline;
+
+  &:hover { color: #1d4ed8; }
+}

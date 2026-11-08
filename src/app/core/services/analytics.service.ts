@@ -5,7 +5,7 @@ import { filter } from 'rxjs/operators';
 declare function gtag(...args: unknown[]): void;
 
 /** Canal do compartilhamento (parâmetro `method` do evento `share` do GA4). */
-export type ShareMethod = 'native' | 'copy_link' | 'whatsapp';
+export type ShareMethod = 'native' | 'copy_link' | 'copy_text' | 'whatsapp';
 /** O que foi compartilhado (parâmetro `content_type` do evento `share` do GA4). */
 export type ShareContentType = 'igreja' | 'cidade';
 

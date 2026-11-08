@@ -1,37 +1,57 @@
 @use '../shared' as *;
 
-// ── Linha da agenda semanal ────────────────────────────────────────────────────
-.schedule-row {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
+// ── Card da grade ───────────────────────────────────────────────────────────────
+.horarios-card {
+  padding: 1rem 1.25rem;
   background: #fff;
   border: 1px solid #e5e7eb;
-  border-radius: 0.75rem;
-  transition: background 0.15s;
+  border-radius: 1rem;
 
-  @media (min-width: 480px) {
-    flex-direction: row;
-    align-items: center;
-  }
+  p { margin: 0; }
+}
+
+// ── Linha da agenda semanal ────────────────────────────────────────────────────
+// Lista com divisórias (não um card por dia): mesma altura em todas as linhas e
+// coluna do dia estreita — nomes curtos ("Segunda") cabem até em 320px.
+.schedule-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.schedule-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 3.5rem;
+  padding: 0.5rem 0.5rem;
+  border-bottom: 1px solid #f1f1f1;
 
   &--hoje {
     background: #fff7f0;
-    border: 2px solid #f3a06e;
+    border-radius: 0.625rem;
+    border-bottom-color: transparent;
   }
 
   &__day {
     display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    width: 100%;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.15rem;
+    width: 5.5rem;
     flex-shrink: 0;
+    font-size: 0.9375rem;
+    font-weight: 700;
 
-    @media (min-width: 480px) {
-      width: 9rem;
+    @media (min-width: 640px) {
+      width: 7rem;
     }
   }
+}
+
+.schedule-sem-missa {
+  padding: 0.75rem 0.5rem 0;
+  font-size: 0.8125rem;
+  color: #9ca3af;
 }
 
 .hoje-pill {
@@ -49,13 +69,12 @@
   display: inline-flex;
   flex-direction: column;
   justify-content: center;
-  height: 3rem;          // altura fixa — todos iguais
+  height: 2.75rem;       // altura fixa — todos iguais
   min-width: 4rem;
   padding: 0 0.75rem;
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: #fff4ea;
+  border: 1px solid #fde3cc;
   border-radius: 0.625rem;
-  box-shadow: 0 1px 2px rgba(0,0,0,0.04);
   overflow: hidden;
 
   .schedule-row--hoje & {

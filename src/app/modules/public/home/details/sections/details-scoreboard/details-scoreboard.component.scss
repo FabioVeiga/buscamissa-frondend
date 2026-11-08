@@ -1,14 +1,19 @@
-// ── Scoreboard ─────────────────────────────────────────────────────────────────
+// ── Placar "Próxima missa" ──────────────────────────────────────────────────────
 .scoreboard {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   border-radius: 1rem;
   padding: 1.125rem 1.375rem;
   background: linear-gradient(135deg, #fff4ea 0%, #ffe8d2 100%);
   border: 1px solid #f3d3b3;
+
+  p { margin: 0; }
 }
 
 .scoreboard-label {
-  font-size: 0.68rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: #b06a2c;
@@ -21,16 +26,19 @@
   color: #ad540c;
 
   @media (min-width: 640px) {
-    font-size: 3.25rem;
+    font-size: 3.5rem;
   }
 }
 
 .scoreboard-day {
   font-size: 1rem;
   font-weight: 700;
-  letter-spacing: 0.04em;
   color: #8a4a12;
   padding-bottom: 0.3rem;
+}
+
+.scoreboard-data {
+  font-weight: 500;
 }
 
 .scoreboard-countdown {
@@ -41,4 +49,18 @@
     font-weight: 700;
     color: #ad540c;
   }
+}
+
+.scoreboard-outras {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.875rem !important;
+  padding-top: 0.75rem;
+  border-top: 1px solid rgba(173, 84, 12, 0.18);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #8a4a12;
+
+  .pi { font-size: 0.875rem; }
 }
