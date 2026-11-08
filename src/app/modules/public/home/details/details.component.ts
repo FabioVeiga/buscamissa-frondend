@@ -25,6 +25,7 @@ import { NavigationHistoryService } from "../../../../core/services/navigation-h
 import { DetailsHeaderComponent } from "./sections/details-header/details-header.component";
 import { DetailsScoreboardComponent } from "./sections/details-scoreboard/details-scoreboard.component";
 import { DetailsHorariosComponent } from "./sections/details-horarios/details-horarios.component";
+import { DetailsAtendimentoComponent } from "./sections/details-atendimento/details-atendimento.component";
 import { DetailsAjudeComponent } from "./sections/details-ajude/details-ajude.component";
 import { DetailsCompartilharModalComponent } from "./sections/details-compartilhar-modal/details-compartilhar-modal.component";
 import { DetailsAgendaModalComponent, DestinoAgenda } from "./sections/details-agenda-modal/details-agenda-modal.component";
@@ -48,6 +49,7 @@ import { LoggerService } from "../../../../core/services/logger.service";
     DetailsHeaderComponent,
     DetailsScoreboardComponent,
     DetailsHorariosComponent,
+    DetailsAtendimentoComponent,
     DetailsAjudeComponent,
     DetailsCompartilharModalComponent,
     DetailsAgendaModalComponent,

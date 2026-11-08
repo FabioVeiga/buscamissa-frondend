@@ -1,0 +1,39 @@
+.atendimento {
+  display: grid;
+  gap: 0.875rem;
+  padding: 1rem 1.25rem;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 1rem;
+
+  h2, p { margin: 0; }
+}
+
+.atendimento__titulo {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.25rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: #1f2937;
+
+  .pi { font-size: 0.875rem; color: #9ca3af; }
+}
+
+.atendimento__linha {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #4b5563;
+}
+
+.atendimento__dias {
+  font-weight: 600;
+  color: #374151;
+}
+
+.atendimento__obs {
+  display: block;
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
