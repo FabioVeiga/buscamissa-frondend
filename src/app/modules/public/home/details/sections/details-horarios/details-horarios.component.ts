@@ -94,7 +94,27 @@ export class DetailsHorariosComponent {
     return (this.missas ?? [])
       .filter((m) => !ehSemanal(m) && !this._estaNaGrade(m))
       .sort((a, b) => (a.diaDoMes ?? 0) - (b.diaDoMes ?? 0) || a.horario.localeCompare(b.horario))
-      .map((m) => ({ descricao: m.descricaoRecorrencia || descrever(m), observacao: m.observacao }));
+      .map((m) => ({ descricao: m.descricaoRecorrencia || descrever(m), observacao: this.notaDaMissa(m) }));
+  }
+
+  /** Só as missas de dia fixo que têm observação a mostrar. */
+  get notasDiaFixo(): { descricao: string; observacao?: string }[] {
+    return this.missasDiaFixo.filter((m) => m.observacao);
+  }
+
+  /** Observações do dia, uma por missa, para a linha abaixo dos chips. */
+  notasDoDia(missas: MissaNaGrade[]): { horario: string; texto: string }[] {
+    return missas
+      .filter((m) => this.notaDaMissa(m))
+      .map((m) => ({ horario: this.formatarHorario(m.horario), texto: this.notaDaMissa(m) }));
+  }
+
+  /** Observação da missa, ou '' se só repete a regra já exibida (ex.: "1ª sexta do mês"). */
+  notaDaMissa(m: Mass): string {
+    const obs = (m.observacao ?? '').trim();
+    if (!obs) return '';
+    const regra = (m.descricaoRecorrencia || descrever(m)).toLowerCase();
+    return regra.includes(obs.toLowerCase()) ? '' : obs;
   }
 
   /** Falso no prerender: separa informação temporal estável da relativa. */
