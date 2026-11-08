@@ -42,8 +42,14 @@ export const FOLGA_ARQUIVOS = 150;
  *           mais é um chunk JS: o #257 passou a importar `city/city.constants.ts` em
  *           `intencao.component.ts`, e o esbuild separou o módulo, agora usado por dois
  *           chunks lazy, num chunk próprio (51 → 52 chunks lazy).
+ *   - 386 — build de produção do PR #287 em 08/11/2026 (run 42525794520):
+ *           4.052 = 1.661 paróquias + 2.005 cidades + 386 fixos
+ *           (237 rotas fixas + 149 arquivos que não são rota). As rotas e os chunks JS
+ *           não mudaram; as 2 unidades a mais são `prerender-shared-*.css` (18 → 20): o
+ *           redesenho da página de paróquia criou novas combinações de blocos de estilo,
+ *           e o dedupe-prerender-css emite um arquivo por combinação.
  */
-export const ARQUIVOS_FIXOS = 384;
+export const ARQUIVOS_FIXOS = 386;
 
 /**
  * Exceção à folga mínima: `PRERENDER_ACEITAR_MARGEM=<n>` aceita UMA margem real entre
