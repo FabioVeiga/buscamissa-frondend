@@ -39,7 +39,7 @@ describe('compartilhar-whatsapp.utils', () => {
       expect(link.startsWith('https://wa.me/?text=')).toBeTrue();
       const texto = decodeURIComponent(link.replace('https://wa.me/?text=', ''));
       expect(texto).toBe(
-        'Missa na Paróquia X: domingo às 8h. Veja todos os horários: ' +
+        'Horários de missa: Paróquia X - domingo às 8h. Veja todos os horários: ' +
         `${url}?utm_source=whatsapp&utm_medium=share&utm_campaign=igreja`,
       );
     });
@@ -52,7 +52,7 @@ describe('compartilhar-whatsapp.utils', () => {
 
     it('sem horários: frase sem resumo', () => {
       const texto = decodeURIComponent(linkWhatsappIgreja('Paróquia X', [], null, url).split('text=')[1]);
-      expect(texto).toBe(`Missa na Paróquia X. Veja todos os horários: ${url}?${'utm_source=whatsapp&utm_medium=share&utm_campaign=igreja'}`);
+      expect(texto).toBe(`Horários de missa: Paróquia X. Veja todos os horários: ${url}?${'utm_source=whatsapp&utm_medium=share&utm_campaign=igreja'}`);
     });
   });
 });

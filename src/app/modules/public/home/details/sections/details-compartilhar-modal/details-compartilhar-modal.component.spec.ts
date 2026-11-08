@@ -16,7 +16,7 @@ describe('DetailsCompartilharModalComponent', () => {
     c = fixture.componentInstance;
     c.igrejaNome = 'Paróquia X';
     c.url = 'https://buscamissa.com.br/paroquia/sp/sp/x';
-    c.mensagem = 'Missa na Paróquia X: domingo às 7h. Veja todos os horários: https://buscamissa.com.br/paroquia/sp/sp/x';
+    c.mensagem = 'Horários de missa: Paróquia X - domingo às 7h. Veja todos os horários: https://buscamissa.com.br/paroquia/sp/sp/x';
     c.whatsappUrl = 'https://wa.me/?text=oi';
     c.visible = true;
     fixture.detectChanges();
