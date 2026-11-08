@@ -81,6 +81,12 @@ button:focus-visible,
   max-width: 72rem;
 }
 
+/* Página da paróquia: foto + dados lado a lado e placar ao lado da grade de
+   horários (redesenho de 2026-11) — em 640px tudo espremia. */
+.layout-main > .card > app-details {
+  max-width: 68rem;
+}
+
 /* Lista larga da cidade (mapa ao lado no desktop). Antes ela escapava dos 640px do
    .card com 100vw + translateX no :host; o transform prendia o botão fixed "Ver mapa"
    à página em vez da tela. */

@@ -30,6 +30,20 @@ export function resumoHorariosWhatsapp(missas: RegraRecorrencia[], proxima: Regr
   return '';
 }
 
+/**
+ * Mensagem pronta para compartilhar a igreja: resumo dos horários + link.
+ * A mesma do WhatsApp e do "Copiar mensagem" do modal de compartilhar.
+ */
+export function mensagemCompartilharIgreja(
+  nomeIgreja: string,
+  missas: RegraRecorrencia[],
+  proxima: RegraRecorrencia | null,
+  url: string,
+): string {
+  const resumo = resumoHorariosWhatsapp(missas, proxima);
+  return `Missa na ${nomeIgreja}${resumo ? `: ${resumo}` : ''}. Veja todos os horários: ${url}`;
+}
+
 /** Link `wa.me` com a mensagem pronta (texto codificado) para a página de igreja. */
 export function linkWhatsappIgreja(
   nomeIgreja: string,
@@ -37,8 +51,6 @@ export function linkWhatsappIgreja(
   proxima: RegraRecorrencia | null,
   shareUrl: string,
 ): string {
-  const resumo = resumoHorariosWhatsapp(missas, proxima);
   const url = `${shareUrl}${shareUrl.includes('?') ? '&' : '?'}${UTM_WHATSAPP_IGREJA}`;
-  const texto = `Missa na ${nomeIgreja}${resumo ? `: ${resumo}` : ''}. Veja todos os horários: ${url}`;
-  return `https://wa.me/?text=${encodeURIComponent(texto)}`;
+  return `https://wa.me/?text=${encodeURIComponent(mensagemCompartilharIgreja(nomeIgreja, missas, proxima, url))}`;
 }

@@ -108,17 +108,17 @@ describe('DetailsHeaderComponent — prioridade da imagem LCP', () => {
   });
 });
 
-describe('DetailsHeaderComponent — Enviar no WhatsApp', () => {
+describe('DetailsHeaderComponent — Compartilhar e Agenda', () => {
   let fixture: ComponentFixture<DetailsHeaderComponent>;
 
-  const botao = () => fixture.nativeElement.querySelector('a.action-btn--whatsapp') as HTMLAnchorElement | null;
-
-  const montar = (whatsappUrl: string) => {
+  const montar = (temMissas: boolean) => {
     fixture = TestBed.createComponent(DetailsHeaderComponent);
     fixture.componentInstance.igreja = { nome: 'Paróquia X', imagemUrl: null, endereco: { localidade: 'São Paulo', uf: 'SP' } };
-    fixture.componentInstance.whatsappUrl = whatsappUrl;
+    fixture.componentInstance.temMissas = temMissas;
     fixture.detectChanges();
   };
+  const botao = (texto: string) =>
+    [...fixture.nativeElement.querySelectorAll('button')].find((b: HTMLButtonElement) => b.textContent!.includes(texto)) as HTMLButtonElement | undefined;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -127,21 +127,22 @@ describe('DetailsHeaderComponent — Enviar no WhatsApp', () => {
     }).compileComponents();
   });
 
-  it('abre o wa.me em nova aba e emite whatsappClick', () => {
-    montar('https://wa.me/?text=oi');
-    const a = botao()!;
-    expect(a.getAttribute('href')).toBe('https://wa.me/?text=oi');
-    expect(a.getAttribute('target')).toBe('_blank');
-
-    const spy = jasmine.createSpy('whatsappClick');
-    fixture.componentInstance.whatsappClick.subscribe(spy);
-    a.addEventListener('click', (e) => e.preventDefault());
-    a.click();
+  it('um botão só de compartilhar (o antigo "Enviar no WhatsApp" foi para o modal)', () => {
+    montar(true);
+    expect(fixture.nativeElement.querySelector('.action-btn--whatsapp')).toBeNull();
+    const spy = jasmine.createSpy('compartilharClick');
+    fixture.componentInstance.compartilharClick.subscribe(spy);
+    botao('Compartilhar')!.click();
     expect(spy).toHaveBeenCalled();
   });
 
-  it('sem link: não renderiza o botão', () => {
-    montar('');
-    expect(botao()).toBeNull();
+  it('"Agenda" aparece só quando há horários e emite agendaClick', () => {
+    montar(false);
+    expect(botao('Agenda')).toBeUndefined();
+    montar(true);
+    const spy = jasmine.createSpy('agendaClick');
+    fixture.componentInstance.agendaClick.subscribe(spy);
+    botao('Agenda')!.click();
+    expect(spy).toHaveBeenCalled();
   });
 });

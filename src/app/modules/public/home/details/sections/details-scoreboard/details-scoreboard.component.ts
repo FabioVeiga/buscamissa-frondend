@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output, PLATFORM_ID, inject } from '@angular/core';
+import { ChangeDetectionStrategy, Component, Input, PLATFORM_ID, inject } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { Mass } from '../../../../church/models/church.model';
 import { CountdownChipComponent } from '../../../../../../shared/components/countdown-chip/countdown-chip.component';
@@ -8,8 +8,12 @@ import {
   getDiaLabel,
   getProximaMissaData,
 } from '../../../../../../shared/utils/mass-time.utils';
+import { ehSemanal } from '../../../../../../shared/utils/recorrencia-missa';
 
-/** Scoreboard "Próxima missa" da página da paróquia (extraído do DetailsComponent — auditoria 2.x). */
+/**
+ * Placar "Próxima missa" da página da paróquia. Sem próxima missa não renderiza:
+ * o aviso de "sem horários" fica só na grade (antes aparecia duas vezes).
+ */
 @Component({
   selector: 'app-details-scoreboard',
   standalone: true,
@@ -20,8 +24,8 @@ import {
 })
 export class DetailsScoreboardComponent {
   @Input() proximaMissa: Mass | null = null;
-
-  @Output() verTodas = new EventEmitter<void>();
+  /** Todas as missas da igreja — usadas para "Também neste dia". */
+  @Input() missas: Mass[] = [];
 
   /** Falso no prerender: separa informação temporal estável da relativa. */
   private readonly _isBrowser = isPlatformBrowser(inject(PLATFORM_ID));
@@ -46,20 +50,37 @@ export class DetailsScoreboardComponent {
   get proximaMissaDiaLabel(): string {
     const pm = this.proximaMissa;
     if (!pm) return '';
-    return getDiaLabel(pm.diaSemana!, pm.horario, this._isBrowser, pm);
+    const label = getDiaLabel(pm.diaSemana!, pm.horario, this._isBrowser, pm);
+    if (label === 'Hoje' || label === 'Amanhã' || !this._isBrowser) return label;
+    // Outro dia da semana: a data por extenso já começa com o nome do dia.
+    return '';
   }
 
   /**
-   * "quinta-feira, 15 de maio" no browser; só "quinta-feira" no prerender.
-   *
-   * Era o pior caso do congelamento: uma data por extenso é afirmativa e
-   * falsificável. Em 2026-09-09 o Google exibia "terça-feira, 8 de setembro" como
-   * próxima missa de uma paróquia — a data do build anterior, de ontem.
+   * Complemento do rótulo — só no browser (no prerender uma data por extenso
+   * congelaria: em 2026-09-09 o Google exibia a data do build anterior).
+   * "Hoje"/"Amanhã" → "8 de novembro"; outro dia → "domingo, 15 de novembro".
    */
   get proximaMissaData(): string {
     const pm = this.proximaMissa;
-    if (!pm) return '';
-    return getProximaMissaData(pm.diaSemana!, pm.horario, this._isBrowser, pm);
+    if (!pm || !this._isBrowser) return '';
+    const completa = getProximaMissaData(pm.diaSemana!, pm.horario, true, pm);
+    if (!this.proximaMissaDiaLabel) return completa.charAt(0).toUpperCase() + completa.slice(1);
+    // "domingo, 8 de novembro" → "8 de novembro"
+    const i = completa.indexOf(', ');
+    return i >= 0 ? completa.slice(i + 2) : completa;
+  }
+
+  /** Demais missas semanais no mesmo dia da próxima, depois dela ("09h00", "18h00"). */
+  get outrasNoDia(): string[] {
+    const pm = this.proximaMissa;
+    if (!pm || !ehSemanal(pm)) return [];
+    return (this.missas ?? [])
+      .filter((m) => ehSemanal(m) && m.diaSemana === pm.diaSemana && m.horario > pm.horario)
+      .map((m) => m.horario)
+      .filter((h, i, arr) => arr.indexOf(h) === i)
+      .sort()
+      .map((h) => formatMassTime(h));
   }
 
   formatarHorario(horario: string): string {

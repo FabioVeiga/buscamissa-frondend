@@ -70,7 +70,7 @@ describe('DetailsComponent — skeleton não pode substituir conteúdo já rende
             getByCidadeESlug: () => resposta$,
             getByNomeUnico: () => resposta$,
             gerarFingerprint: () => 'teste',
-            // Usados pelos filhos (details-confirmar / details-reportar-modal):
+            // Usados pelos filhos (details-ajude / details-reportar-modal):
             // sem eles o TestBed quebra antes de chegar no que este spec defende.
             getResumoConfirmacoes: () => of({ data: { confirmacoes: 0, reports: 0 } }),
             confirmarHorarios: () => of({ data: {} }),

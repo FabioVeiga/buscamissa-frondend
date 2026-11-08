@@ -1,13 +1,22 @@
 // Estilos das seções migraram para ./sections/* (auditoria 2.x).
 // Aqui fica apenas o layout do grid da página.
 
-// ── Grid duas colunas ──────────────────────────────────────────────────────────
-.page-grid {
+// ── Placar + horários ──────────────────────────────────────────────────────────
+// Desktop: placar à esquerda, grade à direita. Sem próxima missa: só a grade.
+.missas-grid {
   display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
 
   @media (min-width: 768px) {
-    grid-template-columns: 1fr 17rem;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr);
+    // Grade longa (santuários com 6+ missas/dia) não estica o placar: ele fica no topo.
+    align-items: start;
+
+    > app-details-scoreboard { display: block; }
+  }
+
+  &--sem-placar {
+    grid-template-columns: minmax(0, 1fr);
   }
 }

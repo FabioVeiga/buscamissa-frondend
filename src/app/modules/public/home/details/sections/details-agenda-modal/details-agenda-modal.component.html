@@ -1,0 +1,34 @@
+<p-dialog header="Adicionar à agenda" [visible]="visible" (visibleChange)="visibleChange.emit($event)"
+          [modal]="true" [dismissableMask]="true" [draggable]="false"
+          [style]="{ width: '26rem', maxWidth: '95vw' }">
+
+  <p class="comp__rotulo">Qual missa?</p>
+  <div class="agenda__missas" role="radiogroup" aria-label="Missa para adicionar à agenda">
+    <button *ngFor="let m of opcoes" type="button" role="radio"
+            class="agenda__missa" [class.agenda__missa--ativa]="m === selecionada"
+            [attr.aria-checked]="m === selecionada" (click)="selecionada = m">
+      {{ rotulo(m) }}
+    </button>
+  </div>
+
+  <!-- Opção real: marcada = evento recorrente; desmarcada = só a próxima missa -->
+  <label *ngIf="regraRepeticao" class="agenda__repetir">
+    <input type="checkbox" [checked]="repetir" (change)="repetir = $any($event.target).checked" />
+    <span>
+      <strong>{{ repeticao }}</strong>
+      <small>{{ repetir ? 'O evento fica fixo na sua agenda.' : 'Só a próxima missa: ' + dataProxima + '.' }}</small>
+    </span>
+  </label>
+
+  <div class="comp__opcoes">
+    <a [href]="linkGoogle" target="_blank" rel="noopener" class="comp__opcao" (click)="abriuGoogle()"
+       [class.agenda__desativada]="!evento">
+      <i class="pi pi-google"></i>
+      <span><strong>Google Agenda</strong><small>Android e computador</small></span>
+    </a>
+    <button type="button" class="comp__opcao" [disabled]="!evento" (click)="baixarIcs()">
+      <i class="pi pi-calendar-plus"></i>
+      <span><strong>Calendário do celular</strong><small>iPhone, Outlook e outros (arquivo .ics)</small></span>
+    </button>
+  </div>
+</p-dialog>
