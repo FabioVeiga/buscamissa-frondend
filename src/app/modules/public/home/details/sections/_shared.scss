@@ -16,7 +16,11 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
-  min-height: 2.5rem;       // área de toque de 40px
+  // Em px de propósito: o html do site tem font-size 14px, e em rem o alvo encolhe.
+  min-height: 44px;
+
+  @media (min-width: 640px) { min-height: 40px; }
+
   padding: 0.45rem 0.9rem;
   border-radius: 0.5rem;
   background: #f3f4f6;

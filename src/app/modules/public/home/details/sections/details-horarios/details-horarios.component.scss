@@ -48,10 +48,33 @@
   }
 }
 
-.schedule-sem-missa {
+.schedule-notas {
+  margin: 0.375rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.8125rem;
+  line-height: 1.35;
+  color: #6b7280;
+}
+
+// Última linha do card: dias sem missa à esquerda, aviso à direita.
+.horarios-rodape {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
   padding: 0.75rem 0.5rem 0;
   font-size: 0.8125rem;
-  color: #9ca3af;
+  color: #6b7280;
+
+  &__aviso {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+
+    @media (min-width: 640px) { margin-left: auto; }
+
+    .pi { font-size: 0.75rem; }
+  }
 }
 
 .hoje-pill {
@@ -90,15 +113,9 @@
   white-space: nowrap;
 }
 
-.mass-chip__obs {
-  font-size: 0.68rem;
-  color: #9ca3af;
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 10rem;
-  margin-top: 0.1rem;
+// Indica que a missa tem observação logo abaixo.
+.mass-chip__marca {
+  font-weight: 700;
 }
 
 // Missa de dia fixo do mês que cai nesta semana (só aparece no browser).

@@ -1,0 +1,15 @@
+<section *ngIf="confissao.length || secretaria.length" class="atendimento" aria-label="Confissão e secretaria">
+  <ng-container *ngTemplateOutlet="bloco; context: { titulo: 'Confissão', icone: 'pi-heart', itens: confissao }"></ng-container>
+  <ng-container *ngTemplateOutlet="bloco; context: { titulo: 'Secretaria', icone: 'pi-building', itens: secretaria }"></ng-container>
+</section>
+
+<ng-template #bloco let-titulo="titulo" let-icone="icone" let-itens="itens">
+  <div *ngIf="itens.length" class="atendimento__bloco">
+    <h2 class="atendimento__titulo"><i class="pi" [ngClass]="icone" aria-hidden="true"></i> {{ titulo }}</h2>
+    <p *ngFor="let s of itens" class="atendimento__linha">
+      <span class="atendimento__dias">{{ s.diasLabel }}</span>
+      {{ formatarHorario(s.horarioInicio) }} às {{ formatarHorario(s.horarioFim) }}
+      <span *ngIf="s.observacao" class="atendimento__obs">{{ s.observacao }}</span>
+    </p>
+  </div>
+</ng-template>

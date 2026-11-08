@@ -41,7 +41,7 @@ export function mensagemCompartilharIgreja(
   url: string,
 ): string {
   const resumo = resumoHorariosWhatsapp(missas, proxima);
-  return `Missa na ${nomeIgreja}${resumo ? `: ${resumo}` : ''}. Veja todos os horários: ${url}`;
+  return `Horários de missa: ${nomeIgreja}${resumo ? ` - ${resumo}` : ''}. Veja todos os horários: ${url}`;
 }
 
 /** Link `wa.me` com a mensagem pronta (texto codificado) para a página de igreja. */

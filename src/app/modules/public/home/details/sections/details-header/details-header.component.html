@@ -56,7 +56,7 @@
          target="_blank" rel="noopener" class="action-btn action-btn--contato-whatsapp"
          aria-label="Conversar com a igreja pelo WhatsApp"
          (click)="objetivoClick.emit('whatsapp'); telefoneClick.emit()">
-        <i class="pi pi-whatsapp"></i> Falar no WhatsApp
+        <i class="pi pi-whatsapp"></i> WhatsApp
       </a>
       <a *ngIf="igreja.contato?.telefone"
          [href]="'tel:' + igreja.contato.ddd + igreja.contato.telefone" class="action-btn"
