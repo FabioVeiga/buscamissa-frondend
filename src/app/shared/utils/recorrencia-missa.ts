@@ -154,15 +154,17 @@ export function descrever(regra: RegraRecorrencia): string {
 
 /**
  * Marca curta para a grade da semana, na data em que a missa cai: "dia 13" (dia fixo),
- * "1ª do mês" / "última do mês" (ocorrência no mês).
+ * "2ª sexta do mês" / "último sábado do mês" (ocorrência no mês). Traz o dia porque
+ * "2ª do mês" sozinho se lê como segunda-feira.
  */
 export function rotuloNaData(regra: RegraRecorrencia, data: Date): string {
   if ((regra.tipoRecorrencia ?? TIPO_RECORRENCIA.Semanal) !== TIPO_RECORRENCIA.OcorrenciaNoMes) return `dia ${data.getDate()}`;
   const masculino = regra.diaSemana === 0 || regra.diaSemana === 6;
+  const dia = DIAS_NOME[data.getDay()].replace('-feira', '');
   const semanas = regra.semanasDoMes ?? 0;
   const ordinal = ordinalNoMes(data);
-  if ((semanas & (1 << ordinal)) !== 0) return `${ordinal + 1}${masculino ? 'º' : 'ª'} do mês`;
-  return `${masculino ? 'último' : 'última'} do mês`;
+  if ((semanas & (1 << ordinal)) !== 0) return `${ordinal + 1}${masculino ? 'º' : 'ª'} ${dia} do mês`;
+  return `${masculino ? 'último' : 'última'} ${dia} do mês`;
 }
 
 /** 0 = 1ª ocorrência do dia da semana no mês (dias 1–7), 1 = 2ª (8–14)... */
