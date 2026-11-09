@@ -94,13 +94,21 @@
   display: inline-flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   height: 2.75rem;       // altura fixa — todos iguais
-  min-width: 4rem;
+  // Em px de propósito: largura igual para os horários formarem colunas entre os dias,
+  // já que cada dígito da fonte tem largura diferente.
+  min-width: 68px;
   padding: 0 0.75rem;
   background: #fff4ea;
   border: 1px solid #fde3cc;
   border-radius: 0.625rem;
   overflow: hidden;
+
+  @media (max-width: 639px) {
+    min-width: 62px;
+    padding: 0 0.5rem;
+  }
 
   .schedule-row--hoje & {
     border-color: #f3a06e;

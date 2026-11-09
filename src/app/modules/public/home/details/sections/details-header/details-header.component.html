@@ -68,15 +68,18 @@
          [attr.aria-label]="'Site: ' + siteLabel" (click)="objetivoClick.emit('site')">
         <i class="pi pi-globe"></i> Site
       </a>
-      <a *ngIf="igreja.contato?.emailContato" [href]="'mailto:' + igreja.contato.emailContato"
-         class="action-btn action-btn--icon" [attr.aria-label]="'E-mail: ' + igreja.contato.emailContato">
-        <i class="pi pi-envelope"></i>
-      </a>
-      <a *ngFor="let rede of igreja.redesSociais" [href]="rede.url" target="_blank" rel="noopener"
-         class="action-btn action-btn--icon" [attr.aria-label]="rede.nomeRedeSocial || 'Rede social'"
-         (click)="socialClick.emit(rede.url)">
-        <i [ngClass]="getSocialIcon(rede.url)"></i>
-      </a>
+      <!-- Agrupados para quebrarem de linha juntos, sem deixar um ícone sozinho. -->
+      <div *ngIf="igreja.contato?.emailContato || igreja.redesSociais?.length" class="church-icones">
+        <a *ngIf="igreja.contato?.emailContato" [href]="'mailto:' + igreja.contato.emailContato"
+           class="action-btn action-btn--icon" [attr.aria-label]="'E-mail: ' + igreja.contato.emailContato">
+          <i class="pi pi-envelope"></i>
+        </a>
+        <a *ngFor="let rede of igreja.redesSociais" [href]="rede.url" target="_blank" rel="noopener"
+           class="action-btn action-btn--icon" [attr.aria-label]="rede.nomeRedeSocial || 'Rede social'"
+           (click)="socialClick.emit(rede.url)">
+          <i [ngClass]="getSocialIcon(rede.url)"></i>
+        </a>
+      </div>
     </div>
 
     <!-- Ações secundárias (3 colunas compactas no celular) -->
