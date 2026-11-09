@@ -15,7 +15,10 @@
       <i class="pi pi-sliders-h"></i> Mais filtros
     </button>
   </div>
-  <button *ngIf="temFiltroAtivo" class="city-filtros__limpar" (click)="limparClick.emit()">
+  <!-- Nó único, alternado por classe (A7): com *ngIf ele entrava na hidratação de
+       ?dia= e quebrava a linha em 320 px (CLS 0,11). Com <html data-dia> o CSS já o
+       mostra na 1ª pintura; oculto, sai do foco e do leitor de tela (display:none). -->
+  <button type="button" class="city-filtros__limpar" [class.city-filtros__limpar--oculto]="!temFiltroAtivo" (click)="limparClick.emit()">
     <i class="pi pi-times"></i> Limpar
   </button>
 </div>
