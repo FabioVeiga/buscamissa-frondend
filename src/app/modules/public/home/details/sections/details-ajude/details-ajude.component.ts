@@ -34,6 +34,8 @@ export class DetailsAjudeComponent implements OnChanges {
   @Input() temMissas = false;
   /** Igreja com responsável verificado: esconde "Sugerir correção" e "Sou o responsável". */
   @Input() verificada = false;
+  /** Na coluna estreita do desktop: pergunta, botão e links um abaixo do outro. */
+  @Input() empilhado = false;
 
   @Output() sugerirCorrecao = new EventEmitter<void>();
   @Output() reportarProblema = new EventEmitter<void>();

@@ -49,8 +49,10 @@
 }
 
 .schedule-notas {
-  margin: 0.375rem 0 0;
-  padding: 0;
+  display: grid;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0.75rem 0.5rem 0;
   list-style: none;
   font-size: 0.8125rem;
   line-height: 1.35;
@@ -113,8 +115,10 @@
   white-space: nowrap;
 }
 
-// Indica que a missa tem observação logo abaixo.
-.mass-chip__marca {
+// Número que liga o chip à observação no fim do quadro.
+.mass-chip__num {
+  margin-left: 0.1rem;
+  font-size: 0.65rem;
   font-weight: 700;
 }
 

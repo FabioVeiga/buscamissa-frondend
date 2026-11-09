@@ -34,14 +34,15 @@
   color: #8a4a12;
 }
 
-// Único botão cheio do bloco. Largura total no celular.
+// Com contorno: "Como chegar" é a única ação cheia da tela. Largura total no celular.
 :host ::ng-deep .ajude__confirmar.p-button {
   flex-shrink: 0;
   justify-content: center;
-  background: #ad540c;
+  background: #fff;
   border-color: #ad540c;
+  color: #ad540c;
 
-  &:enabled:hover { background: #8a4310; border-color: #8a4310; }
+  &:enabled:hover { background: #fff4ea; border-color: #8a4310; color: #8a4310; }
 }
 
 .ajude__acoes {
@@ -90,4 +91,12 @@
   text-decoration: underline;
 
   &:hover { color: #1d4ed8; }
+}
+
+.ajude--empilhado {
+  @media (min-width: 768px) {
+    .ajude__principal { flex-direction: column; align-items: stretch; gap: 0.625rem; }
+    .ajude__acoes { flex-direction: column; align-items: flex-start; }
+    .ajude__convite { margin-left: 0; }
+  }
 }

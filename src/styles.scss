@@ -32,6 +32,17 @@
   animation: none !important;
 }
 
+/* Celular: aviso compacto, sem cobrir o conteúdo. As três opções seguem com o mesmo peso. */
+@media (max-width: 640px) {
+  #cc-main .cm__texts { padding: 0.75rem 0 0; }
+  #cc-main .cm__title { font-size: 0.9375rem; padding: 0 1rem; }
+  #cc-main .cm__desc { font-size: 0.8125rem; line-height: 1.35; margin-top: 0.25rem; padding: 0 1rem; }
+  #cc-main .cm__btns { padding: 0.625rem 1rem 0.75rem; border-top: 0; }
+  #cc-main .cm__btn-group { gap: 0.375rem; }
+  #cc-main .cm__btn-group + .cm__btn-group { margin-top: 0.375rem; }
+  #cc-main .cm__btn { min-height: 44px; margin: 0; padding: 0.375rem 0.5rem; font-size: 0.8125rem; }
+}
+
 /* 2) Fallback métrico da Poppins: a fonte chega tarde em rede lenta (carregamos
       fora do caminho crítico) e o swap re-flui o texto todo. Este fallback ajusta
       o Arial às métricas da Poppins (upm 1000, ascent 1050, descent 350,

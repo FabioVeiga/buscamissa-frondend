@@ -18,11 +18,13 @@
     // Confissão e secretaria ocupam o espaço livre embaixo do placar; a grade de
     // horários fica na coluna inteira. No celular vale a ordem do DOM (depois da grade).
     &:not(.missas-grid--sem-placar) {
-      grid-template-rows: auto 1fr;
+      grid-template-rows: auto auto 1fr;
 
-      > app-details-scoreboard { grid-area: 1 / 1; }
-      > app-details-horarios { grid-area: 1 / 2 / span 2 / 2; }
-      > app-details-atendimento { grid-area: 2 / 1; }
+      > app-details-scoreboard,
+      > app-details-atendimento,
+      > app-details-ajude { grid-column: 1; }
+
+      > app-details-horarios { grid-column: 2; grid-row: 1 / span 3; }
     }
   }
 

@@ -88,13 +88,15 @@
   @media (max-width: 639px) {
     gap: 0.375rem;
 
-    .action-btn:not(.action-btn--primary) {
+    .action-btn:not(.action-btn--primary):not(.action-btn--icon) {
       flex: 1 1 auto;
       justify-content: center;
-      min-width: 44px;
       padding-left: 0.5rem;
       padding-right: 0.5rem;
     }
+
+    // Só ícone: tamanho fixo, para o que sobra na última linha não esticar.
+    .action-btn--icon { flex: 0 0 44px; }
   }
 }
 

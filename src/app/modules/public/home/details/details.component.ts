@@ -504,6 +504,17 @@ export class DetailsComponent implements OnInit {
     return mensagemCompartilharIgreja(ig.nome, ig.missas ?? [], this.proximaMissa, this.shareUrl);
   }
 
+  /**
+   * Bloco de ajuda na coluna do placar só com grade longa (4+ dias com missa). Em grade
+   * curta ele ficaria mais alto que os horários e o vazio só mudaria de lado. Conta só as
+   * semanais: o mesmo resultado no prerender e no browser.
+   */
+  get ajudeNaColuna(): boolean {
+    if (!this.proximaMissa) return false;
+    const dias = (this.churchInfo?.missas ?? []).filter((m: any) => ehSemanal(m)).map((m: any) => m.diaSemana);
+    return new Set(dias).size >= 4;
+  }
+
   /** "Rua X, 50 - Bairro, Cidade/UF" para o campo local do evento na agenda. */
   get enderecoTexto(): string {
     const e = this.churchInfo?.endereco ?? {};
