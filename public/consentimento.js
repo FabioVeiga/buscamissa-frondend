@@ -35,7 +35,7 @@
     consentModal: {
       title: 'Sua privacidade importa',
       description:
-        'Usamos cookies necessários para o site funcionar e, com a sua permissão, cookies de análise para entender como o BuscaMissa é usado e melhorá-lo. Você pode aceitar, recusar ou escolher quais categorias permitir. Saiba mais na <a href="/cookies">Política de Cookies</a>.',
+        'Usamos cookies necessários e, com sua permissão, de análise. Saiba mais na <a href="/cookies">Política de Cookies</a>.',
       acceptAllBtn: 'Aceitar todos',
       acceptNecessaryBtn: 'Recusar não essenciais',
       showPreferencesBtn: 'Escolher cookies',
