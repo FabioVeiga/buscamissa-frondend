@@ -121,6 +121,7 @@
   color: #ad540c;
   line-height: 1.2;
   white-space: nowrap;
+  text-align: center;
 }
 
 // Número que liga o chip à observação no fim do quadro.
@@ -134,4 +135,16 @@
 .mass-chip__dia {
   font-weight: 500;
   opacity: 0.75;
+
+  &::before { content: ' · '; }
+
+  // Celular: abaixo do horário, para "último domingo do mês" não ser cortado pelo chip.
+  @media (max-width: 639px) {
+    display: block;
+    font-size: 0.75rem;
+    line-height: 1.15;
+    text-align: center;
+
+    &::before { content: none; }
+  }
 }

@@ -5,7 +5,7 @@ import { Mass } from '../../../../church/models/church.model';
 import { formatMassTime } from '../../../../../../shared/utils/mass-time.utils';
 import { descrever, ehSemanal, ocorreEm, rotuloNaData } from '../../../../../../shared/utils/recorrencia-missa';
 
-/** Missa na grade semanal; `rotuloNaSemana` marca a mensal que cai nesta semana ("dia 2", "1ª do mês"). */
+/** Missa na grade semanal; `rotuloNaSemana` marca a mensal que cai nesta semana ("dia 2", "1ª sexta do mês"). */
 interface MissaNaGrade extends Mass {
   rotuloNaSemana?: string;
 }
