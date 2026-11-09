@@ -3,10 +3,12 @@
   <!-- Coluna esquerda: horário -->
   <div class="city-card__time-col">
     <ng-container *ngIf="proxima.missa as pm; else semHorario">
+      <span class="city-card__rotulo">Próxima missa</span>
       <span class="city-card__hora">{{ formatarHorario(pm.horario) }}</span>
       <span class="city-card__dia" [class.city-card__dia--hoje]="ehHoje">
         {{ diaLabel }}
       </span>
+      <span class="city-card__data">{{ dataLabel }}</span>
       <span *ngIf="contagem" class="city-card__countdown">
         <i class="pi pi-clock"></i> {{ contagem }}
       </span>
@@ -63,6 +65,10 @@
     </div>
 
     <app-confidence-badge *ngIf="proxima.missa as pb" [mass]="pb" class="city-card__badge" />
+
+    <p *ngIf="proxima.outrosHorarios.length" class="city-card__outros">
+      Também neste dia: {{ outrosHorarios }}
+    </p>
 
     <p *ngIf="diasMissa()" class="city-card__dia-missa">
       Missa: {{ diasMissa() }}

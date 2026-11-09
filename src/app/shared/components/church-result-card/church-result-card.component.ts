@@ -8,8 +8,10 @@ import { MetricasService } from "../../../core/services/metricas.service";
 import { formatMassTime } from "../../utils/mass-time.utils";
 import {
   diasSemanaisDeMissa,
+  formatarOutrosHorarios,
   ProximaMissaCard,
   rotuloContagem,
+  rotuloDataMissa,
   rotuloDiaMissa,
 } from "../../utils/proxima-missa-card.utils";
 import { distanciaMetrosAte } from "../../utils/distance.utils";
@@ -96,6 +98,14 @@ export class ChurchResultCardComponent implements OnInit {
 
   get diaLabel(): string {
     return this.proxima.inicio ? rotuloDiaMissa(this.proxima.inicio, this.agora) : "";
+  }
+
+  get dataLabel(): string {
+    return this.proxima.inicio ? rotuloDataMissa(this.proxima.inicio, this.agora) : "";
+  }
+
+  get outrosHorarios(): string {
+    return formatarOutrosHorarios(this.proxima.outrosHorarios);
   }
 
   get ehHoje(): boolean {

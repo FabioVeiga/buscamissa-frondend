@@ -61,6 +61,26 @@ describe('ChurchResultCardComponent', () => {
     expect(el.querySelector('.city-card__dia-missa')).toBeNull();
   });
 
+  it('mostra rótulo, horário, dia e data da próxima missa', () => {
+    const el = montar([semanal(1, '19:00:00')]);
+
+    expect(el.querySelector('.city-card__rotulo')?.textContent).toBe('Próxima missa');
+    expect(el.querySelector('.city-card__hora')?.textContent).toBe('19h00');
+    expect(el.querySelector('.city-card__data')?.textContent).toBe('9 de novembro');
+  });
+
+  it('mostra os outros horários como sendo do mesmo dia', () => {
+    const el = montar([semanal(1, '19:00:00'), semanal(1, '20:00:00'), semanal(1, '21:00:00')]);
+
+    expect(el.querySelector('.city-card__outros')?.textContent?.trim()).toBe('Também neste dia: 20h00 e 21h00');
+  });
+
+  it('sem outros horários no dia, não mostra a linha', () => {
+    const el = montar([semanal(1, '19:00:00'), semanal(2, '19:00:00')]);
+
+    expect(el.querySelector('.city-card__outros')).toBeNull();
+  });
+
   it('a linha de dias só lista missas semanais', () => {
     const el = montar([semanal(0, '08:00:00'), semanal(5, '08:00:00'), diaFixo(13, '08:00:00')]);
 
