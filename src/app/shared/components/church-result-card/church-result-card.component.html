@@ -2,17 +2,19 @@
 
   <!-- Coluna esquerda: horário -->
   <div class="city-card__time-col">
-    <ng-container *ngIf="proximaMissa() as pm; else semHorario">
+    <ng-container *ngIf="proxima.missa as pm; else semHorario">
+      <span class="city-card__rotulo">Próxima missa</span>
       <span class="city-card__hora">{{ formatarHorario(pm.horario) }}</span>
-      <span class="city-card__dia" [class.city-card__dia--hoje]="diaLabelRelativo(pm) === 'Hoje'">
-        {{ diaLabelRelativo(pm) }}
+      <span class="city-card__dia" [class.city-card__dia--hoje]="ehHoje">
+        {{ diaLabel }}
       </span>
-      <span *ngIf="ehUrgente(pm)" class="city-card__countdown">
-        <i class="pi pi-clock"></i> {{ countdownLabel(pm) }}
+      <span class="city-card__data">{{ dataLabel }}</span>
+      <span *ngIf="contagem" class="city-card__countdown">
+        <i class="pi pi-clock"></i> {{ contagem }}
       </span>
     </ng-container>
     <ng-template #semHorario>
-      <span class="city-card__hora city-card__hora--vazio">—</span>
+      <span class="city-card__sem-horario">{{ textoSemHorario }}</span>
     </ng-template>
   </div>
 
@@ -62,7 +64,11 @@
       </span>
     </div>
 
-    <app-confidence-badge *ngIf="proximaMissa() as pb" [mass]="pb" class="city-card__badge" />
+    <app-confidence-badge *ngIf="proxima.missa as pb" [mass]="pb" class="city-card__badge" />
+
+    <p *ngIf="proxima.outrosHorarios.length" class="city-card__outros">
+      Também neste dia: {{ outrosHorarios }}
+    </p>
 
     <p *ngIf="diasMissa()" class="city-card__dia-missa">
       Missa: {{ diasMissa() }}
@@ -70,7 +76,7 @@
 
     <div class="city-card__actions">
       <a [routerLink]="linkParoquia()" class="city-card__btn city-card__btn--primary" (click)="onClick()">
-        Ver horários
+        {{ proxima.estado === 'sem-horarios' ? 'Ver paróquia' : 'Ver horários' }}
       </a>
       <button class="city-card__btn city-card__btn--secondary" (click)="comoChegar($event)">
         <i class="pi pi-compass"></i> Como chegar
