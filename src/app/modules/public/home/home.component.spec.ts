@@ -370,3 +370,105 @@ describe('HomeComponent — cache de proximasFiltradas', () => {
     expect(c.proximasFiltradas.length).toBe(1);
   });
 });
+
+/**
+ * Filtro de dia em /buscar. Domingo é o valor 0: vindo da URL (toda busca feita na
+ * home abre /buscar?dia=0) ele era descartado por `params.dia || undefined`, e a API
+ * devolvia igrejas de qualquer dia. "Todos" gera `dia=` na URL, e `Number('')` também
+ * é 0: tratar o vazio como número transformaria "Todos" em domingo.
+ */
+describe('HomeComponent — filtro de dia em /buscar', () => {
+  let router: jasmine.SpyObj<Router>;
+  let churches: jasmine.SpyObj<ChurchesService>;
+
+  beforeEach(() => {
+    router = jasmine.createSpyObj<Router>('Router', ['navigate']);
+    router.navigate.and.returnValue(Promise.resolve(true));
+
+    churches = jasmine.createSpyObj<ChurchesService>('ChurchesService', [
+      'addressRange', 'searchByFilters', 'getInfo', 'proximasMissas', 'cidadesProximas',
+    ]);
+    churches.addressRange.and.returnValue(of({ data: {} } as any));
+    churches.getInfo.and.returnValue(of({ data: {} } as any));
+    churches.searchByFilters.and.returnValue(of({ data: { items: [], totalItems: 0 } } as any));
+  });
+
+  function montar(queryParams: Record<string, string>): HomeComponent {
+    TestBed.configureTestingModule({
+      providers: [
+        FormBuilder,
+        DatePipe,
+        { provide: PLATFORM_ID, useValue: 'browser' },
+        { provide: Router, useValue: router },
+        { provide: ChurchesService, useValue: churches },
+        { provide: BuscaLocalService, useValue: jasmine.createSpyObj('BuscaLocalService', ['carregarIndice', 'buscarIgrejas', 'correspondenciasExatas']) },
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParams, data: {} }, queryParams: of(queryParams), data: of({}) } },
+        { provide: MessageService, useValue: jasmine.createSpyObj('MessageService', ['add']) },
+        { provide: AnalyticsService, useValue: jasmine.createSpyObj('AnalyticsService', ['searchStarted', 'trackEvent']) },
+        { provide: FavoritesService, useValue: { favoritos$: of([]), listar: () => [], ehFavorita: () => false } },
+        { provide: RedesSociaisService, useValue: { obterTipos: () => of([]) } },
+        { provide: GeolocationService, useValue: jasmine.createSpyObj('GeolocationService', ['obterPosicaoAtual', 'reverseGeocode', 'consultarCep']) },
+        { provide: SeoService, useValue: jasmine.createSpyObj('SeoService', ['update', 'setJsonLd', 'removeJsonLd']) },
+        { provide: MetricasService, useValue: jasmine.createSpyObj('MetricasService', ['registrarVisualizacaoHome', 'registrarVisualizacaoPagina']) },
+        { provide: SeoPaginasService, useValue: { getEstados: () => of([]) } },
+      ],
+    });
+
+    const c = TestBed.runInInjectionContext(() => new HomeComponent());
+    (c as any).resultsMode = true;
+    c.ngOnInit();
+    return c;
+  }
+
+  const ultimaBusca = () => churches.searchByFilters.calls.mostRecent().args[0];
+  const ultimaUrl = () => router.navigate.calls.mostRecent().args[1]?.queryParams as Record<string, unknown>;
+
+  [0, 1, 2, 3, 4, 5, 6].forEach(dia => {
+    it(`dia=${dia} na URL chega à API como o número ${dia}`, () => {
+      montar({ uf: 'SP', dia: String(dia) });
+
+      expect(ultimaBusca().DiaDaSemana).toBe(dia);
+    });
+  });
+
+  ['', 'abc', '7', '-1', '1.5'].forEach(valor => {
+    it(`dia="${valor}" na URL busca sem filtro de dia`, () => {
+      const c = montar({ uf: 'SP', dia: valor });
+
+      expect(ultimaBusca().DiaDaSemana).toBeUndefined();
+      expect(c.form.get('DiaDaSemana')?.value).toBeNull();
+    });
+  });
+
+  it('restaura o dia como texto, o formato das opções do campo', () => {
+    const c = montar({ uf: 'SP', dia: '0' });
+
+    expect(c.form.get('DiaDaSemana')?.value).toBe('0');
+  });
+
+  it('mantém dia=0 na URL ao refazer a busca', () => {
+    montar({ uf: 'SP', dia: '0' });
+
+    expect(ultimaUrl()['dia']).toBe('0');
+  });
+
+  it('selecionar Domingo no campo envia 0', () => {
+    const c = montar({ uf: 'SP' });
+
+    c.form.get('DiaDaSemana')?.setValue('0');
+    c.searchFilter();
+
+    expect(ultimaBusca().DiaDaSemana).toBe(0);
+    expect(ultimaUrl()['dia']).toBe('0');
+  });
+
+  it('a opção Todos busca sem filtro de dia e tira o dia da URL', () => {
+    const c = montar({ uf: 'SP', dia: '3' });
+
+    c.form.get('DiaDaSemana')?.setValue('');
+    c.searchFilter();
+
+    expect(ultimaBusca().DiaDaSemana).toBeUndefined();
+    expect(ultimaUrl()['dia']).toBeNull();
+  });
+});

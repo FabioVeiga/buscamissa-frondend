@@ -974,6 +974,16 @@ export class HomeComponent {
     return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
   }
 
+  /**
+   * Dia da semana do filtro (0 = domingo … 6 = sábado), ou null para "sem filtro".
+   * Só aceita o dígito: a opção "Todos" gera `dia=` na URL e `Number('')` é 0, o que
+   * a transformaria em domingo.
+   */
+  private _parseDiaFiltro(valor: unknown): number | null {
+    const texto = String(valor ?? '');
+    return /^[0-6]$/.test(texto) ? Number(texto) : null;
+  }
+
   private _restoreFromQueryParams(): void {
     const p = this._route.snapshot.queryParams;
 
@@ -996,7 +1006,9 @@ export class HomeComponent {
 
     if (p['bairro']) this.form.get('Bairro')?.setValue(p['bairro']);
     if (p['nome']) this.form.get('Nome')?.setValue(p['nome']);
-    if (p['dia'] != null) this.form.get('DiaDaSemana')?.setValue(Number(p['dia']));
+    const dia = this._parseDiaFiltro(p['dia']);
+    // Em texto: as opções do campo (WEEK_DAYS) têm id "0".."6".
+    if (dia !== null) this.form.get('DiaDaSemana')?.setValue(String(dia));
     if (p['horario']) {
       const [h, m] = p['horario'].split(':').map(Number);
       const t = new Date();
@@ -1086,7 +1098,7 @@ export class HomeComponent {
     cidade: string | null;
     bairro: string | null;
     nome: string | null;
-    dia: number | null;
+    dia: string | null;
     horario: string | null;
     horarioFim: string | null;
     cep: string | null;
@@ -1095,7 +1107,7 @@ export class HomeComponent {
     const localidade = this.form.get("Localidade")?.value;
     const bairro = this.form.get("Bairro")?.value;
     const nome = String(this.form.get("Nome")?.value ?? '').trim();
-    const diaDaSemana = this.form.get("DiaDaSemana")?.value;
+    const diaDaSemana = this._parseDiaFiltro(this.form.get("DiaDaSemana")?.value);
     const horarioRaw = this.form.value.Horario;
     const horario = horarioRaw ? (typeof horarioRaw === 'string' ? horarioRaw : this._datePipe.transform(horarioRaw, 'HH:mm')) : null;
     const horarioFimRaw = this.form.value.HorarioFim;
@@ -1107,7 +1119,7 @@ export class HomeComponent {
       cidade: localidade ?? null,
       bairro: bairro ?? null,
       nome: nome || null,
-      dia: diaDaSemana ?? null,
+      dia: diaDaSemana === null ? null : String(diaDaSemana),
       horario: horario ?? null,
       horarioFim: horarioFim ?? null,
       cep: cepRaw.length === 8 ? cepRaw : null,
@@ -1375,7 +1387,7 @@ export class HomeComponent {
       Localidade: params.cidade || undefined,
       Bairro: params.bairro || undefined,
       Nome: params.nome || undefined,
-      DiaDaSemana: params.dia || undefined,
+      DiaDaSemana: this._parseDiaFiltro(params.dia) ?? undefined,
       Horario: params.horario || undefined,
       HorarioFim: params.horarioFim || undefined,
       "Paginacao.PageIndex": this.pageIndex,
