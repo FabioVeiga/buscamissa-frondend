@@ -17,7 +17,7 @@
 
   <!-- Só os dias com missa; os demais vão juntos numa linha no fim -->
   <div *ngIf="missas?.length" class="schedule-list">
-    <div *ngFor="let grupo of diasComMissa"
+    <div *ngFor="let grupo of diasComMissa; trackBy: trackDia"
          class="schedule-row"
          [class.schedule-row--hoje]="isHoje(grupo.dia)">
 
@@ -28,7 +28,7 @@
 
       <div class="flex-1 min-w-0">
         <div class="flex flex-wrap gap-2">
-          <div *ngFor="let m of grupo.missas" class="mass-chip">
+          <div *ngFor="let m of grupo.missas; trackBy: trackMissa" class="mass-chip">
             <span class="mass-chip__time">
               {{ formatarHorario(m.horario) }}<sup *ngIf="numeroDaNota(grupo.dia + '-' + m.horario) as n" class="mass-chip__num">{{ n }}</sup><span *ngIf="m.rotuloNaSemana" class="mass-chip__dia">{{ m.rotuloNaSemana }}</span>
             </span>
@@ -42,15 +42,15 @@
   <div *ngIf="missasDiaFixo.length" class="mt-4">
     <h3 class="text-sm font-bold text-gray-600 mb-2">Missas em datas do mês</h3>
     <div class="flex flex-wrap gap-2">
-      <div *ngFor="let m of missasDiaFixo; let i = index" class="mass-chip">
-        <span class="mass-chip__time">{{ m.descricao }}<sup *ngIf="numeroDaNota('fixo-' + i) as n" class="mass-chip__num">{{ n }}</sup></span>
+      <div *ngFor="let m of missasDiaFixo; let i = index; trackBy: trackDiaFixo" class="mass-chip mass-chip--regra">
+        <span class="mass-chip__time mass-chip__time--regra">{{ m.descricao }}<sup *ngIf="numeroDaNota('fixo-' + i) as n" class="mass-chip__num">{{ n }}</sup></span>
       </div>
     </div>
   </div>
 
   <!-- Observações juntas no fim do quadro: a grade fica uniforme e o texto, sempre visível. -->
   <ol *ngIf="notas.length" class="schedule-notas">
-    <li *ngFor="let n of notas"><sup>{{ n.numero }}</sup> {{ n.rotulo }}: {{ n.texto }}</li>
+    <li *ngFor="let n of notas; trackBy: trackNota"><sup>{{ n.numero }}</sup> {{ n.rotulo }}: {{ n.texto }}</li>
   </ol>
 
   <div *ngIf="missas?.length" class="horarios-rodape">

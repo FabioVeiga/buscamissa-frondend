@@ -146,3 +146,36 @@ describe('DetailsHeaderComponent — Compartilhar e Agenda', () => {
     expect(spy).toHaveBeenCalled();
   });
 });
+
+describe('DetailsHeaderComponent — recriação das redes sociais', () => {
+  const igreja = () => ({
+    id: 1,
+    nome: 'Matriz',
+    endereco: { logradouro: 'Rua A', localidade: 'Cidade', uf: 'SP' },
+    redesSociais: [
+      { url: 'https://instagram.com/matriz', nomeRedeSocial: 'Instagram' },
+      { url: 'https://facebook.com/matriz', nomeRedeSocial: 'Facebook' },
+    ],
+  });
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [DetailsHeaderComponent],
+      providers: [provideRouter([])],
+    }).compileComponents();
+  });
+
+  it('mantém os mesmos nós do DOM quando os dados chegam de novo', () => {
+    const f = TestBed.createComponent(DetailsHeaderComponent);
+    f.componentRef.setInput('igreja', igreja());
+    f.detectChanges();
+    const nos = () => Array.from(f.nativeElement.querySelectorAll('.action-btn--icon'));
+    const antes = nos();
+    expect(antes.length).toBe(2);
+
+    f.componentRef.setInput('igreja', igreja());
+    f.detectChanges();
+
+    expect(nos().filter((n, i) => n !== antes[i]).length).toBe(0);
+  });
+});
