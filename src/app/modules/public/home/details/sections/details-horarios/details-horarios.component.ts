@@ -26,6 +26,14 @@ export class DetailsHorariosComponent {
 
   @Output() adicionarHorarios = new EventEmitter<void>();
 
+  // Os getters abaixo montam objetos novos a cada leitura: sem trackBy o *ngFor
+  // destrói e recria os nós, que perdem o id encurtado do HTML pré-renderizado.
+  trackDia = (_: number, g: { dia: number }) => g.dia;
+  trackMissa = (_: number, m: MissaNaGrade) =>
+    [m.diaSemana, m.horario, m.tipoRecorrencia, m.diaDoMes, m.rotuloNaSemana].join('|');
+  trackDiaFixo = (_: number, m: { descricao: string }) => m.descricao;
+  trackNota = (_: number, n: { chave: string }) => n.chave;
+
   /** Só os dias que têm missa — a grade fica compacta e com linhas da mesma altura. */
   get diasComMissa(): { dia: number; label: string; missas: MissaNaGrade[] }[] {
     return this.agendaSemana.filter((g) => g.missas.length);

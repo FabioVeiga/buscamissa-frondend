@@ -42,6 +42,9 @@ export class DetailsHeaderComponent {
 
   fotoQuebrou = false;
 
+  /** Mantém os nós pré-renderizados quando a igreja é recebida de novo no browser. */
+  trackRede = (_: number, rede: { url: string }) => rede.url;
+
   /** "Praça X, 50 — fundos · Bairro" (logradouro chega do banco com espaço sobrando). */
   get linhaRua(): string {
     const e = this.igreja?.endereco ?? {};

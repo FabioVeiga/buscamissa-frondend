@@ -27,6 +27,9 @@
   border-bottom: 1px solid #f1f1f1;
 
   &--hoje {
+    // Variável em vez de `.schedule-row--hoje .mass-chip`: herança independe do id de
+    // encapsulação, e o chip mensal da semana só nasce depois da hidratação.
+    --mass-chip-borda: #f3a06e;
     background: #fff7f0;
     border-radius: 0.625rem;
     border-bottom-color: transparent;
@@ -101,17 +104,13 @@
   min-width: 68px;
   padding: 0 0.75rem;
   background: #fff4ea;
-  border: 1px solid #fde3cc;
+  border: 1px solid var(--mass-chip-borda, #fde3cc);
   border-radius: 0.625rem;
   overflow: hidden;
 
   @media (max-width: 639px) {
     min-width: 62px;
     padding: 0 0.5rem;
-  }
-
-  .schedule-row--hoje & {
-    border-color: #f3a06e;
   }
 }
 
@@ -122,6 +121,24 @@
   line-height: 1.2;
   white-space: nowrap;
   text-align: center;
+}
+
+// Regra por extenso ("Todo dia 29, 15h (exceto sábados e domingos)"): é uma frase, não
+// um horário. Cresce em altura e quebra a linha, fora das colunas iguais da grade.
+.mass-chip--regra {
+  align-items: flex-start;
+  height: auto;
+  min-height: 2.75rem;
+  max-width: 100%;
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
+  overflow: visible;
+}
+
+.mass-chip__time--regra {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
 }
 
 // Número que liga o chip à observação no fim do quadro.

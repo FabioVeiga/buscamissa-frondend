@@ -50,6 +50,38 @@ describe('DetailsHorariosComponent — observações e aviso', () => {
     expect(montar([]).querySelector('.horarios-rodape')).toBeNull();
   });
 
+  describe('recriação do DOM quando os dados chegam de novo', () => {
+    // Segunda, 9/nov: o dia 13 (dia fixo) cai na grade; o dia 28, em "datas do mês".
+    const dados = (): Partial<Mass>[] => [
+      { diaSemana: 0, horario: '09:00:00', observacao: longa },
+      { diaSemana: 1, horario: '07:00:00' },
+      { tipoRecorrencia: 2, diaDoMes: 13, horario: '19:00:00' },
+      { tipoRecorrencia: 2, diaDoMes: 28, horario: '15:00:00' },
+    ];
+
+    beforeEach(() => {
+      jasmine.clock().install();
+      jasmine.clock().mockDate(new Date(2026, 10, 9, 10));
+    });
+    afterEach(() => jasmine.clock().uninstall());
+
+    it('mantém linhas, chips e notas com os mesmos nós do DOM', () => {
+      const f = TestBed.createComponent(DetailsHorariosComponent);
+      f.componentRef.setInput('missas', dados() as Mass[]);
+      f.detectChanges();
+      const el: HTMLElement = f.nativeElement;
+      const nos = () => Array.from(el.querySelectorAll('.schedule-row, .mass-chip, .schedule-notas li'));
+      const antes = nos();
+      expect(antes.length).toBeGreaterThan(5);
+
+      f.componentRef.setInput('missas', dados() as Mass[]);
+      f.detectChanges();
+
+      expect(nos().length).toBe(antes.length);
+      expect(nos().filter((n, i) => n !== antes[i]).length).toBe(0);
+    });
+  });
+
   it('dias sem missa e aviso ficam na mesma linha final', () => {
     const texto = montar([{ diaSemana: 1, horario: '07:00:00' }]).querySelector('.horarios-rodape')!.textContent!;
     expect(texto).toContain('Sem missa:');

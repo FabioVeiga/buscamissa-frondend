@@ -90,6 +90,13 @@
   color: #2563eb;
   text-decoration: underline;
 
+  // Área de toque de 44px; o texto continua do mesmo tamanho.
+  @media (max-width: 639px) {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
   &:hover { color: #1d4ed8; }
 }
 
