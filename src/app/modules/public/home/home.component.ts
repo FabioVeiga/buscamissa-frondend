@@ -1,4 +1,5 @@
 import { ehSemanal, ocorreNoDia, ocorreNoFimDeSemana } from '../../../shared/utils/recorrencia-missa';
+import { calcularProximaMissaCard, compararPorProximaMissa, FiltroMissa, ProximaMissaCard } from '../../../shared/utils/proxima-missa-card.utils';
 import { AnuncioComponent } from "../../../shared/components/anuncio/anuncio.component";
 import { ConviteAnuncieComponent } from "../../../shared/components/convite-anuncie/convite-anuncie.component";
 import { Component, DestroyRef, inject, NgZone, PLATFORM_ID, ViewChild } from "@angular/core";
@@ -241,7 +242,10 @@ export class HomeComponent {
       case 'za':
         return copia.sort((a, b) => (b.nome ?? '').localeCompare(a.nome ?? '', 'pt-BR'));
       case 'proxima-missa':
-        return copia.sort((a, b) => this._minProximaMissaHome(a) - this._minProximaMissaHome(b));
+        return copia.sort((a, b) => compararPorProximaMissa(
+          { ...a, inicio: this.proximaMissaDe(a).inicio },
+          { ...b, inicio: this.proximaMissaDe(b).inicio },
+        ));
       case 'proximidade':
         if (this._userLat === null || this._userLng === null) return copia;
         return copia.sort((a, b) => {
@@ -254,8 +258,75 @@ export class HomeComponent {
     }
   }
 
+  /** Próxima missa de uma igreja dos resultados: a mesma para o card e para a ordenação. */
+  proximaMissaDe(church: Church): ProximaMissaCard {
+    this._garantirProximas();
+    return this._proximas.get(church)
+      ?? calcularProximaMissaCard(church.missas ?? [], this._filtroAplicado, this.agoraResultados);
+  }
+
+  /**
+   * Roda a cada ciclo de renderização, então só recalcula quando a lista mudou, quando
+   * algum resultado venceu (início da missa ou meia-noite) ou quando o relógio voltou.
+   */
+  private _garantirProximas(): void {
+    const agora = this.agoraResultados.getTime();
+    if (
+      this.churchInfo === this._proximasFonte &&
+      agora < this._proximasValidoAte &&
+      agora >= this._proximasCalculadoEm
+    ) return;
+
+    this._proximasFonte = this.churchInfo;
+    this._proximas = new Map(this.churchInfo.map(c => [
+      c,
+      calcularProximaMissaCard(c.missas ?? [], this._filtroAplicado, this.agoraResultados),
+    ]));
+    this._proximasCalculadoEm = agora;
+    this._proximasValidoAte = Math.min(...[...this._proximas.values()].map(p => p.validoAte.getTime()));
+    this._proximasVersao++;
+  }
+
   get churchInfoOrdenaFiltrado(): Church[] {
-    return this._ordenarIgrejas(this.churchInfoFiltrado);
+    this._garantirProximas();
+    const chave = [
+      this.churchInfo, this.ordenacaoResultados, this.quickFilter,
+      this._userLat, this._userLng, this._proximasVersao,
+    ];
+    if (this._ordenadaChave.length && chave.every((v, i) => v === this._ordenadaChave[i])) {
+      return this._ordenadaCache;
+    }
+    this._ordenadaChave = chave;
+    this._ordenadaCache = this._ordenarIgrejas(this.churchInfoFiltrado);
+    return this._ordenadaCache;
+  }
+
+  /**
+   * Um relógio só para os cards. Compara a data absoluta, então a virada de dia, mês e
+   * ano e o computador acordando dão o mesmo resultado. Fora da zona pelo mesmo motivo
+   * do refresh das próximas missas: um intervalo na zona impede a app de estabilizar.
+   */
+  private _iniciarRelogioResultados(): void {
+    if (!this._isBrowser || !this.resultsMode) return;
+
+    const verificar = () => {
+      if (document.visibilityState === 'hidden') return;
+      const agora = new Date();
+      if (Math.floor(agora.getTime() / 60_000) === Math.floor(this.agoraResultados.getTime() / 60_000)) return;
+      this._ngZone.run(() => { this.agoraResultados = agora; });
+    };
+
+    const timer = this._ngZone.runOutsideAngular(() => {
+      document.addEventListener('visibilitychange', verificar);
+      window.addEventListener('pageshow', verificar);
+      return setInterval(verificar, HomeComponent.RELOGIO_RESULTADOS_MS);
+    });
+
+    this._destroyRef.onDestroy(() => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', verificar);
+      window.removeEventListener('pageshow', verificar);
+    });
   }
 
   get totalRecordsFiltrado(): number {
@@ -295,6 +366,21 @@ export class HomeComponent {
 
   /** Flag loading do CTA */
   isLoadingGeoNav = false;
+
+  /** Dia e horário da última busca concluída: edição não aplicada no formulário não vale. */
+  private _filtroAplicado: FiltroMissa | null = null;
+
+  /** Instante de referência dos cards de resultado. */
+  agoraResultados = new Date();
+
+  private _proximas = new Map<Church, ProximaMissaCard>();
+  private _proximasFonte: Church[] | null = null;
+  private _proximasValidoAte = Number.POSITIVE_INFINITY;
+  private _proximasCalculadoEm = 0;
+  private _proximasVersao = 0;
+  private _ordenadaChave: unknown[] = [];
+  private _ordenadaCache: Church[] = [];
+  private static readonly RELOGIO_RESULTADOS_MS = 30_000;
 
   /** Ordenação dos resultados da busca */
   ordenacaoResultados: 'az' | 'za' | 'proximidade' | 'proxima-missa' = 'az';
@@ -518,6 +604,7 @@ export class HomeComponent {
     if (!this.resultsMode) {
       this._metricas.registrarVisualizacaoHome();
     }
+    this._iniciarRelogioResultados();
 
     this.form = this._fb.group({
       // Sem `Validators.required` em `Uf` de propósito: com ele o formulário nasce
@@ -974,6 +1061,16 @@ export class HomeComponent {
     return s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
   }
 
+  /**
+   * Dia da semana do filtro (0 = domingo … 6 = sábado), ou null para "sem filtro".
+   * Só aceita o dígito: a opção "Todos" gera `dia=` na URL e `Number('')` é 0, o que
+   * a transformaria em domingo.
+   */
+  private _parseDiaFiltro(valor: unknown): number | null {
+    const texto = String(valor ?? '');
+    return /^[0-6]$/.test(texto) ? Number(texto) : null;
+  }
+
   private _restoreFromQueryParams(): void {
     const p = this._route.snapshot.queryParams;
 
@@ -996,7 +1093,9 @@ export class HomeComponent {
 
     if (p['bairro']) this.form.get('Bairro')?.setValue(p['bairro']);
     if (p['nome']) this.form.get('Nome')?.setValue(p['nome']);
-    if (p['dia'] != null) this.form.get('DiaDaSemana')?.setValue(Number(p['dia']));
+    const dia = this._parseDiaFiltro(p['dia']);
+    // Em texto: as opções do campo (WEEK_DAYS) têm id "0".."6".
+    if (dia !== null) this.form.get('DiaDaSemana')?.setValue(String(dia));
     if (p['horario']) {
       const [h, m] = p['horario'].split(':').map(Number);
       const t = new Date();
@@ -1086,7 +1185,7 @@ export class HomeComponent {
     cidade: string | null;
     bairro: string | null;
     nome: string | null;
-    dia: number | null;
+    dia: string | null;
     horario: string | null;
     horarioFim: string | null;
     cep: string | null;
@@ -1095,7 +1194,7 @@ export class HomeComponent {
     const localidade = this.form.get("Localidade")?.value;
     const bairro = this.form.get("Bairro")?.value;
     const nome = String(this.form.get("Nome")?.value ?? '').trim();
-    const diaDaSemana = this.form.get("DiaDaSemana")?.value;
+    const diaDaSemana = this._parseDiaFiltro(this.form.get("DiaDaSemana")?.value);
     const horarioRaw = this.form.value.Horario;
     const horario = horarioRaw ? (typeof horarioRaw === 'string' ? horarioRaw : this._datePipe.transform(horarioRaw, 'HH:mm')) : null;
     const horarioFimRaw = this.form.value.HorarioFim;
@@ -1107,7 +1206,7 @@ export class HomeComponent {
       cidade: localidade ?? null,
       bairro: bairro ?? null,
       nome: nome || null,
-      dia: diaDaSemana ?? null,
+      dia: diaDaSemana === null ? null : String(diaDaSemana),
       horario: horario ?? null,
       horarioFim: horarioFim ?? null,
       cep: cepRaw.length === 8 ? cepRaw : null,
@@ -1375,7 +1474,7 @@ export class HomeComponent {
       Localidade: params.cidade || undefined,
       Bairro: params.bairro || undefined,
       Nome: params.nome || undefined,
-      DiaDaSemana: params.dia || undefined,
+      DiaDaSemana: this._parseDiaFiltro(params.dia) ?? undefined,
       Horario: params.horario || undefined,
       HorarioFim: params.horarioFim || undefined,
       "Paginacao.PageIndex": this.pageIndex,
@@ -1384,6 +1483,12 @@ export class HomeComponent {
 
     this._churchService.searchByFilters(filters).subscribe({
       next: (data: any) => {
+        this._filtroAplicado = {
+          dia: filters.DiaDaSemana ?? null,
+          horarioDe: filters.Horario ?? null,
+          horarioAte: filters.HorarioFim ?? null,
+        };
+        this.agoraResultados = new Date();
         this.churchInfo = data.data.items;
         this.totalRecords = data.data.totalItems;
         this.isLoading = false;
