@@ -138,6 +138,14 @@
   color: #ad540c;
   cursor: pointer;
 
+  // Área de toque de 44px; o texto continua do mesmo tamanho.
+  @media (max-width: 639px) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-height: 44px;
+  }
+
   &:hover { text-decoration: underline; }
 }
 
