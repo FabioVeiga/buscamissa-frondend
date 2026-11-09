@@ -87,6 +87,7 @@ import { EventoAnuncio, MetricasService } from '../../../core/services/metricas.
       .anuncio--compacto .anuncio__titulo,
       .anuncio--compacto .anuncio__texto,
       .anuncio--compacto .anuncio__isencao { grid-column: 2; }
+      .anuncio--compacto .anuncio__selo { justify-self: start; }
     }
   `],
 })
