@@ -94,10 +94,16 @@
       padding-left: 0.5rem;
       padding-right: 0.5rem;
     }
-
-    // Só ícone: tamanho fixo, para o que sobra na última linha não esticar.
-    .action-btn--icon { flex: 0 0 44px; }
   }
+}
+
+// E-mail e redes sociais: o grupo vai inteiro para a linha de baixo quando não cabe.
+.church-icones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+
+  @media (max-width: 639px) { gap: 0.375rem; }
 }
 
 // Celular: 3 colunas iguais, ícone sobre o texto. Desktop: linha simples.
@@ -184,9 +190,16 @@
 // Só ícone (e-mail, redes sociais): quadrado com área de toque de 40px.
 .action-btn--icon {
   justify-content: center;
-  min-width: 2.5rem;
+  // Em px de propósito, como o min-height de .action-btn: em rem daria 35px e o
+  // ícone deixaria de ser quadrado (o html do site tem font-size 14px).
+  min-width: 40px;
   padding-left: 0;
   padding-right: 0;
+
+  // Celular: tamanho fixo, para o que sobra na última linha não esticar. Fica sem
+  // seletor descendente: as redes sociais são criadas após a hidratação e não casam
+  // com um ancestral que recebeu o id encurtado pelo dedupe-prerender-css.
+  @media (max-width: 639px) { flex: 0 0 44px; }
 
   .pi { font-size: 1rem; }
 }
