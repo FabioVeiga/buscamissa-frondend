@@ -24,7 +24,7 @@ import { EventoAnuncio, MetricasService } from '../../../core/services/metricas.
   changeDetection: ChangeDetectionStrategy.OnPush,
   template: `
     @if (campanha; as c) {
-      <aside class="anuncio" [attr.aria-label]="c.selo + ': ' + c.titulo">
+      <aside class="anuncio" [class.anuncio--compacto]="posicao === 'detalhe_igreja'" [attr.aria-label]="c.selo + ': ' + c.titulo">
         <span class="anuncio__selo">{{ c.selo }}</span>
         <a class="anuncio__link"
            [href]="c.linkDestino"
@@ -69,6 +69,25 @@ import { EventoAnuncio, MetricasService } from '../../../core/services/metricas.
     .anuncio__titulo { font-weight: 600; }
     .anuncio__texto { opacity: 0.8; }
     .anuncio__isencao { font-size: 0.7rem; opacity: 0.7; }
+
+    /* Página da paróquia: banner proporcional aos demais blocos. A imagem traz texto e
+       botão desenhados, então mantém o 4:1 e só diminui. */
+    .anuncio--compacto { margin: 0; padding: 0.5rem; gap: 0.2rem; font-size: 0.8125rem; }
+    .anuncio--compacto .anuncio__selo { margin-bottom: 0.1rem; }
+    @media (min-width: 640px) {
+      .anuncio--compacto {
+        display: grid;
+        grid-template-columns: minmax(0, 27rem) minmax(0, 1fr);
+        column-gap: 0.875rem;
+        align-content: center;
+      }
+      .anuncio--compacto .anuncio__link { display: contents; }
+      .anuncio--compacto .anuncio__img { grid-column: 1; grid-row: 1 / span 4; }
+      .anuncio--compacto .anuncio__selo,
+      .anuncio--compacto .anuncio__titulo,
+      .anuncio--compacto .anuncio__texto,
+      .anuncio--compacto .anuncio__isencao { grid-column: 2; }
+    }
   `],
 })
 export class AnuncioComponent implements OnInit, OnDestroy {
