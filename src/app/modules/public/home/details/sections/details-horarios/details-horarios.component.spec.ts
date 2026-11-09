@@ -20,11 +20,23 @@ describe('DetailsHorariosComponent — observações e aviso', () => {
     }).compileComponents();
   });
 
-  it('mostra a observação inteira abaixo dos chips, com marca no chip', () => {
+  it('numera o chip e mostra a observação inteira no fim do quadro', () => {
     const el = montar([{ diaSemana: 0, horario: '09:00:00', observacao: longa }, { diaSemana: 0, horario: '18:00:00' }]);
-    expect(el.querySelector('.schedule-notas')!.textContent).toContain(`09h00: ${longa}`);
-    expect(el.querySelectorAll('.mass-chip__marca').length).toBe(1);
-    expect(el.querySelector('.mass-chip')!.textContent).not.toContain(longa);
+    const nota = el.querySelector('.schedule-notas li')!.textContent!;
+    expect(nota).toContain('Domingo, 09h00');
+    expect(nota).toContain(longa);
+    expect(el.querySelector('.mass-chip__num')!.textContent).toBe('1');
+    expect(el.querySelectorAll('.mass-chip__num').length).toBe(1);
+    expect(el.querySelector('.schedule-row')!.textContent).not.toContain(longa);
+  });
+
+  it('numera as observações em ordem entre os dias', () => {
+    const el = montar([
+      { diaSemana: 4, horario: '19:30:00', observacao: 'Na capela' },
+      { diaSemana: 0, horario: '08:00:00', observacao: 'Com as crianças' },
+    ]);
+    const notas = Array.from(el.querySelectorAll('.schedule-notas li')).map((li) => li.textContent!.replace(/\s+/g, ' ').trim());
+    expect(notas).toEqual(['1 Domingo, 08h00: Com as crianças', '2 Quinta, 19h30: Na capela']);
   });
 
   it('não repete observação que só diz a regra da missa', () => {

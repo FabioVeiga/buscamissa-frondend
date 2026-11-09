@@ -97,16 +97,25 @@ export class DetailsHorariosComponent {
       .map((m) => ({ descricao: m.descricaoRecorrencia || descrever(m), observacao: this.notaDaMissa(m) }));
   }
 
-  /** Só as missas de dia fixo que têm observação a mostrar. */
-  get notasDiaFixo(): { descricao: string; observacao?: string }[] {
-    return this.missasDiaFixo.filter((m) => m.observacao);
+  /** Observações do quadro, numeradas na ordem em que aparecem nos chips. */
+  get notas(): { chave: string; numero: number; rotulo: string; texto: string }[] {
+    const daSemana = this.diasComMissa.flatMap((g) =>
+      g.missas
+        .filter((m) => this.notaDaMissa(m))
+        .map((m) => ({
+          chave: `${g.dia}-${m.horario}`,
+          rotulo: `${g.label}, ${this.formatarHorario(m.horario)}`,
+          texto: this.notaDaMissa(m),
+        })),
+    );
+    const doMes = this.missasDiaFixo.flatMap((m, i) =>
+      m.observacao ? [{ chave: `fixo-${i}`, rotulo: m.descricao, texto: m.observacao }] : [],
+    );
+    return [...daSemana, ...doMes].map((n, i) => ({ ...n, numero: i + 1 }));
   }
 
-  /** Observações do dia, uma por missa, para a linha abaixo dos chips. */
-  notasDoDia(missas: MissaNaGrade[]): { horario: string; texto: string }[] {
-    return missas
-      .filter((m) => this.notaDaMissa(m))
-      .map((m) => ({ horario: this.formatarHorario(m.horario), texto: this.notaDaMissa(m) }));
+  numeroDaNota(chave: string): number | null {
+    return this.notas.find((n) => n.chave === chave)?.numero ?? null;
   }
 
   /** Observação da missa, ou '' se só repete a regra já exibida (ex.: "1ª sexta do mês"). */
