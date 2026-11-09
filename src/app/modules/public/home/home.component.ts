@@ -260,19 +260,73 @@ export class HomeComponent {
 
   /** Próxima missa de uma igreja dos resultados: a mesma para o card e para a ordenação. */
   proximaMissaDe(church: Church): ProximaMissaCard {
-    if (this.churchInfo !== this._proximasFonte) {
-      this._proximasFonte = this.churchInfo;
-      this._proximas = new Map(this.churchInfo.map(c => [
-        c,
-        calcularProximaMissaCard(c.missas ?? [], this._filtroAplicado, this.agoraResultados),
-      ]));
-    }
+    this._garantirProximas();
     return this._proximas.get(church)
       ?? calcularProximaMissaCard(church.missas ?? [], this._filtroAplicado, this.agoraResultados);
   }
 
+  /**
+   * Roda a cada ciclo de renderização, então só recalcula quando a lista mudou, quando
+   * algum resultado venceu (início da missa ou meia-noite) ou quando o relógio voltou.
+   */
+  private _garantirProximas(): void {
+    const agora = this.agoraResultados.getTime();
+    if (
+      this.churchInfo === this._proximasFonte &&
+      agora < this._proximasValidoAte &&
+      agora >= this._proximasCalculadoEm
+    ) return;
+
+    this._proximasFonte = this.churchInfo;
+    this._proximas = new Map(this.churchInfo.map(c => [
+      c,
+      calcularProximaMissaCard(c.missas ?? [], this._filtroAplicado, this.agoraResultados),
+    ]));
+    this._proximasCalculadoEm = agora;
+    this._proximasValidoAte = Math.min(...[...this._proximas.values()].map(p => p.validoAte.getTime()));
+    this._proximasVersao++;
+  }
+
   get churchInfoOrdenaFiltrado(): Church[] {
-    return this._ordenarIgrejas(this.churchInfoFiltrado);
+    this._garantirProximas();
+    const chave = [
+      this.churchInfo, this.ordenacaoResultados, this.quickFilter,
+      this._userLat, this._userLng, this._proximasVersao,
+    ];
+    if (this._ordenadaChave.length && chave.every((v, i) => v === this._ordenadaChave[i])) {
+      return this._ordenadaCache;
+    }
+    this._ordenadaChave = chave;
+    this._ordenadaCache = this._ordenarIgrejas(this.churchInfoFiltrado);
+    return this._ordenadaCache;
+  }
+
+  /**
+   * Um relógio só para os cards. Compara a data absoluta, então a virada de dia, mês e
+   * ano e o computador acordando dão o mesmo resultado. Fora da zona pelo mesmo motivo
+   * do refresh das próximas missas: um intervalo na zona impede a app de estabilizar.
+   */
+  private _iniciarRelogioResultados(): void {
+    if (!this._isBrowser || !this.resultsMode) return;
+
+    const verificar = () => {
+      if (document.visibilityState === 'hidden') return;
+      const agora = new Date();
+      if (Math.floor(agora.getTime() / 60_000) === Math.floor(this.agoraResultados.getTime() / 60_000)) return;
+      this._ngZone.run(() => { this.agoraResultados = agora; });
+    };
+
+    const timer = this._ngZone.runOutsideAngular(() => {
+      document.addEventListener('visibilitychange', verificar);
+      window.addEventListener('pageshow', verificar);
+      return setInterval(verificar, HomeComponent.RELOGIO_RESULTADOS_MS);
+    });
+
+    this._destroyRef.onDestroy(() => {
+      clearInterval(timer);
+      document.removeEventListener('visibilitychange', verificar);
+      window.removeEventListener('pageshow', verificar);
+    });
   }
 
   get totalRecordsFiltrado(): number {
@@ -321,6 +375,12 @@ export class HomeComponent {
 
   private _proximas = new Map<Church, ProximaMissaCard>();
   private _proximasFonte: Church[] | null = null;
+  private _proximasValidoAte = Number.POSITIVE_INFINITY;
+  private _proximasCalculadoEm = 0;
+  private _proximasVersao = 0;
+  private _ordenadaChave: unknown[] = [];
+  private _ordenadaCache: Church[] = [];
+  private static readonly RELOGIO_RESULTADOS_MS = 30_000;
 
   /** Ordenação dos resultados da busca */
   ordenacaoResultados: 'az' | 'za' | 'proximidade' | 'proxima-missa' = 'az';
@@ -544,6 +604,7 @@ export class HomeComponent {
     if (!this.resultsMode) {
       this._metricas.registrarVisualizacaoHome();
     }
+    this._iniciarRelogioResultados();
 
     this.form = this._fb.group({
       // Sem `Validators.required` em `Uf` de propósito: com ele o formulário nasce

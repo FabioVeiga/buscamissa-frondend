@@ -504,6 +504,125 @@ describe('HomeComponent — filtro de dia em /buscar', () => {
       expect(c.proximaMissaDe(sem).estado).toBe('sem-horarios');
     });
 
+    describe('com a página aberta', () => {
+      const RES = { resultsMode: true };
+      const tick30 = (n = 1) => jasmine.clock().tick(30_000 * n);
+
+      beforeEach(() => jasmine.clock().install());
+      afterEach(() => jasmine.clock().uninstall());
+
+      it('passa para a ocorrência seguinte quando a missa começa', () => {
+        jasmine.clock().mockDate(new Date(2026, 10, 9, 18, 59, 0));
+        const a = igreja(1, 'A', [semanal(1, '19:00:00')]);
+        responder([a]);
+        const c = montar({ uf: 'SP' }, RES);
+        expect(c.proximaMissaDe(a).inicio).toEqual(new Date(2026, 10, 9, 19, 0));
+
+        tick30(3);
+
+        expect(c.proximaMissaDe(a).inicio).toEqual(new Date(2026, 10, 16, 19, 0));
+      });
+
+      it('atualiza o instante na meia-noite', () => {
+        jasmine.clock().mockDate(new Date(2026, 10, 9, 23, 59, 40));
+        const a = igreja(1, 'A', [semanal(2, '19:00:00')]);
+        responder([a]);
+        const c = montar({ uf: 'SP' }, RES);
+        const versao = (c as any)._proximasVersao;
+        c.proximaMissaDe(a);
+
+        tick30();
+
+        expect(c.agoraResultados.getDate()).toBe(10);
+        c.proximaMissaDe(a);
+        expect((c as any)._proximasVersao).toBeGreaterThan(versao);
+      });
+
+      [
+        ['mês', new Date(2026, 0, 31, 23, 59, 40), new Date(2026, 1, 1, 8, 0)],
+        ['ano', new Date(2026, 11, 31, 23, 59, 40), new Date(2027, 0, 1, 8, 0)],
+      ].forEach(([nome, inicio, esperado]) => {
+        it(`atravessa a virada do ${nome}`, () => {
+          jasmine.clock().mockDate(inicio as Date);
+          const a = igreja(1, 'A', [{ diaSemana: 0, horario: '08:00:00', tipoRecorrencia: 2, diaDoMes: 1 }]);
+          responder([a]);
+          const c = montar({ uf: 'SP' }, RES);
+
+          tick30();
+
+          expect(c.proximaMissaDe(a).inicio).toEqual(esperado as Date);
+          expect(c.agoraResultados.getTime()).toBeGreaterThanOrEqual((esperado as Date).getTime() - 8 * 3_600_000);
+        });
+      });
+
+      it('confere ao voltar para a aba, sem esperar o intervalo', () => {
+        jasmine.clock().mockDate(new Date(2026, 10, 9, 18, 0));
+        const a = igreja(1, 'A', [semanal(1, '19:00:00')]);
+        responder([a]);
+        const c = montar({ uf: 'SP' }, RES);
+        c.proximaMissaDe(a);
+
+        jasmine.clock().mockDate(new Date(2026, 10, 12, 7, 0));
+        document.dispatchEvent(new Event('visibilitychange'));
+
+        expect(c.proximaMissaDe(a).inicio).toEqual(new Date(2026, 10, 16, 19, 0));
+      });
+
+      it('recalcula se o relógio do aparelho voltar', () => {
+        jasmine.clock().mockDate(new Date(2026, 10, 9, 20, 0));
+        const a = igreja(1, 'A', [semanal(1, '19:00:00')]);
+        responder([a]);
+        const c = montar({ uf: 'SP' }, RES);
+        expect(c.proximaMissaDe(a).inicio).toEqual(new Date(2026, 10, 16, 19, 0));
+
+        jasmine.clock().mockDate(new Date(2026, 10, 9, 18, 0));
+        tick30();
+
+        expect(c.proximaMissaDe(a).inicio).toEqual(new Date(2026, 10, 9, 19, 0));
+      });
+
+      it('não recalcula em ciclos sem mudança', () => {
+        jasmine.clock().mockDate(new Date(2026, 10, 9, 10, 0));
+        const lista = Array.from({ length: 20 }, (_, i) => igreja(i, `I${i}`, [semanal(1, '19:00:00')]));
+        responder(lista);
+        const c = montar({ uf: 'SP' }, RES);
+        c.setOrdenacaoResultados('proxima-missa');
+        const primeira = c.churchInfoOrdenaFiltrado;
+        const versao = (c as any)._proximasVersao;
+
+        for (let i = 0; i < 200; i++) {
+          lista.forEach(x => c.proximaMissaDe(x));
+          expect(c.churchInfoOrdenaFiltrado).toBe(primeira);
+        }
+        tick30(4); // o minuto muda, mas nada venceu
+        c.proximaMissaDe(lista[0]);
+
+        expect((c as any)._proximasVersao).toBe(versao);
+        expect(c.churchInfoOrdenaFiltrado).toBe(primeira);
+      });
+
+      it('fora de /buscar não cria o relógio', () => {
+        jasmine.clock().mockDate(new Date(2026, 10, 9, 10, 0));
+        const c = montar({ uf: 'SP' });
+        const antes = c.agoraResultados;
+
+        tick30(4);
+
+        expect(c.agoraResultados).toBe(antes);
+      });
+
+      it('para o relógio ao sair da tela', () => {
+        jasmine.clock().mockDate(new Date(2026, 10, 9, 10, 0));
+        const c = montar({ uf: 'SP' }, RES);
+        const antes = c.agoraResultados;
+
+        TestBed.resetTestingModule();
+        tick30(4);
+
+        expect(c.agoraResultados).toBe(antes);
+      });
+    });
+
     it('mantém A → Z e Z → A', () => {
       responder([igreja(1, 'Bento', []), igreja(2, 'Ávila', [])]);
       const c = montar({ uf: 'SP' }, { resultsMode: true });
