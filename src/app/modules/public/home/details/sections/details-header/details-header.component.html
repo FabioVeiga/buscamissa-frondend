@@ -74,7 +74,7 @@
            class="action-btn action-btn--icon" [attr.aria-label]="'E-mail: ' + igreja.contato.emailContato">
           <i class="pi pi-envelope"></i>
         </a>
-        <a *ngFor="let rede of igreja.redesSociais" [href]="rede.url" target="_blank" rel="noopener"
+        <a *ngFor="let rede of igreja.redesSociais; trackBy: trackRede" [href]="rede.url" target="_blank" rel="noopener"
            class="action-btn action-btn--icon" [attr.aria-label]="rede.nomeRedeSocial || 'Rede social'"
            (click)="socialClick.emit(rede.url)">
           <i [ngClass]="getSocialIcon(rede.url)"></i>
