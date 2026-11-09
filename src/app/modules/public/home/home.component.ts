@@ -1,4 +1,5 @@
 import { ehSemanal, ocorreNoDia, ocorreNoFimDeSemana } from '../../../shared/utils/recorrencia-missa';
+import { calcularProximaMissaCard, compararPorProximaMissa, FiltroMissa, ProximaMissaCard } from '../../../shared/utils/proxima-missa-card.utils';
 import { AnuncioComponent } from "../../../shared/components/anuncio/anuncio.component";
 import { ConviteAnuncieComponent } from "../../../shared/components/convite-anuncie/convite-anuncie.component";
 import { Component, DestroyRef, inject, NgZone, PLATFORM_ID, ViewChild } from "@angular/core";
@@ -241,7 +242,10 @@ export class HomeComponent {
       case 'za':
         return copia.sort((a, b) => (b.nome ?? '').localeCompare(a.nome ?? '', 'pt-BR'));
       case 'proxima-missa':
-        return copia.sort((a, b) => this._minProximaMissaHome(a) - this._minProximaMissaHome(b));
+        return copia.sort((a, b) => compararPorProximaMissa(
+          { ...a, inicio: this.proximaMissaDe(a).inicio },
+          { ...b, inicio: this.proximaMissaDe(b).inicio },
+        ));
       case 'proximidade':
         if (this._userLat === null || this._userLng === null) return copia;
         return copia.sort((a, b) => {
@@ -252,6 +256,19 @@ export class HomeComponent {
       default:
         return copia;
     }
+  }
+
+  /** Próxima missa de uma igreja dos resultados: a mesma para o card e para a ordenação. */
+  proximaMissaDe(church: Church): ProximaMissaCard {
+    if (this.churchInfo !== this._proximasFonte) {
+      this._proximasFonte = this.churchInfo;
+      this._proximas = new Map(this.churchInfo.map(c => [
+        c,
+        calcularProximaMissaCard(c.missas ?? [], this._filtroAplicado, this.agoraResultados),
+      ]));
+    }
+    return this._proximas.get(church)
+      ?? calcularProximaMissaCard(church.missas ?? [], this._filtroAplicado, this.agoraResultados);
   }
 
   get churchInfoOrdenaFiltrado(): Church[] {
@@ -295,6 +312,15 @@ export class HomeComponent {
 
   /** Flag loading do CTA */
   isLoadingGeoNav = false;
+
+  /** Dia e horário da última busca concluída: edição não aplicada no formulário não vale. */
+  private _filtroAplicado: FiltroMissa | null = null;
+
+  /** Instante de referência dos cards de resultado. */
+  agoraResultados = new Date();
+
+  private _proximas = new Map<Church, ProximaMissaCard>();
+  private _proximasFonte: Church[] | null = null;
 
   /** Ordenação dos resultados da busca */
   ordenacaoResultados: 'az' | 'za' | 'proximidade' | 'proxima-missa' = 'az';
@@ -1396,6 +1422,12 @@ export class HomeComponent {
 
     this._churchService.searchByFilters(filters).subscribe({
       next: (data: any) => {
+        this._filtroAplicado = {
+          dia: filters.DiaDaSemana ?? null,
+          horarioDe: filters.Horario ?? null,
+          horarioAte: filters.HorarioFim ?? null,
+        };
+        this.agoraResultados = new Date();
         this.churchInfo = data.data.items;
         this.totalRecords = data.data.totalItems;
         this.isLoading = false;

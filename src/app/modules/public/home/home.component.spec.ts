@@ -393,7 +393,7 @@ describe('HomeComponent — filtro de dia em /buscar', () => {
     churches.searchByFilters.and.returnValue(of({ data: { items: [], totalItems: 0 } } as any));
   });
 
-  function montar(queryParams: Record<string, string>): HomeComponent {
+  function montar(queryParams: Record<string, string>, data: Record<string, unknown> = {}): HomeComponent {
     TestBed.configureTestingModule({
       providers: [
         FormBuilder,
@@ -402,7 +402,7 @@ describe('HomeComponent — filtro de dia em /buscar', () => {
         { provide: Router, useValue: router },
         { provide: ChurchesService, useValue: churches },
         { provide: BuscaLocalService, useValue: jasmine.createSpyObj('BuscaLocalService', ['carregarIndice', 'buscarIgrejas', 'correspondenciasExatas']) },
-        { provide: ActivatedRoute, useValue: { snapshot: { queryParams, data: {} }, queryParams: of(queryParams), data: of({}) } },
+        { provide: ActivatedRoute, useValue: { snapshot: { queryParams, data }, queryParams: of(queryParams), data: of(data) } },
         { provide: MessageService, useValue: jasmine.createSpyObj('MessageService', ['add']) },
         { provide: AnalyticsService, useValue: jasmine.createSpyObj('AnalyticsService', ['searchStarted', 'trackEvent']) },
         { provide: FavoritesService, useValue: { favoritos$: of([]), listar: () => [], ehFavorita: () => false } },
@@ -470,5 +470,47 @@ describe('HomeComponent — filtro de dia em /buscar', () => {
 
     expect(ultimaBusca().DiaDaSemana).toBeUndefined();
     expect(ultimaUrl()['dia']).toBeNull();
+  });
+
+  describe('próxima missa dos resultados', () => {
+    const semanal = (diaSemana: number, horario: string) => ({ diaSemana, horario, tipoRecorrencia: 0 });
+    const igreja = (id: number, nome: string, missas: unknown[]) => ({ id, nome, missas }) as any;
+    const responder = (items: unknown[]) =>
+      churches.searchByFilters.and.returnValue(of({ data: { items, totalItems: items.length } } as any));
+
+    it('usa o filtro da busca feita, não a edição ainda não aplicada', () => {
+      const a = igreja(1, 'A', [semanal(0, '19:00:00'), semanal(4, '19:00:00')]);
+      responder([a]);
+      const c = montar({ uf: 'SP', dia: '0' });
+
+      expect(c.proximaMissaDe(a).inicio?.getDay()).toBe(0);
+
+      c.form.get('DiaDaSemana')?.setValue('4');
+      (c as any)._proximasFonte = null;
+
+      expect(c.proximaMissaDe(a).inicio?.getDay()).toBe(0);
+    });
+
+    it('a ordenação por próxima missa desempata pelo nome e concorda com o card', () => {
+      const zelia = igreja(1, 'Zélia', [semanal(0, '19:00:00')]);
+      const avila = igreja(2, 'Ávila', [semanal(0, '19:00:00')]);
+      const sem = igreja(3, 'Bento', []);
+      responder([sem, zelia, avila]);
+      const c = montar({ uf: 'SP', dia: '0' }, { resultsMode: true });
+
+      c.setOrdenacaoResultados('proxima-missa');
+
+      expect(c.churchInfoOrdenaFiltrado.map(x => x.nome)).toEqual(['Ávila', 'Zélia', 'Bento']);
+      expect(c.proximaMissaDe(sem).estado).toBe('sem-horarios');
+    });
+
+    it('mantém A → Z e Z → A', () => {
+      responder([igreja(1, 'Bento', []), igreja(2, 'Ávila', [])]);
+      const c = montar({ uf: 'SP' }, { resultsMode: true });
+
+      expect(c.churchInfoOrdenaFiltrado.map(x => x.nome)).toEqual(['Ávila', 'Bento']);
+      c.setOrdenacaoResultados('za');
+      expect(c.churchInfoOrdenaFiltrado.map(x => x.nome)).toEqual(['Bento', 'Ávila']);
+    });
   });
 });

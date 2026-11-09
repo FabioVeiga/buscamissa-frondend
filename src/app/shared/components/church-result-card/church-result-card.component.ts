@@ -5,11 +5,13 @@ import { ConfidenceBadgeComponent } from "../confidence-badge/confidence-badge.c
 import { ChurchPlaceholderComponent } from "../church-placeholder/church-placeholder.component";
 import { FavoritesService } from "../../../core/services/favorites.service";
 import { MetricasService } from "../../../core/services/metricas.service";
+import { formatMassTime } from "../../utils/mass-time.utils";
 import {
-  getNextOccurrenceMinutes,
-  formatMassTime,
-  getCountdownLabel,
-} from "../../utils/mass-time.utils";
+  diasSemanaisDeMissa,
+  ProximaMissaCard,
+  rotuloContagem,
+  rotuloDiaMissa,
+} from "../../utils/proxima-missa-card.utils";
 import { distanciaMetrosAte } from "../../utils/distance.utils";
 import { linkParoquia } from "../../utils/church-link.utils";
 
@@ -34,6 +36,10 @@ import { linkParoquia } from "../../utils/church-link.utils";
 })
 export class ChurchResultCardComponent implements OnInit {
   @Input({ required: true }) igreja: any;
+
+  /** Calculada pela tela, para o card e a ordenação usarem o mesmo resultado. */
+  @Input({ required: true }) proxima!: ProximaMissaCard;
+  @Input({ required: true }) agora!: Date;
 
   /** UF/cidade-slug para montar o link da paróquia. Se ausentes, derivados do endereço. */
   @Input() uf = "";
@@ -84,49 +90,37 @@ export class ChurchResultCardComponent implements OnInit {
 
   // ── Próxima missa ───────────────────────────────────────────────────────────
 
-  proximaMissa(): any | null {
-    const candidatas: any[] = this.igreja?.missas ?? [];
-    if (!candidatas.length) return null;
-    return candidatas.reduce((melhor: any, m: any) => {
-      const min = getNextOccurrenceMinutes(m.diaSemana, m.horario, m);
-      const melhorMin = getNextOccurrenceMinutes(melhor.diaSemana, melhor.horario, melhor);
-      return min < melhorMin ? m : melhor;
-    });
-  }
-
   formatarHorario(horario: string): string {
     return formatMassTime(horario);
   }
 
-  countdownLabel(m: any): string {
-    return getCountdownLabel(m.diaSemana, m.horario, m);
+  get diaLabel(): string {
+    return this.proxima.inicio ? rotuloDiaMissa(this.proxima.inicio, this.agora) : "";
   }
 
-  ehUrgente(m: any): boolean {
-    return getNextOccurrenceMinutes(m.diaSemana, m.horario, m) <= 180;
+  get ehHoje(): boolean {
+    return this.diaLabel.startsWith("Hoje");
+  }
+
+  get contagem(): string {
+    return this.proxima.inicio ? rotuloContagem(this.proxima.inicio, this.agora) : "";
+  }
+
+  get textoSemHorario(): string {
+    return this.proxima.estado === "sem-horarios"
+      ? "Horários não informados"
+      : "Não há próxima missa futura informada";
   }
 
   private diaNome(dia: number): string {
     return ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"][dia] ?? "";
   }
 
-  diaLabelRelativo(m: any): string {
-    const min = getNextOccurrenceMinutes(m.diaSemana, m.horario, m);
-    const alvo = new Date(Date.now() + min * 60_000);
-    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
-    const dAlvo = new Date(alvo); dAlvo.setHours(0, 0, 0, 0);
-    const diff = Math.round((dAlvo.getTime() - hoje.getTime()) / 86_400_000);
-    if (diff === 0) return "Hoje";
-    if (diff === 1) return "Amanhã";
-    return this.diaNome(m.diaSemana);
-  }
-
+  /** Só dias de missa semanal; some quando repetiria o único dia já mostrado no horário. */
   diasMissa(): string {
-    const missas: any[] = this.igreja?.missas ?? [];
-    if (!missas.length) return '';
-    const dias = [...new Set(missas.map((m: any) => m.diaSemana as number))]
-      .sort((a, b) => a - b);
-    return dias.map(d => this.diaNome(d)).join(', ');
+    const dias = diasSemanaisDeMissa(this.igreja?.missas ?? []);
+    if (dias.length === 1 && this.proxima.inicio?.getDay() === dias[0]) return "";
+    return dias.map(d => this.diaNome(d)).join(", ");
   }
 
   // ── Distância ───────────────────────────────────────────────────────────────
@@ -167,7 +161,7 @@ export class ChurchResultCardComponent implements OnInit {
     event.preventDefault();
     event.stopPropagation();
 
-    const pm = this.proximaMissa() ?? this.igreja?.missas?.[0] ?? null;
+    const pm = this.proxima.missa ?? this.igreja?.missas?.[0] ?? null;
     this.favorita = this.favorites.alternar({
       id: this.igreja.id,
       nome: this.igreja.nome,

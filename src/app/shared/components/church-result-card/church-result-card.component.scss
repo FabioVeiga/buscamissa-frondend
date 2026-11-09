@@ -48,6 +48,14 @@ $primary-dark: #9a4a0c;
     &--vazio { color: #d1d5db; font-size: 1.5rem; }
   }
 
+  &__sem-horario {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6b7280;
+    text-align: center;
+    line-height: 1.3;
+  }
+
   &__dia {
     font-size: 0.75rem;
     font-weight: 600;
