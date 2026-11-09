@@ -30,14 +30,10 @@
         <div class="flex flex-wrap gap-2">
           <div *ngFor="let m of grupo.missas" class="mass-chip">
             <span class="mass-chip__time">
-              {{ formatarHorario(m.horario) }}<span *ngIf="m.rotuloNaSemana" class="mass-chip__dia"> · {{ m.rotuloNaSemana }}</span><span *ngIf="notaDaMissa(m)" class="mass-chip__marca" aria-hidden="true"> •</span>
+              {{ formatarHorario(m.horario) }}<span *ngIf="m.rotuloNaSemana" class="mass-chip__dia"> · {{ m.rotuloNaSemana }}</span><sup *ngIf="numeroDaNota(grupo.dia + '-' + m.horario) as n" class="mass-chip__num">{{ n }}</sup>
             </span>
           </div>
         </div>
-        <!-- Observação fora do chip: todos do mesmo tamanho e o texto nunca é cortado. -->
-        <ul *ngIf="notasDoDia(grupo.missas).length" class="schedule-notas">
-          <li *ngFor="let n of notasDoDia(grupo.missas)"><span aria-hidden="true">• </span>{{ n.horario }}: {{ n.texto }}</li>
-        </ul>
       </div>
     </div>
   </div>
@@ -46,14 +42,16 @@
   <div *ngIf="missasDiaFixo.length" class="mt-4">
     <h3 class="text-sm font-bold text-gray-600 mb-2">Missas em datas do mês</h3>
     <div class="flex flex-wrap gap-2">
-      <div *ngFor="let m of missasDiaFixo" class="mass-chip">
-        <span class="mass-chip__time">{{ m.descricao }}<span *ngIf="m.observacao" class="mass-chip__marca" aria-hidden="true"> •</span></span>
+      <div *ngFor="let m of missasDiaFixo; let i = index" class="mass-chip">
+        <span class="mass-chip__time">{{ m.descricao }}<sup *ngIf="numeroDaNota('fixo-' + i) as n" class="mass-chip__num">{{ n }}</sup></span>
       </div>
     </div>
-    <ul *ngIf="notasDiaFixo.length" class="schedule-notas">
-      <li *ngFor="let n of notasDiaFixo"><span aria-hidden="true">• </span>{{ n.descricao }}: {{ n.observacao }}</li>
-    </ul>
   </div>
+
+  <!-- Observações juntas no fim do quadro: a grade fica uniforme e o texto, sempre visível. -->
+  <ol *ngIf="notas.length" class="schedule-notas">
+    <li *ngFor="let n of notas"><sup>{{ n.numero }}</sup> {{ n.rotulo }}: {{ n.texto }}</li>
+  </ol>
 
   <div *ngIf="missas?.length" class="horarios-rodape">
     <span *ngIf="diasSemMissa">Sem missa: {{ diasSemMissa }}</span>
