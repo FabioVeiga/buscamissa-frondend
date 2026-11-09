@@ -1,6 +1,6 @@
 <p-toast></p-toast>
 
-<div class="paroquia-page mx-auto px-3 sm:px-4 pb-10">
+<div class="paroquia-page mx-auto px-3 sm:px-4">
 
   <!-- Skeleton -->
   <div *ngIf="isLoading" class="flex flex-col gap-4 pt-4">
@@ -78,11 +78,18 @@
         (adicionarHorarios)="reportarErro()"
       />
       <app-details-atendimento *ngIf="churchInfo.sessoes?.length" [sessoes]="churchInfo.sessoes" />
+      <!-- Grade longa: ocupa o espaço livre embaixo do placar. -->
+      <ng-container *ngIf="ajudeNaColuna" [ngTemplateOutlet]="ajude" [ngTemplateOutletContext]="{ coluna: true }"></ng-container>
     </div>
 
+    <ng-container *ngIf="!ajudeNaColuna" [ngTemplateOutlet]="ajude" [ngTemplateOutletContext]="{ coluna: false }"></ng-container>
+
     <!-- ══ AJUDE A MANTER (confirmar, sugerir, reportar, responsável) ══ -->
+    <ng-template #ajude let-coluna="coluna">
     <app-details-ajude
-      class="block mt-4"
+      class="block"
+      [class.mt-4]="!coluna"
+      [empilhado]="coluna"
       [igrejaId]="churchInfo.id"
       [igrejaNome]="churchInfo.nome"
       [temMissas]="!!churchInfo.missas?.length"
@@ -91,9 +98,10 @@
       (reportarProblema)="abrirModalReportarProblema()"
       (souResponsavel)="abrirSolicitacaoResponsavel()"
     />
+    </ng-template>
 
     <!-- ══ ANÚNCIO (depois do conteúdo principal; com aviso de isenção) ══ -->
-    <div class="mt-6">
+    <div class="mt-4">
       <app-anuncio posicao="detalhe_igreja" />
     </div>
 
