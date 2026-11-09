@@ -42,8 +42,8 @@
   <div *ngIf="missasDiaFixo.length" class="mt-4">
     <h3 class="text-sm font-bold text-gray-600 mb-2">Missas em datas do mês</h3>
     <div class="flex flex-wrap gap-2">
-      <div *ngFor="let m of missasDiaFixo; let i = index" class="mass-chip">
-        <span class="mass-chip__time">{{ m.descricao }}<sup *ngIf="numeroDaNota('fixo-' + i) as n" class="mass-chip__num">{{ n }}</sup></span>
+      <div *ngFor="let m of missasDiaFixo; let i = index" class="mass-chip mass-chip--regra">
+        <span class="mass-chip__time mass-chip__time--regra">{{ m.descricao }}<sup *ngIf="numeroDaNota('fixo-' + i) as n" class="mass-chip__num">{{ n }}</sup></span>
       </div>
     </div>
   </div>

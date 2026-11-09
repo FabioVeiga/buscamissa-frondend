@@ -124,6 +124,24 @@
   text-align: center;
 }
 
+// Regra por extenso ("Todo dia 29, 15h (exceto sábados e domingos)"): é uma frase, não
+// um horário. Cresce em altura e quebra a linha, fora das colunas iguais da grade.
+.mass-chip--regra {
+  align-items: flex-start;
+  height: auto;
+  min-height: 2.75rem;
+  max-width: 100%;
+  padding-top: 0.4rem;
+  padding-bottom: 0.4rem;
+  overflow: visible;
+}
+
+.mass-chip__time--regra {
+  white-space: normal;
+  overflow-wrap: anywhere;
+  text-align: left;
+}
+
 // Número que liga o chip à observação no fim do quadro.
 .mass-chip__num {
   margin-left: 0.1rem;
