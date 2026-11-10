@@ -48,6 +48,20 @@
     </div>
   </div>
 
+  <!-- Missas em datas especiais (Natal, Semana Santa...): só as que ainda vão acontecer -->
+  <div *ngIf="datasEspeciais.length" class="mt-4 datas-especiais">
+    <h3 class="text-sm font-bold text-gray-600 mb-2">Datas especiais</h3>
+    <div *ngFor="let d of datasEspeciais; trackBy: trackDataEspecial" class="datas-especiais__item mb-2">
+      <div class="text-sm font-semibold text-gray-800">{{ d.titulo }}</div>
+      <div class="flex flex-wrap gap-2 mt-1">
+        <div *ngFor="let m of d.missas" class="mass-chip mass-chip--regra">
+          <span class="mass-chip__time mass-chip__time--regra">{{ m.horario }}<span *ngIf="m.texto"> · {{ m.texto }}</span></span>
+        </div>
+      </div>
+      <p *ngIf="d.substitui" class="text-xs text-gray-500 mt-1">Neste dia não há as missas dos horários normais.</p>
+    </div>
+  </div>
+
   <!-- Observações juntas no fim do quadro: a grade fica uniforme e o texto, sempre visível. -->
   <ol *ngIf="notas.length" class="schedule-notas">
     <li *ngFor="let n of notas; trackBy: trackNota"><sup>{{ n.numero }}</sup> {{ n.rotulo }}: {{ n.texto }}</li>

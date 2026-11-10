@@ -1,6 +1,7 @@
 /**
  * Regra de recorrência de uma missa: semanal ("todo domingo"), dia fixo do mês
- * ("todo dia 13") ou ocorrência no mês ("1ª e 3ª sexta-feira do mês"). Espelho de RecorrenciaMissa.cs (buscamissa-api-admin e
+ * ("todo dia 13"), ocorrência no mês ("1ª e 3ª sexta-feira do mês") ou data específica
+ * (25/12/2026, com nome e opção de substituir as missas normais do dia). Espelho de RecorrenciaMissa.cs (buscamissa-api-admin e
  * buscamissa-api-public) — mantenha as três implementações iguais.
  *
  * Calcula no relógio do navegador: o prerender fica no ar por dias e "hoje/amanhã"
@@ -11,6 +12,7 @@ export const TIPO_RECORRENCIA = {
   Semanal: 0,
   OcorrenciaNoMes: 1, // "1ª e 3ª sexta", "última terça"
   DiaDoMes: 2,
+  DataEspecifica: 3, // 25/12/2026: só nessa data (com ano)
 } as const;
 
 /** Campos de `Mass` que definem quando a missa acontece. */
@@ -23,6 +25,12 @@ export interface RegraRecorrencia {
   diasSemanaExcecao?: number | null;
   /** Bitmask das semanas na ocorrência no mês (bit0..bit4 = 1ª..5ª, bit5 = última). */
   semanasDoMes?: number | null;
+  /** Só em data específica: "yyyy-MM-dd". */
+  data?: string | null;
+  /** Nome da missa (ex.: "Missa do Galo"); só em data específica. */
+  nome?: string | null;
+  /** Em data específica: as missas regulares da igreja nesse dia não acontecem. */
+  substituiMissasDoDia?: boolean | null;
 }
 
 /** Bit de "última" em `semanasDoMes`. */
@@ -44,7 +52,7 @@ export const SEMANAS_DO_MES = [
  */
 export function alertaConflitoSemanal(missas: RegraRecorrencia[], nova: RegraRecorrencia): string | null {
   const tipoNovo = nova.tipoRecorrencia ?? TIPO_RECORRENCIA.Semanal;
-  if (tipoNovo === TIPO_RECORRENCIA.DiaDoMes || nova.diaSemana == null || !nova.horario) return null;
+  if (tipoNovo === TIPO_RECORRENCIA.DiaDoMes || tipoNovo === TIPO_RECORRENCIA.DataEspecifica || nova.diaSemana == null || !nova.horario) return null;
   const conflito = missas.find(
     (m) =>
       m.diaSemana === nova.diaSemana &&
@@ -61,7 +69,10 @@ export function alertaConflitoSemanal(missas: RegraRecorrencia[], nova: RegraRec
 }
 
 /** Só os campos que dizem o TIPO da regra; dia/horário vêm à parte. */
-export type TipoDaRegra = Pick<RegraRecorrencia, 'tipoRecorrencia' | 'diaDoMes' | 'diasSemanaExcecao' | 'semanasDoMes'>;
+export type TipoDaRegra = Pick<
+  RegraRecorrencia,
+  'tipoRecorrencia' | 'diaDoMes' | 'diasSemanaExcecao' | 'semanasDoMes' | 'data'
+>;
 
 const HORIZONTE_PADRAO_DIAS = 400;
 const DIAS_ROTULO = ['Domingo', 'Segunda-feira', 'Terça-feira', 'Quarta-feira', 'Quinta-feira', 'Sexta-feira', 'Sábado'];
@@ -90,9 +101,35 @@ export function ocorreEm(regra: RegraRecorrencia, data: Date): boolean {
         (((regra.semanasDoMes & (1 << ordinalNoMes(data))) !== 0) ||
           ((regra.semanasDoMes & ULTIMA_SEMANA) !== 0 && ehUltimaDoMes(data)))
       );
+    case TIPO_RECORRENCIA.DataEspecifica:
+      return regra.data != null && chaveData(data) === regra.data.slice(0, 10);
     default:
       return false;
   }
+}
+
+/** "yyyy-MM-dd" do calendário local (a data da missa não tem fuso). */
+export function chaveData(data: Date): string {
+  return `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}-${String(data.getDate()).padStart(2, '0')}`;
+}
+
+export function ehDataEspecifica(regra: Pick<RegraRecorrencia, 'tipoRecorrencia'>): boolean {
+  return regra.tipoRecorrencia === TIPO_RECORRENCIA.DataEspecifica;
+}
+
+/** Dias ("yyyy-MM-dd") em que uma missa especial desta igreja substitui as missas normais. */
+export function datasSubstituidas(missas: RegraRecorrencia[] | null | undefined): ReadonlySet<string> {
+  const datas = new Set<string>();
+  for (const m of missas ?? []) {
+    if (ehDataEspecifica(m) && m.substituiMissasDoDia && m.data) datas.add(m.data.slice(0, 10));
+  }
+  return datas;
+}
+
+/** "2026-12-25" → "25/12/2026". */
+export function formatarData(iso: string | null | undefined): string {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso ?? '');
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : '';
 }
 
 /**
@@ -102,7 +139,8 @@ export function ocorreEm(regra: RegraRecorrencia, data: Date): boolean {
 export function proximaOcorrencia(
   regra: RegraRecorrencia,
   agora: Date = new Date(),
-  horizonteDias = HORIZONTE_PADRAO_DIAS
+  horizonteDias = HORIZONTE_PADRAO_DIAS,
+  substituidas?: ReadonlySet<string>
 ): Date | null {
   const [h, m] = (regra.horario ?? '').split(':').map(Number);
   if (Number.isNaN(h) || Number.isNaN(m)) return null;
@@ -111,6 +149,8 @@ export function proximaOcorrencia(
   dia.setHours(0, 0, 0, 0);
   for (let i = 0; i <= horizonteDias; i++, dia.setDate(dia.getDate() + 1)) {
     if (!ocorreEm(regra, dia)) continue;
+    // Dia com missa especial "substitui as normais": só a própria data específica conta.
+    if (!ehDataEspecifica(regra) && substituidas?.has(chaveData(dia))) continue;
     const inicio = new Date(dia);
     inicio.setHours(h, m, 0, 0);
     if (inicio > agora) return inicio;
@@ -119,10 +159,16 @@ export function proximaOcorrencia(
 }
 
 /** Ocorre daqui a `offsetDias` dias (0 = hoje, 1 = amanhã), pelo relógio local? */
-export function ocorreNoDia(regra: RegraRecorrencia, offsetDias = 0, agora: Date = new Date()): boolean {
+export function ocorreNoDia(
+  regra: RegraRecorrencia,
+  offsetDias = 0,
+  agora: Date = new Date(),
+  substituidas?: ReadonlySet<string>
+): boolean {
   const data = new Date(agora);
   data.setHours(0, 0, 0, 0);
   data.setDate(data.getDate() + offsetDias);
+  if (!ehDataEspecifica(regra) && substituidas?.has(chaveData(data))) return false;
   return ocorreEm(regra, data);
 }
 
@@ -137,7 +183,7 @@ export function ocorreNoFimDeSemana(regra: RegraRecorrencia, agora: Date = new D
   return ocorreNoDia(regra, ateSabado, agora) || ocorreNoDia(regra, ateSabado + 1, agora);
 }
 
-/** "Domingo, 19h" · "Todo dia 13, 19h30" · "Todo dia 13, 19h (exceto sábados e domingos)". */
+/** "Domingo, 19h" · "25/12/2026, 18h" · "Todo dia 13, 19h30" · "Todo dia 13, 19h (exceto sábados e domingos)". */
 export function descrever(regra: RegraRecorrencia): string {
   const hora = formatarHora(regra.horario);
   switch (regra.tipoRecorrencia ?? TIPO_RECORRENCIA.Semanal) {
@@ -147,6 +193,8 @@ export function descrever(regra: RegraRecorrencia): string {
       return `Todo dia ${regra.diaDoMes}, ${hora}${descreverExcecao(regra)}`;
     case TIPO_RECORRENCIA.OcorrenciaNoMes:
       return `${descreverSemanas(regra)} do mês, ${hora}`;
+    case TIPO_RECORRENCIA.DataEspecifica:
+      return `${formatarData(regra.data)}, ${hora}`;
     default:
       return hora;
   }
@@ -158,6 +206,7 @@ export function descrever(regra: RegraRecorrencia): string {
  * "2ª do mês" sozinho se lê como segunda-feira.
  */
 export function rotuloNaData(regra: RegraRecorrencia, data: Date): string {
+  if (ehDataEspecifica(regra)) return regra.nome || `dia ${data.getDate()}`;
   if ((regra.tipoRecorrencia ?? TIPO_RECORRENCIA.Semanal) !== TIPO_RECORRENCIA.OcorrenciaNoMes) return `dia ${data.getDate()}`;
   const masculino = regra.diaSemana === 0 || regra.diaSemana === 6;
   const dia = DIAS_NOME[data.getDay()].replace('-feira', '');

@@ -3,7 +3,15 @@ import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ButtonModule } from 'primeng/button';
 import { Mass } from '../../../../church/models/church.model';
 import { formatMassTime } from '../../../../../../shared/utils/mass-time.utils';
-import { descrever, ehSemanal, ocorreEm, rotuloNaData } from '../../../../../../shared/utils/recorrencia-missa';
+import {
+  chaveData,
+  descrever,
+  ehDataEspecifica,
+  ehSemanal,
+  formatarData,
+  ocorreEm,
+  rotuloNaData,
+} from '../../../../../../shared/utils/recorrencia-missa';
 
 /** Missa na grade semanal; `rotuloNaSemana` marca a mensal que cai nesta semana ("dia 2", "1ª sexta do mês"). */
 interface MissaNaGrade extends Mass {
@@ -72,7 +80,7 @@ export class DetailsHorariosComponent {
    */
   private _adicionarDiaFixoDaSemana(grupos: Record<number, MissaNaGrade[]>): void {
     if (!this._isBrowser) return;
-    const diasFixos = (this.missas ?? []).filter((m) => !ehSemanal(m));
+    const diasFixos = (this.missas ?? []).filter((m) => !ehSemanal(m) && !ehDataEspecifica(m));
     if (!diasFixos.length) return;
 
     for (const data of this._proximos7Dias()) {
@@ -100,10 +108,45 @@ export class DetailsHorariosComponent {
   // não se repete aqui. No prerender todas entram (a grade lá não tem dia fixo).
   get missasDiaFixo(): { descricao: string; observacao?: string }[] {
     return (this.missas ?? [])
-      .filter((m) => !ehSemanal(m) && !this._estaNaGrade(m))
+      .filter((m) => !ehSemanal(m) && !ehDataEspecifica(m) && !this._estaNaGrade(m))
       .sort((a, b) => (a.diaDoMes ?? 0) - (b.diaDoMes ?? 0) || a.horario.localeCompare(b.horario))
       .map((m) => ({ descricao: m.descricaoRecorrencia || descrever(m), observacao: this.notaDaMissa(m) }));
   }
+
+  /**
+   * Missas de datas especiais (ex.: Natal 2026) que ainda vão acontecer, agrupadas por data.
+   * Datas passadas ficam de fora; `substitui` avisa que as missas normais não ocorrem no dia.
+   */
+  get datasEspeciais(): { data: string; titulo: string; substitui: boolean; missas: { horario: string; texto: string }[] }[] {
+    const hoje = chaveData(new Date());
+    const porData = new Map<string, Mass[]>();
+    for (const m of this.missas ?? []) {
+      if (!ehDataEspecifica(m) || !m.data) continue;
+      const data = m.data.slice(0, 10);
+      if (data < hoje) continue;
+      porData.set(data, [...(porData.get(data) ?? []), m]);
+    }
+    const dias = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'];
+    return [...porData.entries()]
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([data, lista]) => {
+        const [ano, mes, dia] = data.split('-').map(Number);
+        const diaSemana = new Date(ano, mes - 1, dia).getDay();
+        return {
+          data,
+          titulo: `${dias[diaSemana]}, ${formatarData(data)}`,
+          substitui: lista.some((m) => !!m.substituiMissasDoDia),
+          missas: [...lista]
+            .sort((a, b) => a.horario.localeCompare(b.horario))
+            .map((m) => ({
+              horario: this.formatarHorario(m.horario),
+              texto: [m.nome, (m.observacao ?? '').trim()].filter(Boolean).join(' · '),
+            })),
+        };
+      });
+  }
+
+  trackDataEspecial = (_: number, d: { data: string }) => d.data;
 
   /** Observações do quadro, numeradas na ordem em que aparecem nos chips. */
   get notas(): { chave: string; numero: number; rotulo: string; texto: string }[] {

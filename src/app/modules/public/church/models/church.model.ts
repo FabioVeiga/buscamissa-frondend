@@ -10,6 +10,9 @@ export interface Mass {
   diaDoMes?: number | null;
   diasSemanaExcecao?: number | null;
   semanasDoMes?: number | null;
+  data?: string | null;
+  nome?: string | null;
+  substituiMissasDoDia?: boolean | null;
   descricaoRecorrencia?: string;
   // Confiança (preenchida pelo backend)
   fontePrincipal?: number;
