@@ -528,6 +528,21 @@ export class CityComponent implements OnInit, OnDestroy {
       ig.missas?.some((m: any) => m.diaSemana === 0)
     ).length;
 
+    // Cidade em que NENHUMA paróquia tem horário (419 no sitemap em 11/2026): perguntas
+    // sobre horário seriam respondidas com "ainda não há", na página e no FAQPage. Fica
+    // só o que a página entrega — endereço e contato — no mesmo tom do title da API.
+    if (total > 0 && this.igrejas.every((ig) => !ig.missas?.length)) {
+      this.faqs = [
+        {
+          pergunta: `Onde ficam as igrejas católicas de ${this.cidadeNome}?`,
+          resposta: uma
+            ? `Veja abaixo o endereço e o contato da igreja católica cadastrada em ${local}. Os horários de missa ainda não estão cadastrados.`
+            : `Veja abaixo o endereço e o contato das ${total} igrejas católicas cadastradas em ${local}. Os horários de missa ainda não estão cadastrados.`,
+        },
+      ];
+      return;
+    }
+
     this.faqs = [
       {
         pergunta: `Que horas é a missa hoje em ${this.cidadeNome}?`,

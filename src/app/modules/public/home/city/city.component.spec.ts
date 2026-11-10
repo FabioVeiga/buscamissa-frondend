@@ -325,6 +325,20 @@ describe('CityComponent — a FAQ tem de descrever o que a página entrega', () 
     expect(respostas()).not.toContain('todas as paróquias');
   });
 
+  it('cidade sem nenhum horário não ganha perguntas sobre horário', () => {
+    montar([igreja(1, 'Matriz', []), igreja(2, 'São José', [])]);
+    expect(c.faqs.length).toBe(1);
+    expect(c.faqs[0].pergunta).toContain('Onde ficam as igrejas católicas');
+    expect(c.faqs[0].resposta).toContain('2 igrejas católicas');
+    expect(respostas()).not.toContain('missa hoje');
+    expect(respostas()).not.toContain('missa de domingo');
+  });
+
+  it('basta uma paróquia com horário para voltar às três perguntas', () => {
+    montar([igreja(1, 'Matriz', []), igreja(2, 'São José', [0])]);
+    expect(c.faqs.length).toBe(3);
+  });
+
   it('a FAQ vai para o JSON-LD com o mesmo texto exibido', () => {
     montar([igreja(1, 'Matriz', [0])]);
     const ld = document.querySelector('script[type="application/ld+json"]#faq')
