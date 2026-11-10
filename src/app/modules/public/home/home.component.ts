@@ -234,28 +234,18 @@ export class HomeComponent {
     return this._aplicarQuickFilterChurches(this.churchInfo);
   }
 
+  /**
+   * A→Z, Z→A e Mais próximas vêm ordenadas da API em todas as páginas (grupo, nome ou
+   * distância estrita), então a página fica como chegou: reordenar aqui desfaria os
+   * grupos. Só "Próxima missa" reordena, e só a página atual.
+   */
   private _ordenarIgrejas(lista: Church[]): Church[] {
     const copia = [...lista];
-    switch (this.ordenacaoResultados) {
-      case 'az':
-        return copia.sort((a, b) => (a.nome ?? '').localeCompare(b.nome ?? '', 'pt-BR'));
-      case 'za':
-        return copia.sort((a, b) => (b.nome ?? '').localeCompare(a.nome ?? '', 'pt-BR'));
-      case 'proxima-missa':
-        return copia.sort((a, b) => compararPorProximaMissa(
-          { ...a, inicio: this.proximaMissaDe(a).inicio },
-          { ...b, inicio: this.proximaMissaDe(b).inicio },
-        ));
-      case 'proximidade':
-        if (this._userLat === null || this._userLng === null) return copia;
-        return copia.sort((a, b) => {
-          const dA = this._distHome(a) ?? Infinity;
-          const dB = this._distHome(b) ?? Infinity;
-          return dA - dB;
-        });
-      default:
-        return copia;
-    }
+    if (this.ordenacaoResultados !== 'proxima-missa') return copia;
+    return copia.sort((a, b) => compararPorProximaMissa(
+      { ...a, inicio: this.proximaMissaDe(a).inicio, grupo: a.grupoBusca },
+      { ...b, inicio: this.proximaMissaDe(b).inicio, grupo: b.grupoBusca },
+    ));
   }
 
   /** Próxima missa de uma igreja dos resultados: a mesma para o card e para a ordenação. */
@@ -384,6 +374,12 @@ export class HomeComponent {
 
   /** Ordenação dos resultados da busca */
   ordenacaoResultados: 'az' | 'za' | 'proximidade' | 'proxima-missa' = 'az';
+
+  /**
+   * Ordem que a API aplicou na busca atual. "Próxima missa" é só da página e não troca
+   * isto: a página segue a última ordem da API e é reordenada em cima dela.
+   */
+  private _ordenacaoServidor: 'az' | 'za' | 'proximidade' = 'az';
 
   /** Coords do usuário (preenchidas após geoloc) */
   private _userLat: number | null = null;
@@ -1469,6 +1465,13 @@ export class HomeComponent {
       replaceUrl: true,
     });
 
+    if (this.ordenacaoResultados !== 'proxima-missa') {
+      this._ordenacaoServidor = this.ordenacaoResultados === 'proximidade'
+        ? (this.temGeolocalizacao ? 'proximidade' : 'az')
+        : this.ordenacaoResultados;
+    }
+    const porProximidade = this._ordenacaoServidor === 'proximidade' && this.temGeolocalizacao;
+
     const filters: FilterSearchChurch = {
       Uf: params.uf!,
       Localidade: params.cidade || undefined,
@@ -1477,6 +1480,11 @@ export class HomeComponent {
       DiaDaSemana: this._parseDiaFiltro(params.dia) ?? undefined,
       Horario: params.horario || undefined,
       HorarioFim: params.horarioFim || undefined,
+      // Padrão da API (0, nome A→Z) não vai na query.
+      Ordenacao: porProximidade ? 2 : this._ordenacaoServidor === 'za' ? 1 : undefined,
+      // 4 casas (~11 m): basta para ordenar e não manda a posição exata.
+      Lat: porProximidade ? Number(this._userLat!.toFixed(4)) : undefined,
+      Lng: porProximidade ? Number(this._userLng!.toFixed(4)) : undefined,
       "Paginacao.PageIndex": this.pageIndex,
       "Paginacao.PageSize": this.pageSize,
     };
@@ -1526,8 +1534,16 @@ export class HomeComponent {
     });
   }
 
+  /**
+   * Em /buscar, A→Z, Z→A e Mais próximas são ordens da API, entre páginas: trocar refaz a
+   * busca a partir da página 1. "Próxima missa" só reordena a página. Mais próximas sem
+   * localização fica como antes, sem efeito (o chip mostra o cadeado).
+   */
   setOrdenacaoResultados(o: 'az' | 'za' | 'proximidade' | 'proxima-missa'): void {
     this.ordenacaoResultados = o;
+    if (!this.resultsMode || o === 'proxima-missa' || !this.churchInfo.length) return;
+    if (o === 'proximidade' && !this.temGeolocalizacao) return;
+    if (o !== this._ordenacaoServidor) this.searchFilter(true);
   }
 
   get churchInfoOrdenada(): any[] {
@@ -1588,6 +1604,7 @@ export class HomeComponent {
     this.churchInfo = [];
     this.showNoChurchCard = false;
     this.ordenacaoResultados = 'az';
+    this._ordenacaoServidor = 'az';
     this._router.navigate([], { queryParams: {}, replaceUrl: true });
   }
 

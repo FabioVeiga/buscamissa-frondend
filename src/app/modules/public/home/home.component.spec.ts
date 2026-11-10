@@ -623,13 +623,79 @@ describe('HomeComponent — filtro de dia em /buscar', () => {
       });
     });
 
-    it('mantém A → Z e Z → A', () => {
+    it('A → Z e Z → A mostram a página na ordem da API', () => {
       responder([igreja(1, 'Bento', []), igreja(2, 'Ávila', [])]);
       const c = montar({ uf: 'SP' }, { resultsMode: true });
 
-      expect(c.churchInfoOrdenaFiltrado.map(x => x.nome)).toEqual(['Ávila', 'Bento']);
+      expect(c.churchInfoOrdenaFiltrado.map(x => x.nome)).toEqual(['Bento', 'Ávila']);
       c.setOrdenacaoResultados('za');
       expect(c.churchInfoOrdenaFiltrado.map(x => x.nome)).toEqual(['Bento', 'Ávila']);
+    });
+  });
+
+  describe('ordenação em /buscar', () => {
+    const semanal = { diaSemana: 0, horario: '19:00:00', tipoRecorrencia: 0 };
+    const igreja = (id: number, nome: string, grupoBusca: 1 | 2 | 3) =>
+      ({ id, nome, grupoBusca, missas: grupoBusca === 3 ? [] : [semanal] }) as any;
+    const responder = (items: unknown[], totaisPorGrupo: unknown = null, totalItems = items.length) =>
+      churches.searchByFilters.and.returnValue(of({ data: { items, totalItems, totaisPorGrupo } } as any));
+    const RES = { resultsMode: true };
+
+    it('a busca padrão não manda ordenação nem coordenadas', () => {
+      montar({ uf: 'SP' }, RES);
+
+      expect(ultimaBusca().Ordenacao).toBeUndefined();
+      expect(ultimaBusca().Lat).toBeUndefined();
+    });
+
+    it('Z → A pede a ordem à API a partir da página 1, e A → Z volta ao padrão', () => {
+      responder([igreja(1, 'A', 1)]);
+      const c = montar({ uf: 'SP', pagina: '3' }, RES);
+
+      c.setOrdenacaoResultados('za');
+      expect(ultimaBusca().Ordenacao).toBe(1);
+      expect(ultimaBusca()['Paginacao.PageIndex']).toBe(1);
+
+      c.setOrdenacaoResultados('az');
+      expect(ultimaBusca().Ordenacao).toBeUndefined();
+      expect(churches.searchByFilters).toHaveBeenCalledTimes(3);
+    });
+
+    it('Próxima missa reordena só a página, sem nova busca, e põe horários sem data antes de sem horários', () => {
+      responder([igreja(1, 'Zélia', 3), igreja(2, 'Bento', 2), igreja(3, 'Ávila', 1)]);
+      const c = montar({ uf: 'SP' }, RES);
+      const chamadas = churches.searchByFilters.calls.count();
+      // Grupo 2 com regra sem próxima ocorrência no navegador também (dia fixo 31 com exceção em todos os dias).
+      c.churchInfo[1].missas = [{ diaSemana: 0, horario: '19:00:00', tipoRecorrencia: 2, diaDoMes: 31, diasSemanaExcecao: 0b1111111 } as any];
+      (c as any)._proximasFonte = null;
+
+      c.setOrdenacaoResultados('proxima-missa');
+
+      expect(churches.searchByFilters.calls.count()).toBe(chamadas);
+      expect(c.churchInfoOrdenaFiltrado.map(x => x.nome)).toEqual(['Ávila', 'Bento', 'Zélia']);
+    });
+
+    it('Mais próximas sem localização não refaz a busca', () => {
+      responder([igreja(1, 'A', 1)]);
+      const c = montar({ uf: 'SP' }, RES);
+      const chamadas = churches.searchByFilters.calls.count();
+
+      c.setOrdenacaoResultados('proximidade');
+
+      expect(churches.searchByFilters.calls.count()).toBe(chamadas);
+    });
+
+    it('Mais próximas com localização manda a origem com 4 casas', () => {
+      responder([igreja(1, 'A', 1)]);
+      const c = montar({ uf: 'SP' }, RES);
+      (c as any)._userLat = -23.5505199;
+      (c as any)._userLng = -46.6333094;
+
+      c.setOrdenacaoResultados('proximidade');
+
+      expect(ultimaBusca().Ordenacao).toBe(2);
+      expect(ultimaBusca().Lat).toBe(-23.5505);
+      expect(ultimaBusca().Lng).toBe(-46.6333);
     });
   });
 });
