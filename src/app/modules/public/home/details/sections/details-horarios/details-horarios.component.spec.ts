@@ -86,4 +86,22 @@ describe('DetailsHorariosComponent — observações e aviso', () => {
     const texto = montar([{ diaSemana: 1, horario: '07:00:00' }]).querySelector('.horarios-rodape')!.textContent!;
     expect(texto).toContain('Sem missa:');
   });
+
+  it('lista as datas especiais futuras com nome e avisa quando substituem as normais', () => {
+    const futura = new Date();
+    futura.setDate(futura.getDate() + 20);
+    const iso = `${futura.getFullYear()}-${String(futura.getMonth() + 1).padStart(2, '0')}-${String(futura.getDate()).padStart(2, '0')}`;
+    const el = montar([
+      { diaSemana: 0, horario: '09:00:00' },
+      { diaSemana: futura.getDay(), horario: '22:00:00', tipoRecorrencia: 3, data: iso, nome: 'Missa do Galo', substituiMissasDoDia: true },
+      { diaSemana: 1, horario: '08:00:00', tipoRecorrencia: 3, data: '2020-12-25', nome: 'Missa antiga' },
+    ]);
+    const bloco = el.querySelector('.datas-especiais')!.textContent!.replace(/\s+/g, ' ');
+    expect(bloco).toContain('Missa do Galo');
+    expect(bloco).toContain('22h');
+    expect(bloco).toContain('não há as missas dos horários normais');
+    expect(bloco).not.toContain('Missa antiga');
+    // a especial não entra na grade semanal nem na lista de dia fixo
+    expect(el.textContent).not.toContain('Missas em datas do mês');
+  });
 });

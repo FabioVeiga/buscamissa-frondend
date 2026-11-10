@@ -15,6 +15,7 @@ import { FormsModule } from "@angular/forms";
 import { ActivatedRoute, Router, RouterLink } from "@angular/router";
 import { Mass } from "../../church/models/church.model";
 import { getNextOccurrenceMinutes } from "../../../../shared/utils/mass-time.utils";
+import { datasSubstituidas } from "../../../../shared/utils/recorrencia-missa";
 import { AnalyticsService, ShareMethod } from "../../../../core/services/analytics.service";
 import { linkWhatsappIgreja, mensagemCompartilharIgreja } from "../../../../shared/utils/compartilhar-whatsapp.utils";
 import { ClarityService } from "../../../../core/services/clarity.service";
@@ -397,9 +398,10 @@ export class DetailsComponent implements OnInit {
   get proximaMissa(): Mass | null {
     const missas: Mass[] = this.churchInfo?.missas ?? [];
     if (!missas.length) return null;
+    const subst = datasSubstituidas(missas);
     return missas.reduce((melhor, m) => {
-      const min = getNextOccurrenceMinutes(m.diaSemana!, m.horario, m);
-      const melhorMin = getNextOccurrenceMinutes(melhor.diaSemana!, melhor.horario, melhor);
+      const min = getNextOccurrenceMinutes(m.diaSemana!, m.horario, m, subst);
+      const melhorMin = getNextOccurrenceMinutes(melhor.diaSemana!, melhor.horario, melhor, subst);
       return min < melhorMin ? m : melhor;
     });
   }

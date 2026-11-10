@@ -28,10 +28,11 @@ export function formatDistance(meters: number): string {
 export function getNextOccurrenceMinutes(
   diaSemana: number,
   horario: string,
-  regra?: TipoDaRegra | null
+  regra?: TipoDaRegra | null,
+  substituidas?: ReadonlySet<string>
 ): number {
   const now = new Date();
-  const proxima = proximaData(diaSemana, horario, regra, now);
+  const proxima = proximaData(diaSemana, horario, regra, now, substituidas);
   if (!proxima) return Number.POSITIVE_INFINITY;
   return Math.round((proxima.getTime() - now.getTime()) / 60_000);
 }
@@ -41,9 +42,12 @@ function proximaData(
   diaSemana: number,
   horario: string,
   regra: TipoDaRegra | null | undefined,
-  agora: Date
+  agora: Date,
+  substituidas?: ReadonlySet<string>
 ): Date | null {
-  if (regra && !ehSemanal(regra)) return proximaOcorrencia({ ...regra, diaSemana, horario }, agora);
+  // Dia com missa especial "substitui as normais": a semanal também passa pela regra completa.
+  if (regra && (!ehSemanal(regra) || substituidas?.size))
+    return proximaOcorrencia({ ...regra, diaSemana, horario }, agora, undefined, substituidas);
 
   const [h, m] = horario.split(':').map(Number);
   const target = new Date(agora);

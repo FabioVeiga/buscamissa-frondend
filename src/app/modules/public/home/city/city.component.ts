@@ -1,4 +1,4 @@
-import { ehSemanal, ocorreNoDia, ocorreNoFimDeSemana } from '../../../../shared/utils/recorrencia-missa';
+import { datasSubstituidas, ehSemanal, ocorreNoDia, ocorreNoFimDeSemana } from '../../../../shared/utils/recorrencia-missa';
 import { Component, DestroyRef, inject, OnDestroy, OnInit, PLATFORM_ID } from "@angular/core";
 import { takeUntilDestroyed } from "@angular/core/rxjs-interop";
 import { CommonModule, isPlatformBrowser } from "@angular/common";
@@ -298,9 +298,9 @@ export class CityComponent implements OnInit, OnDestroy {
 
     // Quick filters
     if (this.quickFilter === 'hoje') {
-      lista = lista.filter(ig => ig.missas?.some((m: any) => ocorreNoDia(m, 0)));
+      lista = lista.filter(ig => ig.missas?.some((m: any) => ocorreNoDia(m, 0, undefined, datasSubstituidas(ig.missas))));
     } else if (this.quickFilter === 'amanha') {
-      lista = lista.filter(ig => ig.missas?.some((m: any) => ocorreNoDia(m, 1)));
+      lista = lista.filter(ig => ig.missas?.some((m: any) => ocorreNoDia(m, 1, undefined, datasSubstituidas(ig.missas))));
     } else if (this.quickFilter === 'fds') {
       lista = lista.filter(ig => ig.missas?.some((m: any) => ocorreNoFimDeSemana(m)));
     }
@@ -349,15 +349,16 @@ export class CityComponent implements OnInit, OnDestroy {
   }
 
   private _minProximaMissa(igreja: any): number {
-    const missas: any[] = (igreja.missas ?? []).filter((m: any) => this._missaPassaFiltro(m));
+    const missas: any[] = (igreja.missas ?? []).filter((m: any) => this._missaPassaFiltro(m, datasSubstituidas(igreja.missas)));
     if (!missas.length) return Infinity;
-    return Math.min(...missas.map((m) => getNextOccurrenceMinutes(m.diaSemana, m.horario, m)));
+    const subst = datasSubstituidas(igreja.missas);
+    return Math.min(...missas.map((m) => getNextOccurrenceMinutes(m.diaSemana, m.horario, m, subst)));
   }
 
   /** A missa entra no filtro de dia ativo (Hoje/Amanhã/Fim de semana ou dia da semana)? */
-  private _missaPassaFiltro(m: any): boolean {
-    if (this.quickFilter === 'hoje') return ocorreNoDia(m, 0);
-    if (this.quickFilter === 'amanha') return ocorreNoDia(m, 1);
+  private _missaPassaFiltro(m: any, substituidas?: ReadonlySet<string>): boolean {
+    if (this.quickFilter === 'hoje') return ocorreNoDia(m, 0, undefined, substituidas);
+    if (this.quickFilter === 'amanha') return ocorreNoDia(m, 1, undefined, substituidas);
     if (this.quickFilter === 'fds') return ocorreNoFimDeSemana(m);
     if (this.diaAtivo !== null) return ehSemanal(m) && m.diaSemana === this.diaAtivo;
     return true;
@@ -369,7 +370,7 @@ export class CityComponent implements OnInit, OnDestroy {
     let candidatas: any[] = igreja.missas ?? [];
     if (!candidatas.length) return null;
 
-    candidatas = candidatas.filter((m) => this._missaPassaFiltro(m));
+    candidatas = candidatas.filter((m) => this._missaPassaFiltro(m, datasSubstituidas(igreja.missas)));
 
     if (this.periodoAtivo && PERIODOS[this.periodoAtivo]) {
       const { de, ate } = PERIODOS[this.periodoAtivo];
@@ -382,9 +383,10 @@ export class CityComponent implements OnInit, OnDestroy {
 
     if (!candidatas.length) candidatas = igreja.missas ?? [];
 
+    const subst = datasSubstituidas(igreja.missas);
     return candidatas.reduce((melhor: any, m: any) => {
-      const min = getNextOccurrenceMinutes(m.diaSemana, m.horario, m);
-      const melhorMin = getNextOccurrenceMinutes(melhor.diaSemana, melhor.horario, melhor);
+      const min = getNextOccurrenceMinutes(m.diaSemana, m.horario, m, subst);
+      const melhorMin = getNextOccurrenceMinutes(melhor.diaSemana, melhor.horario, melhor, subst);
       return min < melhorMin ? m : melhor;
     });
   }
