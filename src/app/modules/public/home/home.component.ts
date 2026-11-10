@@ -550,12 +550,20 @@ export class HomeComponent {
       .catch(() => this._cepNaoEncontrado());
   }
 
-  /** Geocodifica o CEP apenas para ordenar os resultados por proximidade (fire-and-forget) */
-  private _ordenarPorProximidadeDoCep(cep: string): void {
-    fetch(`https://viacep.com.br/ws/${cep}/json/`)
+  /** Tempo máximo esperando a geocodificação do CEP antes de buscar sem proximidade. */
+  private static readonly ESPERA_CEP_MS = 4000;
+
+  /**
+   * Geocodifica o CEP para a API ordenar por proximidade em todas as páginas. Resolve
+   * `true` com as coordenadas gravadas; `false` se o CEP não geocodificar ou demorar mais
+   * que ESPERA_CEP_MS, e nesse caso uma resposta tardia é ignorada (a busca já saiu).
+   */
+  private _ordenarPorProximidadeDoCep(cep: string): Promise<boolean> {
+    let expirou = false;
+    const geocodificar = fetch(`https://viacep.com.br/ws/${cep}/json/`)
       .then(r => r.json())
       .then((addr: any) => {
-        if (!addr || addr.erro) return;
+        if (!addr || addr.erro) return false;
         const query = encodeURIComponent(
           [addr.logradouro, addr.bairro, addr.localidade, addr.uf, 'Brazil'].filter(Boolean).join(', ')
         );
@@ -563,14 +571,19 @@ export class HomeComponent {
           .then(r => r.json())
           .then((arr: any[]) => {
             const hit = arr?.[0];
-            if (hit?.lat && hit?.lon) {
-              this._userLat = parseFloat(hit.lat);
-              this._userLng = parseFloat(hit.lon);
-              this.ordenacaoResultados = 'proximidade';
-            }
+            if (expirou || !hit?.lat || !hit?.lon) return false;
+            this._userLat = parseFloat(hit.lat);
+            this._userLng = parseFloat(hit.lon);
+            this.ordenacaoResultados = 'proximidade';
+            return true;
           });
       })
-      .catch(() => {});
+      .catch(() => false);
+    const limite = new Promise<boolean>(resolve => setTimeout(() => {
+      expirou = true;
+      resolve(false);
+    }, HomeComponent.ESPERA_CEP_MS));
+    return Promise.race([geocodificar, limite]);
   }
 
   private _cepNaoEncontrado(): void {
@@ -1107,11 +1120,17 @@ export class HomeComponent {
     if (p['pagina']) this.pageIndex = Number(p['pagina']);
 
     // Busca veio do CEP: abre a aba de CEP com o valor preenchido (continuidade),
-    // preserva o param na URL e ordena por proximidade
+    // preserva o param na URL e espera a geocodificação para a API ordenar por
+    // proximidade. Sem coordenadas a tempo, busca na ordem padrão.
     if (p['cep']) {
       this.searchTab = 'local';
       this.form.get('Cep')?.setValue(p['cep']);
-      this._ordenarPorProximidadeDoCep(String(p['cep']));
+      this.isLoading = true;
+      this._ordenarPorProximidadeDoCep(String(p['cep'])).then(() => {
+        this.isLoading = false;
+        this.searchFilter(false);
+      });
+      return;
     }
 
     this.searchFilter(false);

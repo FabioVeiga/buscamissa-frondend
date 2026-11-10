@@ -697,5 +697,57 @@ describe('HomeComponent — filtro de dia em /buscar', () => {
       expect(ultimaBusca().Lat).toBe(-23.5505);
       expect(ultimaBusca().Lng).toBe(-46.6333);
     });
+
+    describe('busca vinda do CEP', () => {
+      const json = (corpo: unknown) => Promise.resolve({ json: () => Promise.resolve(corpo) } as Response);
+      const esvaziar = async () => { for (let i = 0; i < 10; i++) await Promise.resolve(); };
+
+      it('espera a geocodificação e pede proximidade à API', async () => {
+        spyOn(window, 'fetch').and.callFake((url: any) => String(url).includes('viacep')
+          ? json({ logradouro: 'Praça da Sé', localidade: 'São Paulo', uf: 'SP' })
+          : json([{ lat: '-23.55052', lon: '-46.63331' }]));
+
+        const c = montar({ uf: 'SP', cidade: 'São Paulo', cep: '01001000' }, RES);
+        expect(churches.searchByFilters).not.toHaveBeenCalled();
+
+        await esvaziar();
+
+        expect(ultimaBusca().Ordenacao).toBe(2);
+        expect(ultimaBusca().Lat).toBe(-23.5505);
+        expect(c.ordenacaoResultados).toBe('proximidade');
+      });
+
+      it('sem coordenadas, busca na ordem padrão', async () => {
+        spyOn(window, 'fetch').and.returnValue(Promise.reject(new Error('offline')));
+
+        const c = montar({ uf: 'SP', cep: '01001000' }, RES);
+        await esvaziar();
+
+        expect(ultimaBusca().Ordenacao).toBeUndefined();
+        expect(c.ordenacaoResultados).toBe('az');
+      });
+
+      it('geocodificação lenta: busca sem proximidade e ignora a resposta tardia', async () => {
+        jasmine.clock().install();
+        let responderNominatim!: (r: Response) => void;
+        spyOn(window, 'fetch').and.callFake((url: any) => String(url).includes('viacep')
+          ? json({ localidade: 'São Paulo', uf: 'SP' })
+          : new Promise<Response>(r => { responderNominatim = r; }));
+        try {
+          const c = montar({ uf: 'SP', cep: '01001000' }, RES);
+          await esvaziar();
+          jasmine.clock().tick(4000);
+          await esvaziar();
+
+          expect(ultimaBusca().Ordenacao).toBeUndefined();
+
+          responderNominatim({ json: () => Promise.resolve([{ lat: '-23.5', lon: '-46.6' }]) } as Response);
+          await esvaziar();
+          expect(c.ordenacaoResultados).toBe('az');
+        } finally {
+          jasmine.clock().uninstall();
+        }
+      });
+    });
   });
 });
