@@ -39,7 +39,7 @@ describe('ChurchResultCardComponent', () => {
     const el = montar([]);
 
     expect(texto(el)).toContain('Horários não informados');
-    expect(botao(el)).toBe('Ver paróquia');
+    expect(botao(el)).toBe('Ver horários');
     expect(el.querySelector('app-confidence-badge')).toBeNull();
     expect(el.querySelector('.city-card__hora')).toBeNull();
   });
