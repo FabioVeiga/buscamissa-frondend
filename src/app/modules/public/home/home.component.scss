@@ -445,6 +445,18 @@ $texto-2: #6b7280;
   margin-top: 0.75rem;
 }
 
+// Título de grupo (com próximas missas / horários sem próxima data / sem horários):
+// rótulo discreto, no tom dos textos secundários, para não competir com os cards.
+.resultados-grupo {
+  margin: 0.5rem 0 -0.25rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: $texto-2;
+  letter-spacing: 0.01em;
+
+  &:first-child { margin-top: 0; }
+}
+
 .home-instagram {
   margin-top: 1.25rem;
 

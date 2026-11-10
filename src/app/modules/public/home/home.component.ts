@@ -20,7 +20,9 @@ import { PrimeNgModule } from "../../../shared/primeng.module";
 import {
   Church,
   FilterSearchChurch,
+  GrupoBusca,
   Mass,
+  TotaisPorGrupoBusca,
 } from "../../../core/interfaces/church.interface";
 import { HttpErrorResponse } from "@angular/common/http";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
@@ -248,6 +250,38 @@ export class HomeComponent {
     ));
   }
 
+  /** Grupos com título, na ordem da API (GrupoBuscaEnum). */
+  private static readonly TITULOS_GRUPO: Record<GrupoBusca, string> = {
+    1: 'Com próximas missas',
+    2: 'Horários sem próxima data',
+    3: 'Sem horários informados',
+  };
+
+  /**
+   * Título antes do card `indice`, quando ele abre um grupo. Só nas ordens por nome, que
+   * agrupam, e só se o resultado tem mais de um grupo. O primeiro card da página só ganha
+   * título se o grupo começa nele: a página que começa no meio de um grupo não repete o título.
+   */
+  tituloGrupo(indice: number): string | null {
+    const ordemPorNome = this.ordenacaoResultados === 'az' || this.ordenacaoResultados === 'za';
+    const filtroDaPagina = this.quickFilter !== null && this.quickFilter !== 'perto';
+    const totais = this.totaisPorGrupo;
+    if (!this.resultsMode || !ordemPorNome || filtroDaPagina || !totais) return null;
+
+    const porGrupo: Record<GrupoBusca, number> = { 1: totais.comProximaMissa, 2: totais.semProximaData, 3: totais.semHorarios };
+    if (Object.values(porGrupo).filter(n => n > 0).length < 2) return null;
+
+    const lista = this.churchInfoOrdenaFiltrado;
+    const grupo = lista[indice]?.grupoBusca;
+    if (!grupo) return null;
+
+    if (indice > 0) {
+      return lista[indice - 1].grupoBusca !== grupo ? HomeComponent.TITULOS_GRUPO[grupo] : null;
+    }
+    const inicioDoGrupo = ([1, 2, 3] as GrupoBusca[]).filter(g => g < grupo).reduce((s, g) => s + porGrupo[g], 0);
+    return (this.pageIndex - 1) * this.pageSize === inicioDoGrupo ? HomeComponent.TITULOS_GRUPO[grupo] : null;
+  }
+
   /** Próxima missa de uma igreja dos resultados: a mesma para o card e para a ordenação. */
   proximaMissaDe(church: Church): ProximaMissaCard {
     this._garantirProximas();
@@ -380,6 +414,9 @@ export class HomeComponent {
    * isto: a página segue a última ordem da API e é reordenada em cima dela.
    */
   private _ordenacaoServidor: 'az' | 'za' | 'proximidade' = 'az';
+
+  /** Total por grupo da busca atual, para decidir onde entram os títulos dos grupos. */
+  totaisPorGrupo: TotaisPorGrupoBusca | null = null;
 
   /** Coords do usuário (preenchidas após geoloc) */
   private _userLat: number | null = null;
@@ -1518,6 +1555,7 @@ export class HomeComponent {
         this.agoraResultados = new Date();
         this.churchInfo = data.data.items;
         this.totalRecords = data.data.totalItems;
+        this.totaisPorGrupo = data.data.totaisPorGrupo ?? null;
         this.isLoading = false;
 
         if (!this.churchInfo.length) {
@@ -1624,6 +1662,7 @@ export class HomeComponent {
     this.showNoChurchCard = false;
     this.ordenacaoResultados = 'az';
     this._ordenacaoServidor = 'az';
+    this.totaisPorGrupo = null;
     this._router.navigate([], { queryParams: {}, replaceUrl: true });
   }
 
