@@ -299,7 +299,7 @@
         <span class="adicionar-missa__titulo">Adicionar horário</span>
         <div class="chips-freq" role="group" aria-label="Frequência">
           <button *ngFor="let f of frequencias" type="button" class="chip-freq"
-                  [class.chip-freq--ativo]="nova.freq === f.valor" (click)="nova.freq = f.valor">{{ f.rotulo }}</button>
+                  [class.chip-freq--ativo]="nova.freq === f.valor" (click)="nova.freq = f.valor">{{ f.rotulo }}<span *ngIf="contagemPorFreq[f.valor]" class="chip-freq__qtd">{{ contagemPorFreq[f.valor] }}</span></button>
         </div>
 
         <div class="adicionar-missa__campos">
@@ -352,27 +352,32 @@
         <p class="dica-hora">Use o formato 24h, ex.: 07:30, 19:00.</p>
       </div>
 
-      <!-- Lista: agrupada por tipo; só horário e observação (e nome, nas datas especiais) são editáveis. -->
+      <!-- Lista: mostra só os horários da frequência escolhida acima; só horário e observação
+           (e nome, nas datas especiais) são editáveis. -->
       <div class="lista-missas">
-        <p *ngIf="!missas.length" class="vazio-missas">Nenhum horário cadastrado ainda. Use "Adicionar horário" acima.</p>
-        <div *ngFor="let g of gruposMissas; trackBy: trackGrupo" class="grupo-missas">
-          <h3 class="grupo-missas__titulo"><i class="pi" [ngClass]="g.icone"></i> {{ g.titulo }}</h3>
-          <div *ngFor="let item of g.itens; trackBy: trackLinha" [formGroup]="item.ctrl" class="linha-missa">
-            <span class="linha-missa__descricao">{{ item.descricao }}</span>
-            <input *ngIf="item.especial" pInputText formControlName="nome" maxlength="80" placeholder="Nome (ex.: Natal)"
-                   class="linha-missa__nome" />
-            <input pInputText formControlName="horario" placeholder="HH:mm" maxlength="5" class="input-hora"
-                   (blur)="normalizarHorario(item.ctrl.get('horario'))"
-                   [class.ng-invalid-visual]="item.ctrl.get('horario')?.invalid && item.ctrl.get('horario')?.touched" />
-            <input pInputText formControlName="observacao" placeholder="Observação (opcional)"
-                   [class.ng-invalid-visual]="item.ctrl.get('observacao')?.invalid" />
-            <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm"
-                    (click)="removerMissa(item.ctrl)" aria-label="Remover horário"></button>
-            <label *ngIf="item.especial" class="excecao-dia linha-missa__substitui">
-              <input type="checkbox" formControlName="substituiMissasDoDia" /> Substitui as missas normais do dia
-            </label>
+        <ng-container *ngFor="let g of gruposMissas; trackBy: trackGrupo">
+          <div *ngIf="g.freq === nova.freq" class="grupo-missas">
+            <h3 class="grupo-missas__titulo"><i class="pi" [ngClass]="g.icone"></i> {{ g.titulo }}</h3>
+            <p *ngIf="!g.itens.length" class="vazio-missas">
+              Nenhum horário cadastrado aqui ainda. Preencha "Adicionar horário" acima.
+            </p>
+            <div *ngFor="let item of g.itens; trackBy: trackLinha" [formGroup]="item.ctrl" class="linha-missa">
+              <span class="linha-missa__descricao">{{ item.descricao }}</span>
+              <input *ngIf="item.especial" pInputText formControlName="nome" maxlength="80" placeholder="Nome (ex.: Natal)"
+                     class="linha-missa__nome" />
+              <input pInputText formControlName="horario" placeholder="HH:mm" maxlength="5" class="input-hora"
+                     (blur)="normalizarHorario(item.ctrl.get('horario'))"
+                     [class.ng-invalid-visual]="item.ctrl.get('horario')?.invalid && item.ctrl.get('horario')?.touched" />
+              <input pInputText formControlName="observacao" placeholder="Observação (opcional)"
+                     [class.ng-invalid-visual]="item.ctrl.get('observacao')?.invalid" />
+              <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm"
+                      (click)="removerMissa(item.ctrl)" aria-label="Remover horário"></button>
+              <label *ngIf="item.especial" class="excecao-dia linha-missa__substitui">
+                <input type="checkbox" formControlName="substituiMissasDoDia" /> Substitui as missas normais do dia
+              </label>
+            </div>
           </div>
-        </div>
+        </ng-container>
       </div>
       <p *ngFor="let a of alertasMissas" class="alerta-missa">⚠ {{ a }}</p>
     </section>
@@ -383,27 +388,58 @@
       <p class="dica-hora" style="margin-top:0">
         Horários da secretaria e de confissão — aparecem na página da igreja.
       </p>
-      <div formArrayName="sessoes">
-        <div *ngFor="let sessao of sessoes.controls; let i = index" [formGroupName]="i" class="linha-sessao">
-          <p-select formControlName="tipo" [options]="tiposSessao" optionLabel="nome" optionValue="valor"
-                    styleClass="w-full" appendTo="body"></p-select>
-          <p-select formControlName="diaSemana" [options]="dias" optionLabel="nome" optionValue="valor"
-                    styleClass="w-full" appendTo="body"></p-select>
-          <input pInputText formControlName="horarioInicio" placeholder="09:00" maxlength="5" class="input-hora"
-                 (blur)="normalizarHorario(sessoes.at(i).get('horarioInicio'))"
-                 [class.ng-invalid-visual]="sessoes.at(i).get('horarioInicio')?.invalid && sessoes.at(i).get('horarioInicio')?.touched" />
+
+      <div class="adicionar-missa">
+        <span class="adicionar-missa__titulo">Adicionar horário</span>
+        <div class="chips-freq" role="group" aria-label="Tipo">
+          <button *ngFor="let t of tiposSessao" type="button" class="chip-freq"
+                  [class.chip-freq--ativo]="novaSessao.tipo === t.valor" (click)="novaSessao.tipo = t.valor">{{ t.nome }}</button>
+        </div>
+
+        <div class="chips-freq" role="group" aria-label="Dias da semana">
+          <button *ngFor="let d of diasSessao" type="button" class="chip-dia" [attr.aria-pressed]="novaSessao.dias.includes(d.valor)"
+                  [class.chip-dia--ativo]="novaSessao.dias.includes(d.valor)" [title]="d.nome" (click)="toggleDiaSessao(d.valor)">{{ d.curto }}</button>
+        </div>
+        <div class="sugestoes-nome">
+          <span>Atalhos:</span>
+          <button *ngFor="let a of atalhosDias" type="button" class="chip-freq chip-freq--leve" (click)="aplicarAtalhoDias(a.dias)">{{ a.rotulo }}</button>
+        </div>
+
+        <div class="adicionar-missa__campos">
+          <input pInputText [(ngModel)]="novaSessao.inicio" [ngModelOptions]="{ standalone: true }" placeholder="08:00"
+                 maxlength="5" class="input-hora" aria-label="Início" />
           <span class="ate">às</span>
-          <input pInputText formControlName="horarioFim" placeholder="17:00" maxlength="5" class="input-hora"
-                 (blur)="normalizarHorario(sessoes.at(i).get('horarioFim'))"
-                 [class.ng-invalid-visual]="sessoes.at(i).get('horarioFim')?.invalid && sessoes.at(i).get('horarioFim')?.touched" />
-          <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm"
-                  (click)="removerSessao(i)" aria-label="Remover sessão"></button>
-          <input pInputText formControlName="observacao" placeholder="Observação (opcional, até 50 caracteres)"
-                 maxlength="50" class="obs-sessao" />
+          <input pInputText [(ngModel)]="novaSessao.fim" [ngModelOptions]="{ standalone: true }" placeholder="12:00"
+                 maxlength="5" class="input-hora" aria-label="Fim" (keyup.enter)="adicionarNovaSessao()" />
+          <input pInputText [(ngModel)]="novaSessao.observacao" [ngModelOptions]="{ standalone: true }" maxlength="50"
+                 placeholder="Observação (opcional)" class="input-obs" (keyup.enter)="adicionarNovaSessao()" />
+          <button pButton type="button" icon="pi pi-plus" label="Adicionar" class="p-button-sm"
+                  [disabled]="!podeAdicionarSessao" (click)="adicionarNovaSessao()"></button>
+        </div>
+        <p *ngIf="avisoSessao" class="alerta-missa">⚠ {{ avisoSessao }}</p>
+        <p class="dica-hora">Escolha um ou mais dias e o horário: um atendimento é criado para cada dia. Formato 24h, ex.: 08:00.</p>
+      </div>
+
+      <div class="lista-missas">
+        <p *ngIf="!sessoes.length" class="vazio-missas">Nenhum horário cadastrado ainda.</p>
+        <div *ngFor="let g of gruposSessoes; trackBy: trackGrupoSessao" class="grupo-missas">
+          <h3 class="grupo-missas__titulo"><i class="pi" [ngClass]="g.icone"></i> {{ g.titulo }}</h3>
+          <div *ngFor="let item of g.itens; trackBy: trackSessao" [formGroup]="item.ctrl" class="linha-sessao-nova">
+            <span class="linha-sessao-nova__dia">{{ item.dia }}</span>
+            <input pInputText formControlName="horarioInicio" placeholder="08:00" maxlength="5" class="input-hora"
+                   (blur)="normalizarHorario(item.ctrl.get('horarioInicio'))"
+                   [class.ng-invalid-visual]="item.ctrl.get('horarioInicio')?.invalid && item.ctrl.get('horarioInicio')?.touched" />
+            <span class="ate">às</span>
+            <input pInputText formControlName="horarioFim" placeholder="12:00" maxlength="5" class="input-hora"
+                   (blur)="normalizarHorario(item.ctrl.get('horarioFim'))"
+                   [class.ng-invalid-visual]="item.ctrl.get('horarioFim')?.invalid && item.ctrl.get('horarioFim')?.touched" />
+            <input pInputText formControlName="observacao" placeholder="Observação (opcional)" maxlength="50"
+                   class="linha-sessao-nova__obs" />
+            <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm"
+                    (click)="removerSessao(item.ctrl)" aria-label="Remover horário"></button>
+          </div>
         </div>
       </div>
-      <button pButton type="button" icon="pi pi-plus" label="Adicionar horário de atendimento"
-              class="p-button-text p-button-sm mt-1" (click)="adicionarSessao()"></button>
     </section>
 
     <div class="acoes">
