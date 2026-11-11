@@ -98,6 +98,14 @@ $muted: #6b7280;
     text-decoration: none; color: $texto;
   }
   a:hover, a:focus-visible { background: $creme; }
+
+  // Opção ativa pelo teclado. Fundo creme mais forte + barra laranja à esquerda:
+  // o fundo sozinho é igual ao hover, e quem navega por seta precisa distinguir
+  // "onde estou" de "onde o mouse passou".
+  a.sugestoes__opcao--ativa {
+    background: #fdeee2;
+    box-shadow: inset 3px 0 0 $laranja-vivo;
+  }
   i { color: $laranja-vivo; font-size: 0.9rem; flex: 0 0 auto; }
 
   &__nome { font-weight: 600; }

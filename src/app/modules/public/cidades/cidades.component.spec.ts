@@ -152,6 +152,89 @@ describe('CidadesComponent — hero e busca', () => {
     expect(raiz.querySelector('.sugestoes__vazio')!.textContent).toContain('Não encontramos nada');
   });
 
+  // ── Teclado no autocomplete (etapa 6) ───────────────────────────────────────
+  describe('navegação por teclado', () => {
+    const tecla = (key: string) => {
+      const ev = new KeyboardEvent('keydown', { key, cancelable: true });
+      campo().dispatchEvent(ev);
+      fixture.detectChanges();
+      return ev;
+    };
+    const opcoes = () => [...raiz.querySelectorAll('.sugestoes [role="option"]')] as HTMLElement[];
+    const ativas = () => opcoes().filter((o) => o.getAttribute('aria-selected') === 'true');
+
+    /** Abre o painel e garante que há mais de uma opção para navegar. */
+    const abrirCom = (texto: string) => {
+      digitar(texto);
+      expect(opcoes().length).withContext(`"${texto}" deveria abrir o painel com 2+ opções`).toBeGreaterThan(1);
+    };
+
+    it('sem seta, nenhuma opção está ativa e o campo não aponta para nenhuma', () => {
+      abrirCom('i');
+      expect(ativas().length).toBe(0);
+      expect(campo().getAttribute('aria-activedescendant')).toBeNull();
+      expect(opcoes().every((o) => o.getAttribute('aria-selected') === 'false')).toBeTrue();
+    });
+
+    it('↓ ativa a primeira opção: aria-selected, destaque e aria-activedescendant', () => {
+      abrirCom('i');
+      const ev = tecla('ArrowDown');
+      expect(ev.defaultPrevented).withContext('a seta não pode mover o cursor do texto').toBeTrue();
+      expect(ativas()).toEqual([opcoes()[0]]);
+      expect(opcoes()[0].classList.contains('sugestoes__opcao--ativa')).toBeTrue();
+      expect(campo().getAttribute('aria-activedescendant')).toBe(opcoes()[0].id);
+    });
+
+    it('↓ dá a volta da última para a primeira; ↑ sem opção ativa vai à última', () => {
+      abrirCom('i');
+      const n = opcoes().length;
+      tecla('ArrowUp');
+      expect(ativas()).toEqual([opcoes()[n - 1]]);
+      tecla('ArrowDown');
+      expect(ativas()).toEqual([opcoes()[0]]);
+    });
+
+    it('Enter vai para a opção ativa, não para a primeira', () => {
+      abrirCom('i');
+      tecla('ArrowDown');
+      tecla('ArrowDown');
+      const destino = opcoes()[1].getAttribute('href')!.split('/').filter(Boolean);
+      tecla('Enter');
+      expect(router.navigate).toHaveBeenCalledOnceWith(['/' + destino[0], ...destino.slice(1)]);
+    });
+
+    it('Esc fecha o painel, mantém o texto e zera a opção ativa', () => {
+      abrirCom('i');
+      tecla('ArrowDown');
+      const ev = tecla('Escape');
+      expect(ev.defaultPrevented).toBeTrue();
+      expect(raiz.querySelector('.sugestoes')).toBeNull();
+      expect(campo().value).toBe('i');
+      expect(campo().getAttribute('aria-activedescendant')).toBeNull();
+    });
+
+    it('com o painel fechado, a seta reabre sem ativar nada ainda', () => {
+      abrirCom('i');
+      tecla('Escape');
+      tecla('ArrowDown');
+      expect(opcoes().length).toBeGreaterThan(1);
+      expect(ativas().length).toBe(0);
+    });
+
+    it('digitar de novo descarta a opção ativa', () => {
+      abrirCom('i');
+      tecla('ArrowDown');
+      digitar('it');
+      expect(ativas().length).toBe(0);
+    });
+
+    it('o campo se declara combobox com lista', () => {
+      expect(campo().getAttribute('role')).toBe('combobox');
+      expect(campo().getAttribute('aria-autocomplete')).toBe('list');
+      expect(campo().getAttribute('aria-controls')).toBe('sugestoes-busca');
+    });
+  });
+
   it('Enter continua levando ao primeiro resultado', () => {
     digitar('sao paulo');
     campo().dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter' }));

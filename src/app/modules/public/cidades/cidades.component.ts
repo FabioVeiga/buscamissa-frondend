@@ -219,6 +219,8 @@ export class CidadesComponent implements OnInit, OnDestroy {
   // ============================ busca do hero ============================
 
   aoDigitar(): void {
+    // Texto novo, lista nova: a opção ativa anterior não vale mais.
+    this.ativo = -1;
     this.garantirIndice();
     this.recalcular();
     this.mostrarSugestoes = !!this.buscaHero.trim();
@@ -244,6 +246,87 @@ export class CidadesComponent implements OnInit, OnDestroy {
    */
   fecharSugestoes(): void {
     this.mostrarSugestoes = false;
+    this.ativo = -1;
+  }
+
+  // ── Navegação por teclado (padrão combobox da WAI-ARIA) ────────────────────
+  // O foco fica SEMPRE no campo; a opção "ativa" é anunciada pelo
+  // `aria-activedescendant`. Assim quem usa leitor de tela ouve a opção e pode
+  // continuar digitando sem perder o lugar.
+
+  /**
+   * Índice da opção ativa na lista achatada (cidades primeiro, depois igrejas,
+   * na ordem do painel). -1 = nenhuma: o Enter mantém o comportamento antigo
+   * de ir ao primeiro resultado.
+   */
+  ativo = -1;
+
+  private get totalOpcoes(): number {
+    return this.resultado.cidades.length + this.resultado.igrejas.length;
+  }
+
+  /** `id` da opção ativa, para o `aria-activedescendant` do campo. */
+  get idOpcaoAtiva(): string | null {
+    return this.mostrarSugestoes && this.ativo >= 0 ? `opcao-busca-${this.ativo}` : null;
+  }
+
+  aoTeclar(evento: KeyboardEvent): void {
+    switch (evento.key) {
+      case 'ArrowDown':
+      case 'ArrowUp': {
+        if (!this.buscaHero.trim()) return;
+        evento.preventDefault(); // sem isto a seta move o cursor do texto
+        if (!this.mostrarSugestoes) {
+          // Painel fechado (Esc ou clique fora): a seta reabre, sem mover ainda.
+          this.recalcular();
+          this.mostrarSugestoes = true;
+          return;
+        }
+        const total = this.totalOpcoes;
+        if (!total) return;
+        const passo = evento.key === 'ArrowDown' ? 1 : -1;
+        // Circular: da última volta à primeira e vice-versa. Do "nenhuma" (-1),
+        // a seta para cima vai direto à última.
+        this.ativo = this.ativo < 0 && passo < 0 ? total - 1 : (this.ativo + passo + total) % total;
+        this.revelarOpcaoAtiva();
+        return;
+      }
+      case 'Enter':
+        evento.preventDefault();
+        if (this.mostrarSugestoes && this.ativo >= 0) {
+          this.irParaOpcao(this.ativo);
+        } else {
+          this.aoConfirmar();
+        }
+        return;
+      case 'Escape':
+        if (this.mostrarSugestoes) {
+          // Só consome o Esc quando há painel para fechar; com o painel já
+          // fechado, o Esc segue para o navegador (limpar o campo type=search).
+          evento.preventDefault();
+          this.fecharSugestoes();
+        }
+        return;
+    }
+  }
+
+  private irParaOpcao(indice: number): void {
+    const nCidades = this.resultado.cidades.length;
+    if (indice < nCidades) {
+      this.irPara(this.linkCidade(this.resultado.cidades[indice]));
+      return;
+    }
+    const igreja = this.resultado.igrejas[indice - nCidades];
+    if (igreja) this.irPara(this.linkIgreja(igreja));
+  }
+
+  /** O painel rola por dentro (max-height): mantém a opção ativa à vista. */
+  private revelarOpcaoAtiva(): void {
+    if (!this._ehBrowser) return;
+    this._cdr.detectChanges();
+    this.caixaBusca?.nativeElement
+      .querySelector(`#opcao-busca-${this.ativo}`)
+      ?.scrollIntoView({ block: 'nearest' });
   }
 
   /** Enter vai para o primeiro resultado — e só existe quando há um. */
@@ -332,6 +415,9 @@ export class CidadesComponent implements OnInit, OnDestroy {
 
   private recalcular(): void {
     this.resultado = this._buscaLocal.buscar(this.buscaHero, this.cidadesParaBusca);
+    // O índice de igrejas chega depois e só ACRESCENTA ao fim da lista, então a
+    // opção ativa continua válida — a menos que a lista tenha encolhido.
+    if (this.ativo >= this.totalOpcoes) this.ativo = -1;
   }
 
   /** Um download por sessão da página — ver `BuscaLocalService`. */

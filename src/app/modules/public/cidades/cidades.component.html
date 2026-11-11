@@ -22,13 +22,14 @@
         [(ngModel)]="buscaHero"
         (ngModelChange)="aoDigitar()"
         (focus)="aoFocar()"
-        (keydown.escape)="fecharSugestoes()"
-        (keydown.enter)="aoConfirmar()"
+        (keydown)="aoTeclar($event)"
         placeholder="Digite o nome da cidade ou da igreja..."
         aria-label="Buscar por cidade ou igreja"
         autocomplete="off"
         role="combobox"
+        aria-autocomplete="list"
         aria-controls="sugestoes-busca"
+        [attr.aria-activedescendant]="idOpcaoAtiva"
         [attr.aria-expanded]="mostrarSugestoes && temAlgoParaMostrar">
       <!-- Mesmo destino do Enter. Existe porque, sem botão, o campo não dizia
            como concluir a busca — principalmente no toque, onde não há Enter à vista. -->
@@ -48,10 +49,11 @@
         @if (resultado.cidades.length) {
           <p class="sugestoes__grupo" id="grupo-cidades">Cidades</p>
           <ul role="group" aria-labelledby="grupo-cidades">
-            @for (c of resultado.cidades; track c.uf + '/' + c.cidadeSlug) {
+            @for (c of resultado.cidades; track c.uf + '/' + c.cidadeSlug; let ci = $index) {
               <li>
-                <a [routerLink]="linkCidade(c)" role="option" [attr.aria-selected]="false"
-                   (click)="fecharSugestoes()">
+                <a [routerLink]="linkCidade(c)" role="option" [id]="'opcao-busca-' + ci"
+                   [attr.aria-selected]="ativo === ci" [class.sugestoes__opcao--ativa]="ativo === ci"
+                   (mouseenter)="ativo = ci" (click)="fecharSugestoes()">
                   <i class="pi pi-map-marker" aria-hidden="true"></i>
                   <span class="sugestoes__nome">{{ c.nome }}</span>
                   <span class="sugestoes__meta">{{ c.uf | uppercase }} · {{ rotuloParoquias(c.totalParoquias) }}</span>
@@ -67,9 +69,13 @@
         @if (resultado.igrejas.length) {
           <p class="sugestoes__grupo" id="grupo-igrejas">Igrejas</p>
           <ul role="group" aria-labelledby="grupo-igrejas">
-            @for (i of resultado.igrejas; track i.uf + '/' + i.cidadeSlug + '/' + i.slug) {
+            @for (i of resultado.igrejas; track i.uf + '/' + i.cidadeSlug + '/' + i.slug; let ii = $index) {
               <li>
-                <a [routerLink]="linkIgreja(i)" role="option" [attr.aria-selected]="false"
+                <a [routerLink]="linkIgreja(i)" role="option"
+                   [id]="'opcao-busca-' + (resultado.cidades.length + ii)"
+                   [attr.aria-selected]="ativo === resultado.cidades.length + ii"
+                   [class.sugestoes__opcao--ativa]="ativo === resultado.cidades.length + ii"
+                   (mouseenter)="ativo = resultado.cidades.length + ii"
                    class="sugestoes__igreja" (click)="fecharSugestoes()">
                   <i class="pi pi-building" aria-hidden="true"></i>
                   <span class="sugestoes__texto">
