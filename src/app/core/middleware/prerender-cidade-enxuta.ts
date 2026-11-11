@@ -36,6 +36,14 @@ export const CAMPOS_MISSA_FORA_DA_CIDADE = [
 ] as const;
 
 /**
+ * Flags da missa cujo `false` é o padrão: com `semNulos`, saem quando `false`. A página
+ * só as lê por truthiness (ausente = `false`). `substituiMissasDoDia` veio com a data
+ * específica (API #133, 11/11/2026): sozinho somava 77 KB (29 B × 2.663 missas) ao HTML
+ * de /missas/sp/sao-paulo e levou a página a 1,86 MB, acima do limite de 1,8 MB.
+ */
+export const CAMPOS_MISSA_FALSE_PADRAO = ['substituiMissasDoDia'] as const;
+
+/**
  * Do `endereco`, a página de cidade lê só estes (bairro no card; coordenadas na
  * distância, no "Como chegar" e no mapa; uf e cidadeSlug no link da paróquia). Aqui é
  * lista de PERMISSÃO: o objeto é pequeno e todo o uso está mapeado.
@@ -88,7 +96,12 @@ export function enxugarIgrejasCidade(igrejas: unknown, { semNulos = true }: { se
     const saida = enxugarObjeto(igreja, CAMPOS_IGREJA_FORA_DA_CIDADE, semNulos);
     if (ehObjeto(saida['endereco'])) saida['endereco'] = enderecoDaCidade(saida['endereco'], semNulos);
     if (Array.isArray(saida['missas'])) {
-      saida['missas'] = saida['missas'].map((m) => (ehObjeto(m) ? enxugarObjeto(m, CAMPOS_MISSA_FORA_DA_CIDADE, semNulos) : m));
+      saida['missas'] = saida['missas'].map((m) => {
+        if (!ehObjeto(m)) return m;
+        const missa = enxugarObjeto(m, CAMPOS_MISSA_FORA_DA_CIDADE, semNulos);
+        if (semNulos) for (const chave of CAMPOS_MISSA_FALSE_PADRAO) if (missa[chave] === false) delete missa[chave];
+        return missa;
+      });
     }
     return saida;
   });
