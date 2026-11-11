@@ -8,6 +8,7 @@ import { of } from 'rxjs';
 import { CidadesComponent } from './cidades.component';
 import { SeoPaginasService } from '../../../core/services/seo-paginas.service';
 import { BuscaLocalService } from '../../../core/services/busca-local.service';
+import { GeolocationService } from '../../../core/services/geolocation.service';
 
 /**
  * Contrato de `/cidades` depois da reformulação do hero (etapa 2).
@@ -58,6 +59,7 @@ describe('CidadesComponent — hero e busca', () => {
     raiz = fixture.nativeElement;
   });
 
+  const component = () => fixture.componentInstance;
   const campo = () => raiz.querySelector('.busca input') as HTMLInputElement;
   const botao = () => raiz.querySelector('.busca__btn') as HTMLButtonElement;
 
@@ -104,7 +106,9 @@ describe('CidadesComponent — hero e busca', () => {
 
   it('mantém o <h2> das principais cidades e não tem mais a lista por estado', () => {
     const h2 = [...raiz.querySelectorAll('h2')].map((h) => h.textContent!.trim());
-    expect(h2).toContain('Capitais e principais cidades');
+    // "Capitais" saiu: o critério é número de paróquias, e Guarulhos ou São
+    // Bernardo não são capitais.
+    expect(h2).toContain('Principais cidades');
     expect(h2).not.toContain('Escolha uma cidade');
     expect(raiz.querySelectorAll('.estado-card, a.cidade-link').length).toBe(0);
   });
@@ -112,6 +116,11 @@ describe('CidadesComponent — hero e busca', () => {
   it('linka as principais cidades, da mais para a menos paróquias', () => {
     const hrefs = [...raiz.querySelectorAll('a.destaque')].map((a) => a.getAttribute('href'));
     expect(hrefs).toEqual(['/missas/sp/sao-paulo', '/missas/pr/curitiba', '/missas/pr/itapejara-d-oeste']);
+  });
+
+  it('cada cartão mostra o total real de paróquias e a UF', () => {
+    const metas = [...raiz.querySelectorAll('a.destaque .destaque__meta')].map((m) => m.textContent!.trim());
+    expect(metas).toEqual(['509 paróquias · SP', '126 paróquias · PR', '4 paróquias · PR']);
   });
 
   it('o bloco "Procurando outra cidade?" leva a /estados com o total de cidades', () => {
@@ -143,6 +152,170 @@ describe('CidadesComponent — hero e busca', () => {
     fixture.detectChanges();
     expect(router.navigate).not.toHaveBeenCalled();
     expect(raiz.querySelector('.sugestoes__vazio')!.textContent).toContain('Não encontramos nada');
+  });
+
+  // ── Teclado no autocomplete (etapa 6) ───────────────────────────────────────
+  describe('navegação por teclado', () => {
+    const tecla = (key: string) => {
+      const ev = new KeyboardEvent('keydown', { key, cancelable: true });
+      campo().dispatchEvent(ev);
+      fixture.detectChanges();
+      return ev;
+    };
+    const opcoes = () => [...raiz.querySelectorAll('.sugestoes [role="option"]')] as HTMLElement[];
+    const ativas = () => opcoes().filter((o) => o.getAttribute('aria-selected') === 'true');
+
+    /** Abre o painel e garante que há mais de uma opção para navegar. */
+    const abrirCom = (texto: string) => {
+      digitar(texto);
+      expect(opcoes().length).withContext(`"${texto}" deveria abrir o painel com 2+ opções`).toBeGreaterThan(1);
+    };
+
+    it('sem seta, nenhuma opção está ativa e o campo não aponta para nenhuma', () => {
+      abrirCom('i');
+      expect(ativas().length).toBe(0);
+      expect(campo().getAttribute('aria-activedescendant')).toBeNull();
+      expect(opcoes().every((o) => o.getAttribute('aria-selected') === 'false')).toBeTrue();
+    });
+
+    it('↓ ativa a primeira opção: aria-selected, destaque e aria-activedescendant', () => {
+      abrirCom('i');
+      const ev = tecla('ArrowDown');
+      expect(ev.defaultPrevented).withContext('a seta não pode mover o cursor do texto').toBeTrue();
+      expect(ativas()).toEqual([opcoes()[0]]);
+      expect(opcoes()[0].classList.contains('sugestoes__opcao--ativa')).toBeTrue();
+      expect(campo().getAttribute('aria-activedescendant')).toBe(opcoes()[0].id);
+    });
+
+    it('↓ dá a volta da última para a primeira; ↑ sem opção ativa vai à última', () => {
+      abrirCom('i');
+      const n = opcoes().length;
+      tecla('ArrowUp');
+      expect(ativas()).toEqual([opcoes()[n - 1]]);
+      tecla('ArrowDown');
+      expect(ativas()).toEqual([opcoes()[0]]);
+    });
+
+    it('Enter vai para a opção ativa, não para a primeira', () => {
+      abrirCom('i');
+      tecla('ArrowDown');
+      tecla('ArrowDown');
+      const destino = opcoes()[1].getAttribute('href')!.split('/').filter(Boolean);
+      tecla('Enter');
+      expect(router.navigate).toHaveBeenCalledOnceWith(['/' + destino[0], ...destino.slice(1)]);
+    });
+
+    it('Esc fecha o painel, mantém o texto e zera a opção ativa', () => {
+      abrirCom('i');
+      tecla('ArrowDown');
+      const ev = tecla('Escape');
+      expect(ev.defaultPrevented).toBeTrue();
+      expect(raiz.querySelector('.sugestoes')).toBeNull();
+      expect(campo().value).toBe('i');
+      expect(campo().getAttribute('aria-activedescendant')).toBeNull();
+    });
+
+    it('com o painel fechado, a seta reabre sem ativar nada ainda', () => {
+      abrirCom('i');
+      tecla('Escape');
+      tecla('ArrowDown');
+      expect(opcoes().length).toBeGreaterThan(1);
+      expect(ativas().length).toBe(0);
+    });
+
+    it('digitar de novo descarta a opção ativa', () => {
+      abrirCom('i');
+      tecla('ArrowDown');
+      digitar('it');
+      expect(ativas().length).toBe(0);
+    });
+
+    it('o campo se declara combobox com lista', () => {
+      expect(campo().getAttribute('role')).toBe('combobox');
+      expect(campo().getAttribute('aria-autocomplete')).toBe('list');
+      expect(campo().getAttribute('aria-controls')).toBe('sugestoes-busca');
+    });
+  });
+
+  // ── "Usar minha localização" (etapa 7) ──────────────────────────────────────
+  describe('localização', () => {
+    let geo: GeolocationService;
+    const botaoGeo = () => raiz.querySelector('.geo__btn') as HTMLButtonElement;
+    const msg = () => raiz.querySelector('.geo__msg')?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+
+    beforeEach(() => {
+      geo = TestBed.inject(GeolocationService);
+    });
+
+    const clicar = async () => {
+      botaoGeo().click();
+      await fixture.whenStable();
+      await new Promise((r) => setTimeout(r));
+      fixture.detectChanges();
+    };
+
+    it('NUNCA pede a localização ao abrir a página', () => {
+      // O componente já foi criado e inicializado no beforeEach de fora: se algo
+      // chamasse a geo na carga, o espião criado agora não pegaria — então o
+      // contrato é verificado pelo inverso: só o clique chama.
+      const pos = spyOn(geo, 'obterPosicaoAtual').and.returnValue(new Promise(() => {}));
+      component().ngOnInit();
+      expect(pos).not.toHaveBeenCalled();
+      botaoGeo().click();
+      expect(pos).toHaveBeenCalledTimes(1);
+    });
+
+    it('cidade com página: navega para ela', async () => {
+      spyOn(geo, 'obterPosicaoAtual').and.resolveTo({ lat: -25.4, lng: -49.3 });
+      spyOn(geo, 'reverseGeocode').and.resolveTo({ city: 'Curitiba', 'ISO3166-2-lvl4': 'BR-PR' });
+      await clicar();
+      expect(router.navigate).toHaveBeenCalledOnceWith(['/missas', 'pr', 'curitiba']);
+    });
+
+    it('cidade sem página no mesmo estado: oferece o hub do estado, sem navegar', async () => {
+      spyOn(geo, 'obterPosicaoAtual').and.resolveTo({ lat: 0, lng: 0 });
+      spyOn(geo, 'reverseGeocode').and.resolveTo({ town: 'Pato Branco', 'ISO3166-2-lvl4': 'BR-PR' });
+      await clicar();
+      expect(router.navigate).not.toHaveBeenCalled();
+      expect(msg()).toContain('Ainda não há missas em Pato Branco.');
+      const link = raiz.querySelector('.geo__msg a')!;
+      expect(link.getAttribute('href')).toBe('/missas/pr');
+      expect(link.textContent!.trim()).toBe('Ver cidades de Paraná');
+    });
+
+    it('estado sem nenhuma cidade: oferece /estados', async () => {
+      spyOn(geo, 'obterPosicaoAtual').and.resolveTo({ lat: 0, lng: 0 });
+      spyOn(geo, 'reverseGeocode').and.resolveTo({ city: 'Manaus', 'ISO3166-2-lvl4': 'BR-AM' });
+      await clicar();
+      expect(raiz.querySelector('.geo__msg a')!.getAttribute('href')).toBe('/estados');
+    });
+
+    it('permissão negada: explica e a busca manual segue funcionando', async () => {
+      spyOn(geo, 'obterPosicaoAtual').and.rejectWith({ code: 1 });
+      await clicar();
+      expect(msg()).toBe('Localização não permitida. Digite sua cidade acima.');
+      // A mensagem ocupa o lugar do botão (mesma altura reservada, sem CLS).
+      expect(botaoGeo()).toBeNull();
+      digitar('curitiba');
+      botao().click();
+      expect(router.navigate).toHaveBeenCalledOnceWith(['/missas', 'pr', 'curitiba']);
+    });
+
+    it('falha de rede no Nominatim: mensagem própria, sem navegar', async () => {
+      spyOn(geo, 'obterPosicaoAtual').and.resolveTo({ lat: 0, lng: 0 });
+      spyOn(geo, 'reverseGeocode').and.resolveTo(null);
+      await clicar();
+      expect(msg()).toContain('Não conseguimos identificar sua cidade.');
+      expect(router.navigate).not.toHaveBeenCalled();
+    });
+
+    it('enquanto localiza, o botão fica desabilitado e diz o que está fazendo', () => {
+      spyOn(geo, 'obterPosicaoAtual').and.returnValue(new Promise(() => {}));
+      botaoGeo().click();
+      fixture.detectChanges();
+      expect(botaoGeo().disabled).toBeTrue();
+      expect(botaoGeo().textContent).toContain('Localizando');
+    });
   });
 
   it('Enter continua levando ao primeiro resultado', () => {

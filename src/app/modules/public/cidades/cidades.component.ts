@@ -16,6 +16,9 @@ import {
   BuscaLocalService, CidadeBusca, IgrejaBusca, ResultadoBusca,
 } from '../../../core/services/busca-local.service';
 import { cidades, estados, paroquias } from '../../../shared/utils/plural.utils';
+import { GeolocationService } from '../../../core/services/geolocation.service';
+import { acharCidade, nomeDoMunicipio, resolverUf } from '../../../shared/utils/localizacao.utils';
+import { STATES } from '../../../core/constants/states';
 
 const SITE = 'https://buscamissa.com.br';
 /** Cap do bloco "Capitais e principais cidades" — vitrine, não substitui o índice completo. */
@@ -59,6 +62,7 @@ export class CidadesComponent implements OnInit, OnDestroy {
   private _destroyRef = inject(DestroyRef);
   private _buscaLocal = inject(BuscaLocalService);
   private _router = inject(Router);
+  private _geo = inject(GeolocationService);
   private _ehBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   isLoading = true;
@@ -134,7 +138,74 @@ export class CidadesComponent implements OnInit, OnDestroy {
     this.carregar();
   }
 
+  // ============================ localização ============================
+  // Só por clique (nunca ao abrir a página). Resolve a posição para uma cidade
+  // QUE TEM PÁGINA e navega; em qualquer outro caso, explica na linha do botão.
+
+  geoEstado: 'ocioso' | 'carregando' | 'sem-pagina' | 'indisponivel' = 'ocioso';
+  geoMensagem = '';
+  geoCidade = '';
+  geoLinkAlternativo: string[] = ['/estados'];
+  geoRotuloAlternativo = 'Ver cidades por estado';
+
+  /** Evita navegar depois que a pessoa já saiu da página (a geo leva segundos). */
+  private _destruido = false;
+
+  async usarLocalizacao(): Promise<void> {
+    if (!this._ehBrowser || this.geoEstado === 'carregando') return;
+    this.geoEstado = 'carregando';
+    this._cdr.markForCheck();
+
+    let lat: number;
+    let lng: number;
+    try {
+      ({ lat, lng } = await this._geo.obterPosicaoAtual());
+    } catch (erro) {
+      // code 1 = PERMISSION_DENIED; o resto (timeout, sem sinal, sem API) é falha.
+      const negou = (erro as GeolocationPositionError | undefined)?.code === 1;
+      this.falharGeo(negou
+        ? 'Localização não permitida.'
+        : 'Não conseguimos obter sua localização.');
+      return;
+    }
+
+    const addr = await this._geo.reverseGeocode(lat, lng);
+    if (this._destruido) return;
+    const uf = resolverUf(addr);
+    const nome = nomeDoMunicipio(addr);
+    if (!uf || !nome) {
+      this.falharGeo('Não conseguimos identificar sua cidade.');
+      return;
+    }
+
+    const cidade = acharCidade(nome, uf, this.cidadesParaBusca);
+    if (cidade) {
+      this.geoEstado = 'ocioso';
+      this.irPara(this.linkCidade(cidade));
+      return;
+    }
+
+    // Cidade sem página: o melhor vizinho é o hub do estado, se ele existir;
+    // senão, o índice de estados.
+    const ufMin = uf.toLowerCase();
+    const temEstado = this.cidadesParaBusca.some((c) => c.uf === ufMin);
+    this.geoCidade = nome;
+    this.geoLinkAlternativo = temEstado ? ['/missas', ufMin] : ['/estados'];
+    const nomeUf = STATES.find((s) => s.sigla === uf)?.nome ?? uf;
+    this.geoRotuloAlternativo = temEstado ? `Ver cidades de ${nomeUf}` : 'Ver cidades por estado';
+    this.geoEstado = 'sem-pagina';
+    this._cdr.markForCheck();
+  }
+
+  private falharGeo(mensagem: string): void {
+    if (this._destruido) return;
+    this.geoMensagem = mensagem;
+    this.geoEstado = 'indisponivel';
+    this._cdr.markForCheck();
+  }
+
   ngOnDestroy(): void {
+    this._destruido = true;
     this._seo.removeJsonLd('breadcrumb');
     this._seo.removeJsonLd('itemlist');
   }
@@ -219,6 +290,8 @@ export class CidadesComponent implements OnInit, OnDestroy {
   // ============================ busca do hero ============================
 
   aoDigitar(): void {
+    // Texto novo, lista nova: a opção ativa anterior não vale mais.
+    this.ativo = -1;
     this.garantirIndice();
     this.recalcular();
     this.mostrarSugestoes = !!this.buscaHero.trim();
@@ -244,6 +317,87 @@ export class CidadesComponent implements OnInit, OnDestroy {
    */
   fecharSugestoes(): void {
     this.mostrarSugestoes = false;
+    this.ativo = -1;
+  }
+
+  // ── Navegação por teclado (padrão combobox da WAI-ARIA) ────────────────────
+  // O foco fica SEMPRE no campo; a opção "ativa" é anunciada pelo
+  // `aria-activedescendant`. Assim quem usa leitor de tela ouve a opção e pode
+  // continuar digitando sem perder o lugar.
+
+  /**
+   * Índice da opção ativa na lista achatada (cidades primeiro, depois igrejas,
+   * na ordem do painel). -1 = nenhuma: o Enter mantém o comportamento antigo
+   * de ir ao primeiro resultado.
+   */
+  ativo = -1;
+
+  private get totalOpcoes(): number {
+    return this.resultado.cidades.length + this.resultado.igrejas.length;
+  }
+
+  /** `id` da opção ativa, para o `aria-activedescendant` do campo. */
+  get idOpcaoAtiva(): string | null {
+    return this.mostrarSugestoes && this.ativo >= 0 ? `opcao-busca-${this.ativo}` : null;
+  }
+
+  aoTeclar(evento: KeyboardEvent): void {
+    switch (evento.key) {
+      case 'ArrowDown':
+      case 'ArrowUp': {
+        if (!this.buscaHero.trim()) return;
+        evento.preventDefault(); // sem isto a seta move o cursor do texto
+        if (!this.mostrarSugestoes) {
+          // Painel fechado (Esc ou clique fora): a seta reabre, sem mover ainda.
+          this.recalcular();
+          this.mostrarSugestoes = true;
+          return;
+        }
+        const total = this.totalOpcoes;
+        if (!total) return;
+        const passo = evento.key === 'ArrowDown' ? 1 : -1;
+        // Circular: da última volta à primeira e vice-versa. Do "nenhuma" (-1),
+        // a seta para cima vai direto à última.
+        this.ativo = this.ativo < 0 && passo < 0 ? total - 1 : (this.ativo + passo + total) % total;
+        this.revelarOpcaoAtiva();
+        return;
+      }
+      case 'Enter':
+        evento.preventDefault();
+        if (this.mostrarSugestoes && this.ativo >= 0) {
+          this.irParaOpcao(this.ativo);
+        } else {
+          this.aoConfirmar();
+        }
+        return;
+      case 'Escape':
+        if (this.mostrarSugestoes) {
+          // Só consome o Esc quando há painel para fechar; com o painel já
+          // fechado, o Esc segue para o navegador (limpar o campo type=search).
+          evento.preventDefault();
+          this.fecharSugestoes();
+        }
+        return;
+    }
+  }
+
+  private irParaOpcao(indice: number): void {
+    const nCidades = this.resultado.cidades.length;
+    if (indice < nCidades) {
+      this.irPara(this.linkCidade(this.resultado.cidades[indice]));
+      return;
+    }
+    const igreja = this.resultado.igrejas[indice - nCidades];
+    if (igreja) this.irPara(this.linkIgreja(igreja));
+  }
+
+  /** O painel rola por dentro (max-height): mantém a opção ativa à vista. */
+  private revelarOpcaoAtiva(): void {
+    if (!this._ehBrowser) return;
+    this._cdr.detectChanges();
+    this.caixaBusca?.nativeElement
+      .querySelector(`#opcao-busca-${this.ativo}`)
+      ?.scrollIntoView({ block: 'nearest' });
   }
 
   /** Enter vai para o primeiro resultado — e só existe quando há um. */
@@ -332,6 +486,9 @@ export class CidadesComponent implements OnInit, OnDestroy {
 
   private recalcular(): void {
     this.resultado = this._buscaLocal.buscar(this.buscaHero, this.cidadesParaBusca);
+    // O índice de igrejas chega depois e só ACRESCENTA ao fim da lista, então a
+    // opção ativa continua válida — a menos que a lista tenha encolhido.
+    if (this.ativo >= this.totalOpcoes) this.ativo = -1;
   }
 
   /** Um download por sessão da página — ver `BuscaLocalService`. */

@@ -14,6 +14,9 @@
     abaixo — no mobile, digitar não mudava nada na viewport.
   -->
   <div class="busca-hero" hero-busca #caixaBusca>
+    <!-- Âncora do painel de sugestões: ele abre colado ao CAMPO, por cima da
+         linha de localização logo abaixo, e não depois dela. -->
+    <div class="busca-ancora">
     <div class="busca busca--ampla">
       <i class="pi pi-search" aria-hidden="true"></i>
       <input
@@ -22,13 +25,14 @@
         [(ngModel)]="buscaHero"
         (ngModelChange)="aoDigitar()"
         (focus)="aoFocar()"
-        (keydown.escape)="fecharSugestoes()"
-        (keydown.enter)="aoConfirmar()"
+        (keydown)="aoTeclar($event)"
         placeholder="Digite o nome da cidade ou da igreja..."
         aria-label="Buscar por cidade ou igreja"
         autocomplete="off"
         role="combobox"
+        aria-autocomplete="list"
         aria-controls="sugestoes-busca"
+        [attr.aria-activedescendant]="idOpcaoAtiva"
         [attr.aria-expanded]="mostrarSugestoes && temAlgoParaMostrar">
       <!-- Mesmo destino do Enter. Existe porque, sem botão, o campo não dizia
            como concluir a busca — principalmente no toque, onde não há Enter à vista. -->
@@ -48,10 +52,11 @@
         @if (resultado.cidades.length) {
           <p class="sugestoes__grupo" id="grupo-cidades">Cidades</p>
           <ul role="group" aria-labelledby="grupo-cidades">
-            @for (c of resultado.cidades; track c.uf + '/' + c.cidadeSlug) {
+            @for (c of resultado.cidades; track c.uf + '/' + c.cidadeSlug; let ci = $index) {
               <li>
-                <a [routerLink]="linkCidade(c)" role="option" [attr.aria-selected]="false"
-                   (click)="fecharSugestoes()">
+                <a [routerLink]="linkCidade(c)" role="option" [id]="'opcao-busca-' + ci"
+                   [attr.aria-selected]="ativo === ci" [class.sugestoes__opcao--ativa]="ativo === ci"
+                   (mouseenter)="ativo = ci" (click)="fecharSugestoes()">
                   <i class="pi pi-map-marker" aria-hidden="true"></i>
                   <span class="sugestoes__nome">{{ c.nome }}</span>
                   <span class="sugestoes__meta">{{ c.uf | uppercase }} · {{ rotuloParoquias(c.totalParoquias) }}</span>
@@ -67,9 +72,13 @@
         @if (resultado.igrejas.length) {
           <p class="sugestoes__grupo" id="grupo-igrejas">Igrejas</p>
           <ul role="group" aria-labelledby="grupo-igrejas">
-            @for (i of resultado.igrejas; track i.uf + '/' + i.cidadeSlug + '/' + i.slug) {
+            @for (i of resultado.igrejas; track i.uf + '/' + i.cidadeSlug + '/' + i.slug; let ii = $index) {
               <li>
-                <a [routerLink]="linkIgreja(i)" role="option" [attr.aria-selected]="false"
+                <a [routerLink]="linkIgreja(i)" role="option"
+                   [id]="'opcao-busca-' + (resultado.cidades.length + ii)"
+                   [attr.aria-selected]="ativo === resultado.cidades.length + ii"
+                   [class.sugestoes__opcao--ativa]="ativo === resultado.cidades.length + ii"
+                   (mouseenter)="ativo = resultado.cidades.length + ii"
                    class="sugestoes__igreja" (click)="fecharSugestoes()">
                   <i class="pi pi-building" aria-hidden="true"></i>
                   <span class="sugestoes__texto">
@@ -90,6 +99,39 @@
         }
       </div>
     }
+    </div>
+
+    <!--
+      Localização SÓ por clique: nada pede permissão ao abrir a página. Recusa,
+      falha ou cidade sem página viram uma mensagem NO LUGAR do botão, e a busca
+      acima continua funcionando. A mensagem substitui o botão (em vez de entrar
+      ao lado dele) para caber na altura já reservada pelo `min-height`: ao lado,
+      ela quebrava linha e empurrava a página ~20px (CLS). `aria-live` anuncia o
+      resultado a leitores de tela.
+    -->
+    <div class="geo" aria-live="polite">
+      @if (geoEstado === 'sem-pagina') {
+        <p class="geo__msg">
+          <i class="pi pi-map-marker" aria-hidden="true"></i>
+          <span>Ainda não há missas em {{ geoCidade }}.
+            <a [routerLink]="geoLinkAlternativo">{{ geoRotuloAlternativo }}</a></span>
+        </p>
+      } @else if (geoEstado === 'indisponivel') {
+        <p class="geo__msg">
+          <i class="pi pi-info-circle" aria-hidden="true"></i>
+          <span>{{ geoMensagem }} Digite sua cidade acima.</span>
+        </p>
+      } @else {
+        <button type="button" class="geo__btn" (click)="usarLocalizacao()"
+                [disabled]="geoEstado === 'carregando'">
+          @if (geoEstado === 'carregando') {
+            <i class="pi pi-spin pi-spinner" aria-hidden="true"></i> Localizando…
+          } @else {
+            <i class="pi pi-map-marker" aria-hidden="true"></i> Usar minha localização
+          }
+        </button>
+      }
+    </div>
   </div>
 
   <!--
@@ -142,7 +184,7 @@
         <section class="mt-6">
           <h2 class="sec-titulo">
             <i class="pi pi-building sec-titulo__ico" aria-hidden="true"></i>
-            Capitais e principais cidades
+            Principais cidades
           </h2>
           <p class="sec-sub">As cidades com mais igrejas cadastradas.</p>
 
@@ -150,8 +192,10 @@
             @for (c of principaisCidades; track c.uf + '/' + c.slug) {
               <a class="destaque" [routerLink]="['/missas', c.uf, c.slug]">
                 <i class="pi pi-map-marker destaque__ico" aria-hidden="true"></i>
-                <span class="destaque__nome">{{ c.nome }}</span>
-                <span class="destaque__meta">{{ rotuloParoquias(c.totalParoquias) }}</span>
+                <span class="destaque__texto">
+                  <span class="destaque__nome">{{ c.nome }}</span>
+                  <span class="destaque__meta">{{ rotuloParoquias(c.totalParoquias) }} · {{ c.uf | uppercase }}</span>
+                </span>
               </a>
             }
           </div>
