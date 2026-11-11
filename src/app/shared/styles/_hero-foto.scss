@@ -1,0 +1,42 @@
+// Foto do hero compacto (/cidades e /estados) projetada no slot [hero-arte].
+// Mora aqui pelo mesmo motivo do _hero-busca: com encapsulação emulada, só o
+// SCSS da PÁGINA alcança o markup projetado.
+//
+// Uso: `@use '../../../shared/styles/hero-foto' as *;` no topo do SCSS da página.
+
+// Composição da referência: a foto não tem moldura recortada — ela se DISSOLVE no
+// creme pela esquerda (máscara em gradiente) e um arco fino laranja desenha a
+// "janela" sobre ela. A busca e o título continuam sobre fundo liso: a máscara
+// zera a foto antes de a coluna de texto acabar.
+.hero-foto {
+  position: relative;
+  display: block;
+  height: 100%;
+  // O arco é maior que a caixa; sem isso ele vazaria por cima do header.
+  overflow: hidden;
+
+  &::after {
+    content: '';
+    position: absolute;
+    z-index: 1;
+    top: -18%;
+    left: 22%;
+    width: 120%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    border: 2px solid rgba(226, 118, 27, 0.7);
+    pointer-events: none;
+  }
+}
+
+.hero-foto img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center 22%;
+  // Luz quente da tarde, como na referência, sem editar o arquivo.
+  filter: saturate(1.08) sepia(0.12);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.55) 22%, #000 42%);
+  mask-image: linear-gradient(to right, transparent 0%, rgba(0, 0, 0, 0.55) 22%, #000 42%);
+}

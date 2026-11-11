@@ -2,11 +2,16 @@
 // Sem disco: recebe o HTML prerenderizado e devolve o veredito (o script em scripts/
 // faz o I/O).
 //
-// Por que existe: `/cidades` é o hub com mais links internos do site (em produção,
-// 2.188 cidades em 11/11/2026). A reformulação mexe em hero, cartões e acordeão de
-// estados — exatamente o markup que carrega esses links. Este guard fixa o que NÃO
-// pode mudar: os links de cidade no HTML inicial (sem depender de JavaScript),
-// canonical, robots, title, description, um único <h1> e os dois JSON-LD.
+// Por que existe: `/cidades` era o hub com mais links internos do site (em produção,
+// 2.188 cidades em 11/11/2026). Este guard fixa o que NÃO pode mudar sem decisão:
+// os links de cidade no HTML inicial (sem depender de JavaScript), canonical,
+// robots, title, description, um único <h1> e os dois JSON-LD.
+//
+// Mudança aprovada (11/11/2026): o acordeão com TODAS as cidades por estado saiu de
+// `/cidades`, trocado por um link para `/estados`. Toda cidade continua com <a> na
+// página do seu estado (`/missas/:uf`, prerenderizada) e no sitemap. A partir daí
+// o contrato é: `/cidades` linka EXATAMENTE as principais cidades (as TOP_CIDADES
+// com mais paróquias, mesma regra do componente) e linka `/estados`.
 //
 // O TEXTO do <h1> fica de fora de propósito: ele muda na reformulação (decisão de
 // produto). O que se preserva é a estrutura — exatamente um <h1>, não vazio.
@@ -17,6 +22,9 @@ export const DESCRIPTION =
   'Encontre horários de missa em qualquer cidade do Brasil. Escolha o estado e veja as paróquias e comunidades católicas cadastradas.';
 
 const SITE = 'https://buscamissa.com.br';
+
+/** Mesmo cap de `TOP_CIDADES` em `cidades.component.ts`. */
+export const TOP_CIDADES = 8;
 
 /** Entidades que o Angular emite em texto/atributo — o bastante para comparar strings. */
 function decodificar(s) {
@@ -42,10 +50,10 @@ function conteudoMeta(html, nome) {
 }
 
 /**
- * Rotas `/missas/{uf}/{cidade}` esperadas, a partir do bulk `/v2/seo/estados`
- * (`.prerender-cache/estados.json`) — a MESMA fonte que o componente renderiza.
+ * Todas as rotas `/missas/{uf}/{cidade}` do bulk `/v2/seo/estados`
+ * (`.prerender-cache/estados.json`) — a MESMA fonte que o componente usa.
  */
-export function rotasEsperadas(estados) {
+export function rotasDoBulk(estados) {
   const rotas = new Set();
   for (const e of estados ?? []) {
     if (!e?.uf) continue;
@@ -56,12 +64,32 @@ export function rotasEsperadas(estados) {
   return rotas;
 }
 
+/**
+ * As principais cidades, na regra do componente: achata o bulk na ordem em que
+ * vem, ordena por `totalParoquias` decrescente (sort estável: empate mantém a
+ * ordem do bulk) e corta em TOP_CIDADES.
+ */
+export function rotasPrincipais(estados, n = TOP_CIDADES) {
+  const todas = [];
+  for (const e of estados ?? []) {
+    if (!e?.uf) continue;
+    for (const c of e.cidades ?? []) {
+      if (c?.cidadeSlug) {
+        todas.push({ rota: `/missas/${e.uf.toLowerCase()}/${c.cidadeSlug}`, total: c.totalParoquias ?? 0 });
+      }
+    }
+  }
+  return new Set(todas.sort((a, b) => b.total - a.total).slice(0, n).map((c) => c.rota));
+}
+
 /** Extrai do HTML tudo o que a linha de base compara. Não decide nada. */
 export function analisarHtmlCidades(html) {
   const linksCidade = new Set();
   for (const m of html.matchAll(/<a\b[^>]*\bhref="(\/missas\/[a-z]{2}\/[^"/?#]+)"/gi)) {
     linksCidade.add(decodificar(m[1]));
   }
+
+  const linkEstados = /<a\b[^>]*\bhref="\/estados"/i.test(html);
 
   const canonicais = (html.match(/<link\b[^>]*>/gi) ?? [])
     .filter((tag) => atributo(tag, 'rel') === 'canonical')
@@ -85,6 +113,7 @@ export function analisarHtmlCidades(html) {
 
   return {
     linksCidade,
+    linkEstados,
     canonicais,
     robots: conteudoMeta(html, 'robots'),
     title: titulo ? decodificar(titulo[1]).trim() : null,
@@ -97,7 +126,7 @@ export function analisarHtmlCidades(html) {
 }
 
 /**
- * Veredito. `esperadas` é o Set de `rotasEsperadas()`; sem ele (HTML baixado de um
+ * Veredito. `esperadas` é o Set de `rotasPrincipais()`; sem ele (HTML baixado de um
  * ambiente cujo bulk não está em disco) a comparação é só interna: links do HTML
  * contra o ItemList do próprio HTML.
  */
@@ -106,18 +135,21 @@ export function verificarSeoCidades(analise, esperadas = null) {
   const links = analise.linksCidade;
 
   if (links.size === 0) problemas.push('nenhum link /missas/{uf}/{cidade} no HTML inicial.');
+  if (!analise.linkEstados) {
+    problemas.push('sem link para /estados — é o caminho para as cidades fora das principais.');
+  }
 
   if (esperadas) {
     const faltando = [...esperadas].filter((r) => !links.has(r));
     const sobrando = [...links].filter((r) => !esperadas.has(r));
     if (faltando.length) {
       problemas.push(
-        `${faltando.length} cidade(s) do bulk sem link no HTML inicial (ex.: ${faltando.slice(0, 5).join(', ')}).`,
+        `${faltando.length} cidade(s) principal(is) sem link no HTML inicial (ex.: ${faltando.slice(0, 5).join(', ')}).`,
       );
     }
     if (sobrando.length) {
       problemas.push(
-        `${sobrando.length} link(s) de cidade fora do bulk (ex.: ${sobrando.slice(0, 5).join(', ')}).`,
+        `${sobrando.length} link(s) de cidade fora das principais (ex.: ${sobrando.slice(0, 5).join(', ')}).`,
       );
     }
   }
@@ -180,6 +212,7 @@ export function resumir(analise) {
   const itemList = analise.jsonLd.find((j) => j?.['@type'] === 'ItemList');
   return {
     linksCidade: analise.linksCidade.size,
+    linkEstados: analise.linkEstados,
     ufsComLink: new Set([...analise.linksCidade].map((r) => r.split('/')[2])).size,
     canonical: analise.canonicais[0] ?? null,
     robots: analise.robots,

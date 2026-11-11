@@ -2,12 +2,12 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   CANONICAL, DESCRIPTION, TITLE,
-  analisarHtmlCidades, resumir, rotasEsperadas, verificarSeoCidades,
+  analisarHtmlCidades, resumir, rotasDoBulk, rotasPrincipais, verificarSeoCidades,
 } from './verificar-seo-cidades.mjs';
 
 const ESTADOS = [
-  { uf: 'SP', cidades: [{ cidadeSlug: 'sao-paulo' }, { cidadeSlug: 'campinas' }] },
-  { uf: 'PR', cidades: [{ cidadeSlug: 'itapejara-d-oeste' }] },
+  { uf: 'SP', cidades: [{ cidadeSlug: 'sao-paulo', totalParoquias: 509 }, { cidadeSlug: 'campinas', totalParoquias: 90 }] },
+  { uf: 'PR', cidades: [{ cidadeSlug: 'itapejara-d-oeste', totalParoquias: 4 }] },
 ];
 
 const ROTAS = ['/missas/sp/sao-paulo', '/missas/sp/campinas', '/missas/pr/itapejara-d-oeste'];
@@ -23,6 +23,7 @@ function pagina({
   itens = rotas,
   numberOfItems = itens.length,
   breadcrumb = ['https://buscamissa.com.br/', CANONICAL],
+  linkEstados = '<a class="ver-estados" href="/estados">Ver por estado</a>',
 } = {}) {
   const ld = (id, obj) => `<script id="ld-${id}" type="application/ld+json">${JSON.stringify(obj)}</script>`;
   return `<!doctype html><html><head>
@@ -44,16 +45,34 @@ ${ld('itemlist', {
 </head><body>${h1}
 <a href="/missas/sp">São Paulo (estado)</a>
 <a href="/cidades">Cidades</a>
+${linkEstados}
 ${rotas.map((r) => `<a _ngc-e="" class="cidade-link cidade-link--oculto" href="${r}" jsaction="click:;">x</a>`).join('\n')}
 </body></html>`;
 }
 
-const veredito = (opcoes, esperadas = rotasEsperadas(ESTADOS)) =>
+const veredito = (opcoes, esperadas = rotasPrincipais(ESTADOS)) =>
   verificarSeoCidades(analisarHtmlCidades(pagina(opcoes)), esperadas);
 
-test('rotasEsperadas monta /missas/{uf}/{slug} com a UF em minúsculo', () => {
-  assert.deepEqual([...rotasEsperadas(ESTADOS)].sort(), [...ROTAS].sort());
-  assert.equal(rotasEsperadas([{ uf: 'SP' }, { cidades: [{ cidadeSlug: 'x' }] }, null]).size, 0);
+test('rotasDoBulk monta /missas/{uf}/{slug} com a UF em minúsculo', () => {
+  assert.deepEqual([...rotasDoBulk(ESTADOS)].sort(), [...ROTAS].sort());
+  assert.equal(rotasDoBulk([{ uf: 'SP' }, { cidades: [{ cidadeSlug: 'x' }] }, null]).size, 0);
+});
+
+test('rotasPrincipais: mais paróquias primeiro, corta no cap', () => {
+  assert.deepEqual([...rotasPrincipais(ESTADOS, 2)], ['/missas/sp/sao-paulo', '/missas/sp/campinas']);
+  assert.equal(rotasPrincipais(ESTADOS).size, 3);
+});
+
+test('rotasPrincipais: empate mantém a ordem do bulk (sort estável, como no componente)', () => {
+  const empate = [
+    { uf: 'BA', cidades: [{ cidadeSlug: 'a', totalParoquias: 5 }] },
+    { uf: 'AC', cidades: [{ cidadeSlug: 'b', totalParoquias: 5 }] },
+  ];
+  assert.deepEqual([...rotasPrincipais(empate, 1)], ['/missas/ba/a']);
+});
+
+test('sem link para /estados falha', () => {
+  assert.match(veredito({ linkEstados: '' }).problemas.join('\n'), /sem link para \/estados/);
 });
 
 test('página íntegra passa', () => {
@@ -77,13 +96,13 @@ test('link oculto por classe continua contando — está no HTML inicial', () =>
 test('cidade do bulk sem link no HTML falha e cita a rota', () => {
   const r = veredito({ rotas: ROTAS.slice(0, 2) });
   assert.equal(r.ok, false);
-  assert.match(r.problemas.join('\n'), /1 cidade\(s\) do bulk sem link.*itapejara-d-oeste/);
+  assert.match(r.problemas.join('\n'), /1 cidade\(s\) principal\(is\) sem link.*itapejara-d-oeste/);
 });
 
-test('link de cidade fora do bulk falha', () => {
+test('link de cidade fora das principais falha', () => {
   const r = veredito({ rotas: [...ROTAS, '/missas/sp/inventada'] });
   assert.equal(r.ok, false);
-  assert.match(r.problemas.join('\n'), /1 link\(s\) de cidade fora do bulk.*inventada/);
+  assert.match(r.problemas.join('\n'), /1 link\(s\) de cidade fora das principais.*inventada/);
 });
 
 test('HTML sem nenhum link de cidade falha (página virou shell CSR)', () => {
@@ -132,12 +151,12 @@ test('BreadcrumbList precisa ser Início › Cidades', () => {
 test('JSON-LD ausente ou inválido falha', () => {
   const semLd = pagina().replace(/<script id="ld-itemlist"[\s\S]*?<\/script>/, '');
   assert.match(
-    verificarSeoCidades(analisarHtmlCidades(semLd), rotasEsperadas(ESTADOS)).problemas.join('\n'),
+    verificarSeoCidades(analisarHtmlCidades(semLd), rotasPrincipais(ESTADOS)).problemas.join('\n'),
     /um ItemList; veio 0/,
   );
   const quebrado = pagina().replace('{"@type":"BreadcrumbList"', '{"@type":BreadcrumbList');
   assert.match(
-    verificarSeoCidades(analisarHtmlCidades(quebrado), rotasEsperadas(ESTADOS)).problemas.join('\n'),
+    verificarSeoCidades(analisarHtmlCidades(quebrado), rotasPrincipais(ESTADOS)).problemas.join('\n'),
     /JSON inválido/,
   );
 });

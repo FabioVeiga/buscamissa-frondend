@@ -242,9 +242,20 @@ $muted: #6b7280;
   .ph-hero__cobertura { margin-top: 0.9rem; }
 }
 @media (min-width: 900px) {
-  .ph-hero--compacto { min-height: 0; }
-  .ph-hero--compacto .ph-hero__conteudo { padding-right: calc(34% + 1.5rem); }
-  .ph-hero--compacto .ph-hero__arte { width: 34%; }
+  /* A arte ocupa quase metade da faixa, mas "dissolve" no creme pela esquerda
+     (máscara na página): o texto pode avançar sobre a zona transparente, então a
+     reserva da coluna de texto é menor que a largura da arte. */
+  .ph-hero--compacto {
+    min-height: 0;
+    padding: 2rem 0 2.5rem;
+    background: linear-gradient(100deg, #fdf6f0 0%, #fdf3ea 55%, #fbe7d6 100%);
+  }
+  .ph-hero--compacto .ph-hero__conteudo { padding-right: calc(38% + 1.5rem); }
+  .ph-hero--compacto .ph-hero__arte { width: 48%; }
+  .ph-hero--compacto .ph-hero__titulo { letter-spacing: -0.02em; line-height: 1.08; }
+}
+@media (min-width: 1024px) {
+  .ph-hero--compacto .ph-hero__titulo { font-size: 3rem; }
 }
 
 /* ===== Ritmo do bloco de ação: busca -> hint -> tiles =====

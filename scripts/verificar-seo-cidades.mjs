@@ -3,8 +3,8 @@
 //
 // Uso:
 //   node scripts/verificar-seo-cidades.mjs
-//       Lê dist/<app>/browser/cidades/index.html e compara os links com o bulk em
-//       .prerender-cache/estados.json (a mesma fonte que o componente renderiza).
+//       Lê dist/<app>/browser/cidades/index.html e compara os links com as principais
+//       cidades do bulk em .prerender-cache/estados.json (mesma regra do componente).
 //
 //   node scripts/verificar-seo-cidades.mjs --html <arquivo> [--json <saida.json>]
 //       Lê um HTML qualquer (ex.: o de produção baixado com curl), sem bulk: a
@@ -15,7 +15,7 @@ import { existsSync, readFileSync, readdirSync, statSync, writeFileSync } from '
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import {
-  analisarHtmlCidades, resumir, rotasEsperadas, verificarSeoCidades,
+  analisarHtmlCidades, resumir, rotasPrincipais, verificarSeoCidades,
 } from './lib/verificar-seo-cidades.mjs';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -55,7 +55,7 @@ let esperadas = null;
 if (!htmlAvulso) {
   const cache = join(ROOT, '.prerender-cache', 'estados.json');
   if (!existsSync(cache)) falhar('.prerender-cache/estados.json não encontrado — rode o prebuild.');
-  esperadas = rotasEsperadas(JSON.parse(readFileSync(cache, 'utf8')));
+  esperadas = rotasPrincipais(JSON.parse(readFileSync(cache, 'utf8')));
   if (esperadas.size === 0) falhar('.prerender-cache/estados.json não tem nenhuma cidade.');
 }
 
@@ -65,7 +65,8 @@ const { ok, problemas } = verificarSeoCidades(analise, esperadas);
 
 console.log(
   `[seo-cidades] ${resumo.linksCidade} links de cidade em ${resumo.ufsComLink} UFs` +
-    (esperadas ? ` | bulk: ${esperadas.size}` : ' | sem bulk (conferência interna)') +
+    (esperadas ? ` | principais do bulk: ${esperadas.size}` : ' | sem bulk (conferência interna)') +
+    ` | link /estados: ${resumo.linkEstados ? 'sim' : 'NÃO'}` +
     ` | ItemList: ${resumo.itemListNumberOfItems} | JSON-LD: ${resumo.jsonLd.join(', ')}` +
     ` | h1: ${JSON.stringify(resumo.h1)} | ${resumo.bytes.toLocaleString('pt-BR')} B`,
 );
@@ -76,8 +77,8 @@ if (saida) writeFileSync(saida, JSON.stringify(resumo, null, 2) + '\n');
 if (!ok) {
   console.error(`\n❌ [seo-cidades] ${problemas.length} problema(s) no HTML prerenderizado de /cidades:`);
   for (const p of problemas) console.error(`   ${p}`);
-  console.error('   /cidades é o hub com mais links internos do site: os links de cidade precisam estar');
-  console.error('   no HTML inicial (sem JavaScript), com canonical, robots e JSON-LD intactos.\n');
+  console.error('   /cidades linka as principais cidades e /estados no HTML inicial (sem JavaScript),');
+  console.error('   com canonical, robots e JSON-LD intactos. Ver scripts/lib/verificar-seo-cidades.mjs.\n');
   process.exit(1);
 }
-console.log('✓ [seo-cidades] links, canonical, robots, title, description, h1 e JSON-LD preservados.');
+console.log('✓ [seo-cidades] principais cidades, link /estados, canonical, robots, title, description, h1 e JSON-LD ok.');
