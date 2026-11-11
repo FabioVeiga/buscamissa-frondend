@@ -104,4 +104,33 @@ describe('DetailsHorariosComponent — observações e aviso', () => {
     // a especial não entra na grade semanal nem na lista de dia fixo
     expect(el.textContent).not.toContain('Missas em datas do mês');
   });
+
+  describe('datas especiais: nome ao lado da data', () => {
+    const iso = (() => {
+      const d = new Date();
+      d.setDate(d.getDate() + 10);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    })();
+
+    it('mesmo nome em todos os horários: aparece uma vez, junto da data', () => {
+      const el = montar([
+        { horario: '17:00:00', tipoRecorrencia: 3, data: iso, nome: 'Natal' },
+        { horario: '20:00:00', tipoRecorrencia: 3, data: iso, nome: 'Natal' },
+      ]);
+      expect(el.querySelector('.data-especial__nome')!.textContent!.trim()).toBe('Natal');
+      const chips = Array.from(el.querySelectorAll('.data-especial .mass-chip')).map((c) => c.textContent!.trim());
+      expect(chips).toEqual(['17h00', '20h00']);
+    });
+
+    it('nomes diferentes no mesmo dia: cada horário traz o seu nome', () => {
+      const el = montar([
+        { horario: '22:00:00', tipoRecorrencia: 3, data: iso, nome: 'Missa do Galo' },
+        { horario: '10:00:00', tipoRecorrencia: 3, data: iso, nome: 'Natal' },
+      ]);
+      expect(el.querySelector('.data-especial__nome')).toBeNull();
+      const texto = el.querySelector('.data-especial')!.textContent!.replace(/\s+/g, ' ');
+      expect(texto).toContain('10h00 Natal');
+      expect(texto).toContain('22h00 Missa do Galo');
+    });
+  });
 });

@@ -188,6 +188,9 @@ export class ChurchEditPageComponent implements OnInit {
         diaDoMes: missa.diaDoMes ?? null,
         diasSemanaExcecao: missa.diasSemanaExcecao ?? null,
         semanasDoMes: missa.semanasDoMes ?? null,
+        data: missa.data ?? null,
+        nome: (missa.nome ?? '').trim() || null,
+        substituiMissasDoDia: !!missa.substituiMissasDoDia,
       })),
       endereco: {
         cep: formData.cep.replace(/\D/g, ""),
