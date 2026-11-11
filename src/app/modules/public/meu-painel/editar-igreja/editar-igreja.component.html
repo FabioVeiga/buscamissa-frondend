@@ -353,21 +353,21 @@
       </div>
 
       <!-- Lista: agrupada por tipo; só horário e observação (e nome, nas datas especiais) são editáveis. -->
-      <div formArrayName="missas" class="lista-missas">
+      <div class="lista-missas">
         <p *ngIf="!missas.length" class="vazio-missas">Nenhum horário cadastrado ainda. Use "Adicionar horário" acima.</p>
-        <div *ngFor="let g of gruposMissas" class="grupo-missas">
+        <div *ngFor="let g of gruposMissas; trackBy: trackGrupo" class="grupo-missas">
           <h3 class="grupo-missas__titulo"><i class="pi" [ngClass]="g.icone"></i> {{ g.titulo }}</h3>
-          <div *ngFor="let item of g.itens" [formGroupName]="item.i" class="linha-missa">
+          <div *ngFor="let item of g.itens; trackBy: trackLinha" [formGroup]="item.ctrl" class="linha-missa">
             <span class="linha-missa__descricao">{{ item.descricao }}</span>
             <input *ngIf="item.especial" pInputText formControlName="nome" maxlength="80" placeholder="Nome (ex.: Natal)"
                    class="linha-missa__nome" />
             <input pInputText formControlName="horario" placeholder="HH:mm" maxlength="5" class="input-hora"
-                   (blur)="normalizarHorario(missas.at(item.i).get('horario'))"
-                   [class.ng-invalid-visual]="missas.at(item.i).get('horario')?.invalid && missas.at(item.i).get('horario')?.touched" />
+                   (blur)="normalizarHorario(item.ctrl.get('horario'))"
+                   [class.ng-invalid-visual]="item.ctrl.get('horario')?.invalid && item.ctrl.get('horario')?.touched" />
             <input pInputText formControlName="observacao" placeholder="Observação (opcional)"
-                   [class.ng-invalid-visual]="missas.at(item.i).get('observacao')?.invalid" />
+                   [class.ng-invalid-visual]="item.ctrl.get('observacao')?.invalid" />
             <button pButton type="button" icon="pi pi-trash" class="p-button-text p-button-danger p-button-sm"
-                    (click)="removerMissa(item.i)" aria-label="Remover horário"></button>
+                    (click)="removerMissa(item.ctrl)" aria-label="Remover horário"></button>
             <label *ngIf="item.especial" class="excecao-dia linha-missa__substitui">
               <input type="checkbox" formControlName="substituiMissasDoDia" /> Substitui as missas normais do dia
             </label>

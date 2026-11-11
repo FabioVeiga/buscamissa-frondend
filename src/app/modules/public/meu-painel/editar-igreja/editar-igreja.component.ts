@@ -45,6 +45,17 @@ const OCORRENCIA_NO_MES = 8;
 // Valor fictício para "data específica" (25/12/2026, com nome opcional).
 const DATA_ESPECIFICA = 9;
 
+interface LinhaMissa {
+  ctrl: FormGroup;
+  descricao: string;
+  especial: boolean;
+}
+interface GrupoMissas {
+  titulo: string;
+  icone: string;
+  itens: LinhaMissa[];
+}
+
 const DIAS = [
   { valor: 0, nome: "Domingo" },
   { valor: 1, nome: "Segunda-feira" },
@@ -536,8 +547,10 @@ export class EditarIgrejaComponent implements OnInit {
     );
   }
 
-  removerMissa(i: number): void {
-    this.missas.removeAt(i);
+  removerMissa(ctrl: AbstractControl): void {
+    const i = this.missas.controls.indexOf(ctrl);
+    if (i >= 0) this.missas.removeAt(i);
+    this._atualizarGrupos();
   }
 
   adicionarSessao(tipo = 1, dia = 1, horarioInicio = "", horarioFim = "", observacao = ""): void {
@@ -763,23 +776,33 @@ export class EditarIgrejaComponent implements OnInit {
       (a, b) => chave(a.value) - chave(b.value) || String(a.value.horario).localeCompare(String(b.value.horario))
     );
     ordenadas.forEach((ctrl, i) => this.missas.setControl(i, ctrl));
+    this._atualizarGrupos();
   }
 
-  /** Linhas da lista agrupadas por tipo; cada item guarda o índice no FormArray. */
-  get gruposMissas(): { titulo: string; icone: string; itens: { i: number; descricao: string; especial: boolean }[] }[] {
-    const grupos = [
-      { titulo: "Semanais", icone: "pi-refresh", itens: [] as { i: number; descricao: string; especial: boolean }[] },
-      { titulo: "No mês", icone: "pi-calendar", itens: [] as { i: number; descricao: string; especial: boolean }[] },
-      { titulo: "Datas especiais", icone: "pi-star", itens: [] as { i: number; descricao: string; especial: boolean }[] },
+  /**
+   * Linhas da lista agrupadas por tipo; cada item guarda o controle da linha.
+   * Campo (não getter): um getter criava objetos novos a cada ciclo do Angular, as linhas
+   * eram recriadas sem parar e a tela travava. Recalculado só quando os horários mudam.
+   */
+  gruposMissas: GrupoMissas[] = [];
+
+  trackGrupo = (_: number, g: GrupoMissas) => g.titulo;
+  trackLinha = (_: number, item: LinhaMissa) => item.ctrl;
+
+  private _atualizarGrupos(): void {
+    const grupos: GrupoMissas[] = [
+      { titulo: "Semanais", icone: "pi-refresh", itens: [] },
+      { titulo: "No mês", icone: "pi-calendar", itens: [] },
+      { titulo: "Datas especiais", icone: "pi-star", itens: [] },
     ];
-    this.missas.controls.forEach((c, i) => {
+    this.missas.controls.forEach((c) => {
       const m = c.value;
-      const item = { i, descricao: this.descricaoMissa(m), especial: m.diaSemana === DATA_ESPECIFICA };
+      const item: LinhaMissa = { ctrl: c as FormGroup, descricao: this.descricaoMissa(m), especial: m.diaSemana === DATA_ESPECIFICA };
       if (m.diaSemana === DATA_ESPECIFICA) grupos[2].itens.push(item);
       else if (m.diaSemana === DIA_FIXO || m.diaSemana === OCORRENCIA_NO_MES) grupos[1].itens.push(item);
       else grupos[0].itens.push(item);
     });
-    return grupos.filter((g) => g.itens.length);
+    this.gruposMissas = grupos.filter((g) => g.itens.length);
   }
 
   /** "Domingo" · "Todo dia 13 (exceto domingos)" · "1ª e 3ª sexta do mês" · "Qui, 25/12/2026". */
