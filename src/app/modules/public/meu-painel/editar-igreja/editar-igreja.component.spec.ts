@@ -52,12 +52,36 @@ describe('EditarIgrejaComponent — horários de missa', () => {
     { diaSemana: 4, horario: '17:00', tipoRecorrencia: 3, data: '2026-12-25', nome: 'Natal', substituiMissasDoDia: true },
   ];
 
-  it('mostra as missas agrupadas por tipo', () => {
-    const el: HTMLElement = montar(missas).nativeElement;
-    const titulos = Array.from(el.querySelectorAll('.grupo-missas__titulo')).map((t) => t.textContent!.trim());
-    expect(titulos).toEqual(['Semanais', 'No mês', 'Datas especiais']);
-    expect(el.querySelectorAll('.lista-missas .linha-missa').length).toBe(5);
+  const titulos = (el: HTMLElement) =>
+    Array.from(el.querySelectorAll('.grupo-missas__titulo')).map((t) => t.textContent!.trim());
+  const linhas = (el: HTMLElement) => el.querySelectorAll('.lista-missas .linha-missa').length;
+
+  it('mostra só os horários da frequência escolhida', () => {
+    const f = montar(missas);
+    const el: HTMLElement = f.nativeElement;
+    expect(titulos(el)).toEqual(['Semanais']);
+    expect(linhas(el)).toBe(3);
+
+    f.componentInstance.nova.freq = 'data';
+    f.detectChanges();
+    expect(titulos(el)).toEqual(['Datas especiais']);
+    expect(linhas(el)).toBe(1);
     expect(el.querySelector('.lista-missas')!.textContent).toContain('25/12/2026');
+
+    f.componentInstance.nova.freq = 'ocorrencia';
+    f.detectChanges();
+    expect(titulos(el)).toEqual(['Dia da semana no mês']);
+    expect(linhas(el)).toBe(1);
+  });
+
+  it('avisa quando não há horário na frequência escolhida e mostra a contagem nos botões', () => {
+    const f = montar(missas);
+    const el: HTMLElement = f.nativeElement;
+    f.componentInstance.nova.freq = 'diaFixo';
+    f.detectChanges();
+    expect(el.querySelector('.vazio-missas')!.textContent).toContain('Nenhum horário cadastrado aqui');
+    const qtds = Array.from(el.querySelectorAll('.chip-freq__qtd')).map((q) => q.textContent!.trim());
+    expect(qtds).toEqual(['3', '1', '1']); // semanal, ocorrência, data (dia fixo está vazio)
   });
 
   it('não recria as linhas a cada ciclo de detecção de mudanças', () => {
@@ -87,14 +111,15 @@ describe('EditarIgrejaComponent — horários de missa', () => {
     expect(c.podeAdicionarNova).toBeTrue();
     c.adicionarNova();
     f.detectChanges();
-    expect(el.querySelectorAll('.lista-missas .linha-missa').length).toBe(6);
-    // a data mais cedo vem primeiro dentro de "Datas especiais"
-    const especiais = el.querySelectorAll('.grupo-missas')[2].querySelectorAll('.linha-missa__descricao');
+    // a frequência escolhida continua "data": lista só as datas especiais, a mais cedo primeiro
+    expect(el.querySelectorAll('.lista-missas .linha-missa').length).toBe(2);
+    const especiais = el.querySelectorAll('.linha-missa__descricao');
     expect(especiais[0].textContent).toContain('24/12/2026');
 
-    c.removerMissa(c.gruposMissas[0].itens[0].ctrl);
+    c.removerMissa(c.gruposMissas[3].itens[0].ctrl);
     f.detectChanges();
-    expect(el.querySelectorAll('.lista-missas .linha-missa').length).toBe(5);
+    expect(el.querySelectorAll('.lista-missas .linha-missa').length).toBe(1);
+    expect(c.missas.length).toBe(5);
   });
 
   describe('atendimento e confissão', () => {

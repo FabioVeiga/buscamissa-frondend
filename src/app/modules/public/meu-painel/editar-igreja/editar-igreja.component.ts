@@ -61,6 +61,7 @@ interface GrupoSessoes {
   itens: LinhaSessao[];
 }
 interface GrupoMissas {
+  freq: string;
   titulo: string;
   icone: string;
   itens: LinhaMissa[];
@@ -899,19 +900,25 @@ export class EditarIgrejaComponent implements OnInit {
 
   private _atualizarGrupos(): void {
     const grupos: GrupoMissas[] = [
-      { titulo: "Semanais", icone: "pi-refresh", itens: [] },
-      { titulo: "No mês", icone: "pi-calendar", itens: [] },
-      { titulo: "Datas especiais", icone: "pi-star", itens: [] },
+      { freq: "semanal", titulo: "Semanais", icone: "pi-refresh", itens: [] },
+      { freq: "diaFixo", titulo: "Dia fixo do mês", icone: "pi-calendar", itens: [] },
+      { freq: "ocorrencia", titulo: "Dia da semana no mês", icone: "pi-calendar", itens: [] },
+      { freq: "data", titulo: "Datas especiais", icone: "pi-star", itens: [] },
     ];
+    const porFreq: Record<string, GrupoMissas> = Object.fromEntries(grupos.map((g) => [g.freq, g]));
     this.missas.controls.forEach((c) => {
       const m = c.value;
       const item: LinhaMissa = { ctrl: c as FormGroup, descricao: this.descricaoMissa(m), especial: m.diaSemana === DATA_ESPECIFICA };
-      if (m.diaSemana === DATA_ESPECIFICA) grupos[2].itens.push(item);
-      else if (m.diaSemana === DIA_FIXO || m.diaSemana === OCORRENCIA_NO_MES) grupos[1].itens.push(item);
-      else grupos[0].itens.push(item);
+      const freq =
+        m.diaSemana === DATA_ESPECIFICA ? "data" : m.diaSemana === DIA_FIXO ? "diaFixo" : m.diaSemana === OCORRENCIA_NO_MES ? "ocorrencia" : "semanal";
+      porFreq[freq].itens.push(item);
     });
-    this.gruposMissas = grupos.filter((g) => g.itens.length);
+    this.gruposMissas = grupos;
+    this.contagemPorFreq = Object.fromEntries(grupos.map((g) => [g.freq, g.itens.length]));
   }
+
+  /** Quantos horários há em cada frequência — vai no botão do filtro. */
+  contagemPorFreq: Record<string, number> = {};
 
   /** "Domingo" · "Todo dia 13 (exceto domingos)" · "1ª e 3ª sexta do mês" · "Qui, 25/12/2026". */
   descricaoMissa(m: any): string {

@@ -523,3 +523,17 @@ h2.mt {
     &__obs { flex: 1 1 100%; }
   }
 }
+
+.chip-freq__qtd {
+  display: inline-block;
+  min-width: 1.15rem;
+  margin-left: 0.4rem;
+  padding: 0 0.3rem;
+  border-radius: 9999px;
+  background: rgba(173, 84, 12, 0.14);
+  font-size: 0.7rem;
+  line-height: 1.15rem;
+  text-align: center;
+}
+
+.chip-freq--ativo .chip-freq__qtd { background: rgba(255, 255, 255, 0.25); }
