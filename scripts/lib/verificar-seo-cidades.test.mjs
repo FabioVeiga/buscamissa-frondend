@@ -1,0 +1,156 @@
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import {
+  CANONICAL, DESCRIPTION, TITLE,
+  analisarHtmlCidades, resumir, rotasEsperadas, verificarSeoCidades,
+} from './verificar-seo-cidades.mjs';
+
+const ESTADOS = [
+  { uf: 'SP', cidades: [{ cidadeSlug: 'sao-paulo' }, { cidadeSlug: 'campinas' }] },
+  { uf: 'PR', cidades: [{ cidadeSlug: 'itapejara-d-oeste' }] },
+];
+
+const ROTAS = ['/missas/sp/sao-paulo', '/missas/sp/campinas', '/missas/pr/itapejara-d-oeste'];
+
+/** HTML mínimo no formato que o prerender emite; cada opção quebra UMA coisa. */
+function pagina({
+  rotas = ROTAS,
+  canonical = `<link rel="canonical" href="${CANONICAL}">`,
+  robots = 'index, follow',
+  title = TITLE,
+  description = DESCRIPTION,
+  h1 = '<h1 class="ph-hero__titulo">Horários de Missa\npor<span> Cidade</span></h1>',
+  itens = rotas,
+  numberOfItems = itens.length,
+  breadcrumb = ['https://buscamissa.com.br/', CANONICAL],
+} = {}) {
+  const ld = (id, obj) => `<script id="ld-${id}" type="application/ld+json">${JSON.stringify(obj)}</script>`;
+  return `<!doctype html><html><head>
+<title>${title}</title>
+<meta name="description" content="${description}">
+<meta name="robots" content="${robots}">
+${canonical}
+${ld('breadcrumb', {
+    '@type': 'BreadcrumbList',
+    itemListElement: breadcrumb.map((item, i) => ({ '@type': 'ListItem', position: i + 1, item })),
+  })}
+${ld('itemlist', {
+    '@type': 'ItemList',
+    numberOfItems,
+    itemListElement: itens.map((r, i) => ({
+      '@type': 'ListItem', position: i + 1, item: `https://buscamissa.com.br${r}`,
+    })),
+  })}
+</head><body>${h1}
+<a href="/missas/sp">São Paulo (estado)</a>
+<a href="/cidades">Cidades</a>
+${rotas.map((r) => `<a _ngc-e="" class="cidade-link cidade-link--oculto" href="${r}" jsaction="click:;">x</a>`).join('\n')}
+</body></html>`;
+}
+
+const veredito = (opcoes, esperadas = rotasEsperadas(ESTADOS)) =>
+  verificarSeoCidades(analisarHtmlCidades(pagina(opcoes)), esperadas);
+
+test('rotasEsperadas monta /missas/{uf}/{slug} com a UF em minúsculo', () => {
+  assert.deepEqual([...rotasEsperadas(ESTADOS)].sort(), [...ROTAS].sort());
+  assert.equal(rotasEsperadas([{ uf: 'SP' }, { cidades: [{ cidadeSlug: 'x' }] }, null]).size, 0);
+});
+
+test('página íntegra passa', () => {
+  assert.deepEqual(veredito(), { ok: true, problemas: [] });
+});
+
+test('só conta link de CIDADE: hub de UF e outras rotas ficam de fora', () => {
+  const a = analisarHtmlCidades(pagina());
+  assert.deepEqual([...a.linksCidade].sort(), [...ROTAS].sort());
+});
+
+test('link repetido (vitrine + acordeão) conta uma vez', () => {
+  const a = analisarHtmlCidades(pagina({ rotas: [...ROTAS, '/missas/sp/sao-paulo'], itens: ROTAS }));
+  assert.equal(a.linksCidade.size, 3);
+});
+
+test('link oculto por classe continua contando — está no HTML inicial', () => {
+  assert.equal(veredito().ok, true);
+});
+
+test('cidade do bulk sem link no HTML falha e cita a rota', () => {
+  const r = veredito({ rotas: ROTAS.slice(0, 2) });
+  assert.equal(r.ok, false);
+  assert.match(r.problemas.join('\n'), /1 cidade\(s\) do bulk sem link.*itapejara-d-oeste/);
+});
+
+test('link de cidade fora do bulk falha', () => {
+  const r = veredito({ rotas: [...ROTAS, '/missas/sp/inventada'] });
+  assert.equal(r.ok, false);
+  assert.match(r.problemas.join('\n'), /1 link\(s\) de cidade fora do bulk.*inventada/);
+});
+
+test('HTML sem nenhum link de cidade falha (página virou shell CSR)', () => {
+  const r = veredito({ rotas: [], itens: [] }, null);
+  assert.match(r.problemas.join('\n'), /nenhum link/);
+});
+
+test('canonical ausente, trocado ou duplicado falha', () => {
+  assert.equal(veredito({ canonical: '' }).ok, false);
+  assert.equal(veredito({ canonical: '<link rel="canonical" href="https://buscamissa.com.br/">' }).ok, false);
+  const duas = `<link rel="canonical" href="${CANONICAL}">`.repeat(2);
+  assert.equal(veredito({ canonical: duas }).ok, false);
+});
+
+test('robots com noindex ou nofollow falha', () => {
+  assert.equal(veredito({ robots: 'noindex, follow' }).ok, false);
+  assert.equal(veredito({ robots: 'index, nofollow' }).ok, false);
+});
+
+test('title e description são fixos', () => {
+  assert.match(veredito({ title: 'Todas as cidades | BuscaMissa' }).problemas.join('\n'), /title mudou/);
+  assert.match(veredito({ description: 'outra' }).problemas.join('\n'), /meta description mudou/);
+});
+
+test('o TEXTO do h1 é livre; a quantidade não', () => {
+  assert.equal(veredito({ h1: '<h1>Encontre a missa na sua cidade</h1>' }).ok, true);
+  assert.equal(veredito({ h1: '' }).ok, false);
+  assert.equal(veredito({ h1: '<h1>a</h1><h1>b</h1>' }).ok, false);
+  assert.equal(veredito({ h1: '<h1> <span></span> </h1>' }).ok, false);
+});
+
+test('h1 é lido sem as tags internas', () => {
+  assert.deepEqual(analisarHtmlCidades(pagina()).h1, ['Horários de Missa por Cidade']);
+});
+
+test('ItemList precisa bater com os links do HTML', () => {
+  const r = veredito({ itens: ROTAS.slice(0, 2) });
+  assert.match(r.problemas.join('\n'), /ItemList e links do HTML divergem: 0 item\(ns\) sem <a>, 1 <a> sem item/);
+  assert.match(veredito({ numberOfItems: 99 }).problemas.join('\n'), /numberOfItems \(99\)/);
+});
+
+test('BreadcrumbList precisa ser Início › Cidades', () => {
+  assert.equal(veredito({ breadcrumb: ['https://buscamissa.com.br/'] }).ok, false);
+});
+
+test('JSON-LD ausente ou inválido falha', () => {
+  const semLd = pagina().replace(/<script id="ld-itemlist"[\s\S]*?<\/script>/, '');
+  assert.match(
+    verificarSeoCidades(analisarHtmlCidades(semLd), rotasEsperadas(ESTADOS)).problemas.join('\n'),
+    /um ItemList; veio 0/,
+  );
+  const quebrado = pagina().replace('{"@type":"BreadcrumbList"', '{"@type":BreadcrumbList');
+  assert.match(
+    verificarSeoCidades(analisarHtmlCidades(quebrado), rotasEsperadas(ESTADOS)).problemas.join('\n'),
+    /JSON inválido/,
+  );
+});
+
+test('sem bulk em disco a verificação é só interna e ainda passa', () => {
+  assert.equal(veredito({}, null).ok, true);
+});
+
+test('resumir devolve os números do antes × depois', () => {
+  const r = resumir(analisarHtmlCidades(pagina()));
+  assert.equal(r.linksCidade, 3);
+  assert.equal(r.ufsComLink, 2);
+  assert.equal(r.itemListNumberOfItems, 3);
+  assert.deepEqual(r.jsonLd, ['BreadcrumbList', 'ItemList']);
+  assert.equal(r.canonical, CANONICAL);
+});
