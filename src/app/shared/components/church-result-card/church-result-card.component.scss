@@ -149,6 +149,9 @@ $primary-dark: #9a4a0c;
     align-items: center;
     gap: 0.5rem;
     flex-shrink: 0;
+    // O favoritar (35px) é mais alto que uma linha do nome (~23px). Sem a margem negativa,
+    // a linha do topo assumia a altura do botão e abria ~18px entre o nome e o endereço.
+    margin-bottom: -0.75rem;
   }
 
   &__nome {
@@ -213,12 +216,24 @@ $primary-dark: #9a4a0c;
   }
 
   &__logradouro {
+    // Recuo para o texto não passar por baixo do favoritar, que avança sobre esta linha.
+    padding-right: 2.75rem;
     font-size: 0.9rem;
     color: #374151;
     font-weight: 500;
-    white-space: nowrap;
+    // Até duas linhas: com número e complemento, uma linha só cortava o número no mobile.
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     overflow: hidden;
-    text-overflow: ellipsis;
+
+    // Abaixo de 480px o corpo do card fica estreito (~170px a 320px): três linhas mantêm
+    // o número visível nos endereços longos.
+    @media (max-width: 479.98px) {
+      -webkit-line-clamp: 3;
+      line-clamp: 3;
+    }
 
     @media (min-width: 480px) {
       font-size: 0.9375rem;

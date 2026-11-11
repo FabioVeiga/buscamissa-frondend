@@ -53,7 +53,7 @@
 
     <div class="city-card__meta">
       <span *ngIf="igreja.endereco?.logradouro" class="city-card__logradouro">
-        {{ igreja.endereco.logradouro }}
+        {{ igreja.endereco.logradouro }}<ng-container *ngIf="igreja.endereco.numero">, {{ igreja.endereco.numero }}</ng-container><ng-container *ngIf="igreja.endereco.complemento"> – {{ igreja.endereco.complemento }}</ng-container>
       </span>
       <span class="city-card__bairro">
         <ng-container *ngIf="igreja.endereco?.bairro">{{ igreja.endereco.bairro }}<ng-container *ngIf="cidadeNome">, {{ cidadeNome }}/{{ ufLabel }}</ng-container></ng-container>
