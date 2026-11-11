@@ -16,6 +16,9 @@ import {
   BuscaLocalService, CidadeBusca, IgrejaBusca, ResultadoBusca,
 } from '../../../core/services/busca-local.service';
 import { cidades, estados, paroquias } from '../../../shared/utils/plural.utils';
+import { GeolocationService } from '../../../core/services/geolocation.service';
+import { acharCidade, nomeDoMunicipio, resolverUf } from '../../../shared/utils/localizacao.utils';
+import { STATES } from '../../../core/constants/states';
 
 const SITE = 'https://buscamissa.com.br';
 /** Cap do bloco "Capitais e principais cidades" — vitrine, não substitui o índice completo. */
@@ -59,6 +62,7 @@ export class CidadesComponent implements OnInit, OnDestroy {
   private _destroyRef = inject(DestroyRef);
   private _buscaLocal = inject(BuscaLocalService);
   private _router = inject(Router);
+  private _geo = inject(GeolocationService);
   private _ehBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   isLoading = true;
@@ -134,7 +138,74 @@ export class CidadesComponent implements OnInit, OnDestroy {
     this.carregar();
   }
 
+  // ============================ localização ============================
+  // Só por clique (nunca ao abrir a página). Resolve a posição para uma cidade
+  // QUE TEM PÁGINA e navega; em qualquer outro caso, explica na linha do botão.
+
+  geoEstado: 'ocioso' | 'carregando' | 'sem-pagina' | 'indisponivel' = 'ocioso';
+  geoMensagem = '';
+  geoCidade = '';
+  geoLinkAlternativo: string[] = ['/estados'];
+  geoRotuloAlternativo = 'Ver cidades por estado';
+
+  /** Evita navegar depois que a pessoa já saiu da página (a geo leva segundos). */
+  private _destruido = false;
+
+  async usarLocalizacao(): Promise<void> {
+    if (!this._ehBrowser || this.geoEstado === 'carregando') return;
+    this.geoEstado = 'carregando';
+    this._cdr.markForCheck();
+
+    let lat: number;
+    let lng: number;
+    try {
+      ({ lat, lng } = await this._geo.obterPosicaoAtual());
+    } catch (erro) {
+      // code 1 = PERMISSION_DENIED; o resto (timeout, sem sinal, sem API) é falha.
+      const negou = (erro as GeolocationPositionError | undefined)?.code === 1;
+      this.falharGeo(negou
+        ? 'Localização não permitida.'
+        : 'Não conseguimos obter sua localização.');
+      return;
+    }
+
+    const addr = await this._geo.reverseGeocode(lat, lng);
+    if (this._destruido) return;
+    const uf = resolverUf(addr);
+    const nome = nomeDoMunicipio(addr);
+    if (!uf || !nome) {
+      this.falharGeo('Não conseguimos identificar sua cidade.');
+      return;
+    }
+
+    const cidade = acharCidade(nome, uf, this.cidadesParaBusca);
+    if (cidade) {
+      this.geoEstado = 'ocioso';
+      this.irPara(this.linkCidade(cidade));
+      return;
+    }
+
+    // Cidade sem página: o melhor vizinho é o hub do estado, se ele existir;
+    // senão, o índice de estados.
+    const ufMin = uf.toLowerCase();
+    const temEstado = this.cidadesParaBusca.some((c) => c.uf === ufMin);
+    this.geoCidade = nome;
+    this.geoLinkAlternativo = temEstado ? ['/missas', ufMin] : ['/estados'];
+    const nomeUf = STATES.find((s) => s.sigla === uf)?.nome ?? uf;
+    this.geoRotuloAlternativo = temEstado ? `Ver cidades de ${nomeUf}` : 'Ver cidades por estado';
+    this.geoEstado = 'sem-pagina';
+    this._cdr.markForCheck();
+  }
+
+  private falharGeo(mensagem: string): void {
+    if (this._destruido) return;
+    this.geoMensagem = mensagem;
+    this.geoEstado = 'indisponivel';
+    this._cdr.markForCheck();
+  }
+
   ngOnDestroy(): void {
+    this._destruido = true;
     this._seo.removeJsonLd('breadcrumb');
     this._seo.removeJsonLd('itemlist');
   }

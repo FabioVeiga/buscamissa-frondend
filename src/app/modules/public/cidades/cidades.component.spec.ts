@@ -8,6 +8,7 @@ import { of } from 'rxjs';
 import { CidadesComponent } from './cidades.component';
 import { SeoPaginasService } from '../../../core/services/seo-paginas.service';
 import { BuscaLocalService } from '../../../core/services/busca-local.service';
+import { GeolocationService } from '../../../core/services/geolocation.service';
 
 /**
  * Contrato de `/cidades` depois da reformulação do hero (etapa 2).
@@ -58,6 +59,7 @@ describe('CidadesComponent — hero e busca', () => {
     raiz = fixture.nativeElement;
   });
 
+  const component = () => fixture.componentInstance;
   const campo = () => raiz.querySelector('.busca input') as HTMLInputElement;
   const botao = () => raiz.querySelector('.busca__btn') as HTMLButtonElement;
 
@@ -232,6 +234,87 @@ describe('CidadesComponent — hero e busca', () => {
       expect(campo().getAttribute('role')).toBe('combobox');
       expect(campo().getAttribute('aria-autocomplete')).toBe('list');
       expect(campo().getAttribute('aria-controls')).toBe('sugestoes-busca');
+    });
+  });
+
+  // ── "Usar minha localização" (etapa 7) ──────────────────────────────────────
+  describe('localização', () => {
+    let geo: GeolocationService;
+    const botaoGeo = () => raiz.querySelector('.geo__btn') as HTMLButtonElement;
+    const msg = () => raiz.querySelector('.geo__msg')?.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+
+    beforeEach(() => {
+      geo = TestBed.inject(GeolocationService);
+    });
+
+    const clicar = async () => {
+      botaoGeo().click();
+      await fixture.whenStable();
+      await new Promise((r) => setTimeout(r));
+      fixture.detectChanges();
+    };
+
+    it('NUNCA pede a localização ao abrir a página', () => {
+      // O componente já foi criado e inicializado no beforeEach de fora: se algo
+      // chamasse a geo na carga, o espião criado agora não pegaria — então o
+      // contrato é verificado pelo inverso: só o clique chama.
+      const pos = spyOn(geo, 'obterPosicaoAtual').and.returnValue(new Promise(() => {}));
+      component().ngOnInit();
+      expect(pos).not.toHaveBeenCalled();
+      botaoGeo().click();
+      expect(pos).toHaveBeenCalledTimes(1);
+    });
+
+    it('cidade com página: navega para ela', async () => {
+      spyOn(geo, 'obterPosicaoAtual').and.resolveTo({ lat: -25.4, lng: -49.3 });
+      spyOn(geo, 'reverseGeocode').and.resolveTo({ city: 'Curitiba', 'ISO3166-2-lvl4': 'BR-PR' });
+      await clicar();
+      expect(router.navigate).toHaveBeenCalledOnceWith(['/missas', 'pr', 'curitiba']);
+    });
+
+    it('cidade sem página no mesmo estado: oferece o hub do estado, sem navegar', async () => {
+      spyOn(geo, 'obterPosicaoAtual').and.resolveTo({ lat: 0, lng: 0 });
+      spyOn(geo, 'reverseGeocode').and.resolveTo({ town: 'Pato Branco', 'ISO3166-2-lvl4': 'BR-PR' });
+      await clicar();
+      expect(router.navigate).not.toHaveBeenCalled();
+      expect(msg()).toContain('Ainda não há missas em Pato Branco.');
+      const link = raiz.querySelector('.geo__msg a')!;
+      expect(link.getAttribute('href')).toBe('/missas/pr');
+      expect(link.textContent!.trim()).toBe('Ver cidades de Paraná');
+    });
+
+    it('estado sem nenhuma cidade: oferece /estados', async () => {
+      spyOn(geo, 'obterPosicaoAtual').and.resolveTo({ lat: 0, lng: 0 });
+      spyOn(geo, 'reverseGeocode').and.resolveTo({ city: 'Manaus', 'ISO3166-2-lvl4': 'BR-AM' });
+      await clicar();
+      expect(raiz.querySelector('.geo__msg a')!.getAttribute('href')).toBe('/estados');
+    });
+
+    it('permissão negada: explica e a busca manual segue funcionando', async () => {
+      spyOn(geo, 'obterPosicaoAtual').and.rejectWith({ code: 1 });
+      await clicar();
+      expect(msg()).toBe('Localização não permitida. Digite sua cidade acima.');
+      // A mensagem ocupa o lugar do botão (mesma altura reservada, sem CLS).
+      expect(botaoGeo()).toBeNull();
+      digitar('curitiba');
+      botao().click();
+      expect(router.navigate).toHaveBeenCalledOnceWith(['/missas', 'pr', 'curitiba']);
+    });
+
+    it('falha de rede no Nominatim: mensagem própria, sem navegar', async () => {
+      spyOn(geo, 'obterPosicaoAtual').and.resolveTo({ lat: 0, lng: 0 });
+      spyOn(geo, 'reverseGeocode').and.resolveTo(null);
+      await clicar();
+      expect(msg()).toContain('Não conseguimos identificar sua cidade.');
+      expect(router.navigate).not.toHaveBeenCalled();
+    });
+
+    it('enquanto localiza, o botão fica desabilitado e diz o que está fazendo', () => {
+      spyOn(geo, 'obterPosicaoAtual').and.returnValue(new Promise(() => {}));
+      botaoGeo().click();
+      fixture.detectChanges();
+      expect(botaoGeo().disabled).toBeTrue();
+      expect(botaoGeo().textContent).toContain('Localizando');
     });
   });
 

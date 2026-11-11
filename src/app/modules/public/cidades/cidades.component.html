@@ -14,6 +14,9 @@
     abaixo — no mobile, digitar não mudava nada na viewport.
   -->
   <div class="busca-hero" hero-busca #caixaBusca>
+    <!-- Âncora do painel de sugestões: ele abre colado ao CAMPO, por cima da
+         linha de localização logo abaixo, e não depois dela. -->
+    <div class="busca-ancora">
     <div class="busca busca--ampla">
       <i class="pi pi-search" aria-hidden="true"></i>
       <input
@@ -96,6 +99,39 @@
         }
       </div>
     }
+    </div>
+
+    <!--
+      Localização SÓ por clique: nada pede permissão ao abrir a página. Recusa,
+      falha ou cidade sem página viram uma mensagem NO LUGAR do botão, e a busca
+      acima continua funcionando. A mensagem substitui o botão (em vez de entrar
+      ao lado dele) para caber na altura já reservada pelo `min-height`: ao lado,
+      ela quebrava linha e empurrava a página ~20px (CLS). `aria-live` anuncia o
+      resultado a leitores de tela.
+    -->
+    <div class="geo" aria-live="polite">
+      @if (geoEstado === 'sem-pagina') {
+        <p class="geo__msg">
+          <i class="pi pi-map-marker" aria-hidden="true"></i>
+          <span>Ainda não há missas em {{ geoCidade }}.
+            <a [routerLink]="geoLinkAlternativo">{{ geoRotuloAlternativo }}</a></span>
+        </p>
+      } @else if (geoEstado === 'indisponivel') {
+        <p class="geo__msg">
+          <i class="pi pi-info-circle" aria-hidden="true"></i>
+          <span>{{ geoMensagem }} Digite sua cidade acima.</span>
+        </p>
+      } @else {
+        <button type="button" class="geo__btn" (click)="usarLocalizacao()"
+                [disabled]="geoEstado === 'carregando'">
+          @if (geoEstado === 'carregando') {
+            <i class="pi pi-spin pi-spinner" aria-hidden="true"></i> Localizando…
+          } @else {
+            <i class="pi pi-map-marker" aria-hidden="true"></i> Usar minha localização
+          }
+        </button>
+      }
+    </div>
   </div>
 
   <!--

@@ -25,6 +25,37 @@ $muted: #6b7280;
 // o painel precisa deixar isso óbvio sem virar interface de filtro.
 
 .busca-hero { position: relative; }
+.busca-ancora { position: relative; }
+
+// ── Localização ────────────────────────────────────────────────────────────────
+// Linha discreta abaixo da busca: é um ATALHO, não compete com o campo.
+.geo {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.75rem;
+  // Reserva a altura do botão: a mensagem que aparece ao lado não empurra nada.
+  min-height: 44px; margin-top: 0.35rem;
+  font-size: 0.875rem; color: $texto;
+
+  &__btn {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    min-height: 44px; padding: 0 0.25rem;
+    background: none; border: 0; cursor: pointer;
+    color: $laranja; font-weight: 600; font-size: 0.875rem;
+    text-decoration: underline; text-underline-offset: 3px;
+    i { font-size: 0.9rem; color: $laranja-vivo; }
+    &:hover { color: $laranja-vivo; }
+    &:focus-visible { outline: 3px solid rgba(226, 118, 27, 0.35); outline-offset: 2px; border-radius: 6px; }
+    &:disabled { cursor: progress; text-decoration: none; opacity: 0.8; }
+  }
+
+  // Até duas linhas cabem nos 44px reservados (≈17px por linha): textos curtos
+  // de propósito, para nem o celular estreito passar disso.
+  &__msg {
+    display: flex; align-items: flex-start; gap: 0.4rem;
+    margin: 0; color: $muted; line-height: 1.4;
+    i { color: $laranja-vivo; font-size: 0.9rem; margin-top: 0.15rem; flex: 0 0 auto; }
+    a { color: $laranja; font-weight: 600; white-space: nowrap; }
+  }
+}
 
 // Busca AMPLA: só em /cidades. O `.busca` base (partial compartilhado com
 // /estados e /missas/:uf) fica intocado; aqui o campo ganha altura, sombra e o
