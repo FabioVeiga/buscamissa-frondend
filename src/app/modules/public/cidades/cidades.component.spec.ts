@@ -104,7 +104,9 @@ describe('CidadesComponent — hero e busca', () => {
 
   it('mantém o <h2> das principais cidades e não tem mais a lista por estado', () => {
     const h2 = [...raiz.querySelectorAll('h2')].map((h) => h.textContent!.trim());
-    expect(h2).toContain('Capitais e principais cidades');
+    // "Capitais" saiu: o critério é número de paróquias, e Guarulhos ou São
+    // Bernardo não são capitais.
+    expect(h2).toContain('Principais cidades');
     expect(h2).not.toContain('Escolha uma cidade');
     expect(raiz.querySelectorAll('.estado-card, a.cidade-link').length).toBe(0);
   });
@@ -112,6 +114,11 @@ describe('CidadesComponent — hero e busca', () => {
   it('linka as principais cidades, da mais para a menos paróquias', () => {
     const hrefs = [...raiz.querySelectorAll('a.destaque')].map((a) => a.getAttribute('href'));
     expect(hrefs).toEqual(['/missas/sp/sao-paulo', '/missas/pr/curitiba', '/missas/pr/itapejara-d-oeste']);
+  });
+
+  it('cada cartão mostra o total real de paróquias e a UF', () => {
+    const metas = [...raiz.querySelectorAll('a.destaque .destaque__meta')].map((m) => m.textContent!.trim());
+    expect(metas).toEqual(['509 paróquias · SP', '126 paróquias · PR', '4 paróquias · PR']);
   });
 
   it('o bloco "Procurando outra cidade?" leva a /estados com o total de cidades', () => {

@@ -142,7 +142,7 @@
         <section class="mt-6">
           <h2 class="sec-titulo">
             <i class="pi pi-building sec-titulo__ico" aria-hidden="true"></i>
-            Capitais e principais cidades
+            Principais cidades
           </h2>
           <p class="sec-sub">As cidades com mais igrejas cadastradas.</p>
 
@@ -150,8 +150,10 @@
             @for (c of principaisCidades; track c.uf + '/' + c.slug) {
               <a class="destaque" [routerLink]="['/missas', c.uf, c.slug]">
                 <i class="pi pi-map-marker destaque__ico" aria-hidden="true"></i>
-                <span class="destaque__nome">{{ c.nome }}</span>
-                <span class="destaque__meta">{{ rotuloParoquias(c.totalParoquias) }}</span>
+                <span class="destaque__texto">
+                  <span class="destaque__nome">{{ c.nome }}</span>
+                  <span class="destaque__meta">{{ rotuloParoquias(c.totalParoquias) }} · {{ c.uf | uppercase }}</span>
+                </span>
               </a>
             }
           </div>
