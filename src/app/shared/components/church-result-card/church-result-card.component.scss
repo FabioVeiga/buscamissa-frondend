@@ -45,7 +45,7 @@ $primary-dark: #9a4a0c;
     line-height: 1;
     letter-spacing: -0.03em;
 
-    &--vazio { color: #d1d5db; font-size: 1.5rem; }
+    &--vazio { color: #9ca3af; font-size: 1.5rem; }
   }
 
   &__rotulo {
@@ -80,11 +80,11 @@ $primary-dark: #9a4a0c;
   &__dia {
     font-size: 0.75rem;
     font-weight: 600;
-    color: #9ca3af;
+    color: #6b7280;
     margin-top: 0.25rem;
     text-align: center;
 
-    &--hoje { color: #16a34a; }
+    &--hoje { color: #15803d; }
   }
 
   &__countdown {
@@ -93,7 +93,7 @@ $primary-dark: #9a4a0c;
     gap: 0.2rem;
     font-size: 0.6875rem;
     font-weight: 700;
-    color: #dc2626;
+    color: #b91c1c;
     background: #fef2f2;
     border-radius: 999px;
     padding: 0.2rem 0.4rem;
@@ -185,9 +185,9 @@ $primary-dark: #9a4a0c;
     width: 2.5rem;
     height: 2.5rem;
     background: none;
-    border: 1.5px solid #e5e7eb;
+    border: 1.5px solid #9ca3af;
     border-radius: 50%;
-    color: #d1d5db;
+    color: #6b7280;
     cursor: pointer;
     font-size: 1.125rem;
     transition: color 0.15s, border-color 0.15s, background 0.15s;
