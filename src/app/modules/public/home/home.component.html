@@ -316,8 +316,10 @@
         <app-anuncio posicao="fim_resultados" />
       }
     }
-    <p-paginator [rows]="pageSize" [first]="(pageIndex - 1) * pageSize" [totalRecords]="totalRecordsFiltrado"
-      [rowsPerPageOptions]="[5, 10, 20]" (onPageChange)="onPageChange($event)"></p-paginator>
+    <div class="resultados-paginacao">
+      <p-paginator [rows]="pageSize" [first]="(pageIndex - 1) * pageSize" [totalRecords]="totalRecordsFiltrado"
+        [rowsPerPageOptions]="[5, 10, 20]" (onPageChange)="onPageChange($event)"></p-paginator>
+    </div>
   </div>
 
   <!-- ══ CONVITE ANUNCIE ══ -->

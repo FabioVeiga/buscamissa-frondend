@@ -442,6 +442,26 @@ $texto-2: #6b7280;
   &--ativo { background: $laranja; border-color: $laranja; color: #fff; &:hover { background: $laranja-hover; color: #fff; } }
 }
 
+// ── Paginação dos resultados ──────────────────────────────────────────────────
+// Alvos de toque de 44px (3.143rem com raiz de 14px) e 8px entre eles. Restrito a esta
+// tela pelo wrapper: o tema global do PrimeNG não muda.
+.resultados-paginacao ::ng-deep .p-paginator {
+  gap: 0.5715rem;
+
+  .p-paginator-pages { gap: 0.5715rem; }
+
+  .p-paginator-first, .p-paginator-prev, .p-paginator-page,
+  .p-paginator-next, .p-paginator-last {
+    min-width: 3.143rem;
+    height: 3.143rem;
+  }
+
+  .p-paginator-rpp-dropdown {
+    height: 3.143rem;
+    align-items: center;
+  }
+}
+
 // ── Resultados (cards) ────────────────────────────────────────────────────────
 .resultados-cards {
   display: flex;
