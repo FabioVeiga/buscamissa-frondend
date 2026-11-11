@@ -341,7 +341,7 @@ $texto-2: #6b7280;
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    font-size: 0.85rem;
+    font-size: 0.875rem;
     font-weight: 600;
     color: $laranja;
     text-decoration: none;
@@ -430,7 +430,7 @@ $texto-2: #6b7280;
 // ── Chips de ordenação ────────────────────────────────────────────────────────
 .sort-chip {
   display: inline-flex; align-items: center; gap: 0.3rem;
-  padding: 0.3rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600;
+  padding: 0.3rem 0.75rem; border-radius: 999px; font-size: 0.875rem; font-weight: 600;
   border: 1.5px solid #9ca3af; background: #fff; color: $texto-2; cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
   &:hover { border-color: $laranja; color: $laranja; }
