@@ -8,8 +8,22 @@ export interface FilterSearchChurch {
   DiaDaSemana?: number;
   Horario?: string;
   HorarioFim?: string;
+  /** OrdenacaoBuscaEnum da API: 0 = nome A→Z (padrão), 1 = Z→A, 2 = proximidade (exige Lat e Lng). */
+  Ordenacao?: number;
+  Lat?: number;
+  Lng?: number;
   "Paginacao.PageIndex": number;
   "Paginacao.PageSize": number;
+}
+
+/** GrupoBuscaEnum da API, na ordem em que os grupos aparecem na busca. */
+export type GrupoBusca = 1 | 2 | 3;
+
+/** Total de igrejas do filtro em cada grupo (`totaisPorGrupo` de buscar-por-filtro). */
+export interface TotaisPorGrupoBusca {
+  comProximaMissa: number;
+  semProximaData: number;
+  semHorarios: number;
 }
 
 export type StatusConfianca = 'Alta' | 'Media' | 'Baixa' | 'Desconhecida';
@@ -34,6 +48,8 @@ export interface Church {
   missas: Mass[];
   endereco: Address;
   statusConfianca?: StatusConfianca;
+  /** Grupo calculado pela API, presente só nos resultados de buscar-por-filtro. */
+  grupoBusca?: GrupoBusca;
   /** Tipo da unidade (Paróquia, Capela...). Ausente em respostas antigas = Paróquia. */
   tipoIgreja?: TipoIgreja;
   /** Paróquia-sede quando esta unidade é capela/comunidade; null para paróquias. */
@@ -66,6 +82,9 @@ export interface Mass {
   diaDoMes?: number | null;
   diasSemanaExcecao?: number | null;
   semanasDoMes?: number | null;
+  data?: string | null;
+  nome?: string | null;
+  substituiMissasDoDia?: boolean | null;
   descricaoRecorrencia?: string;
   // Confiança (preenchida pelo backend)
   fontePrincipal?: number;

@@ -1,4 +1,4 @@
-import { SEMANAS_DO_MES, TIPO_RECORRENCIA, alertaConflitoSemanal, ehSemanal } from "../../../../shared/utils/recorrencia-missa";
+import { SEMANAS_DO_MES, TIPO_RECORRENCIA, alertaConflitoSemanal, chaveData, descrever, ehSemanal } from "../../../../shared/utils/recorrencia-missa";
 import { FotoIgrejaSelecionada, FotoIgrejaUploadComponent } from "../../../../shared/components/foto-igreja-upload/foto-igreja-upload.component";
 import { Component, inject, OnInit } from "@angular/core";
 import { CommonModule } from "@angular/common";
@@ -42,6 +42,32 @@ const TIPOS_SESSAO = [
 const DIA_FIXO = 7;
 // Valor fictício para "dia da semana no mês" ("1ª e 3ª sexta").
 const OCORRENCIA_NO_MES = 8;
+// Valor fictício para "data específica" (25/12/2026, com nome opcional).
+const DATA_ESPECIFICA = 9;
+
+interface LinhaMissa {
+  ctrl: FormGroup;
+  descricao: string;
+  especial: boolean;
+}
+interface LinhaSessao {
+  ctrl: FormGroup;
+  dia: string;
+}
+interface GrupoSessoes {
+  tipo: number;
+  titulo: string;
+  icone: string;
+  itens: LinhaSessao[];
+}
+interface GrupoMissas {
+  freq: string;
+  titulo: string;
+  icone: string;
+  itens: LinhaMissa[];
+}
+
+const DIAS_CURTOS = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 const DIAS = [
   { valor: 0, nome: "Domingo" },
@@ -83,6 +109,7 @@ export class EditarIgrejaComponent implements OnInit {
   /** Opções do dia da missa: os 7 dias da semana + "Dia fixo do mês" (valor DIA_FIXO). */
   readonly DIA_FIXO = DIA_FIXO;
   readonly OCORRENCIA_NO_MES = OCORRENCIA_NO_MES;
+  readonly DATA_ESPECIFICA = DATA_ESPECIFICA;
   readonly SEMANAS_DO_MES = SEMANAS_DO_MES;
   readonly diasMissa = [
     ...DIAS,
@@ -420,17 +447,24 @@ export class EditarIgrejaComponent implements OnInit {
               ? m.diaSemana
               : m.tipoRecorrencia === TIPO_RECORRENCIA.OcorrenciaNoMes
                 ? OCORRENCIA_NO_MES
-                : DIA_FIXO,
+                : m.tipoRecorrencia === TIPO_RECORRENCIA.DataEspecifica
+                  ? DATA_ESPECIFICA
+                  : DIA_FIXO,
             m.horario,
             m.observacao ?? "",
             m.diaDoMes ?? null,
             m.diasSemanaExcecao ?? null,
             m.tipoRecorrencia === TIPO_RECORRENCIA.OcorrenciaNoMes ? m.diaSemana : null,
-            m.semanasDoMes ?? 0
+            m.semanasDoMes ?? 0,
+            m.data ? String(m.data).slice(0, 10) : "",
+            m.nome ?? "",
+            !!m.substituiMissasDoDia
           )
         );
+        this.ordenarMissas();
         dados.sessoes.forEach((se) =>
           this.adicionarSessao(se.tipo, se.diaSemana, se.horarioInicio, se.horarioFim, se.observacao ?? ""));
+        this.ordenarSessoes();
 
         this.form.get("endereco")!.patchValue({
           cep: dados.endereco.cep ?? "",
@@ -502,7 +536,10 @@ export class EditarIgrejaComponent implements OnInit {
     diaDoMes: number | null = null,
     excecao: number | null = null,
     diaOcorrencia: number | null = null,
-    semanasDoMes = 0
+    semanasDoMes = 0,
+    data = "",
+    nome = "",
+    substitui = false
   ): void {
     this.missas.push(
       this._fb.group({
@@ -510,6 +547,10 @@ export class EditarIgrejaComponent implements OnInit {
         // Só usados quando diaSemana === OCORRENCIA_NO_MES.
         diaOcorrencia: [diaOcorrencia],
         semanasDoMes: [semanasDoMes],
+        // Só usados quando diaSemana === DATA_ESPECIFICA.
+        data: [data],
+        nome: [nome, Validators.maxLength(80)],
+        substituiMissasDoDia: [substitui],
         // Só usados quando diaSemana === DIA_FIXO.
         diaDoMes: [diaDoMes, [Validators.min(1), Validators.max(31)]],
         excecaoSabado: [!!excecao && (excecao & (1 << 6)) !== 0],
@@ -520,8 +561,10 @@ export class EditarIgrejaComponent implements OnInit {
     );
   }
 
-  removerMissa(i: number): void {
-    this.missas.removeAt(i);
+  removerMissa(ctrl: AbstractControl): void {
+    const i = this.missas.controls.indexOf(ctrl);
+    if (i >= 0) this.missas.removeAt(i);
+    this._atualizarGrupos();
   }
 
   adicionarSessao(tipo = 1, dia = 1, horarioInicio = "", horarioFim = "", observacao = ""): void {
@@ -537,8 +580,103 @@ export class EditarIgrejaComponent implements OnInit {
     );
   }
 
-  removerSessao(i: number): void {
-    this.sessoes.removeAt(i);
+  removerSessao(ctrl: AbstractControl): void {
+    const i = this.sessoes.controls.indexOf(ctrl);
+    if (i >= 0) this.sessoes.removeAt(i);
+    this._atualizarGruposSessoes();
+  }
+
+  // ── Atendimento e confissão: barra de adicionar (vários dias de uma vez) + lista por tipo ──
+  /** Segunda a domingo (a semana de quem trabalha na secretaria). */
+  readonly diasSessao = [1, 2, 3, 4, 5, 6, 0].map((v) => ({ valor: v, curto: DIAS_CURTOS[v], nome: DIAS[v].nome }));
+  readonly atalhosDias = [
+    { rotulo: "Segunda a sexta", dias: [1, 2, 3, 4, 5] },
+    { rotulo: "Segunda a sábado", dias: [1, 2, 3, 4, 5, 6] },
+    { rotulo: "Todos os dias", dias: [0, 1, 2, 3, 4, 5, 6] },
+  ];
+
+  novaSessao = { tipo: 1, dias: [] as number[], inicio: "", fim: "", observacao: "" };
+
+  gruposSessoes: GrupoSessoes[] = [];
+  trackGrupoSessao = (_: number, g: GrupoSessoes) => g.tipo;
+  trackSessao = (_: number, item: LinhaSessao) => item.ctrl;
+
+  toggleDiaSessao(dia: number): void {
+    const d = this.novaSessao.dias;
+    this.novaSessao.dias = d.includes(dia) ? d.filter((x) => x !== dia) : [...d, dia];
+  }
+
+  aplicarAtalhoDias(dias: number[]): void {
+    this.novaSessao.dias = [...dias];
+  }
+
+  private _horaValida(h: string): boolean {
+    return /^([01]?\d|2[0-3]):[0-5]\d$/.test((h ?? "").trim());
+  }
+
+  private _hhmm(h: string): string {
+    return h.trim().padStart(5, "0");
+  }
+
+  get podeAdicionarSessao(): boolean {
+    const n = this.novaSessao;
+    return (
+      n.dias.length > 0 &&
+      this._horaValida(n.inicio) &&
+      this._horaValida(n.fim) &&
+      this._hhmm(n.fim) > this._hhmm(n.inicio) &&
+      n.observacao.length <= 50
+    );
+  }
+
+  /** Aviso (não bloqueia): o fim precisa vir depois do início. */
+  get avisoSessao(): string | null {
+    const n = this.novaSessao;
+    if (this._horaValida(n.inicio) && this._horaValida(n.fim) && this._hhmm(n.fim) <= this._hhmm(n.inicio))
+      return "O horário final precisa ser depois do inicial.";
+    return null;
+  }
+
+  adicionarNovaSessao(): void {
+    if (!this.podeAdicionarSessao) return;
+    const n = this.novaSessao;
+    const inicio = this._hhmm(n.inicio);
+    const fim = this._hhmm(n.fim);
+    for (const dia of n.dias) {
+      const jaExiste = this.sessoes.controls.some((c) => {
+        const v = c.value;
+        return v.tipo === n.tipo && v.diaSemana === dia && v.horarioInicio === inicio && v.horarioFim === fim;
+      });
+      if (!jaExiste) this.adicionarSessao(n.tipo, dia, inicio, fim, n.observacao);
+    }
+    this.ordenarSessoes();
+    // Mantém tipo e dias: quem cadastra manhã e tarde só troca os horários.
+    this.novaSessao = { ...n, inicio: "", fim: "", observacao: "" };
+  }
+
+  /** Por tipo, depois dia (segunda primeiro) e horário. */
+  ordenarSessoes(): void {
+    const ordemDia = (d: number) => (d === 0 ? 7 : d);
+    const ordenadas = [...this.sessoes.controls].sort(
+      (a, b) =>
+        a.value.tipo - b.value.tipo ||
+        ordemDia(a.value.diaSemana) - ordemDia(b.value.diaSemana) ||
+        String(a.value.horarioInicio).localeCompare(String(b.value.horarioInicio))
+    );
+    ordenadas.forEach((ctrl, i) => this.sessoes.setControl(i, ctrl));
+    this._atualizarGruposSessoes();
+  }
+
+  // Campo (não getter): objetos novos a cada ciclo recriariam as linhas sem parar.
+  private _atualizarGruposSessoes(): void {
+    this.gruposSessoes = TIPOS_SESSAO.map((t) => ({
+      tipo: t.valor,
+      titulo: t.nome,
+      icone: t.valor === 1 ? "pi-building" : "pi-heart",
+      itens: this.sessoes.controls
+        .filter((c) => c.value.tipo === t.valor)
+        .map((c) => ({ ctrl: c as FormGroup, dia: DIAS.find((d) => d.valor === c.value.diaSemana)?.nome ?? "" })),
+    })).filter((g) => g.itens.length);
   }
 
   /**
@@ -642,6 +780,7 @@ export class EditarIgrejaComponent implements OnInit {
     if (m.diaSemana === OCORRENCIA_NO_MES)
       return { tipoRecorrencia: TIPO_RECORRENCIA.OcorrenciaNoMes, diaSemana: m.diaOcorrencia, horario: m.horario ?? "" };
     if (m.diaSemana === DIA_FIXO) return { tipoRecorrencia: TIPO_RECORRENCIA.DiaDoMes, horario: m.horario ?? "" };
+    if (m.diaSemana === DATA_ESPECIFICA) return { tipoRecorrencia: TIPO_RECORRENCIA.DataEspecifica, horario: m.horario ?? "" };
     return { tipoRecorrencia: TIPO_RECORRENCIA.Semanal, diaSemana: m.diaSemana, horario: m.horario ?? "" };
   }
 
@@ -649,9 +788,160 @@ export class EditarIgrejaComponent implements OnInit {
     const g = this.missas.at(i);
     if (g.get("diaSemana")?.value === OCORRENCIA_NO_MES)
       return g.get("diaOcorrencia")?.value != null && (Number(g.get("semanasDoMes")?.value) || 0) > 0;
+    if (g.get("diaSemana")?.value === DATA_ESPECIFICA) return /^\d{4}-\d{2}-\d{2}$/.test(g.get("data")?.value ?? "");
     if (g.get("diaSemana")?.value !== DIA_FIXO) return true;
     const dia = Number(g.get("diaDoMes")?.value);
     return Number.isInteger(dia) && dia >= 1 && dia <= 31;
+  }
+
+  // ── Adicionar horário (barra no topo) + lista agrupada ─────────────────────────────
+  readonly frequencias = [
+    { valor: "semanal", rotulo: "Toda semana" },
+    { valor: "diaFixo", rotulo: "Dia fixo do mês" },
+    { valor: "ocorrencia", rotulo: "Dia da semana no mês" },
+    { valor: "data", rotulo: "Data específica" },
+  ];
+  readonly sugestoesNome = ["Natal", "Missa do Galo", "Ano Novo", "Quarta-feira de Cinzas", "Sexta-feira Santa", "Páscoa"];
+  readonly hojeIso = chaveData(new Date());
+
+  nova = this._novaVazia();
+
+  private _novaVazia() {
+    return {
+      freq: "semanal",
+      dia: null as number | null,
+      diaDoMes: null as number | null,
+      excecaoSabado: false,
+      excecaoDomingo: false,
+      diaOcorrencia: null as number | null,
+      semanas: 0,
+      data: "",
+      nome: "",
+      substitui: false,
+      horario: "",
+      observacao: "",
+    };
+  }
+
+  toggleSemanaNova(bit: number): void {
+    this.nova.semanas ^= bit;
+  }
+
+  temSemanaNova(bit: number): boolean {
+    return (this.nova.semanas & bit) !== 0;
+  }
+
+  get horarioNovoValido(): boolean {
+    return /^([01]?\d|2[0-3]):[0-5]\d$/.test((this.nova.horario ?? "").trim());
+  }
+
+  get podeAdicionarNova(): boolean {
+    const n = this.nova;
+    if (!this.horarioNovoValido || n.observacao.length > 20) return false;
+    switch (n.freq) {
+      case "diaFixo":
+        return Number.isInteger(Number(n.diaDoMes)) && Number(n.diaDoMes) >= 1 && Number(n.diaDoMes) <= 31;
+      case "ocorrencia":
+        return n.diaOcorrencia !== null && n.semanas > 0;
+      case "data":
+        return /^\d{4}-\d{2}-\d{2}$/.test(n.data);
+      default:
+        return n.dia !== null;
+    }
+  }
+
+  adicionarNova(): void {
+    if (!this.podeAdicionarNova) return;
+    const n = this.nova;
+    const horario = n.horario.trim().padStart(5, "0");
+    const excecao = (n.excecaoSabado ? 1 << 6 : 0) | (n.excecaoDomingo ? 1 : 0);
+    switch (n.freq) {
+      case "diaFixo":
+        this.adicionarMissa(DIA_FIXO, horario, n.observacao, Number(n.diaDoMes), excecao || null);
+        break;
+      case "ocorrencia":
+        this.adicionarMissa(OCORRENCIA_NO_MES, horario, n.observacao, null, null, n.diaOcorrencia, n.semanas);
+        break;
+      case "data":
+        this.adicionarMissa(DATA_ESPECIFICA, horario, n.observacao, null, null, null, 0, n.data, n.nome.trim().slice(0, 80), n.substitui);
+        break;
+      default:
+        this.adicionarMissa(n.dia ?? 0, horario, n.observacao);
+    }
+    this.ordenarMissas();
+    // Mantém a frequência escolhida: quem cadastra vários horários seguidos não reescolhe.
+    this.nova = { ...this._novaVazia(), freq: n.freq };
+  }
+
+  /** Semanais por dia; depois ocorrência no mês, dia fixo e datas especiais; dentro, por horário. */
+  ordenarMissas(): void {
+    const chave = (m: any): number => {
+      if (m.diaSemana === DATA_ESPECIFICA) return 1000 + (m.data ? Math.floor(Date.parse(m.data) / 86400000) : 0);
+      if (m.diaSemana === DIA_FIXO) return 100 + (Number(m.diaDoMes) || 0);
+      if (m.diaSemana === OCORRENCIA_NO_MES) return 50 + (m.diaOcorrencia ?? 0);
+      return m.diaSemana ?? 0;
+    };
+    const ordenadas = [...this.missas.controls].sort(
+      (a, b) => chave(a.value) - chave(b.value) || String(a.value.horario).localeCompare(String(b.value.horario))
+    );
+    ordenadas.forEach((ctrl, i) => this.missas.setControl(i, ctrl));
+    this._atualizarGrupos();
+  }
+
+  /**
+   * Linhas da lista agrupadas por tipo; cada item guarda o controle da linha.
+   * Campo (não getter): um getter criava objetos novos a cada ciclo do Angular, as linhas
+   * eram recriadas sem parar e a tela travava. Recalculado só quando os horários mudam.
+   */
+  gruposMissas: GrupoMissas[] = [];
+
+  trackGrupo = (_: number, g: GrupoMissas) => g.titulo;
+  trackLinha = (_: number, item: LinhaMissa) => item.ctrl;
+
+  private _atualizarGrupos(): void {
+    const grupos: GrupoMissas[] = [
+      { freq: "semanal", titulo: "Semanais", icone: "pi-refresh", itens: [] },
+      { freq: "diaFixo", titulo: "Dia fixo do mês", icone: "pi-calendar", itens: [] },
+      { freq: "ocorrencia", titulo: "Dia da semana no mês", icone: "pi-calendar", itens: [] },
+      { freq: "data", titulo: "Datas especiais", icone: "pi-star", itens: [] },
+    ];
+    const porFreq: Record<string, GrupoMissas> = Object.fromEntries(grupos.map((g) => [g.freq, g]));
+    this.missas.controls.forEach((c) => {
+      const m = c.value;
+      const item: LinhaMissa = { ctrl: c as FormGroup, descricao: this.descricaoMissa(m), especial: m.diaSemana === DATA_ESPECIFICA };
+      const freq =
+        m.diaSemana === DATA_ESPECIFICA ? "data" : m.diaSemana === DIA_FIXO ? "diaFixo" : m.diaSemana === OCORRENCIA_NO_MES ? "ocorrencia" : "semanal";
+      porFreq[freq].itens.push(item);
+    });
+    this.gruposMissas = grupos;
+    this.contagemPorFreq = Object.fromEntries(grupos.map((g) => [g.freq, g.itens.length]));
+  }
+
+  /** Quantos horários há em cada frequência — vai no botão do filtro. */
+  contagemPorFreq: Record<string, number> = {};
+
+  /** "Domingo" · "Todo dia 13 (exceto domingos)" · "1ª e 3ª sexta do mês" · "Qui, 25/12/2026". */
+  descricaoMissa(m: any): string {
+    const hora = "00:00"; // a hora tem campo próprio na linha
+    if (m.diaSemana === DATA_ESPECIFICA) {
+      const [ano, mes, dia] = String(m.data ?? "").split("-").map(Number);
+      if (!ano) return "Escolha a data";
+      const semana = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"][new Date(ano, mes - 1, dia).getDay()];
+      return `${semana}, ${String(dia).padStart(2, "0")}/${String(mes).padStart(2, "0")}/${ano}`;
+    }
+    if (m.diaSemana === DIA_FIXO) {
+      const excecao = ((m.excecaoSabado ? 1 << 6 : 0) | (m.excecaoDomingo ? 1 : 0)) || null;
+      return descrever({ tipoRecorrencia: TIPO_RECORRENCIA.DiaDoMes, diaDoMes: Number(m.diaDoMes), diasSemanaExcecao: excecao, horario: hora }).replace(/, 0?0h(00)?/, "");
+    }
+    if (m.diaSemana === OCORRENCIA_NO_MES) {
+      return descrever({ tipoRecorrencia: TIPO_RECORRENCIA.OcorrenciaNoMes, diaSemana: m.diaOcorrencia, semanasDoMes: Number(m.semanasDoMes), horario: hora }).replace(/, 0?0h(00)?/, "");
+    }
+    return DIAS.find((d) => d.valor === m.diaSemana)?.nome ?? "";
+  }
+
+  private _diaDaSemanaDe(iso: string): number {
+    const [ano, mes, dia] = String(iso).split("-").map(Number);
+    return new Date(ano, mes - 1, dia).getDay();
   }
 
   salvar(): void {
@@ -659,7 +949,7 @@ export class EditarIgrejaComponent implements OnInit {
       this._message.add({
         severity: "warn",
         summary: "Revise o formulário",
-        detail: "Informe o dia do mês (1 a 31) nas missas de dia fixo e o dia e as semanas nas de dia da semana no mês.",
+        detail: "Informe o dia do mês (1 a 31) nas missas de dia fixo, o dia e as semanas nas de dia da semana no mês e a data nas de data específica.",
       });
       return;
     }
@@ -686,7 +976,17 @@ export class EditarIgrejaComponent implements OnInit {
         },
         redesSociais: v.redesSociais,
         missas: v.missas.map((m: any) =>
-          m.diaSemana === DIA_FIXO
+          m.diaSemana === DATA_ESPECIFICA
+            ? {
+                diaSemana: this._diaDaSemanaDe(m.data),
+                horario: m.horario,
+                observacao: m.observacao,
+                tipoRecorrencia: TIPO_RECORRENCIA.DataEspecifica,
+                data: m.data,
+                nome: (m.nome ?? "").trim() || null,
+                substituiMissasDoDia: !!m.substituiMissasDoDia,
+              }
+            : m.diaSemana === DIA_FIXO
             ? {
                 diaSemana: 0, // ignorado no dia fixo
                 horario: m.horario,

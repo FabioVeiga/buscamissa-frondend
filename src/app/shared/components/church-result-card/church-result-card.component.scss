@@ -45,11 +45,11 @@ $primary-dark: #9a4a0c;
     line-height: 1;
     letter-spacing: -0.03em;
 
-    &--vazio { color: #d1d5db; font-size: 1.5rem; }
+    &--vazio { color: #9ca3af; font-size: 1.5rem; }
   }
 
   &__rotulo {
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     font-weight: 700;
     color: #6b7280;
     text-align: center;
@@ -57,7 +57,7 @@ $primary-dark: #9a4a0c;
   }
 
   &__data {
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     color: #6b7280;
     text-align: center;
   }
@@ -70,7 +70,7 @@ $primary-dark: #9a4a0c;
   }
 
   &__sem-horario {
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     font-weight: 600;
     color: #6b7280;
     text-align: center;
@@ -78,22 +78,22 @@ $primary-dark: #9a4a0c;
   }
 
   &__dia {
-    font-size: 0.75rem;
+    font-size: 0.875rem;
     font-weight: 600;
-    color: #9ca3af;
+    color: #6b7280;
     margin-top: 0.25rem;
     text-align: center;
 
-    &--hoje { color: #16a34a; }
+    &--hoje { color: #15803d; }
   }
 
   &__countdown {
     display: inline-flex;
     align-items: center;
     gap: 0.2rem;
-    font-size: 0.6875rem;
+    font-size: 0.8125rem;
     font-weight: 700;
-    color: #dc2626;
+    color: #b91c1c;
     background: #fef2f2;
     border-radius: 999px;
     padding: 0.2rem 0.4rem;
@@ -149,6 +149,9 @@ $primary-dark: #9a4a0c;
     align-items: center;
     gap: 0.5rem;
     flex-shrink: 0;
+    // O favoritar (35px) é mais alto que uma linha do nome (~23px). Sem a margem negativa,
+    // a linha do topo assumia a altura do botão e abria ~18px entre o nome e o endereço.
+    margin-bottom: -0.75rem;
   }
 
   &__nome {
@@ -167,7 +170,7 @@ $primary-dark: #9a4a0c;
   }
 
   &__badge-destaque {
-    font-size: 0.75rem;
+    font-size: 0.8125rem;
     font-weight: 700;
     color: #92400e;
     background: #fef3c7;
@@ -185,12 +188,22 @@ $primary-dark: #9a4a0c;
     width: 2.5rem;
     height: 2.5rem;
     background: none;
-    border: 1.5px solid #e5e7eb;
+    border: 1.5px solid #9ca3af;
     border-radius: 50%;
-    color: #d1d5db;
+    color: #6b7280;
     cursor: pointer;
     font-size: 1.125rem;
     transition: color 0.15s, border-color 0.15s, background 0.15s;
+    // Círculo visível de 35px; a área de toque cresce para 44x44px sem empurrar o nome.
+    position: relative;
+
+    &::before {
+      content: '';
+      position: absolute;
+      // Medido a partir da borda interna (35px - 2 x 1,5px de borda = 32px): (44 - 32) / 2 = 6px.
+      // Área quadrada: no Chrome o border-radius também recorta a área clicável.
+      inset: -0.4286rem;
+    }
 
     &:hover {
       color: #ef4444;
@@ -213,12 +226,24 @@ $primary-dark: #9a4a0c;
   }
 
   &__logradouro {
+    // Recuo para o texto não passar por baixo do favoritar, que avança sobre esta linha.
+    padding-right: 2.75rem;
     font-size: 0.9rem;
     color: #374151;
     font-weight: 500;
-    white-space: nowrap;
+    // Até duas linhas: com número e complemento, uma linha só cortava o número no mobile.
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
     overflow: hidden;
-    text-overflow: ellipsis;
+
+    // Abaixo de 480px o corpo do card fica estreito (~170px a 320px): três linhas mantêm
+    // o número visível nos endereços longos.
+    @media (max-width: 479.98px) {
+      -webkit-line-clamp: 3;
+      line-clamp: 3;
+    }
 
     @media (min-width: 480px) {
       font-size: 0.9375rem;
@@ -226,7 +251,7 @@ $primary-dark: #9a4a0c;
   }
 
   &__bairro {
-    font-size: 0.8125rem;
+    font-size: 0.875rem;
     color: #6b7280;
     display: flex;
     align-items: center;
@@ -283,7 +308,7 @@ $primary-dark: #9a4a0c;
     cursor: pointer;
     text-decoration: none;
     border: none;
-    min-height: 2.75rem; // ≥44px — WCAG 2.5.5 touch target
+    min-height: 3.143rem; // 44px com a raiz de 14px (2.75rem dava 38,5px) — alvo de toque
     transition: background 0.15s, color 0.15s;
 
     &--primary {
@@ -327,7 +352,7 @@ $primary-dark: #9a4a0c;
     &__sem-horario { text-align: left; }
 
     &__hora { font-size: 1.5rem; }
-    &__dia { margin-top: 0; font-size: 0.8125rem; }
+    &__dia { margin-top: 0; }
     &__countdown { margin-top: 0; margin-left: auto; align-self: center; }
 
     &__img-wrap { grid-area: img; }
@@ -338,12 +363,18 @@ $primary-dark: #9a4a0c;
     // Dois botões lado a lado, ocupando a largura do corpo (alvo de toque mantido em 44px).
     &__actions {
       flex-wrap: nowrap;
-      gap: 0.5rem;
+      gap: 0.5715rem; // 8px
       margin-top: 0.5rem;
+
+      // Abaixo de 360px os dois botões não cabem lado a lado (o "Como chegar" saía do card).
+      @media (max-width: 359.98px) { flex-wrap: wrap; }
     }
 
     &__btn {
       flex: 1 1 0;
+
+      @media (max-width: 359.98px) { flex-basis: 100%; }
+
       justify-content: center;
       padding: 0.5rem 0.5rem;
       font-size: 0.875rem;

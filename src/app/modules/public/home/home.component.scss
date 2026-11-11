@@ -341,7 +341,8 @@ $texto-2: #6b7280;
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
-    font-size: 0.85rem;
+    min-height: 1.714rem; // 24px — alvo mínimo WCAG 2.2
+    font-size: 0.875rem;
     font-weight: 600;
     color: $laranja;
     text-decoration: none;
@@ -430,11 +431,35 @@ $texto-2: #6b7280;
 // ── Chips de ordenação ────────────────────────────────────────────────────────
 .sort-chip {
   display: inline-flex; align-items: center; gap: 0.3rem;
-  padding: 0.3rem 0.75rem; border-radius: 999px; font-size: 0.75rem; font-weight: 600;
-  border: 1.5px solid $borda; background: #fff; color: $texto-2; cursor: pointer;
+  padding: 0.3rem 0.75rem; border-radius: 999px; font-size: 0.875rem; font-weight: 600;
+  border: 1.5px solid #9ca3af; background: #fff; color: $texto-2; cursor: pointer;
   transition: background 0.15s, border-color 0.15s, color 0.15s;
+  // Chip visível de 32px; a área de toque vai a 44px de altura. A margem vertical (6px)
+  // reserva esse espaço para que as áreas de linhas quebradas não se sobreponham.
+  position: relative; min-height: 2.286rem; margin-block: 0.43rem;
+  &::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 3.143rem; transform: translateY(-50%); }
   &:hover { border-color: $laranja; color: $laranja; }
   &--ativo { background: $laranja; border-color: $laranja; color: #fff; &:hover { background: $laranja-hover; color: #fff; } }
+}
+
+// ── Paginação dos resultados ──────────────────────────────────────────────────
+// Alvos de toque de 44px (3.143rem com raiz de 14px) e 8px entre eles. Restrito a esta
+// tela pelo wrapper: o tema global do PrimeNG não muda.
+.resultados-paginacao ::ng-deep .p-paginator {
+  gap: 0.5715rem;
+
+  .p-paginator-pages { gap: 0.5715rem; }
+
+  .p-paginator-first, .p-paginator-prev, .p-paginator-page,
+  .p-paginator-next, .p-paginator-last {
+    min-width: 3.143rem;
+    height: 3.143rem;
+  }
+
+  .p-paginator-rpp-dropdown {
+    height: 3.143rem;
+    align-items: center;
+  }
 }
 
 // ── Resultados (cards) ────────────────────────────────────────────────────────
@@ -443,6 +468,18 @@ $texto-2: #6b7280;
   flex-direction: column;
   gap: 0.75rem;
   margin-top: 0.75rem;
+}
+
+// Título de grupo (com próximas missas / horários sem próxima data / sem horários):
+// rótulo discreto, no tom dos textos secundários, para não competir com os cards.
+.resultados-grupo {
+  margin: 0.5rem 0 -0.25rem;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: $texto-2;
+  letter-spacing: 0.01em;
+
+  &:first-child { margin-top: 0; }
 }
 
 .home-instagram {

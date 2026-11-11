@@ -623,13 +623,186 @@ describe('HomeComponent — filtro de dia em /buscar', () => {
       });
     });
 
-    it('mantém A → Z e Z → A', () => {
+    it('A → Z e Z → A mostram a página na ordem da API', () => {
       responder([igreja(1, 'Bento', []), igreja(2, 'Ávila', [])]);
       const c = montar({ uf: 'SP' }, { resultsMode: true });
 
-      expect(c.churchInfoOrdenaFiltrado.map(x => x.nome)).toEqual(['Ávila', 'Bento']);
+      expect(c.churchInfoOrdenaFiltrado.map(x => x.nome)).toEqual(['Bento', 'Ávila']);
       c.setOrdenacaoResultados('za');
       expect(c.churchInfoOrdenaFiltrado.map(x => x.nome)).toEqual(['Bento', 'Ávila']);
+    });
+  });
+
+  describe('ordenação e grupos em /buscar', () => {
+    const semanal = { diaSemana: 0, horario: '19:00:00', tipoRecorrencia: 0 };
+    const igreja = (id: number, nome: string, grupoBusca: 1 | 2 | 3) =>
+      ({ id, nome, grupoBusca, missas: grupoBusca === 3 ? [] : [semanal] }) as any;
+    const responder = (items: unknown[], totaisPorGrupo: unknown = null, totalItems = items.length) =>
+      churches.searchByFilters.and.returnValue(of({ data: { items, totalItems, totaisPorGrupo } } as any));
+    const totais = (comProximaMissa: number, semProximaData: number, semHorarios: number) =>
+      ({ comProximaMissa, semProximaData, semHorarios });
+    const titulos = (c: HomeComponent) => c.churchInfoOrdenaFiltrado.map((_, i) => c.tituloGrupo(i));
+    const RES = { resultsMode: true };
+
+    it('a busca padrão não manda ordenação nem coordenadas', () => {
+      montar({ uf: 'SP' }, RES);
+
+      expect(ultimaBusca().Ordenacao).toBeUndefined();
+      expect(ultimaBusca().Lat).toBeUndefined();
+    });
+
+    it('Z → A pede a ordem à API a partir da página 1, e A → Z volta ao padrão', () => {
+      responder([igreja(1, 'A', 1)]);
+      const c = montar({ uf: 'SP', pagina: '3' }, RES);
+
+      c.setOrdenacaoResultados('za');
+      expect(ultimaBusca().Ordenacao).toBe(1);
+      expect(ultimaBusca()['Paginacao.PageIndex']).toBe(1);
+
+      c.setOrdenacaoResultados('az');
+      expect(ultimaBusca().Ordenacao).toBeUndefined();
+      expect(churches.searchByFilters).toHaveBeenCalledTimes(3);
+    });
+
+    it('Próxima missa reordena só a página, sem nova busca, e põe horários sem data antes de sem horários', () => {
+      responder([igreja(1, 'Zélia', 3), igreja(2, 'Bento', 2), igreja(3, 'Ávila', 1)]);
+      const c = montar({ uf: 'SP' }, RES);
+      const chamadas = churches.searchByFilters.calls.count();
+      // Grupo 2 com regra sem próxima ocorrência no navegador também (dia fixo 31 com exceção em todos os dias).
+      c.churchInfo[1].missas = [{ diaSemana: 0, horario: '19:00:00', tipoRecorrencia: 2, diaDoMes: 31, diasSemanaExcecao: 0b1111111 } as any];
+      (c as any)._proximasFonte = null;
+
+      c.setOrdenacaoResultados('proxima-missa');
+
+      expect(churches.searchByFilters.calls.count()).toBe(chamadas);
+      expect(c.churchInfoOrdenaFiltrado.map(x => x.nome)).toEqual(['Ávila', 'Bento', 'Zélia']);
+    });
+
+    it('Mais próximas sem localização não refaz a busca', () => {
+      responder([igreja(1, 'A', 1)]);
+      const c = montar({ uf: 'SP' }, RES);
+      const chamadas = churches.searchByFilters.calls.count();
+
+      c.setOrdenacaoResultados('proximidade');
+
+      expect(churches.searchByFilters.calls.count()).toBe(chamadas);
+    });
+
+    it('Mais próximas com localização manda a origem com 4 casas', () => {
+      responder([igreja(1, 'A', 1)]);
+      const c = montar({ uf: 'SP' }, RES);
+      (c as any)._userLat = -23.5505199;
+      (c as any)._userLng = -46.6333094;
+
+      c.setOrdenacaoResultados('proximidade');
+
+      expect(ultimaBusca().Ordenacao).toBe(2);
+      expect(ultimaBusca().Lat).toBe(-23.5505);
+      expect(ultimaBusca().Lng).toBe(-46.6333);
+    });
+
+    it('título antes do primeiro card de cada grupo da página', () => {
+      responder(
+        [igreja(1, 'A', 1), igreja(2, 'B', 1), igreja(3, 'C', 1), igreja(4, 'D', 2), igreja(5, 'E', 3), igreja(6, 'F', 3)],
+        totais(3, 1, 2));
+      const c = montar({ uf: 'SP' }, RES);
+
+      expect(titulos(c)).toEqual([
+        'Com próximas missas', null, null, 'Horários sem próxima data', 'Sem horários informados', null,
+      ]);
+    });
+
+    it('página que começa no meio de um grupo não repete o título', () => {
+      responder([igreja(3, 'C', 1), igreja(4, 'D', 3)], totais(3, 0, 2), 5);
+      const c = montar({ uf: 'SP', pagina: '2' }, RES);
+      c.pageSize = 2;
+
+      expect(titulos(c)).toEqual([null, 'Sem horários informados']);
+    });
+
+    it('página que começa exatamente no início de um grupo mostra o título', () => {
+      responder([igreja(4, 'D', 3), igreja(5, 'E', 3)], totais(3, 0, 2), 5);
+      const c = montar({ uf: 'SP', pagina: '2' }, RES);
+      c.pageSize = 3;
+
+      expect(titulos(c)).toEqual(['Sem horários informados', null]);
+    });
+
+    it('sem títulos quando só há um grupo, fora das ordens por nome ou com filtro da página', () => {
+      responder([igreja(1, 'A', 1), igreja(2, 'B', 1)], totais(2, 0, 0));
+      const unico = montar({ uf: 'SP' }, RES);
+      expect(titulos(unico)).toEqual([null, null]);
+      TestBed.resetTestingModule();
+
+      responder([igreja(1, 'A', 1), igreja(2, 'B', 3)], totais(1, 0, 1));
+      const c = montar({ uf: 'SP' }, RES);
+      expect(titulos(c)).toEqual(['Com próximas missas', 'Sem horários informados']);
+
+      c.setOrdenacaoResultados('proxima-missa');
+      expect(titulos(c)).toEqual([null, null]);
+
+      c.setOrdenacaoResultados('az');
+      c.quickFilter = 'noite';
+      expect(c.churchInfoOrdenaFiltrado.every((_, i) => c.tituloGrupo(i) === null)).toBeTrue();
+    });
+
+    it('resposta sem totaisPorGrupo (API antiga) não mostra títulos', () => {
+      responder([igreja(1, 'A', 1), igreja(2, 'B', 3)]);
+      const c = montar({ uf: 'SP' }, RES);
+
+      expect(titulos(c)).toEqual([null, null]);
+    });
+
+    describe('busca vinda do CEP', () => {
+      const json = (corpo: unknown) => Promise.resolve({ json: () => Promise.resolve(corpo) } as Response);
+      const esvaziar = async () => { for (let i = 0; i < 10; i++) await Promise.resolve(); };
+
+      it('espera a geocodificação e pede proximidade à API', async () => {
+        spyOn(window, 'fetch').and.callFake((url: any) => String(url).includes('viacep')
+          ? json({ logradouro: 'Praça da Sé', localidade: 'São Paulo', uf: 'SP' })
+          : json([{ lat: '-23.55052', lon: '-46.63331' }]));
+
+        const c = montar({ uf: 'SP', cidade: 'São Paulo', cep: '01001000' }, RES);
+        expect(churches.searchByFilters).not.toHaveBeenCalled();
+
+        await esvaziar();
+
+        expect(ultimaBusca().Ordenacao).toBe(2);
+        expect(ultimaBusca().Lat).toBe(-23.5505);
+        expect(c.ordenacaoResultados).toBe('proximidade');
+      });
+
+      it('sem coordenadas, busca na ordem padrão', async () => {
+        spyOn(window, 'fetch').and.returnValue(Promise.reject(new Error('offline')));
+
+        const c = montar({ uf: 'SP', cep: '01001000' }, RES);
+        await esvaziar();
+
+        expect(ultimaBusca().Ordenacao).toBeUndefined();
+        expect(c.ordenacaoResultados).toBe('az');
+      });
+
+      it('geocodificação lenta: busca sem proximidade e ignora a resposta tardia', async () => {
+        jasmine.clock().install();
+        let responderNominatim!: (r: Response) => void;
+        spyOn(window, 'fetch').and.callFake((url: any) => String(url).includes('viacep')
+          ? json({ localidade: 'São Paulo', uf: 'SP' })
+          : new Promise<Response>(r => { responderNominatim = r; }));
+        try {
+          const c = montar({ uf: 'SP', cep: '01001000' }, RES);
+          await esvaziar();
+          jasmine.clock().tick(4000);
+          await esvaziar();
+
+          expect(ultimaBusca().Ordenacao).toBeUndefined();
+
+          responderNominatim({ json: () => Promise.resolve([{ lat: '-23.5', lon: '-46.6' }]) } as Response);
+          await esvaziar();
+          expect(c.ordenacaoResultados).toBe('az');
+        } finally {
+          jasmine.clock().uninstall();
+        }
+      });
     });
   });
 });

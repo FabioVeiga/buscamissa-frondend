@@ -53,7 +53,7 @@
 
     <div class="city-card__meta">
       <span *ngIf="igreja.endereco?.logradouro" class="city-card__logradouro">
-        {{ igreja.endereco.logradouro }}
+        {{ igreja.endereco.logradouro }}<ng-container *ngIf="igreja.endereco.numero">, {{ igreja.endereco.numero }}</ng-container><ng-container *ngIf="igreja.endereco.complemento"> – {{ igreja.endereco.complemento }}</ng-container>
       </span>
       <span class="city-card__bairro">
         <ng-container *ngIf="igreja.endereco?.bairro">{{ igreja.endereco.bairro }}<ng-container *ngIf="cidadeNome">, {{ cidadeNome }}/{{ ufLabel }}</ng-container></ng-container>
@@ -76,7 +76,7 @@
 
     <div class="city-card__actions">
       <a [routerLink]="linkParoquia()" class="city-card__btn city-card__btn--primary" (click)="onClick()">
-        {{ proxima.estado === 'sem-horarios' ? 'Ver paróquia' : 'Ver horários' }}
+        Ver horários
       </a>
       <button class="city-card__btn city-card__btn--secondary" (click)="comoChegar($event)">
         <i class="pi pi-compass"></i> Como chegar

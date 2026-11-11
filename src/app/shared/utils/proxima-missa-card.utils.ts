@@ -1,6 +1,6 @@
 import { Mass } from '../../core/interfaces/church.interface';
 import { formatMassTime } from './mass-time.utils';
-import { ehSemanal, proximaOcorrencia } from './recorrencia-missa';
+import { datasSubstituidas, ehDataEspecifica, ehSemanal, proximaOcorrencia } from './recorrencia-missa';
 
 /** Filtro de dia e horário da busca, como foi enviado à API. */
 export interface FiltroMissa {
@@ -44,6 +44,8 @@ export function filtrarMissasCompativeis(missas: Mass[], filtro: FiltroMissa | n
 
   return missas.filter(m => {
     if (dia !== null && !(ehSemanal(m) && m.diaSemana === dia)) return false;
+    // Missa de data específica não entra em filtro por horário (igual à API).
+    if (de !== null && ehDataEspecifica(m)) return false;
     if (de === null) return true;
     const horario = segundosDoDia(m.horario);
     return horario >= de && horario <= ate!;
@@ -64,8 +66,9 @@ export function calcularProximaMissaCard(missas: Mass[], filtro: FiltroMissa | n
     return { missa: null, inicio: null, outrosHorarios: [], estado: 'sem-horarios', validoAte: meiaNoite };
   }
 
+  const substituidas = datasSubstituidas(missas);
   const ocorrencias = filtrarMissasCompativeis(missas, filtro)
-    .map(missa => ({ missa, inicio: proximaOcorrencia(missa, agora) }))
+    .map(missa => ({ missa, inicio: proximaOcorrencia(missa, agora, undefined, substituidas) }))
     .filter((o): o is { missa: Mass; inicio: Date } => o.inicio !== null)
     .sort((a, b) => a.inicio.getTime() - b.inicio.getTime());
 
@@ -132,13 +135,18 @@ export function diasSemanaisDeMissa(missas: Mass[]): number[] {
   return [...new Set(dias)].sort((a, b) => a - b);
 }
 
-/** Início, depois nome em pt-BR, depois id; sem próxima missa fica no fim. */
+/**
+ * Início, depois grupo da busca (quando houver), depois nome em pt-BR, depois id; sem
+ * próxima missa fica no fim, com horários cadastrados antes de sem horários.
+ */
 export function compararPorProximaMissa(
-  a: { inicio: Date | null; nome?: string; id?: number },
-  b: { inicio: Date | null; nome?: string; id?: number },
+  a: { inicio: Date | null; nome?: string; id?: number; grupo?: number },
+  b: { inicio: Date | null; nome?: string; id?: number; grupo?: number },
 ): number {
   const inicioA = a.inicio?.getTime() ?? Number.POSITIVE_INFINITY;
   const inicioB = b.inicio?.getTime() ?? Number.POSITIVE_INFINITY;
   if (inicioA !== inicioB) return inicioA < inicioB ? -1 : 1;
-  return (a.nome ?? '').localeCompare(b.nome ?? '', 'pt-BR') || (a.id ?? 0) - (b.id ?? 0);
+  return (a.grupo ?? 0) - (b.grupo ?? 0)
+    || (a.nome ?? '').localeCompare(b.nome ?? '', 'pt-BR')
+    || (a.id ?? 0) - (b.id ?? 0);
 }

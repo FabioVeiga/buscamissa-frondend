@@ -389,3 +389,151 @@ h2.mt {
   align-items: center;
   gap: 0.5rem;
 }
+
+// ── Horários de missa: barra de adicionar + lista agrupada ──────────────────────────
+.adicionar-missa {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  background: #fafafa;
+  border: 1px solid #ececec;
+  border-radius: 0.75rem;
+
+  &__titulo { font-weight: 700; font-size: 0.9rem; }
+
+  &__campos {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+
+    p-select { flex: 0 0 200px; }
+    .input-dia { flex: 0 0 150px; }
+    .input-data { flex: 0 0 160px; }
+    .input-nome { flex: 1 1 220px; min-width: 0; }
+    .input-hora { flex: 0 0 90px; width: 90px; text-align: center; }
+    .input-obs { flex: 1 1 160px; min-width: 0; }
+  }
+}
+
+.chips-freq,
+.sugestoes-nome {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: center;
+
+  > span { font-size: 0.8rem; color: #6b7280; }
+}
+
+.chip-freq {
+  padding: 0.3rem 0.75rem;
+  border: 1px solid #f3a06e;
+  border-radius: 9999px;
+  background: #fff;
+  color: #ad540c;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &--ativo { background: #ad540c; border-color: #ad540c; color: #fff; }
+  &--leve { border-color: #e5e7eb; color: #4b5563; font-weight: 500; }
+}
+
+.excecao-dia--livre { align-items: flex-start; white-space: normal; }
+
+.lista-missas { display: flex; flex-direction: column; gap: 1rem; }
+
+.grupo-missas {
+  &__titulo {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin: 0 0 0.4rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: #6b7280;
+  }
+}
+
+.vazio-missas { color: #6b7280; font-size: 0.9rem; margin: 0; }
+
+.linha-missa {
+  &__descricao {
+    flex: 0 0 180px;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  &__nome { flex: 1 1 180px; min-width: 0; }
+
+  &__substitui {
+    flex: 1 1 100%;
+    padding-left: 180px;
+    font-size: 0.78rem;
+    color: #6b7280;
+  }
+}
+
+@media (max-width: 640px) {
+  .linha-missa {
+    &__descricao { flex: 1 1 100%; }
+    &__nome { flex: 1 1 100%; }
+    &__substitui { padding-left: 0; }
+  }
+}
+
+// ── Atendimento e confissão ─────────────────────────────────────────────────────────
+.chip-dia {
+  min-width: 3rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background: #fff;
+  color: #4b5563;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &--ativo { background: #ad540c; border-color: #ad540c; color: #fff; }
+}
+
+.adicionar-missa__campos .ate { font-size: 0.78rem; color: #9ca3af; }
+
+.linha-sessao-nova {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+
+  &__dia { flex: 0 0 130px; font-weight: 600; font-size: 0.9rem; }
+  .input-hora { flex: 0 0 90px; width: 90px; text-align: center; }
+  .ate { font-size: 0.78rem; color: #9ca3af; }
+  &__obs { flex: 1 1 160px; min-width: 0; }
+}
+
+@media (max-width: 640px) {
+  .linha-sessao-nova {
+    &__dia { flex: 1 1 100%; }
+    &__obs { flex: 1 1 100%; }
+  }
+}
+
+.chip-freq__qtd {
+  display: inline-block;
+  min-width: 1.15rem;
+  margin-left: 0.4rem;
+  padding: 0 0.3rem;
+  border-radius: 9999px;
+  background: rgba(173, 84, 12, 0.14);
+  font-size: 0.7rem;
+  line-height: 1.15rem;
+  text-align: center;
+}
+
+.chip-freq--ativo .chip-freq__qtd { background: rgba(255, 255, 255, 0.25); }
