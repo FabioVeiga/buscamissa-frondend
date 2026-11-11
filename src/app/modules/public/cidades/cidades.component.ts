@@ -87,6 +87,9 @@ export class CidadesComponent implements OnInit, OnDestroy {
   /** Caixa da busca — referência para detectar clique FORA dela. */
   @ViewChild('caixaBusca') private caixaBusca?: ElementRef<HTMLElement>;
 
+  /** O campo em si — o botão "Buscar" devolve o foco a ele quando não há o que buscar. */
+  @ViewChild('campoBusca') private campoBusca?: ElementRef<HTMLInputElement>;
+
   /** Cidades no formato da busca, montadas uma vez por carga. */
   private cidadesParaBusca: CidadeBusca[] = [];
 
@@ -108,7 +111,7 @@ export class CidadesComponent implements OnInit, OnDestroy {
   ];
 
   /** `\n` vira quebra de linha (o hero usa `white-space: pre-line`). */
-  readonly TITULO_HERO = 'Horários de Missa\npor';
+  readonly TITULO_HERO = 'Encontre a missa\nna sua';
 
   /**
    * Prova de cobertura em uma linha. Eram três tiles numéricos logo abaixo da
@@ -283,6 +286,25 @@ export class CidadesComponent implements OnInit, OnDestroy {
     if (igreja) {
       this.irPara(['/paroquia', igreja.uf, igreja.cidadeSlug, igreja.slug]);
     }
+  }
+
+  /**
+   * Botão "Buscar". Com resultado, faz o mesmo que o Enter. Sem texto, leva o foco
+   * ao campo; com texto que não casou, abre o painel — que é onde a mensagem de
+   * "não encontramos" mora. Em nenhum caso o clique fica sem resposta.
+   */
+  aoBuscar(): void {
+    if (!this.buscaHero.trim()) {
+      this.campoBusca?.nativeElement.focus();
+      return;
+    }
+    this.garantirIndice();
+    this.recalcular();
+    if (this.resultado.cidades.length || this.resultado.igrejas.length) {
+      this.aoConfirmar();
+      return;
+    }
+    this.mostrarSugestoes = true;
   }
 
   /** "1 paróquia" / "14 paróquias" — ver shared/utils/plural.utils. */

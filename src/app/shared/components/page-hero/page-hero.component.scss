@@ -223,6 +223,30 @@ $muted: #6b7280;
   @media (max-width: 640px) { font-size: 0.75rem; }
 }
 
+/* ================= VARIANTE COMPACTA (/cidades) =================
+   Tudo aqui está sob `.ph-hero--compacto`: sem a classe, nenhuma regra abaixo
+   casa e os outros hubs não mudam um pixel.
+
+   O que muda: a faixa perde a altura mínima de 30rem (era o que empurrava a
+   vitrine de cidades para fora da dobra no desktop) e a arte cede largura para o
+   texto — a busca passa de ~58% para ~66% do container. */
+.ph-hero--compacto {
+  padding: 1.25rem 0 2rem;
+  margin-bottom: 2rem;
+
+  @media (max-width: 640px) { padding-bottom: 1.25rem; margin-bottom: 1.5rem; }
+
+  .ph-hero__breadcrumb { margin-bottom: 0.9rem; }
+  .ph-hero__titulo { margin-bottom: 0.6rem; }
+  .ph-hero__sub { margin-bottom: 1.25rem; }
+  .ph-hero__cobertura { margin-top: 0.9rem; }
+}
+@media (min-width: 900px) {
+  .ph-hero--compacto { min-height: 0; }
+  .ph-hero--compacto .ph-hero__conteudo { padding-right: calc(34% + 1.5rem); }
+  .ph-hero--compacto .ph-hero__arte { width: 34%; }
+}
+
 /* ===== Ritmo do bloco de ação: busca -> hint -> tiles =====
    Cada bloco só empurra o seguinte quando existe de fato — `:has(> *)` cobre o
    caso do slot projetado vazio (/dias não tem busca) e o `@if` do template cobre

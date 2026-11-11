@@ -30,6 +30,57 @@ $muted: #6b7280;
 
 .busca-hero { position: relative; }
 
+// Busca AMPLA: só em /cidades. O `.busca` base (partial compartilhado com
+// /estados e /missas/:uf) fica intocado; aqui o campo ganha altura, sombra e o
+// botão "Buscar" — é o elemento de maior peso visual do hero.
+.busca--ampla {
+  padding: 0.3rem 0.3rem 0.3rem 1.25rem;
+  border-radius: 999px;
+  box-shadow: 0 6px 20px rgba(173, 84, 12, 0.10);
+
+  i { font-size: 1.2rem; }
+  input { padding: 0.95rem 0; font-size: 1.0625rem; }
+}
+
+.busca__btn {
+  display: inline-flex; align-items: center; gap: 0.5rem; flex: 0 0 auto;
+  // Em px: a raiz do site é 14px, então rem não garante o alvo de 44px.
+  min-height: 48px; padding: 0 1.5rem;
+  background: $laranja-vivo; color: #fff; border: 0; border-radius: 999px;
+  font-size: 1rem; font-weight: 700; cursor: pointer;
+  transition: background 0.15s;
+
+  i { color: #fff; font-size: 0.75rem; }
+  &:hover { background: $laranja; }
+  &:focus-visible { outline: 3px solid rgba(226, 118, 27, 0.35); outline-offset: 2px; }
+
+  &-lupa { display: none; }
+}
+
+// Até 480px o campo não comporta lupa + placeholder + "Buscar ›": o placeholder
+// era cortado em "Digite o nome da cic". O botão vira um círculo só com a lupa
+// (que sai da esquerda do campo, para não aparecer duas vezes) e o rótulo
+// "Buscar" continua no DOM como nome acessível, só fora da tela.
+@media (max-width: 480px) {
+  .busca--ampla {
+    padding-left: 1.1rem;
+    > i { display: none; }
+    // O texto digitado fica em 16px (abaixo disso o iOS dá zoom no foco); só o
+    // placeholder encolhe, para caber inteiro.
+    input { font-size: 16px; }
+    input::placeholder { font-size: 12.5px; text-overflow: ellipsis; }
+  }
+  .busca__btn {
+    width: 48px; padding: 0; justify-content: center;
+    &-rotulo {
+      position: absolute; width: 1px; height: 1px; overflow: hidden;
+      clip-path: inset(50%); white-space: nowrap;
+    }
+    &-seta { display: none; }
+    &-lupa { display: inline-block; font-size: 1.1rem; }
+  }
+}
+
 .sugestoes {
   position: absolute; z-index: 5; top: calc(100% + 0.35rem); left: 0; right: 0;
   margin: 0; padding: 0.3rem;

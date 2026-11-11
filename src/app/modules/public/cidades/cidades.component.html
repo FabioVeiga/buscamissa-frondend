@@ -1,10 +1,10 @@
 <app-page-hero
   [breadcrumb]="breadcrumb"
+  variante="compacto"
   [titulo]="TITULO_HERO"
-  tituloDestaque="Cidade"
-  subtitulo="Encontre uma missa perto de você."
+  tituloDestaque="cidade"
+  subtitulo="Descubra os horários de missa nas principais cidades do Brasil."
   [coberturaTexto]="cobertura"
-  hint="Digite o nome da cidade ou da igreja."
 >
   <!--
     Ação primária ANTES dos números: a busca é o que o usuário veio fazer aqui.
@@ -14,21 +14,29 @@
     abaixo — no mobile, digitar não mudava nada na viewport.
   -->
   <div class="busca-hero" hero-busca #caixaBusca>
-    <div class="busca">
+    <div class="busca busca--ampla">
       <i class="pi pi-search" aria-hidden="true"></i>
       <input
+        #campoBusca
         type="search"
         [(ngModel)]="buscaHero"
         (ngModelChange)="aoDigitar()"
         (focus)="aoFocar()"
         (keydown.escape)="fecharSugestoes()"
         (keydown.enter)="aoConfirmar()"
-        placeholder="Buscar por cidade ou igreja..."
+        placeholder="Digite o nome da cidade ou da igreja..."
         aria-label="Buscar por cidade ou igreja"
         autocomplete="off"
         role="combobox"
         aria-controls="sugestoes-busca"
         [attr.aria-expanded]="mostrarSugestoes && temAlgoParaMostrar">
+      <!-- Mesmo destino do Enter. Existe porque, sem botão, o campo não dizia
+           como concluir a busca — principalmente no toque, onde não há Enter à vista. -->
+      <button type="button" class="busca__btn" (click)="aoBuscar()">
+        <span class="busca__btn-rotulo">Buscar</span>
+        <i class="pi pi-chevron-right busca__btn-seta" aria-hidden="true"></i>
+        <i class="pi pi-search busca__btn-lupa" aria-hidden="true"></i>
+      </button>
     </div>
 
     @if (mostrarSugestoes && temAlgoParaMostrar) {
