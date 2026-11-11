@@ -1,4 +1,4 @@
-<div class="ph-hero">
+<div class="ph-hero" [class.ph-hero--compacto]="variante === 'compacto'">
   <div class="ph-hero__conteudo">
     @if (breadcrumb.length) {
       <nav class="ph-hero__breadcrumb" aria-label="Trilha de navegação">

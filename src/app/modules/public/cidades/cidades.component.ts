@@ -9,7 +9,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { MetricasService, PaginaMetrica } from '../../../core/services/metricas.service';
 import { SeoPaginasService } from '../../../core/services/seo-paginas.service';
 import { SeoService } from '../../../core/services/seo.service';
-import { STATES } from '../../../core/constants/states';
 import { PageHeroComponent } from '../../../shared/components/page-hero/page-hero.component';
 import { HubBreadcrumb } from '../../../shared/components/hub-lista/hub-lista.component';
 import { HubPonteComponent } from '../../../shared/components/hub-ponte/hub-ponte.component';
@@ -21,16 +20,6 @@ import { cidades, estados, paroquias } from '../../../shared/utils/plural.utils'
 const SITE = 'https://buscamissa.com.br';
 /** Cap do bloco "Capitais e principais cidades" — vitrine, não substitui o índice completo. */
 const TOP_CIDADES = 8;
-/**
- * Cap de cidades visíveis por estado ao abrir o acordeão — sem isso, um estado
- * como o Paraná (159 cidades) despeja uma grade enorme de uma vez, o tipo de
- * "parede de links" que lê mal principalmente no mobile. Mesmo padrão de
- * "ver mais" que `estado.component.ts` já usa no índice A–Z.
- */
-const CAP_CIDADES_POR_ESTADO = 24;
-
-interface CidadeItem { nome: string; slug: string; totalParoquias: number; }
-interface EstadoItem { sigla: string; nome: string; cidades: CidadeItem[]; expandido: boolean; verTodas: boolean; }
 interface CidadeDestaque { nome: string; slug: string; uf: string; totalParoquias: number; }
 
 /** Formato de item de `/v2/seo/estados` — mesmo bulk que alimenta `/estados` e o prerender. */
@@ -73,7 +62,6 @@ export class CidadesComponent implements OnInit, OnDestroy {
   private _ehBrowser = isPlatformBrowser(inject(PLATFORM_ID));
 
   isLoading = true;
-  estados: EstadoItem[] = [];
 
   // ── Busca do hero ────────────────────────────────────────────────────────
   // Autocomplete, NÃO filtro do índice lá embaixo. Antes, este mesmo campo
@@ -86,6 +74,9 @@ export class CidadesComponent implements OnInit, OnDestroy {
 
   /** Caixa da busca — referência para detectar clique FORA dela. */
   @ViewChild('caixaBusca') private caixaBusca?: ElementRef<HTMLElement>;
+
+  /** O campo em si — o botão "Buscar" devolve o foco a ele quando não há o que buscar. */
+  @ViewChild('campoBusca') private campoBusca?: ElementRef<HTMLInputElement>;
 
   /** Cidades no formato da busca, montadas uma vez por carga. */
   private cidadesParaBusca: CidadeBusca[] = [];
@@ -108,7 +99,7 @@ export class CidadesComponent implements OnInit, OnDestroy {
   ];
 
   /** `\n` vira quebra de linha (o hero usa `white-space: pre-line`). */
-  readonly TITULO_HERO = 'Horários de Missa\npor';
+  readonly TITULO_HERO = 'Encontre a missa\nna sua';
 
   /**
    * Prova de cobertura em uma linha. Eram três tiles numéricos logo abaixo da
@@ -126,17 +117,14 @@ export class CidadesComponent implements OnInit, OnDestroy {
    */
   semDados = false;
 
-  // Cores por estado (sigla → classe CSS)
-  readonly estadoCores: Record<string, string> = {
-    SP: 'badge--sp', MG: 'badge--mg', RJ: 'badge--rj', PR: 'badge--pr',
-    RS: 'badge--rs', SC: 'badge--sc', DF: 'badge--df', GO: 'badge--go',
-    BA: 'badge--ba', CE: 'badge--ce', PE: 'badge--pe', PA: 'badge--pa',
-  };
-
   private totalParoquias = 0;
 
-  get totalCidades(): number {
-    return this.estados.reduce((s, e) => s + e.cidades.length, 0);
+  /** Total de cidades do bulk — vai para a cobertura do hero e para o bloco de /estados. */
+  totalCidades = 0;
+
+  /** "2.188" — separador de milhar em pt-BR. */
+  get totalCidadesFmt(): string {
+    return this.totalCidades.toLocaleString('pt-BR');
   }
 
 
@@ -188,21 +176,6 @@ export class CidadesComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Ordem alfabética: isto é um índice para consultar, não um ranking — a vitrine
-    // de "principais cidades" abaixo já cobre o volume. Nenhum estado abre sozinho
-    // por padrão (antes o PR, o maior, abria com 161 cidades na cara de quem procura SP).
-    this.estados = lista
-      .map((e) => ({
-        sigla: e.uf.toUpperCase(),
-        nome: STATES.find((s) => s.sigla === e.uf.toUpperCase())?.nome ?? e.estado,
-        cidades: (e.cidades ?? [])
-          .map((c) => ({ nome: c.cidade, slug: c.cidadeSlug, totalParoquias: c.totalParoquias }))
-          .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR')),
-        expandido: false,
-        verTodas: false,
-      }))
-      .sort((a, b) => a.nome.localeCompare(b.nome, 'pt-BR'));
-
     // Cidades no formato da busca. Vêm do MESMO payload do índice acima — a busca
     // por cidade não depende do `busca-index.json` e responde já na primeira tecla.
     this.cidadesParaBusca = lista.flatMap((e) =>
@@ -224,6 +197,7 @@ export class CidadesComponent implements OnInit, OnDestroy {
       .sort((a, b) => b.totalParoquias - a.totalParoquias)
       .slice(0, TOP_CIDADES);
 
+    this.totalCidades = this.cidadesParaBusca.length;
     this.totalParoquias = lista.reduce((s, e) => s + (e.totalParoquias ?? 0), 0);
     this.isLoading = false;
     this.semDados = false;
@@ -283,6 +257,25 @@ export class CidadesComponent implements OnInit, OnDestroy {
     if (igreja) {
       this.irPara(['/paroquia', igreja.uf, igreja.cidadeSlug, igreja.slug]);
     }
+  }
+
+  /**
+   * Botão "Buscar". Com resultado, faz o mesmo que o Enter. Sem texto, leva o foco
+   * ao campo; com texto que não casou, abre o painel — que é onde a mensagem de
+   * "não encontramos" mora. Em nenhum caso o clique fica sem resposta.
+   */
+  aoBuscar(): void {
+    if (!this.buscaHero.trim()) {
+      this.campoBusca?.nativeElement.focus();
+      return;
+    }
+    this.garantirIndice();
+    this.recalcular();
+    if (this.resultado.cidades.length || this.resultado.igrejas.length) {
+      this.aoConfirmar();
+      return;
+    }
+    this.mostrarSugestoes = true;
   }
 
   /** "1 paróquia" / "14 paróquias" — ver shared/utils/plural.utils. */
@@ -357,30 +350,6 @@ export class CidadesComponent implements OnInit, OnDestroy {
       });
   }
 
-  // ============================ índice por estado ============================
-
-  toggleEstado(e: EstadoItem): void { e.expandido = !e.expandido; }
-
-  toggleVerTodas(e: EstadoItem): void { e.verTodas = !e.verTodas; }
-
-  /** Cap de exibição por estado — ver `CAP_CIDADES_POR_ESTADO`. */
-  cidadeOculta(e: EstadoItem, indice: number): boolean {
-    return !e.verTodas && indice >= CAP_CIDADES_POR_ESTADO && e.cidades.length > CAP_CIDADES_POR_ESTADO;
-  }
-
-  temMaisCidades(e: EstadoItem): boolean {
-    return !e.verTodas && e.cidades.length > CAP_CIDADES_POR_ESTADO;
-  }
-
-  cidadesOcultasCount(e: EstadoItem): number {
-    return e.cidades.length - CAP_CIDADES_POR_ESTADO;
-  }
-
-  badgeClass(sigla: string): string {
-    return this.estadoCores[sigla] ?? 'badge--default';
-  }
-
-
   private aplicarSeo(): void {
     this._seo.update({
       title: 'Cidades com missas cadastradas — horários por cidade | BuscaMissa',
@@ -402,11 +371,16 @@ export class CidadesComponent implements OnInit, OnDestroy {
     this._seo.setJsonLd('itemlist', {
       '@context': 'https://schema.org',
       '@type': 'ItemList',
-      name: 'Cidades do Brasil com missas cadastradas',
-      numberOfItems: this.totalCidades,
-      itemListElement: this.estados.flatMap((e) =>
-        e.cidades.map((c) => ({ name: c.nome, item: `${SITE}/missas/${e.sigla.toLowerCase()}/${c.slug}` })),
-      ).map((it, i) => ({ '@type': 'ListItem', position: i + 1, name: it.name, item: it.item })),
+      // Só as cidades que a página LINKA: o ItemList descreve a lista visível,
+      // e a lista completa saiu daqui para /estados → /missas/:uf.
+      name: 'Principais cidades do Brasil com missas cadastradas',
+      numberOfItems: this.principaisCidades.length,
+      itemListElement: this.principaisCidades.map((c, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        name: c.nome,
+        item: `${SITE}/missas/${c.uf}/${c.slug}`,
+      })),
     });
   }
 }
