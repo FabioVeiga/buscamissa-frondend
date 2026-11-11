@@ -26,17 +26,31 @@ test('build de produção de 03/11 (PR #275): 1.734 paróquias + 1.933 cidades +
 });
 
 test('build de produção de 08/11 (PR #287): 1.661 paróquias + 2.005 cidades + 386 fixos = 4.052', () => {
-  assert.equal(ARQUIVOS_FIXOS, 386);
-  assert.equal(projetarArquivos({ cidades: 2005, paroquias: 1661 }), 4052);
+  assert.equal(projetarArquivos({ cidades: 2005, paroquias: 1661, fixos: 386 }), 4052);
+});
+
+test('build de produção de 11/11 (PR #303): 1.476 paróquias + 2.188 cidades + 387 fixos = 4.051', () => {
+  assert.equal(ARQUIVOS_FIXOS, 387);
+  assert.equal(projetarArquivos({ cidades: 2188, paroquias: 1476 }), 4051);
+});
+
+test('com 387 fixos e os dados de 11/11, o teto volta a deixar exatamente a folga', () => {
+  // Com 386 a seleção pegou 1.476 paróquias e o dist real (387 fixos) ficou com margem 149.
+  assert.equal(tetoParoquias({ cidades: 2188, fixos: 386 }), 1476);
+  assert.equal(avaliarMargem({ arquivos: 4051, env: {} }).ok, false);
+  const teto = tetoParoquias({ cidades: 2188 });
+  assert.equal(teto, 1475);
+  const arquivos = projetarArquivos({ cidades: 2188, paroquias: teto });
+  assert.deepEqual(avaliarMargem({ arquivos, env: {} }), { ok: true, margem: FOLGA_ARQUIVOS });
 });
 
 test('com 386 fixos e os dados de 08/11, o teto volta a deixar exatamente a folga', () => {
   // Com 384 a seleção pegou 1.661 paróquias e o dist real (386 fixos) ficou com margem 148.
   assert.equal(tetoParoquias({ cidades: 2005, fixos: 384 }), 1661);
   assert.equal(avaliarMargem({ arquivos: 4052, env: {} }).ok, false);
-  const teto = tetoParoquias({ cidades: 2005 });
+  const teto = tetoParoquias({ cidades: 2005, fixos: 386 });
   assert.equal(teto, 1659);
-  const arquivos = projetarArquivos({ cidades: 2005, paroquias: teto });
+  const arquivos = projetarArquivos({ cidades: 2005, paroquias: teto, fixos: 386 });
   assert.deepEqual(avaliarMargem({ arquivos, env: {} }), { ok: true, margem: FOLGA_ARQUIVOS });
 });
 
