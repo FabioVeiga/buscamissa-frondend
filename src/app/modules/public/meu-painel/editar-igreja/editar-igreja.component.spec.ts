@@ -12,12 +12,12 @@ import { MetricasService } from '../../../../core/services/metricas.service';
 const stub = (base: Record<string, unknown>) =>
   new Proxy(base, { get: (t, k: string) => (k in t ? t[k] : () => of([])) });
 
-const dados = (missas: unknown[]) => ({
+const dados = (missas: unknown[], sessoes: unknown[] = []) => ({
   igrejaNome: 'Igreja Teste',
   contato: {},
   redesSociais: [],
   missas,
-  sessoes: [],
+  sessoes,
   endereco: { cep: '01001000', logradouro: 'Rua A', localidade: 'São Paulo', uf: 'SP', numero: 1 },
   circunscricao: null,
   capelasComunidades: [],
@@ -25,14 +25,14 @@ const dados = (missas: unknown[]) => ({
 });
 
 describe('EditarIgrejaComponent — horários de missa', () => {
-  const montar = (missas: unknown[]) => {
+  const montar = (missas: unknown[], sessoes: unknown[] = []) => {
     TestBed.configureTestingModule({
       imports: [EditarIgrejaComponent],
       providers: [
         { provide: AuthService, useValue: { estaLogado: true } },
         { provide: Router, useValue: { navigate: () => {}, createUrlTree: () => ({}), serializeUrl: () => '', events: of() } },
         { provide: ActivatedRoute, useValue: { snapshot: { paramMap: { get: () => '1' } } } },
-        { provide: ResponsavelService, useValue: stub({ obterDados: () => of(dados(missas)), obterMetricas: () => of(null) }) },
+        { provide: ResponsavelService, useValue: stub({ obterDados: () => of(dados(missas, sessoes)), obterMetricas: () => of(null) }) },
         { provide: ChurchesService, useValue: stub({}) },
         { provide: MetricasService, useValue: stub({ registrarVisualizacaoPagina: () => {} }) },
         { provide: LoggerService, useValue: { logError: () => {} } },
@@ -95,5 +95,45 @@ describe('EditarIgrejaComponent — horários de missa', () => {
     c.removerMissa(c.gruposMissas[0].itens[0].ctrl);
     f.detectChanges();
     expect(el.querySelectorAll('.lista-missas .linha-missa').length).toBe(5);
+  });
+
+  describe('atendimento e confissão', () => {
+    const sessoes = [
+      { tipo: 2, diaSemana: 6, horarioInicio: '16:00', horarioFim: '17:30' },
+      { tipo: 1, diaSemana: 2, horarioInicio: '08:00', horarioFim: '12:00' },
+      { tipo: 1, diaSemana: 1, horarioInicio: '08:00', horarioFim: '12:00', observacao: 'fecha no feriado' },
+    ];
+
+    it('lista por tipo, com segunda antes de terça', () => {
+      const el: HTMLElement = montar([], sessoes).nativeElement;
+      const grupos = Array.from(el.querySelectorAll('.grupo-missas')).filter((g) => g.querySelector('.linha-sessao-nova'));
+      expect(grupos.map((g) => g.querySelector('.grupo-missas__titulo')!.textContent!.trim())).toEqual(['Secretaria', 'Confissão']);
+      const dias = Array.from(grupos[0].querySelectorAll('.linha-sessao-nova__dia')).map((d) => d.textContent!.trim());
+      expect(dias).toEqual(['Segunda-feira', 'Terça-feira']);
+    });
+
+    it('cria um atendimento por dia escolhido e não duplica', () => {
+      const f = montar([], sessoes);
+      const c = f.componentInstance;
+      c.novaSessao = { tipo: 1, dias: [], inicio: '', fim: '', observacao: '' };
+      c.aplicarAtalhoDias([1, 2, 3, 4, 5]);
+      c.novaSessao.inicio = '14:00';
+      c.novaSessao.fim = '17:00';
+      expect(c.podeAdicionarSessao).toBeTrue();
+      c.adicionarNovaSessao();
+      expect(c.sessoes.length).toBe(3 + 5);
+      c.aplicarAtalhoDias([1, 2, 3, 4, 5]);
+      c.novaSessao.inicio = '14:00';
+      c.novaSessao.fim = '17:00';
+      c.adicionarNovaSessao();
+      expect(c.sessoes.length).toBe(3 + 5);
+    });
+
+    it('não deixa adicionar com fim antes do início', () => {
+      const c = montar([], []).componentInstance;
+      c.novaSessao = { tipo: 1, dias: [1], inicio: '12:00', fim: '08:00', observacao: '' };
+      expect(c.podeAdicionarSessao).toBeFalse();
+      expect(c.avisoSessao).toContain('depois do inicial');
+    });
   });
 });

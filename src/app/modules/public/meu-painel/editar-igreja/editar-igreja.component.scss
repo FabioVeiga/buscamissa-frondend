@@ -486,3 +486,40 @@ h2.mt {
     &__substitui { padding-left: 0; }
   }
 }
+
+// ── Atendimento e confissão ─────────────────────────────────────────────────────────
+.chip-dia {
+  min-width: 3rem;
+  padding: 0.35rem 0.6rem;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  background: #fff;
+  color: #4b5563;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+
+  &--ativo { background: #ad540c; border-color: #ad540c; color: #fff; }
+}
+
+.adicionar-missa__campos .ate { font-size: 0.78rem; color: #9ca3af; }
+
+.linha-sessao-nova {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-bottom: 0.5rem;
+
+  &__dia { flex: 0 0 130px; font-weight: 600; font-size: 0.9rem; }
+  .input-hora { flex: 0 0 90px; width: 90px; text-align: center; }
+  .ate { font-size: 0.78rem; color: #9ca3af; }
+  &__obs { flex: 1 1 160px; min-width: 0; }
+}
+
+@media (max-width: 640px) {
+  .linha-sessao-nova {
+    &__dia { flex: 1 1 100%; }
+    &__obs { flex: 1 1 100%; }
+  }
+}
