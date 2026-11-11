@@ -244,6 +244,52 @@
           [outlined]="frequenciaUnica !== TIPO_RECORRENCIA.OcorrenciaNoMes"
           (click)="frequenciaUnica = TIPO_RECORRENCIA.OcorrenciaNoMes"
         ></p-button>
+        <p-button
+          label="Data específica"
+          size="small"
+          [outlined]="frequenciaUnica !== TIPO_RECORRENCIA.DataEspecifica"
+          (click)="frequenciaUnica = TIPO_RECORRENCIA.DataEspecifica"
+        ></p-button>
+      </div>
+
+      <div *ngIf="frequenciaUnica === TIPO_RECORRENCIA.DataEspecifica" class="flex flex-col gap-3 rounded-lg bg-surface-50 p-3">
+        <div class="flex flex-col md:flex-row gap-2">
+          <p-datepicker
+            [(ngModel)]="dataUnica"
+            [ngModelOptions]="{ standalone: true }"
+            [minDate]="hoje"
+            dateFormat="dd/mm/yy"
+            placeholder="Data (dd/mm/aaaa)"
+            showIcon
+            fluid="true"
+            iconDisplay="input"
+            appendTo="body"
+            class="w-full md:w-1/3"
+          />
+          <div class="w-full md:flex-1">
+            <input
+              pInputText
+              [(ngModel)]="nomeUnico"
+              [ngModelOptions]="{ standalone: true }"
+              placeholder="Nome (opcional), ex.: Missa do Galo"
+              maxlength="80"
+              class="w-full"
+            />
+          </div>
+        </div>
+        <div class="flex flex-wrap gap-2 items-center">
+          <span class="text-sm text-gray-500">Sugestões:</span>
+          <p-chip
+            *ngFor="let n of sugestoesNome"
+            [label]="n"
+            styleClass="cursor-pointer"
+            (click)="nomeUnico = n"
+          ></p-chip>
+        </div>
+        <label class="flex items-start gap-2 text-sm">
+          <input type="checkbox" class="mt-1" [(ngModel)]="substituiUnico" [ngModelOptions]="{ standalone: true }" />
+          <span>Substitui as missas normais deste dia <span class="text-gray-400">(por padrão, soma aos horários de sempre)</span></span>
+        </label>
       </div>
 
       <div *ngIf="frequenciaUnica === TIPO_RECORRENCIA.OcorrenciaNoMes" class="flex flex-wrap gap-3 items-center">
@@ -421,6 +467,18 @@
               <span *ngIf="ehDiaFixo(horarioCtrl)" class="block py-2 text-sm font-medium">
                 {{ descreverLinha(horarioCtrl) }}
               </span>
+              <ng-container *ngIf="horarioCtrl.get('tipoRecorrencia')?.value === TIPO_RECORRENCIA.DataEspecifica">
+                <input
+                  pInputText
+                  formControlName="nome"
+                  placeholder="Nome (ex.: Natal)"
+                  maxlength="80"
+                  class="w-full mb-1"
+                />
+                <label class="flex items-center gap-2 text-xs text-gray-600">
+                  <input type="checkbox" formControlName="substituiMissasDoDia" /> Substitui as missas normais do dia
+                </label>
+              </ng-container>
               <p-select
                 *ngIf="!ehDiaFixo(horarioCtrl)"
                 formControlName="diaSemana"

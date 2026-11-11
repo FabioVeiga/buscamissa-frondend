@@ -18,6 +18,16 @@ interface MissaNaGrade extends Mass {
   rotuloNaSemana?: string;
 }
 
+/** Um dia especial (Natal, Missa do Galo...) com os horários que ainda vão acontecer. */
+interface DataEspecial {
+  data: string;
+  diaSemana: string;
+  dataCurta: string;
+  nome: string;
+  substitui: boolean;
+  missas: { horario: string; texto: string }[];
+}
+
 /** Agenda semanal de horários da paróquia (extraído do DetailsComponent — auditoria 2.x). */
 @Component({
   selector: 'app-details-horarios',
@@ -117,7 +127,7 @@ export class DetailsHorariosComponent {
    * Missas de datas especiais (ex.: Natal 2026) que ainda vão acontecer, agrupadas por data.
    * Datas passadas ficam de fora; `substitui` avisa que as missas normais não ocorrem no dia.
    */
-  get datasEspeciais(): { data: string; titulo: string; substitui: boolean; missas: { horario: string; texto: string }[] }[] {
+  get datasEspeciais(): DataEspecial[] {
     const hoje = chaveData(new Date());
     const porData = new Map<string, Mass[]>();
     for (const m of this.missas ?? []) {
@@ -132,15 +142,21 @@ export class DetailsHorariosComponent {
       .map(([data, lista]) => {
         const [ano, mes, dia] = data.split('-').map(Number);
         const diaSemana = new Date(ano, mes - 1, dia).getDay();
+        // Nome igual em todas as missas do dia (ex.: "Natal") vai ao lado da data;
+        // nomes diferentes ("Missa do Galo" e "Natal") continuam em cada horário.
+        const nomes = new Set(lista.map((m) => (m.nome ?? '').trim()));
+        const nomeDoDia = nomes.size === 1 ? [...nomes][0] : '';
         return {
           data,
-          titulo: `${dias[diaSemana]}, ${formatarData(data)}`,
+          diaSemana: dias[diaSemana],
+          dataCurta: formatarData(data),
+          nome: nomeDoDia,
           substitui: lista.some((m) => !!m.substituiMissasDoDia),
           missas: [...lista]
             .sort((a, b) => a.horario.localeCompare(b.horario))
             .map((m) => ({
               horario: this.formatarHorario(m.horario),
-              texto: [m.nome, (m.observacao ?? '').trim()].filter(Boolean).join(' · '),
+              texto: [nomeDoDia ? '' : (m.nome ?? '').trim(), (m.observacao ?? '').trim()].filter(Boolean).join(' · '),
             })),
         };
       });
