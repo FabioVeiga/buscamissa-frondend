@@ -301,6 +301,9 @@
 
   <div *ngIf="churchInfo && churchInfo.length > 0" class="resultados-cards">
     @for (church of (resultsMode ? churchInfoOrdenaFiltrado : churchInfoOrdenada); track church.id) {
+      @if (tituloGrupo($index); as titulo) {
+        <h2 class="resultados-grupo">{{ titulo }}</h2>
+      }
       <app-church-result-card
         [igreja]="church"
         [proxima]="proximaMissaDe(church)"

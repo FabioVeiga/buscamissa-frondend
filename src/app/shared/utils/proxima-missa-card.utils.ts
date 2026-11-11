@@ -135,13 +135,18 @@ export function diasSemanaisDeMissa(missas: Mass[]): number[] {
   return [...new Set(dias)].sort((a, b) => a - b);
 }
 
-/** Início, depois nome em pt-BR, depois id; sem próxima missa fica no fim. */
+/**
+ * Início, depois grupo da busca (quando houver), depois nome em pt-BR, depois id; sem
+ * próxima missa fica no fim, com horários cadastrados antes de sem horários.
+ */
 export function compararPorProximaMissa(
-  a: { inicio: Date | null; nome?: string; id?: number },
-  b: { inicio: Date | null; nome?: string; id?: number },
+  a: { inicio: Date | null; nome?: string; id?: number; grupo?: number },
+  b: { inicio: Date | null; nome?: string; id?: number; grupo?: number },
 ): number {
   const inicioA = a.inicio?.getTime() ?? Number.POSITIVE_INFINITY;
   const inicioB = b.inicio?.getTime() ?? Number.POSITIVE_INFINITY;
   if (inicioA !== inicioB) return inicioA < inicioB ? -1 : 1;
-  return (a.nome ?? '').localeCompare(b.nome ?? '', 'pt-BR') || (a.id ?? 0) - (b.id ?? 0);
+  return (a.grupo ?? 0) - (b.grupo ?? 0)
+    || (a.nome ?? '').localeCompare(b.nome ?? '', 'pt-BR')
+    || (a.id ?? 0) - (b.id ?? 0);
 }

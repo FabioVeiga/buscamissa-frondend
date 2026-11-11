@@ -20,7 +20,9 @@ import { PrimeNgModule } from "../../../shared/primeng.module";
 import {
   Church,
   FilterSearchChurch,
+  GrupoBusca,
   Mass,
+  TotaisPorGrupoBusca,
 } from "../../../core/interfaces/church.interface";
 import { HttpErrorResponse } from "@angular/common/http";
 import { ActivatedRoute, Router, RouterModule } from "@angular/router";
@@ -234,28 +236,50 @@ export class HomeComponent {
     return this._aplicarQuickFilterChurches(this.churchInfo);
   }
 
+  /**
+   * A→Z, Z→A e Mais próximas vêm ordenadas da API em todas as páginas (grupo, nome ou
+   * distância estrita), então a página fica como chegou: reordenar aqui desfaria os
+   * grupos. Só "Próxima missa" reordena, e só a página atual.
+   */
   private _ordenarIgrejas(lista: Church[]): Church[] {
     const copia = [...lista];
-    switch (this.ordenacaoResultados) {
-      case 'az':
-        return copia.sort((a, b) => (a.nome ?? '').localeCompare(b.nome ?? '', 'pt-BR'));
-      case 'za':
-        return copia.sort((a, b) => (b.nome ?? '').localeCompare(a.nome ?? '', 'pt-BR'));
-      case 'proxima-missa':
-        return copia.sort((a, b) => compararPorProximaMissa(
-          { ...a, inicio: this.proximaMissaDe(a).inicio },
-          { ...b, inicio: this.proximaMissaDe(b).inicio },
-        ));
-      case 'proximidade':
-        if (this._userLat === null || this._userLng === null) return copia;
-        return copia.sort((a, b) => {
-          const dA = this._distHome(a) ?? Infinity;
-          const dB = this._distHome(b) ?? Infinity;
-          return dA - dB;
-        });
-      default:
-        return copia;
+    if (this.ordenacaoResultados !== 'proxima-missa') return copia;
+    return copia.sort((a, b) => compararPorProximaMissa(
+      { ...a, inicio: this.proximaMissaDe(a).inicio, grupo: a.grupoBusca },
+      { ...b, inicio: this.proximaMissaDe(b).inicio, grupo: b.grupoBusca },
+    ));
+  }
+
+  /** Grupos com título, na ordem da API (GrupoBuscaEnum). */
+  private static readonly TITULOS_GRUPO: Record<GrupoBusca, string> = {
+    1: 'Com próximas missas',
+    2: 'Horários sem próxima data',
+    3: 'Sem horários informados',
+  };
+
+  /**
+   * Título antes do card `indice`, quando ele abre um grupo. Só nas ordens por nome, que
+   * agrupam, e só se o resultado tem mais de um grupo. O primeiro card da página só ganha
+   * título se o grupo começa nele: a página que começa no meio de um grupo não repete o título.
+   */
+  tituloGrupo(indice: number): string | null {
+    const ordemPorNome = this.ordenacaoResultados === 'az' || this.ordenacaoResultados === 'za';
+    const filtroDaPagina = this.quickFilter !== null && this.quickFilter !== 'perto';
+    const totais = this.totaisPorGrupo;
+    if (!this.resultsMode || !ordemPorNome || filtroDaPagina || !totais) return null;
+
+    const porGrupo: Record<GrupoBusca, number> = { 1: totais.comProximaMissa, 2: totais.semProximaData, 3: totais.semHorarios };
+    if (Object.values(porGrupo).filter(n => n > 0).length < 2) return null;
+
+    const lista = this.churchInfoOrdenaFiltrado;
+    const grupo = lista[indice]?.grupoBusca;
+    if (!grupo) return null;
+
+    if (indice > 0) {
+      return lista[indice - 1].grupoBusca !== grupo ? HomeComponent.TITULOS_GRUPO[grupo] : null;
     }
+    const inicioDoGrupo = ([1, 2, 3] as GrupoBusca[]).filter(g => g < grupo).reduce((s, g) => s + porGrupo[g], 0);
+    return (this.pageIndex - 1) * this.pageSize === inicioDoGrupo ? HomeComponent.TITULOS_GRUPO[grupo] : null;
   }
 
   /** Próxima missa de uma igreja dos resultados: a mesma para o card e para a ordenação. */
@@ -384,6 +408,15 @@ export class HomeComponent {
 
   /** Ordenação dos resultados da busca */
   ordenacaoResultados: 'az' | 'za' | 'proximidade' | 'proxima-missa' = 'az';
+
+  /**
+   * Ordem que a API aplicou na busca atual. "Próxima missa" é só da página e não troca
+   * isto: a página segue a última ordem da API e é reordenada em cima dela.
+   */
+  private _ordenacaoServidor: 'az' | 'za' | 'proximidade' = 'az';
+
+  /** Total por grupo da busca atual, para decidir onde entram os títulos dos grupos. */
+  totaisPorGrupo: TotaisPorGrupoBusca | null = null;
 
   /** Coords do usuário (preenchidas após geoloc) */
   private _userLat: number | null = null;
@@ -554,12 +587,20 @@ export class HomeComponent {
       .catch(() => this._cepNaoEncontrado());
   }
 
-  /** Geocodifica o CEP apenas para ordenar os resultados por proximidade (fire-and-forget) */
-  private _ordenarPorProximidadeDoCep(cep: string): void {
-    fetch(`https://viacep.com.br/ws/${cep}/json/`)
+  /** Tempo máximo esperando a geocodificação do CEP antes de buscar sem proximidade. */
+  private static readonly ESPERA_CEP_MS = 4000;
+
+  /**
+   * Geocodifica o CEP para a API ordenar por proximidade em todas as páginas. Resolve
+   * `true` com as coordenadas gravadas; `false` se o CEP não geocodificar ou demorar mais
+   * que ESPERA_CEP_MS, e nesse caso uma resposta tardia é ignorada (a busca já saiu).
+   */
+  private _ordenarPorProximidadeDoCep(cep: string): Promise<boolean> {
+    let expirou = false;
+    const geocodificar = fetch(`https://viacep.com.br/ws/${cep}/json/`)
       .then(r => r.json())
       .then((addr: any) => {
-        if (!addr || addr.erro) return;
+        if (!addr || addr.erro) return false;
         const query = encodeURIComponent(
           [addr.logradouro, addr.bairro, addr.localidade, addr.uf, 'Brazil'].filter(Boolean).join(', ')
         );
@@ -567,14 +608,19 @@ export class HomeComponent {
           .then(r => r.json())
           .then((arr: any[]) => {
             const hit = arr?.[0];
-            if (hit?.lat && hit?.lon) {
-              this._userLat = parseFloat(hit.lat);
-              this._userLng = parseFloat(hit.lon);
-              this.ordenacaoResultados = 'proximidade';
-            }
+            if (expirou || !hit?.lat || !hit?.lon) return false;
+            this._userLat = parseFloat(hit.lat);
+            this._userLng = parseFloat(hit.lon);
+            this.ordenacaoResultados = 'proximidade';
+            return true;
           });
       })
-      .catch(() => {});
+      .catch(() => false);
+    const limite = new Promise<boolean>(resolve => setTimeout(() => {
+      expirou = true;
+      resolve(false);
+    }, HomeComponent.ESPERA_CEP_MS));
+    return Promise.race([geocodificar, limite]);
   }
 
   private _cepNaoEncontrado(): void {
@@ -1111,11 +1157,17 @@ export class HomeComponent {
     if (p['pagina']) this.pageIndex = Number(p['pagina']);
 
     // Busca veio do CEP: abre a aba de CEP com o valor preenchido (continuidade),
-    // preserva o param na URL e ordena por proximidade
+    // preserva o param na URL e espera a geocodificação para a API ordenar por
+    // proximidade. Sem coordenadas a tempo, busca na ordem padrão.
     if (p['cep']) {
       this.searchTab = 'local';
       this.form.get('Cep')?.setValue(p['cep']);
-      this._ordenarPorProximidadeDoCep(String(p['cep']));
+      this.isLoading = true;
+      this._ordenarPorProximidadeDoCep(String(p['cep'])).then(() => {
+        this.isLoading = false;
+        this.searchFilter(false);
+      });
+      return;
     }
 
     this.searchFilter(false);
@@ -1469,6 +1521,13 @@ export class HomeComponent {
       replaceUrl: true,
     });
 
+    if (this.ordenacaoResultados !== 'proxima-missa') {
+      this._ordenacaoServidor = this.ordenacaoResultados === 'proximidade'
+        ? (this.temGeolocalizacao ? 'proximidade' : 'az')
+        : this.ordenacaoResultados;
+    }
+    const porProximidade = this._ordenacaoServidor === 'proximidade' && this.temGeolocalizacao;
+
     const filters: FilterSearchChurch = {
       Uf: params.uf!,
       Localidade: params.cidade || undefined,
@@ -1477,6 +1536,11 @@ export class HomeComponent {
       DiaDaSemana: this._parseDiaFiltro(params.dia) ?? undefined,
       Horario: params.horario || undefined,
       HorarioFim: params.horarioFim || undefined,
+      // Padrão da API (0, nome A→Z) não vai na query.
+      Ordenacao: porProximidade ? 2 : this._ordenacaoServidor === 'za' ? 1 : undefined,
+      // 4 casas (~11 m): basta para ordenar e não manda a posição exata.
+      Lat: porProximidade ? Number(this._userLat!.toFixed(4)) : undefined,
+      Lng: porProximidade ? Number(this._userLng!.toFixed(4)) : undefined,
       "Paginacao.PageIndex": this.pageIndex,
       "Paginacao.PageSize": this.pageSize,
     };
@@ -1491,6 +1555,7 @@ export class HomeComponent {
         this.agoraResultados = new Date();
         this.churchInfo = data.data.items;
         this.totalRecords = data.data.totalItems;
+        this.totaisPorGrupo = data.data.totaisPorGrupo ?? null;
         this.isLoading = false;
 
         if (!this.churchInfo.length) {
@@ -1526,8 +1591,16 @@ export class HomeComponent {
     });
   }
 
+  /**
+   * Em /buscar, A→Z, Z→A e Mais próximas são ordens da API, entre páginas: trocar refaz a
+   * busca a partir da página 1. "Próxima missa" só reordena a página. Mais próximas sem
+   * localização fica como antes, sem efeito (o chip mostra o cadeado).
+   */
   setOrdenacaoResultados(o: 'az' | 'za' | 'proximidade' | 'proxima-missa'): void {
     this.ordenacaoResultados = o;
+    if (!this.resultsMode || o === 'proxima-missa' || !this.churchInfo.length) return;
+    if (o === 'proximidade' && !this.temGeolocalizacao) return;
+    if (o !== this._ordenacaoServidor) this.searchFilter(true);
   }
 
   get churchInfoOrdenada(): any[] {
@@ -1588,6 +1661,8 @@ export class HomeComponent {
     this.churchInfo = [];
     this.showNoChurchCard = false;
     this.ordenacaoResultados = 'az';
+    this._ordenacaoServidor = 'az';
+    this.totaisPorGrupo = null;
     this._router.navigate([], { queryParams: {}, replaceUrl: true });
   }
 
