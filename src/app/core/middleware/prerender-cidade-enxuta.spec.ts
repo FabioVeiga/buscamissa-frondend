@@ -42,6 +42,9 @@ function baseFicticia(): any[] {
     nivelConfianca: 'Alto',
     fonteLabel: 'Paróquia',
     descricaoConfianca: 'Confirmado pela paróquia em 01/10/2026',
+    data: null,
+    nome: null,
+    substituiMissasDoDia: false,
     ...extra,
   });
   const endereco = (bairro: string, lat: number | null, lng: number | null) => ({
@@ -161,6 +164,15 @@ describe('enxugarIgrejasCidade', () => {
     const [alfa, beta] = enxugarIgrejasCidade(baseFicticia(), { semNulos: false }) as any[];
     expect(alfa.missas[0].observacao).toBeNull();
     expect(beta.endereco.latitude).toBeNull();
+    expect(alfa.missas[0].substituiMissasDoDia).toBeFalse();
+  });
+
+  it('com semNulos tira substituiMissasDoDia quando false e mantém quando true', () => {
+    const base = baseFicticia();
+    base[0].missas[1].substituiMissasDoDia = true;
+    const [alfa] = enxugarIgrejasCidade(base) as any[];
+    expect('substituiMissasDoDia' in alfa.missas[0]).toBeFalse();
+    expect(alfa.missas[1].substituiMissasDoDia).toBeTrue();
   });
 
   it('endereço fica só com bairro, coordenadas, uf e cidadeSlug', () => {
