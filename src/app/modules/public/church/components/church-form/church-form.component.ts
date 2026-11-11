@@ -22,7 +22,7 @@ import {
   ValidationErrors,
 } from "@angular/forms";
 import { CommonModule, DatePipe } from "@angular/common";
-import { SEMANAS_DO_MES, TIPO_RECORRENCIA, alertaConflitoSemanal, descrever, ehSemanal } from "../../../../../shared/utils/recorrencia-missa";
+import { SEMANAS_DO_MES, TIPO_RECORRENCIA, alertaConflitoSemanal, chaveData, descrever, ehDataEspecifica, ehSemanal } from "../../../../../shared/utils/recorrencia-missa";
 import { PrimeNgModule } from "../../../../../shared/primeng.module";
 import { ChurchFormData, Mass } from "../../models/church.model";
 import { MessageService } from "primeng/api";
@@ -428,6 +428,9 @@ export class ChurchFormComponent implements OnInit, OnChanges {
               diaDoMes: [null],
               diasSemanaExcecao: [null],
               semanasDoMes: [null],
+              data: [null],
+              nome: [null],
+              substituiMissasDoDia: [false],
             })
           );
           adicionados++;
@@ -484,6 +487,9 @@ export class ChurchFormComponent implements OnInit, OnChanges {
         diaDoMes: [missa?.diaDoMes ?? null],
         diasSemanaExcecao: [missa?.diasSemanaExcecao ?? null],
         semanasDoMes: [missa?.semanasDoMes ?? null],
+        data: [missa?.data ? String(missa.data).slice(0, 10) : null],
+        nome: [missa?.nome ?? null],
+        substituiMissasDoDia: [!!missa?.substituiMissasDoDia],
       })
     );
   }
@@ -491,6 +497,7 @@ export class ChurchFormComponent implements OnInit, OnChanges {
   /** Semanais pelo dia da semana; dia fixo do mês depois, pelo dia do mês. */
   private chaveOrdenacao(v: any): number {
     if (v.tipoRecorrencia === TIPO_RECORRENCIA.OcorrenciaNoMes) return 50 + (v.diaSemana ?? 0);
+    if (ehDataEspecifica(v)) return 1000 + (v.data ? Math.floor(Date.parse(v.data) / 86400000) : 0);
     if (!ehSemanal(v)) return 100 + (v.diaDoMes ?? 0);
     return v.diaSemana ?? Number.MAX_SAFE_INTEGER;
   }
@@ -527,6 +534,13 @@ export class ChurchFormComponent implements OnInit, OnChanges {
   // Ocorrência no mês ("1ª e 3ª sexta"): dia da semana + semanas.
   readonly SEMANAS_DO_MES = SEMANAS_DO_MES;
   diaOcorrenciaUnico: number | null = null;
+
+  // Data específica ("25/12/2026"): data, nome opcional e se substitui as missas normais do dia.
+  dataUnica: Date | null = null;
+  nomeUnico = "";
+  substituiUnico = false;
+  readonly hoje = new Date();
+  readonly sugestoesNome = ["Natal", "Missa do Galo", "Ano Novo", "Quarta-feira de Cinzas", "Sexta-feira Santa", "Páscoa"];
   semanasDoMesUnico = 0;
 
   toggleSemanaUnica(bit: number): void {
@@ -540,6 +554,7 @@ export class ChurchFormComponent implements OnInit, OnChanges {
 
   get podeAdicionarUnico(): boolean {
     if (!this.horarioUnico) return false;
+    if (this.frequenciaUnica === TIPO_RECORRENCIA.DataEspecifica) return !!this.dataUnica;
     if (this.frequenciaUnica === TIPO_RECORRENCIA.DiaDoMes) return this.diaDoMesUnico != null;
     if (this.frequenciaUnica === TIPO_RECORRENCIA.OcorrenciaNoMes)
       return this.diaOcorrenciaUnico !== null && this.semanasDoMesUnico > 0;
@@ -548,7 +563,7 @@ export class ChurchFormComponent implements OnInit, OnChanges {
 
   /** Aviso de semanal x ocorrência no mês no mesmo dia e horário (não bloqueia). */
   get alertaUnico(): string | null {
-    if (!this.horarioUnico || this.frequenciaUnica === TIPO_RECORRENCIA.DiaDoMes) return null;
+    if (!this.horarioUnico || this.frequenciaUnica === TIPO_RECORRENCIA.DiaDoMes || this.frequenciaUnica === TIPO_RECORRENCIA.DataEspecifica) return null;
     const hhmm = (d: Date) => `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
     const existentes = this.horarios.controls.map((c) => ({
       ...c.value,
@@ -572,6 +587,10 @@ export class ChurchFormComponent implements OnInit, OnChanges {
   }
 
   adicionarHorarioUnico(): void {
+    if (this.frequenciaUnica === TIPO_RECORRENCIA.DataEspecifica) {
+      this.adicionarDataEspecificaUnica();
+      return;
+    }
     if (this.frequenciaUnica === TIPO_RECORRENCIA.DiaDoMes) {
       this.adicionarDiaFixoUnico();
       return;
@@ -599,11 +618,49 @@ export class ChurchFormComponent implements OnInit, OnChanges {
         diaDoMes: [null],
         diasSemanaExcecao: [null],
         semanasDoMes: [null],
+        data: [null],
+        nome: [null],
+        substituiMissasDoDia: [false],
       })
     );
     this.ordenarHorarios();
 
     this.diaUnico = null;
+    this.horarioUnico = null;
+    this.observacaoUnica = "";
+    this.cd.markForCheck();
+  }
+
+  private adicionarDataEspecificaUnica(): void {
+    if (!this.horarioUnico || !this.dataUnica) {
+      this.messageService.add({
+        severity: "warn",
+        summary: "Selecione os dados",
+        detail: "Escolha a data e o horário antes de adicionar.",
+      });
+      return;
+    }
+    const nome = this.nomeUnico.trim().slice(0, 80);
+    this.horarios.push(
+      this.fb.group({
+        id: [null],
+        diaSemana: [this.dataUnica.getDay(), Validators.required],
+        horario: [new Date(this.horarioUnico), [Validators.required, this.minutosValidos()]],
+        observacao: [this.observacaoUnica ?? "", Validators.maxLength(20)],
+        tipoRecorrencia: [TIPO_RECORRENCIA.DataEspecifica],
+        diaDoMes: [null],
+        diasSemanaExcecao: [null],
+        semanasDoMes: [null],
+        data: [chaveData(this.dataUnica)],
+        nome: [nome || null],
+        substituiMissasDoDia: [this.substituiUnico],
+      })
+    );
+    this.ordenarHorarios();
+
+    this.dataUnica = null;
+    this.nomeUnico = "";
+    this.substituiUnico = false;
     this.horarioUnico = null;
     this.observacaoUnica = "";
     this.cd.markForCheck();
@@ -631,6 +688,9 @@ export class ChurchFormComponent implements OnInit, OnChanges {
         diaDoMes: [dia],
         diasSemanaExcecao: [excecao || null],
         semanasDoMes: [null],
+        data: [null],
+        nome: [null],
+        substituiMissasDoDia: [false],
       })
     );
     this.ordenarHorarios();
@@ -663,6 +723,9 @@ export class ChurchFormComponent implements OnInit, OnChanges {
         diaDoMes: [null],
         diasSemanaExcecao: [null],
         semanasDoMes: [this.semanasDoMesUnico],
+        data: [null],
+        nome: [null],
+        substituiMissasDoDia: [false],
       })
     );
     this.ordenarHorarios();

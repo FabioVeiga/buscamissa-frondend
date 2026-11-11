@@ -49,11 +49,15 @@ export interface MissaEdicao {
   diaSemana: number; // 0=Domingo ... 6=Sábado
   horario: string; // "HH:mm"
   observacao?: string | null;
-  // Recorrência (ausente = semanal): 0 = semanal, 2 = dia fixo do mês.
+  // Recorrência (ausente = semanal): 0 = semanal, 1 = dia da semana no mês, 2 = dia fixo, 3 = data específica.
   tipoRecorrencia?: number | null;
   diaDoMes?: number | null;
   diasSemanaExcecao?: number | null;
   semanasDoMes?: number | null;
+  /** Só em data específica (tipoRecorrencia 3): "yyyy-MM-dd", nome opcional e substituição do dia. */
+  data?: string | null;
+  nome?: string | null;
+  substituiMissasDoDia?: boolean | null;
 }
 
 // ---- Fase 9: endereço + imagem ----

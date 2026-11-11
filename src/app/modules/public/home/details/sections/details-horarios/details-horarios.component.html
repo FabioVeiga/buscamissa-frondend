@@ -50,15 +50,22 @@
 
   <!-- Missas em datas especiais (Natal, Semana Santa...): só as que ainda vão acontecer -->
   <div *ngIf="datasEspeciais.length" class="mt-4 datas-especiais">
-    <h3 class="text-sm font-bold text-gray-600 mb-2">Datas especiais</h3>
-    <div *ngFor="let d of datasEspeciais; trackBy: trackDataEspecial" class="datas-especiais__item mb-2">
-      <div class="text-sm font-semibold text-gray-800">{{ d.titulo }}</div>
-      <div class="flex flex-wrap gap-2 mt-1">
-        <div *ngFor="let m of d.missas" class="mass-chip mass-chip--regra">
-          <span class="mass-chip__time mass-chip__time--regra">{{ m.horario }}<span *ngIf="m.texto"> · {{ m.texto }}</span></span>
+    <h3 class="text-sm font-bold text-gray-600 mb-1">Datas especiais</h3>
+    <div class="schedule-list">
+      <div *ngFor="let d of datasEspeciais; trackBy: trackDataEspecial" class="data-especial">
+        <div class="data-especial__titulo">
+          <span class="data-especial__data">{{ d.diaSemana }}, {{ d.dataCurta }}</span>
+          <span *ngIf="d.nome" class="data-especial__nome">{{ d.nome }}</span>
         </div>
+        <div class="flex flex-wrap gap-2">
+          <div *ngFor="let m of d.missas" class="mass-chip" [class.mass-chip--regra]="m.texto">
+            <span class="mass-chip__time" [class.mass-chip__time--regra]="m.texto">{{ m.horario }}<span *ngIf="m.texto" class="mass-chip__dia"> {{ m.texto }}</span></span>
+          </div>
+        </div>
+        <p *ngIf="d.substitui" class="data-especial__aviso">
+          <i class="pi pi-info-circle" aria-hidden="true"></i> Neste dia não há as missas dos horários normais.
+        </p>
       </div>
-      <p *ngIf="d.substitui" class="text-xs text-gray-500 mt-1">Neste dia não há as missas dos horários normais.</p>
     </div>
   </div>
 

@@ -165,3 +165,46 @@
     &::before { content: none; }
   }
 }
+
+// ── Datas especiais: data e nome na mesma linha, horários logo abaixo ─────────────
+.data-especial {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 0.75rem 0.5rem;
+  border-bottom: 1px solid #f1f1f1;
+
+  &:last-child { border-bottom: 0; }
+
+  &__titulo {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem 0.6rem;
+  }
+
+  &__data {
+    font-size: 0.9375rem;
+    font-weight: 700;
+    color: #1f2937;
+  }
+
+  &__nome {
+    padding: 0.1rem 0.6rem;
+    border-radius: 9999px;
+    background: #ad540c;
+    color: #fff;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+
+  &__aviso {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8125rem;
+    color: #6b7280;
+
+    .pi { font-size: 0.75rem; }
+  }
+}
