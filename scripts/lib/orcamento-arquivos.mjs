@@ -48,8 +48,13 @@ export const FOLGA_ARQUIVOS = 150;
  *           não mudaram; as 2 unidades a mais são `prerender-shared-*.css` (18 → 20): o
  *           redesenho da página de paróquia criou novas combinações de blocos de estilo,
  *           e o dedupe-prerender-css emite um arquivo por combinação.
+ *   - 387 — build de produção do PR #303 em 11/11/2026 (run 43015961609):
+ *           4.051 = 1.476 paróquias + 2.188 cidades + 387 fixos. A unidade a mais é
+ *           um chunk JS: `cep-redirect.component.ts` passou a importar o
+ *           `NotFoundComponent`, que também é carregado lazy pela rota `**`, e o
+ *           esbuild separou o módulo num chunk próprio (margem real 149 < 150).
  */
-export const ARQUIVOS_FIXOS = 386;
+export const ARQUIVOS_FIXOS = 387;
 
 /**
  * Exceção à folga mínima: `PRERENDER_ACEITAR_MARGEM=<n>` aceita UMA margem real entre
