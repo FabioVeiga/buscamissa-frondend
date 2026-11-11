@@ -277,10 +277,10 @@ describe('CidadesComponent — hero e busca', () => {
       spyOn(geo, 'reverseGeocode').and.resolveTo({ town: 'Pato Branco', 'ISO3166-2-lvl4': 'BR-PR' });
       await clicar();
       expect(router.navigate).not.toHaveBeenCalled();
-      expect(msg()).toContain('Ainda não há missas em Pato Branco.');
+      expect(msg()).toContain('Ainda não temos horários cadastrados para Pato Branco.');
       const link = raiz.querySelector('.geo__msg a')!;
       expect(link.getAttribute('href')).toBe('/missas/pr');
-      expect(link.textContent!.trim()).toBe('Ver cidades de Paraná');
+      expect(link.textContent!.trim()).toBe('Ver cidades do Paraná');
     });
 
     it('estado sem nenhuma cidade: oferece /estados', async () => {
