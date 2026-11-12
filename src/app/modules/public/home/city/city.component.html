@@ -15,7 +15,7 @@
       <ng-container *ngIf="cidadeNome; else breadcrumbSemNome">{{ cidadeNome }}<span *ngIf="uf">/{{ uf.toUpperCase() }}</span></ng-container>
       <ng-template #breadcrumbSemNome>
         <span *ngIf="!erroCarregar" class="city-nome-reservado city-nome-reservado--curto" aria-hidden="true"></span>
-        <ng-container *ngIf="erroCarregar">{{ uf?.toUpperCase() }}</ng-container>
+        <ng-container *ngIf="erroCarregar">{{ uf.toUpperCase() }}</ng-container>
       </ng-template>
     </span>
   </nav>

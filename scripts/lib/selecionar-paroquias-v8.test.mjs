@@ -128,7 +128,8 @@ test('teto dinâmico: projeção de arquivos fica exatamente na folga', () => {
   assert.equal(tetoParoquias({ cidades: 1806, fixos: 383 }), 1861); // fixos de 26/10
   assert.equal(tetoParoquias({ cidades: 1806, fixos: 384 }), 1860); // fixos de 03/11
   assert.equal(tetoParoquias({ cidades: 1806, fixos: 386 }), 1858); // fixos de 08/11
-  assert.equal(tetoParoquias({ cidades: 1806 }), 1857); // fixos de 11/11 (387)
+  assert.equal(tetoParoquias({ cidades: 1806, fixos: 387 }), 1857); // fixos de 11/11
+  assert.equal(tetoParoquias({ cidades: 1806 }), 1856); // fixos de 12/11 (388)
 });
 
 test('cidades sintéticas sem demanda não ocupam piso nem tiram protegidas', () => {
