@@ -678,14 +678,32 @@ describe('HomeComponent — filtro de dia em /buscar', () => {
       expect(c.churchInfoOrdenaFiltrado.map(x => x.nome)).toEqual(['Ávila', 'Bento', 'Zélia']);
     });
 
-    it('Mais próximas sem localização não refaz a busca', () => {
+    it('Mais próximas sem localização negada: não refaz a busca, não marca o chip e avisa', () => {
       responder([igreja(1, 'A', 1)]);
       const c = montar({ uf: 'SP' }, RES);
       const chamadas = churches.searchByFilters.calls.count();
+      spyOn(navigator.geolocation, 'getCurrentPosition').and.callFake((_ok: any, erro: any) => erro({ code: 1 }));
+      const toast = (c as any)._toast.add as jasmine.Spy;
+      toast.calls.reset();
 
       c.setOrdenacaoResultados('proximidade');
 
       expect(churches.searchByFilters.calls.count()).toBe(chamadas);
+      expect(c.ordenacaoResultados).toBe('az');
+      expect(toast).toHaveBeenCalled();
+    });
+
+    it('Mais próximas sem localização concedida: marca o chip e busca com a origem', () => {
+      responder([igreja(1, 'A', 1)]);
+      const c = montar({ uf: 'SP' }, RES);
+      spyOn(navigator.geolocation, 'getCurrentPosition').and.callFake((ok: any) =>
+        ok({ coords: { latitude: -23.5505199, longitude: -46.6333094 } }));
+
+      c.setOrdenacaoResultados('proximidade');
+
+      expect(c.ordenacaoResultados).toBe('proximidade');
+      expect(ultimaBusca().Ordenacao).toBe(2);
+      expect(ultimaBusca().Lat).toBe(-23.5505);
     });
 
     it('Mais próximas com localização manda a origem com 4 casas', () => {
