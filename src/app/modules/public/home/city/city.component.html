@@ -12,7 +12,11 @@
     <a routerLink="/cidades" class="city-breadcrumb__item">Cidades</a>
     <span class="city-breadcrumb__sep">/</span>
     <span class="city-breadcrumb__item city-breadcrumb__item--active">
-      {{ cidadeNome }}<span *ngIf="uf">/{{ uf.toUpperCase() }}</span>
+      <ng-container *ngIf="cidadeNome; else breadcrumbSemNome">{{ cidadeNome }}<span *ngIf="uf">/{{ uf.toUpperCase() }}</span></ng-container>
+      <ng-template #breadcrumbSemNome>
+        <span *ngIf="!erroCarregar" class="city-nome-reservado city-nome-reservado--curto" aria-hidden="true"></span>
+        <ng-container *ngIf="erroCarregar">{{ uf?.toUpperCase() }}</ng-container>
+      </ng-template>
     </span>
   </nav>
 
@@ -25,7 +29,21 @@
       <div>
         <h1 class="city-header__titulo">
           <i class="pi pi-map-marker city-header__titulo-icon"></i>
-          Missas em {{ cidadeNome }}<span *ngIf="uf">/{{ uf.toUpperCase() }}</span>
+          <!-- Nome só da API (nunca do slug). Sem nome: carregando, um marcador do
+               tamanho de um nome reserva a linha (sem CLS); na falha, um título
+               neutro com a UF. -->
+          <ng-container *ngIf="cidadeNome; else tituloSemNome">
+            Missas em {{ cidadeNome }}<span *ngIf="uf">/{{ uf.toUpperCase() }}</span>
+          </ng-container>
+          <ng-template #tituloSemNome>
+            <ng-container *ngIf="erroCarregar; else tituloCarregando">
+              Horários de missa<span *ngIf="uf"> — {{ uf.toUpperCase() }}</span>
+            </ng-container>
+            <ng-template #tituloCarregando>
+              Missas em <span class="city-nome-reservado" aria-hidden="true"></span>
+              <span class="sr-only">carregando cidade</span>
+            </ng-template>
+          </ng-template>
         </h1>
         <!-- Sempre no layout (anti-CLS na navegação SPA): sem dados, a linha fica
              reservada e invisível; com *ngIf ela nascia junto com os dados e empurrava
@@ -126,7 +144,7 @@
         <!-- Vazio geral -->
         <div *ngIf="naoEncontrado && !igrejas.length && !erroCarregar" class="city-vazio">
           <i class="pi pi-search"></i>
-          <p>Nenhuma paróquia cadastrada em {{ cidadeNome }} ainda.</p>
+          <p>Nenhuma paróquia cadastrada {{ cidadeNome ? 'em ' + cidadeNome : 'nesta cidade' }} ainda.</p>
           <a routerLink="/nova">Cadastrar paróquia</a>
         </div>
 

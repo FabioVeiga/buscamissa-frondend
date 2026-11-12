@@ -4,10 +4,12 @@ import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { provideNoopAnimations } from '@angular/platform-browser/animations';
 import { ActivatedRoute, provideRouter } from '@angular/router';
-import { Observable, Subject, concat, of, throwError } from 'rxjs';
+import { BehaviorSubject, Observable, Subject, concat, of, throwError } from 'rxjs';
 
 import { CityComponent } from './city.component';
 import { ChurchesService } from '../../../../core/services/churches.service';
+import { MetricasService } from '../../../../core/services/metricas.service';
+import { SeoService } from '../../../../core/services/seo.service';
 
 /**
  * Trava a regressão de CLS reportada pelo Search Console (grupo de 3.159 URLs,
@@ -346,5 +348,169 @@ describe('CityComponent — a FAQ tem de descrever o que a página entrega', () 
            .find((s) => (s.textContent || '').includes('FAQPage'));
     expect(ld).withContext('o bloco FAQPage precisa existir').toBeTruthy();
     expect(ld!.textContent).toContain(c.faqs[0].resposta);
+  });
+});
+
+/**
+ * O nome da cidade vem SÓ da API (Plano 2, 11/2026). Antes ele era montado a partir
+ * do slug ("itapejara-d-oeste" → "Itapejara D Oeste") e aparecia no H1 até a API
+ * responder; se ela falhasse, o title ficava com o slug cru
+ * ("Missas em itapejara-d-oeste/PR"). A métrica de visualização também saía antes da
+ * resposta, com esse nome inventado.
+ */
+describe('CityComponent — nome da cidade só da API', () => {
+  let fixture: ComponentFixture<CityComponent>;
+  let params$: BehaviorSubject<{ uf: string; cidade: string }>;
+  let resposta$: () => Observable<any>;
+  let metricas: jasmine.Spy;
+  let seoUpdate: jasmine.Spy;
+
+  const NOME = "Itapejara d'Oeste";
+
+  const igrejaDe = (id: number) => ({
+    id,
+    nome: `Paróquia ${id}`,
+    imagemUrl: null,
+    endereco: { bairro: 'Centro', latitude: -25.9, longitude: -52.8 },
+    missas: [{ id, diaSemana: 0, horario: '19:00:00' }],
+  });
+  const respostaDe = (cidade: string, n = 1) => ({
+    data: { cidade, igrejas: Array.from({ length: n }, (_, i) => igrejaDe(i + 1)), seo: {} },
+  });
+
+  const texto = (sel: string) =>
+    ((fixture.nativeElement.querySelector(sel) as HTMLElement).textContent ?? '').replace(/\s+/g, ' ').trim();
+  const h1 = () => texto('h1');
+  const breadcrumb = () => texto('.city-breadcrumb__item--active');
+  const titles = () => seoUpdate.calls.all().map((ch) => ch.args[0]?.title).filter(Boolean) as string[];
+  const ultimoTitle = () => titles()[titles().length - 1];
+
+  const montar = (plataforma: 'browser' | 'server' = 'browser', inicial = { uf: 'pr', cidade: 'itapejara-d-oeste' }) => {
+    TestBed.resetTestingModule();
+    params$ = new BehaviorSubject(inicial);
+    TestBed.configureTestingModule({
+      imports: [CityComponent],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        provideNoopAnimations(),
+        provideRouter([]),
+        { provide: PLATFORM_ID, useValue: plataforma },
+        {
+          provide: ActivatedRoute,
+          useValue: {
+            params: params$,
+            queryParams: of({}),
+            snapshot: { params: inicial, queryParams: {}, data: {} },
+          },
+        },
+        { provide: ChurchesService, useValue: { getByCidade: () => resposta$() } },
+      ],
+    });
+    metricas = spyOn(TestBed.inject(MetricasService), 'registrarVisualizacaoCidade');
+    seoUpdate = spyOn(TestBed.inject(SeoService), 'update').and.callThrough();
+    fixture = TestBed.createComponent(CityComponent);
+  };
+
+  /** Nenhum texto visível nem title pode conter o slug ou o nome montado a partir dele. */
+  const semNomeInventado = () => {
+    for (const t of [h1(), breadcrumb(), ...titles()]) {
+      expect(t).not.toContain('itapejara-d-oeste');
+      expect(t).not.toContain('Itapejara D Oeste');
+    }
+  };
+
+  it('sucesso: H1, breadcrumb e title usam o nome da API; métrica uma vez, com esse nome', () => {
+    resposta$ = () => of(respostaDe(NOME));
+    montar();
+    fixture.detectChanges();
+    expect(h1()).toBe(`Missas em ${NOME}/PR`);
+    expect(breadcrumb()).toBe(`${NOME}/PR`);
+    expect(ultimoTitle()).toContain(`${NOME}/PR`);
+    expect(metricas).toHaveBeenCalledOnceWith('pr', 'itapejara-d-oeste', NOME);
+    semNomeInventado();
+  });
+
+  it('carregando: sem nome nenhum, com marcador do tamanho de um nome e sem métrica', () => {
+    const rede = new Subject<any>();
+    resposta$ = () => rede;
+    montar();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('h1 .city-nome-reservado')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.city-breadcrumb .city-nome-reservado')).not.toBeNull();
+    expect(metricas).not.toHaveBeenCalled();
+    semNomeInventado();
+  });
+
+  it('falha da API sem conteúdo: title e H1 neutros com a UF, nunca o slug; sem métrica', () => {
+    resposta$ = () => throwError(() => new Error('rede'));
+    montar();
+    fixture.detectChanges();
+    expect(h1()).toBe('Horários de missa — PR');
+    expect(ultimoTitle()).toBe('Horários de missa — PR | BuscaMissa');
+    expect(metricas).not.toHaveBeenCalled();
+    semNomeInventado();
+  });
+
+  it('resposta duplicada (cache + revalidação): uma métrica só e o mesmo nome', () => {
+    resposta$ = () => concat(of(respostaDe(NOME)), of(respostaDe(NOME)));
+    montar();
+    fixture.detectChanges();
+    expect(metricas).toHaveBeenCalledTimes(1);
+    expect(h1()).toBe(`Missas em ${NOME}/PR`);
+  });
+
+  it('revalidação sem `cidade` não apaga o nome nem troca pelo slug', () => {
+    resposta$ = () => concat(of(respostaDe(NOME)), of({ data: { igrejas: [igrejaDe(1)], seo: {} } }));
+    montar();
+    fixture.detectChanges();
+    expect(h1()).toBe(`Missas em ${NOME}/PR`);
+    semNomeInventado();
+  });
+
+  it('cidade sem paróquias (slug inválido): sem métrica', () => {
+    resposta$ = () => of({ data: { cidade: 'Lugar Nenhum', igrejas: [], seo: {} } });
+    montar();
+    fixture.detectChanges();
+    expect(metricas).not.toHaveBeenCalled();
+  });
+
+  it('navegação interna: o nome da cidade anterior some até a nova responder', () => {
+    resposta$ = () => of(respostaDe(NOME));
+    montar();
+    fixture.detectChanges();
+    expect(h1()).toBe(`Missas em ${NOME}/PR`);
+
+    const rede = new Subject<any>();
+    resposta$ = () => rede;
+    params$.next({ uf: 'pr', cidade: 'francisco-beltrao' });
+    fixture.detectChanges();
+    expect(h1()).not.toContain('Itapejara');
+    expect(h1()).not.toContain('Francisco Beltrao');
+    expect(fixture.nativeElement.querySelector('h1 .city-nome-reservado')).not.toBeNull();
+
+    rede.next(respostaDe('Francisco Beltrão'));
+    fixture.detectChanges();
+    expect(h1()).toBe('Missas em Francisco Beltrão/PR');
+    expect(metricas.calls.allArgs()).toEqual([
+      ['pr', 'itapejara-d-oeste', NOME],
+      ['pr', 'francisco-beltrao', 'Francisco Beltrão'],
+    ]);
+  });
+
+  it('prerender (servidor) com dados: H1, breadcrumb e title como antes, sem marcador', () => {
+    resposta$ = () => of({
+      data: {
+        cidade: 'Curitiba',
+        igrejas: [igrejaDe(1), igrejaDe(2)],
+        seo: { title: 'Missa hoje em Curitiba/PR: horários | BuscaMissa', canonicalUrl: 'https://buscamissa.com.br/missas/pr/curitiba' },
+      },
+    });
+    montar('server', { uf: 'pr', cidade: 'curitiba' });
+    fixture.detectChanges();
+    expect(h1()).toBe('Missas em Curitiba/PR');
+    expect(breadcrumb()).toBe('Curitiba/PR');
+    expect(ultimoTitle()).toBe('Missa hoje em Curitiba/PR: horários | BuscaMissa');
+    expect(fixture.nativeElement.querySelector('.city-nome-reservado')).toBeNull();
   });
 });

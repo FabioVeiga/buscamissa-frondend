@@ -348,3 +348,18 @@ $primary-light: #fff4ed;
   }
 }
 
+
+// Marcador do nome da cidade enquanto a API não respondeu (navegação interna).
+// O nome vem só da API; até lá, um bloco do tamanho de um nome médio ocupa o
+// lugar dele na MESMA linha — altura menor que a da linha, então o H1 e o
+// breadcrumb não mudam de altura quando o nome chega (sem CLS).
+.city-nome-reservado {
+  display: inline-block;
+  width: 9ch;
+  height: 0.8em;
+  vertical-align: middle;
+  border-radius: 6px;
+  background: #f3f4f6;
+
+  &--curto { width: 6ch; }
+}
