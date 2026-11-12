@@ -1594,13 +1594,37 @@ export class HomeComponent {
   /**
    * Em /buscar, A→Z, Z→A e Mais próximas são ordens da API, entre páginas: trocar refaz a
    * busca a partir da página 1. "Próxima missa" só reordena a página. Mais próximas sem
-   * localização fica como antes, sem efeito (o chip mostra o cadeado).
+   * localização pede a localização ao navegador e só marca o chip quando ela chega;
+   * negada, a ordem atual fica e um aviso explica o que fazer.
    */
   setOrdenacaoResultados(o: 'az' | 'za' | 'proximidade' | 'proxima-missa'): void {
+    if (o === 'proximidade' && !this.temGeolocalizacao) {
+      this._pedirLocalizacaoParaOrdenar();
+      return;
+    }
     this.ordenacaoResultados = o;
     if (!this.resultsMode || o === 'proxima-missa' || !this.churchInfo.length) return;
-    if (o === 'proximidade' && !this.temGeolocalizacao) return;
     if (o !== this._ordenacaoServidor) this.searchFilter(true);
+  }
+
+  private _pedirLocalizacaoParaOrdenar(): void {
+    const avisar = () => this._toast.add({
+      severity: 'info',
+      summary: 'Localização indisponível',
+      detail: 'Permita a localização no navegador ou busque pelo CEP para ver as mais próximas.',
+    });
+    if (!this._isBrowser || !navigator.geolocation) { avisar(); return; }
+    this.geoStatus = 'loading';
+    navigator.geolocation.getCurrentPosition(
+      pos => {
+        this._userLat = pos.coords.latitude;
+        this._userLng = pos.coords.longitude;
+        this.geoStatus = 'found';
+        this.setOrdenacaoResultados('proximidade');
+      },
+      () => { this.geoStatus = 'denied'; avisar(); },
+      { timeout: 10000, maximumAge: 300000 },
+    );
   }
 
   get churchInfoOrdenada(): any[] {
