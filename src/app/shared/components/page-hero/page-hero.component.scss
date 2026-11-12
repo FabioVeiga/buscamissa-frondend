@@ -54,8 +54,14 @@ $muted: #6b7280;
   padding: 0 1.5rem;
 }
 @media (min-width: 900px) {
-  /* reserva a faixa da arte para o texto nunca correr por baixo dela */
-  .ph-hero__conteudo { padding-right: calc(42% + 1.5rem); }
+  /* Reserva a faixa da arte para o texto nunca correr por baixo dela. Medida a
+     partir do CONTEÚDO, não da faixa: o `%` de padding é relativo à faixa
+     full-bleed, mas o conteúdo para em 72rem. Com `42%` fixo, em telas largas a
+     reserva crescia com a tela e a coluna encolhia (~100px a 1920px: título em 4
+     linhas, tiles espremidos em /missas/:uf e /dias). A arte começa em 56% da
+     faixa (width: 44%); borda direita do conteúdo (50% + W/2) menos 56%, mais
+     1.5rem de folga. */
+  .ph-hero__conteudo { padding-right: calc(min(100%, 72rem) / 2 - 6% + 1.5rem); }
 }
 
 /* Só a CAIXA da arte é do hero; o conteúdo projetado é estilizado pela página. */
