@@ -65,7 +65,11 @@ export class CityComponent implements OnInit, OnDestroy {
   isLoading = false;
   uf = "";
   cidade = "";
+  /** Nome oficial vindo da API. Vazio até a primeira resposta — nunca derivado do slug. */
   cidadeNome = "";
+
+  /** A visualização desta cidade já foi registrada? Ver `carregar()`. */
+  private visualizacaoRegistrada = false;
   igrejas: any[] = [];
   igrejasFiltradas: any[] = [];
   trackByIgrejaId = (_: number, igreja: any): number => igreja.id;
@@ -121,16 +125,15 @@ export class CityComponent implements OnInit, OnDestroy {
       if (params["uf"] !== this.uf || params["cidade"] !== this.cidade) {
         this.igrejas = [];
         this.igrejasFiltradas = [];
+        // O nome vem SÓ da API. Antes ele era montado a partir do slug
+        // ("itapejara-d-oeste" → "Itapejara D Oeste"), que não é o nome oficial e
+        // aparecia no H1 até a resposta chegar — ou para sempre, se ela falhasse.
+        // Vazio, o H1 mostra um marcador do mesmo tamanho (ver template).
+        this.cidadeNome = '';
+        this.visualizacaoRegistrada = false;
       }
       this.uf = params["uf"];
       this.cidade = params["cidade"];
-      this.cidadeNome = this.cidade
-        .split('-')
-        .map((w: string) => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(' ');
-      if (this.uf && this.cidade) {
-        this._metricas.registrarVisualizacaoCidade(this.uf, this.cidade, this.cidadeNome);
-      }
 
       this._route.queryParams.pipe(takeUntilDestroyed(this._destroyRef)).subscribe((qp) => {
         this.diaAtivo = this.parseDiaSlug(qp["dia"]);
@@ -172,8 +175,18 @@ export class CityComponent implements OnInit, OnDestroy {
         this.isLoading = false;
         const data = response?.data;
         this.igrejas = data?.igrejas ?? [];
-        this.cidadeNome = data?.cidade ?? this.cidade;
+        // Sem `?? this.cidade`: o slug nunca vira nome. Resposta sem `cidade`
+        // mantém o nome que já havia (ou nenhum).
+        this.cidadeNome = (data?.cidade ?? '').trim() || this.cidadeNome;
         const seo = data?.seo;
+
+        // Visualização só com dado confiável: cidade com paróquias e nome da API.
+        // Uma vez por cidade — a revalidação (2ª emissão) e as recargas por filtro
+        // (queryParams) chamam este `next` de novo.
+        if (!this.visualizacaoRegistrada && this.cidadeNome && this.igrejas.length) {
+          this._metricas.registrarVisualizacaoCidade(this.uf, this.cidade, this.cidadeNome);
+          this.visualizacaoRegistrada = true;
+        }
 
         this.aplicarFiltros();
 
@@ -204,7 +217,9 @@ export class CityComponent implements OnInit, OnDestroy {
           ? `Veja horários de missa de ${totalIgrejas} ${totalIgrejas === 1 ? 'paróquia' : 'paróquias'} em ${this.cidadeNome}/${ufUpper}. Encontre a missa mais próxima por dia, horário e bairro no BuscaMissa.`
           : `Horários de missa em ${this.cidadeNome}/${ufUpper}. Encontre missas perto de você no BuscaMissa.`;
         this._seo.update({
-          title: seo?.title ?? `Missas em ${this.cidadeNome}/${ufUpper} — Horários atualizados | BuscaMissa`,
+          title: seo?.title ?? (this.cidadeNome
+            ? `Missas em ${this.cidadeNome}/${ufUpper} — Horários atualizados | BuscaMissa`
+            : `Horários de missa — ${ufUpper} | BuscaMissa`),
           description: seo?.description ?? descFallback,
           canonical: seo?.canonicalUrl,
           // Cidade sem nenhuma paróquia = slug inválido (o prerender só gera cidade
@@ -232,7 +247,13 @@ export class CityComponent implements OnInit, OnDestroy {
         // Com conteúdo, o SEO também fica: a canonical que está aí veio de dado válido.
         if (this.temConteudo()) return;
         this.erroCarregar = true;
-        this._seo.update({ title: `Missas em ${this.cidade}/${this.uf?.toUpperCase()} | BuscaMissa`, canonical: null });
+        // Sem nome da API não há nome confiável: title neutro, nunca o slug.
+        this._seo.update({
+          title: this.cidadeNome
+            ? `Missas em ${this.cidadeNome}/${this.uf?.toUpperCase()} | BuscaMissa`
+            : `Horários de missa — ${this.uf?.toUpperCase()} | BuscaMissa`,
+          canonical: null,
+        });
       },
     });
   }
@@ -467,7 +488,9 @@ export class CityComponent implements OnInit, OnDestroy {
 
   compartilhar(): void {
     if (!this._isBrowser) return;
-    const title = `Missas em ${this.cidadeNome}/${this.uf.toUpperCase()} | BuscaMissa`;
+    const title = this.cidadeNome
+      ? `Missas em ${this.cidadeNome}/${this.uf.toUpperCase()} | BuscaMissa`
+      : `Horários de missa | BuscaMissa`;
     const itemId = `${this.uf.toLowerCase()}/${this.cidade}`;
     if (navigator.share) {
       this._analytics.share('native', '', this.cidadeNome, this.uf.toUpperCase(), itemId, 'cidade');

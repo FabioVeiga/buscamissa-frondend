@@ -1,5 +1,7 @@
 // Campo de busca projetado no slot [hero-busca].
 @use '../../../shared/styles/hero-busca' as *;
+// Foto do hero (máscara + arco), compartilhada com /estados.
+@use '../../../shared/styles/hero-foto' as *;
 
 $laranja: #ad540c;
 $laranja-vivo: #e2761b;
@@ -10,25 +12,105 @@ $texto: #374151;
 $muted: #6b7280;
 
 // ── Hero ───────────────────────────────────────────────────────────────────────
-// A casca (faixa, breadcrumb, H1, subtítulo, tiles) é do <app-page-hero>. Aqui
-// ficam só a ilustração projetada e o container do conteúdo abaixo do hero.
+// A casca (faixa, breadcrumb, H1, subtítulo) é do <app-page-hero>. Aqui ficam só
+// a foto projetada e o container do conteúdo abaixo do hero.
 
-.cidades-arte {
-  width: 100%;
-  height: 100%;
-  display: block;
-  background: linear-gradient(160deg, #fdeee2 0%, #f7e0cc 100%);
-  // Mesma curva elíptica da foto em /missas/:uf.
-  border-top-left-radius: 38% 62%;
-  border-bottom-left-radius: 14% 24%;
-}
-
+// Mesma foto e mesma curva elíptica de /missas/:uf. O enquadramento muda: o hero
+// compacto é uma faixa BAIXA e larga, e o arquivo é retrato (1200x1801) — com o
+// `center 35%` de lá o recorte pegava só céu. 22% traz a torre e a cruz para
+// dentro da faixa.
 // ── Autocomplete do hero ───────────────────────────────────────────────────────
 // Mesma gramática do autocomplete de /missas/:uf: painel branco ancorado ao campo,
 // pin laranja, meta à direita. A diferença é que aqui há DOIS tipos de resultado, e
 // o painel precisa deixar isso óbvio sem virar interface de filtro.
 
 .busca-hero { position: relative; }
+.busca-ancora { position: relative; }
+
+// ── Localização ────────────────────────────────────────────────────────────────
+// Linha discreta abaixo da busca: é um ATALHO, não compete com o campo.
+.geo {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.75rem;
+  // Reserva a altura do botão: a mensagem que aparece ao lado não empurra nada.
+  min-height: 44px; margin-top: 0.35rem;
+  // Os 44px são área de toque, não espaço visual: sem isto o vão até a linha de
+  // cobertura ficava maior que o vão título → busca. Margem negativa devolve a
+  // folga sem encolher a área de toque nem a altura reservada contra CLS.
+  margin-bottom: -0.5rem;
+  font-size: 0.875rem; color: $texto;
+
+  &__btn {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    min-height: 44px; padding: 0 0.25rem;
+    background: none; border: 0; cursor: pointer;
+    color: $laranja; font-weight: 600; font-size: 0.875rem;
+    text-decoration: underline; text-underline-offset: 3px;
+    i { font-size: 0.9rem; color: $laranja-vivo; }
+    &:hover { color: $laranja-vivo; }
+    &:focus-visible { outline: 3px solid rgba(226, 118, 27, 0.35); outline-offset: 2px; border-radius: 6px; }
+    &:disabled { cursor: progress; text-decoration: none; opacity: 0.8; }
+  }
+
+  // Até duas linhas cabem nos 44px reservados (≈17px por linha): textos curtos
+  // de propósito, para nem o celular estreito passar disso.
+  &__msg {
+    display: flex; align-items: flex-start; gap: 0.4rem;
+    margin: 0; color: $muted; line-height: 1.4;
+    i { color: $laranja-vivo; font-size: 0.9rem; margin-top: 0.15rem; flex: 0 0 auto; }
+    a { color: $laranja; font-weight: 600; white-space: nowrap; }
+  }
+}
+
+// Busca AMPLA: só em /cidades. O `.busca` base (partial compartilhado com
+// /estados e /missas/:uf) fica intocado; aqui o campo ganha altura, sombra e o
+// botão "Buscar" — é o elemento de maior peso visual do hero.
+.busca--ampla {
+  padding: 0.3rem 0.3rem 0.3rem 1.25rem;
+  border-radius: 999px;
+  box-shadow: 0 6px 20px rgba(173, 84, 12, 0.10);
+
+  i { font-size: 1.2rem; }
+  input { padding: 0.95rem 0; font-size: 1.0625rem; }
+}
+
+.busca__btn {
+  display: inline-flex; align-items: center; gap: 0.5rem; flex: 0 0 auto;
+  // Em px: a raiz do site é 14px, então rem não garante o alvo de 44px.
+  min-height: 48px; padding: 0 1.5rem;
+  background: $laranja-vivo; color: #fff; border: 0; border-radius: 999px;
+  font-size: 1rem; font-weight: 700; cursor: pointer;
+  transition: background 0.15s;
+
+  i { color: #fff; font-size: 0.75rem; }
+  &:hover { background: $laranja; }
+  &:focus-visible { outline: 3px solid rgba(226, 118, 27, 0.35); outline-offset: 2px; }
+
+  &-lupa { display: none; }
+}
+
+// Até 480px o campo não comporta lupa + placeholder + "Buscar ›": o placeholder
+// era cortado em "Digite o nome da cic". O botão vira um círculo só com a lupa
+// (que sai da esquerda do campo, para não aparecer duas vezes) e o rótulo
+// "Buscar" continua no DOM como nome acessível, só fora da tela.
+@media (max-width: 480px) {
+  .busca--ampla {
+    padding-left: 1.1rem;
+    > i { display: none; }
+    // O texto digitado fica em 16px (abaixo disso o iOS dá zoom no foco); só o
+    // placeholder encolhe, para caber inteiro.
+    input { font-size: 16px; }
+    input::placeholder { font-size: 12.5px; text-overflow: ellipsis; }
+  }
+  .busca__btn {
+    width: 48px; padding: 0; justify-content: center;
+    &-rotulo {
+      position: absolute; width: 1px; height: 1px; overflow: hidden;
+      clip-path: inset(50%); white-space: nowrap;
+    }
+    &-seta { display: none; }
+    &-lupa { display: inline-block; font-size: 1.1rem; }
+  }
+}
 
 .sugestoes {
   position: absolute; z-index: 5; top: calc(100% + 0.35rem); left: 0; right: 0;
@@ -51,6 +133,14 @@ $muted: #6b7280;
     text-decoration: none; color: $texto;
   }
   a:hover, a:focus-visible { background: $creme; }
+
+  // Opção ativa pelo teclado. Fundo creme mais forte + barra laranja à esquerda:
+  // o fundo sozinho é igual ao hover, e quem navega por seta precisa distinguir
+  // "onde estou" de "onde o mouse passou".
+  a.sugestoes__opcao--ativa {
+    background: #fdeee2;
+    box-shadow: inset 3px 0 0 $laranja-vivo;
+  }
   i { color: $laranja-vivo; font-size: 0.9rem; flex: 0 0 auto; }
 
   &__nome { font-weight: 600; }
@@ -120,155 +210,76 @@ $muted: #6b7280;
 .sec-sub { color: $muted; margin: 0 0 1.25rem; font-size: 0.875rem; }
 
 // ── Capitais e principais cidades ──────────────────────────────────────────────
+// Colunas FIXAS em vez de auto-fit: com 8 cidades, o auto-fit dava 6 + 2 no
+// desktop (dois cartões órfãos). 4 colunas fecham 4 + 4; abaixo disso, 2 fecham
+// 2 × 4. A troca é em 1024px: em 768px, com 4 colunas, cada cartão ficava com
+// ~170px e "100 paróquias · RJ" quebrava em duas linhas (alturas desiguais).
 .destaque-grid {
-  display: grid; gap: 0.85rem;
-  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  display: grid; gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  @media (min-width: 1024px) { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 }
+
+// Cartão em LINHA (pin à esquerda, nome e total empilhados ao lado): metade da
+// altura do cartão centralizado antigo, sem perder o total de paróquias.
 .destaque {
-  display: flex; flex-direction: column; align-items: center; gap: 0.3rem;
-  padding: 1.25rem 0.75rem;
+  display: flex; align-items: center; gap: 0.75rem;
+  min-height: 64px; padding: 0.75rem 0.9rem;
   background: #fff; border: 1px solid $borda; border-radius: 14px;
-  text-decoration: none; text-align: center;
-  transition: border-color .15s, box-shadow .15s, transform .15s;
-  &:hover { border-color: #f3b989; box-shadow: 0 3px 12px rgba(0,0,0,.06); transform: translateY(-2px); }
-  &__ico { color: $laranja-vivo; font-size: 1.2rem; margin-bottom: 0.15rem; }
-  &__nome { font-weight: 700; color: $titulo; font-size: 0.9375rem; line-height: 1.25; }
-  &__meta { color: $muted; font-size: 0.8125rem; }
-}
-
-// ── Card de estado (acordeão) ──────────────────────────────────────────────────
-.estado-card {
-  background: #fff;
-  border: 1px solid $borda;
-  border-radius: 0.75rem;
-  overflow: hidden;
-  transition: border-color 0.15s;
-
-  &:hover { border-color: #f3b989; }
-}
-
-.estado-header {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  width: 100%;
-  padding: 0.875rem 1rem;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  transition: background 0.15s;
-  // Alvo de toque confortável no mobile (era só a altura do texto). Em px, não
-  // rem: a raiz do site é 14px (não 16px) — 2.75rem virava 38.5px, não 44px.
-  min-height: 44px;
-
-  &:hover { background: #fafafa; }
-}
-
-.estado-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 2.25rem;
-  height: 2.25rem;
-  border-radius: 0.5rem;
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.02em;
-  flex-shrink: 0;
-
-  // Cores por estado
-  &--sp      { background: #fff4ed; color: #ad540c; }
-  &--mg      { background: #d1fae5; color: #065f46; }
-  &--rj      { background: #fee2e2; color: #991b1b; }
-  &--pr      { background: #e0e7ff; color: #3730a3; }
-  &--rs      { background: #f3f4f6; color: #374151; }
-  &--sc      { background: #dbeafe; color: #1e40af; }
-  &--df      { background: #ede9fe; color: #5b21b6; }
-  &--go      { background: #fef9c3; color: #854d0e; }
-  &--ba      { background: #fce7f3; color: #9d174d; }
-  &--ce      { background: #ecfdf5; color: #065f46; }
-  &--pe      { background: #fef3c7; color: #92400e; }
-  &--pa      { background: #f0fdf4; color: #166534; }
-  &--default { background: #f3f4f6; color: $muted; }
-}
-
-.estado-nome {
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: $titulo;
-  margin-right: 0.5rem;
-}
-
-// Era #9ca3af (~2,5:1, abaixo do mínimo AA de 4,5:1). $muted (#6b7280) já é
-// token do projeto e passa (~4,8:1) sem inventar cor nova.
-.estado-count {
-  font-size: 0.75rem;
-  color: $muted;
-}
-
-// ── Grid de cidades ────────────────────────────────────────────────────────────
-// Colapsa por display:none (não por *ngIf/@if): os <a href> continuam no HTML
-// prerenderizado com o acordeão fechado — a linkagem interna/SEO não depende de JS.
-.cidades-grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.25rem 0.5rem;
-  border-top: 1px solid #f3f4f6;
-
-  @media (min-width: 480px) { grid-template-columns: repeat(3, 1fr); }
-  @media (min-width: 700px) { grid-template-columns: repeat(4, 1fr); }
-
-  &--oculto { display: none; }
-}
-
-.cidade-link {
-  display: flex;
-  align-items: center;
-  // Sem chevron: com centenas de cidades por estado, um ícone por link é ruído,
-  // não affordance — o link já se lê como link (cor + hover + sublinhado).
-  padding: 0.375rem 0.5rem;
-  font-size: 0.8125rem;
-  color: $texto;
   text-decoration: none;
-  border-radius: 0.375rem;
-  transition: background 0.12s, color 0.12s;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  transition: border-color .15s, box-shadow .15s;
+  &:hover { border-color: #f3b989; box-shadow: 0 3px 12px rgba(0,0,0,.06); }
+  &:focus-visible { outline: 3px solid rgba(226, 118, 27, 0.35); outline-offset: 2px; }
 
-  &:hover {
-    background: #fff4ed;
-    color: $laranja;
-    text-decoration: underline;
+  &__ico {
+    display: grid; place-items: center; flex: 0 0 36px;
+    width: 36px; height: 36px; border-radius: 10px;
+    background: $creme; color: $laranja-vivo; font-size: 1rem;
   }
+  &__texto { display: flex; flex-direction: column; gap: 0.1rem; min-width: 0; }
+  &__nome { font-weight: 700; color: $titulo; font-size: 0.9375rem; line-height: 1.25; overflow-wrap: anywhere; }
+  &__meta { color: $muted; font-size: 0.8125rem; white-space: nowrap; }
 
-  // Alvo de toque ≥ 44px no mobile, sem alterar a densidade do desktop (a grade de
-  // 2 colunas já dá espaço de sobra ali; era 25px de altura efetiva). Em px: a
-  // raiz do site é 14px, não 16px — 2.75rem dava 38.5px, não 44px.
-  @media (max-width: 640px) {
-    min-height: 44px;
+  // No celular o pin encolhe: em 375px cada cartão tem ~160px, e "São Bernardo
+  // do Campo" precisa da largura para quebrar em duas linhas, não em três.
+  @media (max-width: 480px) {
+    gap: 0.55rem; padding: 0.7rem;
+    &__ico { flex-basis: 30px; width: 30px; height: 30px; font-size: 0.875rem; }
+    &__nome { font-size: 0.875rem; }
   }
-
-  // Além do cap de "ver mais" (CAP_CIDADES_POR_ESTADO): continua no HTML
-  // (rastreável), só não ocupa espaço na tela até o clique.
-  &--oculto { display: none; }
 }
 
-// Botão "ver mais N cidades" — mesma gramática do "Ver mais cidades" de
-// /missas/:uf (btn-linha), sem duplicar a classe porque essa vive num
-// componente diferente.
-.ver-mais-cidades {
-  display: flex;
-  justify-content: center;
-  padding: 0 1rem 1rem;
+// ── Saída para /estados ─────────────────────────────────────────────────────────
+// Um único cartão largo, no lugar do acordeão: é uma AÇÃO ("ver por estado"),
+// então segue a gramática dos cartões do hub-ponte, não a de uma lista.
+.ver-estados {
+  display: flex; align-items: center; gap: 1rem;
+  padding: 1.1rem 1.25rem;
+  background: #fff; border: 1px solid $borda; border-radius: 16px;
+  text-decoration: none;
+  transition: border-color .15s, box-shadow .15s;
+  &:hover { border-color: #f3b989; box-shadow: 0 3px 12px rgba(0,0,0,.06); }
+  &:focus-visible { outline: 3px solid rgba(226, 118, 27, 0.35); outline-offset: 2px; }
 
-  &__btn {
-    display: inline-flex; align-items: center; gap: 0.4rem;
-    background: #fff; border: 1px solid $borda; border-radius: 10px;
-    padding: 0.5rem 1rem; font-size: 0.8125rem; font-weight: 600;
-    color: $texto; cursor: pointer;
-    i { font-size: 0.65rem; color: $muted; }
-    &:hover { border-color: #f3b989; color: $laranja; background: $creme; i { color: $laranja; } }
+  &__ico {
+    display: grid; place-items: center; flex: 0 0 44px;
+    width: 44px; height: 44px; border-radius: 12px; background: $creme;
+    i { color: $laranja-vivo; font-size: 1.15rem; }
+  }
+  &__texto { display: flex; flex-direction: column; gap: 0.15rem; min-width: 0; flex: 1; }
+  &__titulo { font-weight: 800; color: $titulo; font-size: 1rem; }
+  &__desc { color: $muted; font-size: 0.875rem; line-height: 1.4; }
+  &__acao {
+    display: inline-flex; align-items: center; gap: 0.4rem; white-space: nowrap;
+    color: $laranja; font-weight: 700; font-size: 0.9375rem;
+    i { font-size: 0.7rem; }
+  }
+
+  // No celular a ação desce para baixo do texto: lado a lado ela espremia a
+  // descrição em quatro linhas.
+  @media (max-width: 640px) {
+    flex-wrap: wrap;
+    &__acao { flex-basis: 100%; padding-left: calc(44px + 1rem); }
   }
 }
 

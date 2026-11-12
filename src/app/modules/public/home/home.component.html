@@ -286,7 +286,7 @@
 
   <!-- ══ ORDENAÇÃO DOS RESULTADOS ══ -->
   <div *ngIf="churchInfo && churchInfo.length > 0" class="flex gap-2 flex-wrap items-center mt-3 mb-1">
-    <span class="text-xs text-gray-400 font-medium mr-1">Ordenar:</span>
+    <span class="text-sm text-gray-500 font-medium mr-1">Ordenar:</span>
     <button (click)="setOrdenacaoResultados('az')" class="sort-chip" [class.sort-chip--ativo]="ordenacaoResultados === 'az'">A → Z</button>
     <button (click)="setOrdenacaoResultados('za')" class="sort-chip" [class.sort-chip--ativo]="ordenacaoResultados === 'za'">Z → A</button>
     <button (click)="setOrdenacaoResultados('proxima-missa')" class="sort-chip" [class.sort-chip--ativo]="ordenacaoResultados === 'proxima-missa'">

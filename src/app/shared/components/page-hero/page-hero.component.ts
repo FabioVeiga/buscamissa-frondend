@@ -40,6 +40,15 @@ export class PageHeroComponent {
   @Input() breadcrumb: HubBreadcrumb[] = [];
 
   /**
+   * `compacto` é a casca de `/cidades`: faixa mais baixa e coluna de texto mais
+   * larga, para a BUSCA ser o elemento dominante e a vitrine de cidades entrar na
+   * primeira dobra. O padrão não muda nada — `/estados`, `/dias` e `/missas/:uf`
+   * continuam exatamente como eram (todas as regras da variante vivem sob
+   * `.ph-hero--compacto` no SCSS).
+   */
+  @Input() variante: 'padrao' | 'compacto' = 'padrao';
+
+  /**
    * Texto do `<h1>`. Quebras de linha vão como `\n` (o título é renderizado com
    * `white-space: pre-line`) — preserva o `<br>` do layout original sem precisar
    * de innerHTML.

@@ -53,8 +53,15 @@ export const FOLGA_ARQUIVOS = 150;
  *           um chunk JS: `cep-redirect.component.ts` passou a importar o
  *           `NotFoundComponent`, que também é carregado lazy pela rota `**`, e o
  *           esbuild separou o módulo num chunk próprio (margem real 149 < 150).
+ *   - 388 — build de produção do PR #321 em 12/11/2026 (run 43278687681):
+ *           4.051 = 1.475 paróquias + 2.188 cidades + 388 fixos. Mesmas rotas do
+ *           build anterior (3.900 prerenderizadas); a unidade a mais é um chunk JS:
+ *           o commit 66e1128 ("Usar minha localização" em /cidades) passou a injetar
+ *           o `GeolocationService` em `cidades.component.ts`, e o esbuild separou o
+ *           serviço, agora usado pelos chunks lazy da home e de /cidades, num chunk
+ *           próprio (margem real 149 < 150).
  */
-export const ARQUIVOS_FIXOS = 387;
+export const ARQUIVOS_FIXOS = 388;
 
 /**
  * Exceção à folga mínima: `PRERENDER_ACEITAR_MARGEM=<n>` aceita UMA margem real entre

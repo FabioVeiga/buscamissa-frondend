@@ -223,6 +223,50 @@ $muted: #6b7280;
   @media (max-width: 640px) { font-size: 0.75rem; }
 }
 
+/* ================= VARIANTE COMPACTA (/cidades) =================
+   Tudo aqui está sob `.ph-hero--compacto`: sem a classe, nenhuma regra abaixo
+   casa e os outros hubs não mudam um pixel.
+
+   O que muda: a faixa perde a altura mínima de 30rem (era o que empurrava a
+   vitrine de cidades para fora da dobra no desktop) e a arte cede largura para o
+   texto — a busca passa de ~58% para ~66% do container. */
+.ph-hero--compacto {
+  padding: 1.25rem 0 2rem;
+  margin-bottom: 2rem;
+
+  @media (max-width: 640px) { padding-bottom: 1.25rem; margin-bottom: 1.5rem; }
+
+  .ph-hero__breadcrumb { margin-bottom: 0.9rem; }
+  .ph-hero__titulo { margin-bottom: 0.6rem; }
+  .ph-hero__sub { margin-bottom: 1.25rem; }
+  .ph-hero__cobertura { margin-top: 0.9rem; }
+}
+@media (min-width: 900px) {
+  /* A arte ocupa quase metade da faixa, mas "dissolve" no creme pela esquerda
+     (máscara na página): o texto pode avançar sobre a zona transparente, então a
+     reserva da coluna de texto é menor que a largura da arte. */
+  .ph-hero--compacto {
+    min-height: 0;
+    padding: 2rem 0 2.5rem;
+    background: linear-gradient(100deg, #fdf6f0 0%, #fdf3ea 55%, #fbe7d6 100%);
+  }
+  /* A reserva é medida em relação ao CONTEÚDO, não à faixa. O `%` de padding é
+     relativo à faixa inteira (full-bleed), mas o conteúdo para em 72rem: com
+     `38%` fixo, em telas largas a reserva crescia junto com a tela e a coluna de
+     texto encolhia (~370px a 1510px; título em 4 linhas, busca cortando o texto
+     de exemplo). Aqui o texto termina onde a foto passa a ser visível — a arte
+     começa em 52% da faixa e a máscara a zera até ~22% dela, ou seja ~62% —
+     com 1.5rem de folga: borda direita do conteúdo (50% + W/2) menos 62%. */
+  .ph-hero--compacto .ph-hero__conteudo {
+    padding-right: calc(min(100%, 72rem) / 2 - 12% + 1.5rem);
+  }
+  .ph-hero--compacto .ph-hero__arte { width: 48%; }
+  .ph-hero--compacto .ph-hero__titulo { letter-spacing: -0.02em; line-height: 1.08; }
+}
+@media (min-width: 1024px) {
+  .ph-hero--compacto .ph-hero__titulo { font-size: 3rem; }
+}
+
 /* ===== Ritmo do bloco de ação: busca -> hint -> tiles =====
    Cada bloco só empurra o seguinte quando existe de fato — `:has(> *)` cobre o
    caso do slot projetado vazio (/dias não tem busca) e o `@if` do template cobre
