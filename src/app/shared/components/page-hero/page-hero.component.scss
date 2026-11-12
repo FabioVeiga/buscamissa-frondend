@@ -250,7 +250,16 @@ $muted: #6b7280;
     padding: 2rem 0 2.5rem;
     background: linear-gradient(100deg, #fdf6f0 0%, #fdf3ea 55%, #fbe7d6 100%);
   }
-  .ph-hero--compacto .ph-hero__conteudo { padding-right: calc(38% + 1.5rem); }
+  /* A reserva é medida em relação ao CONTEÚDO, não à faixa. O `%` de padding é
+     relativo à faixa inteira (full-bleed), mas o conteúdo para em 72rem: com
+     `38%` fixo, em telas largas a reserva crescia junto com a tela e a coluna de
+     texto encolhia (~370px a 1510px; título em 4 linhas, busca cortando o texto
+     de exemplo). Aqui o texto termina onde a foto passa a ser visível — a arte
+     começa em 52% da faixa e a máscara a zera até ~22% dela, ou seja ~62% —
+     com 1.5rem de folga: borda direita do conteúdo (50% + W/2) menos 62%. */
+  .ph-hero--compacto .ph-hero__conteudo {
+    padding-right: calc(min(100%, 72rem) / 2 - 12% + 1.5rem);
+  }
   .ph-hero--compacto .ph-hero__arte { width: 48%; }
   .ph-hero--compacto .ph-hero__titulo { letter-spacing: -0.02em; line-height: 1.08; }
 }
