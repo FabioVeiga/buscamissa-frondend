@@ -132,7 +132,17 @@ export class CidadesComponent implements OnInit, OnDestroy {
   }
 
 
+  /**
+   * Texto de exemplo do campo. Até 480px o longo era cortado ("...da igreja..");
+   * lá vira o curto. Só troca no browser: o HTML prerenderizado leva o longo, e
+   * trocar o placeholder não move nada (sem CLS).
+   */
+  placeholderBusca = 'Digite o nome da cidade ou da igreja...';
+
   ngOnInit(): void {
+    if (this._ehBrowser && window.matchMedia?.('(max-width: 480px)').matches) {
+      this.placeholderBusca = 'Cidade ou igreja';
+    }
     this._metricas.registrarVisualizacaoPagina(PaginaMetrica.Cidades);
     this.aplicarSeo();
     this.carregar();
