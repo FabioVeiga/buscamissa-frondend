@@ -37,8 +37,6 @@ import { getSocialIconFromTipos } from "../../../shared/utils/social-icon.utils"
 import { distanciaMetrosAte } from "../../../shared/utils/distance.utils";
 import { CIDADES_POPULARES } from "../../../core/constants/cidades-populares";
 import { GeolocationService } from "../../../core/services/geolocation.service";
-import { HomeStatsComponent } from "./sections/home-stats/home-stats.component";
-import { HomeComoFuncionaComponent } from "./sections/home-como-funciona/home-como-funciona.component";
 import { HomeFavoritosComponent } from "./sections/home-favoritos/home-favoritos.component";
 import { HomeCidadesComponent } from "./sections/home-cidades/home-cidades.component";
 import { ChipDestaque } from "./sections/home-chips/home-chips.component";
@@ -64,8 +62,6 @@ interface AddressData {
     PrimeNgModule,
     RouterModule,
     ChurchResultCardComponent,
-    HomeStatsComponent,
-    HomeComoFuncionaComponent,
     HomeFavoritosComponent,
     HomeCidadesComponent,
     HomeMissasMapaComponent,
@@ -512,9 +508,6 @@ export class HomeComponent {
    */
   private _resolverAposIndice = false;
 
-  /** Estatísticas (números reais via getInfo, com fallback) */
-  stats = { igrejas: 2000, horarios: 9100, cidades: 213, estados: 26 };
-
   /**
    * True só no browser. No prerender/SSG (Fase 3) a home é assada no server, onde
    * navigator/document/timers não existem — qualquer acesso trava o render e aborta
@@ -670,7 +663,6 @@ export class HomeComponent {
     this.searchTab = 'cidade';
     this.getAddress();
     this._loadFavorita();
-    this._loadStats();
 
     // Limpa resultados quando o usuário navega para home sem filtros (ex: clique no logo).
     // Usa a key 'uf' (minúscula) — a mesma gravada por searchFilter — senão o form
@@ -802,26 +794,6 @@ export class HomeComponent {
       },
       () => { this.geoStatus = 'denied'; }
     );
-  }
-
-  private _loadStats(): void {
-    this._churchService.getInfo().subscribe({
-      next: (res: any) => {
-        const d = res?.data ?? res ?? {};
-        const igrejas = d.quantidadesIgrejas ?? d.quantidadeIgrejas ?? d.totalIgrejas;
-        const horarios = d.quantidadeMissas ?? d.quantidadesMissas ?? d.totalMissas;
-        // Nova referência (não mutar): HomeStatsComponent é OnPush e só
-        // re-renderiza quando a referência do input muda.
-        if (igrejas || horarios) {
-          this.stats = {
-            ...this.stats,
-            ...(igrejas ? { igrejas } : {}),
-            ...(horarios ? { horarios } : {}),
-          };
-        }
-      },
-      error: () => { /* silencioso — mantém fallback */ },
-    });
   }
 
   /** Args da última carga — usados pelo refresh periódico para repetir a mesma busca. */
