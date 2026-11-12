@@ -33,6 +33,10 @@ $muted: #6b7280;
   display: flex; flex-wrap: wrap; align-items: center; gap: 0.25rem 0.75rem;
   // Reserva a altura do botão: a mensagem que aparece ao lado não empurra nada.
   min-height: 44px; margin-top: 0.35rem;
+  // Os 44px são área de toque, não espaço visual: sem isto o vão até a linha de
+  // cobertura ficava maior que o vão título → busca. Margem negativa devolve a
+  // folga sem encolher a área de toque nem a altura reservada contra CLS.
+  margin-bottom: -0.5rem;
   font-size: 0.875rem; color: $texto;
 
   &__btn {

@@ -20,7 +20,9 @@
     position: absolute;
     z-index: 1;
     top: -18%;
-    left: 22%;
+    // 30%, não 22%: a coluna de texto termina onde a máscara da foto acaba
+    // (~22% da arte), e com 22% o arco passava colado ao botão "Buscar".
+    left: 30%;
     width: 120%;
     aspect-ratio: 1;
     border-radius: 50%;
