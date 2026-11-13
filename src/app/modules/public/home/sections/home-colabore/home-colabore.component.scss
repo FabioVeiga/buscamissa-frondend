@@ -11,14 +11,14 @@
   background: #fcf7f3;
 
   &__ilustracao {
-    width: 6.5rem;
-    height: 6.5rem;
+    width: 7.5rem;
+    height: 7.5rem;
     color: $laranja;
     flex-shrink: 0;
   }
 
   &__rotulo {
-    margin: 0 0 0.25rem;
+    margin: 0 0 0.4rem;
     font-size: 0.75rem;
     font-weight: 700;
     letter-spacing: 0.06em;
@@ -27,7 +27,7 @@
   }
 
   &__titulo {
-    margin: 0 0 0.35rem;
+    margin: 0 0 0.65rem;
     font-size: 1.5rem;
     font-weight: 800;
     line-height: 1.2;
@@ -35,17 +35,17 @@
   }
 
   &__lead {
-    margin: 0 0 0.5rem;
-    font-size: 1rem;
+    margin: 0 0 0.75rem;
+    font-size: 1.0625rem;
     color: #374151;
     line-height: 1.5;
   }
 
   &__apoio {
     margin: 0;
-    font-size: 0.9rem;
+    font-size: 1rem;
     color: $texto-2;
-    line-height: 1.5;
+    line-height: 1.55;
   }
 
   // Tablet/celular: tudo empilhado, botão em largura total.
@@ -56,7 +56,7 @@
     gap: 1rem;
     margin-bottom: 2rem;
 
-    &__ilustracao { width: 4rem; height: 4rem; }
+    &__ilustracao { width: 4.75rem; height: 4.75rem; }
     &__titulo { font-size: 1.3rem; }
     &__acao { width: 100%; }
     &__btn { width: 100%; white-space: normal; text-align: center; }
