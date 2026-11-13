@@ -231,6 +231,13 @@
     />
   }
 
+  <!-- ══ SEÇÃO COLABORATIVA ══ -->
+  <!-- Sem @defer: markup estático e leve; um @placeholder assado no servidor nunca
+       seria acionado na hidratação. -->
+  @if (!resultsMode) {
+    <app-home-colabore />
+  }
+
   <!-- ══ CIDADES POPULARES ══ -->
   <!-- SEM @defer (mesmo motivo do "Como funciona"): sem geo, `cidadesExibidas` é a
        constante CIDADES_POPULARES tanto no servidor quanto no cliente inicial, então

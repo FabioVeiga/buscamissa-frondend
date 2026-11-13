@@ -38,6 +38,7 @@ import { distanciaMetrosAte } from "../../../shared/utils/distance.utils";
 import { CIDADES_POPULARES } from "../../../core/constants/cidades-populares";
 import { GeolocationService } from "../../../core/services/geolocation.service";
 import { HomeFavoritosComponent } from "./sections/home-favoritos/home-favoritos.component";
+import { HomeColaboreComponent } from "./sections/home-colabore/home-colabore.component";
 import { HomeCidadesComponent } from "./sections/home-cidades/home-cidades.component";
 import { ChipDestaque } from "./sections/home-chips/home-chips.component";
 import { HomeMissasMapaComponent } from "./sections/home-missas-mapa/home-missas-mapa.component";
@@ -63,6 +64,7 @@ interface AddressData {
     RouterModule,
     ChurchResultCardComponent,
     HomeFavoritosComponent,
+    HomeColaboreComponent,
     HomeCidadesComponent,
     HomeMissasMapaComponent,
     ConviteAnuncieComponent,
