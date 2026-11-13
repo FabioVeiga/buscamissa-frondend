@@ -34,23 +34,64 @@
   color: #6b7280;
 }
 
-.footer-home__instagram {
+// ── Faixa "Faça parte dessa comunidade" ──
+.footer-home__social {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 64rem;
+  margin: 0 auto 2rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: 1rem;
+  background: #fcf7f3;
+
+  @media (min-width: 768px) {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1.5rem;
+  }
+}
+
+.footer-home__social-titulo {
+  margin: 0 0 0.2rem;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #111827;
+}
+
+.footer-home__social-sub {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
+.footer-home__social-links {
+  display: flex;
+  gap: 0.75rem;
+
+  @media (max-width: 767px) { .footer-home__rede { flex: 1; } }
+}
+
+.footer-home__rede {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   min-height: 44px;
-  margin-top: 0.25rem;
-  padding: 0 1rem;
-  border-radius: 0.5rem;
-  background: #ad540c;
-  color: #fff;
-  font-size: 0.9375rem;
+  padding: 0 1.1rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #111827;
+  font-size: 0.9rem;
   font-weight: 600;
-  transition: background 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 
-  &:hover { background: #8a4310; color: #fff; }
+  &:hover { border-color: #f3b989; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06); color: #111827; }
 
-  .pi { font-size: 1.125rem; }
+  .pi { font-size: 1.2rem; }
+  &--instagram .pi { color: #e1306c; }
+  &--facebook .pi { color: #1877f2; }
 }
 
 .footer-home__coluna {

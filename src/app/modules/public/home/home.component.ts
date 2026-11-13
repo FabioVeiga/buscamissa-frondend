@@ -727,7 +727,7 @@ export class HomeComponent {
       name: "BuscaMissa",
       url: base,
       logo: `${base}/android-chrome-512x512.png`,
-      sameAs: ["https://www.instagram.com/buscamissa/"],
+      sameAs: ["https://www.instagram.com/buscamissa/", "https://www.facebook.com/buscamissa"],
     });
 
     this._seo.setJsonLd("website", {
