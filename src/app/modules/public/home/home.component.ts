@@ -631,6 +631,36 @@ export class HomeComponent {
       ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+  /** Contorno temporário no card de busca após "Alterar cidade" (feedback visual). */
+  destacarBusca = false;
+  /** Mensagem para leitores de tela (região role="status" no hero). */
+  avisoBusca = '';
+  private _destaqueTimer?: ReturnType<typeof setTimeout>;
+
+  /**
+   * "Alterar cidade" (seção Missas acontecendo agora): leva o usuário ao formulário
+   * principal e foca o Estado. Não muda a lógica de localização nem a lista de missas.
+   * A busca continua terminando em /buscar, como sempre.
+   */
+  alterarCidade(): void {
+    if (!this._isBrowser) return;
+    this.setSearchTab('cidade');
+    const reduzir = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    // Espera o painel da aba "cidade" existir (*ngIf) antes de focar o Estado.
+    setTimeout(() => {
+      document.querySelector('.search-card')
+        ?.scrollIntoView({ behavior: reduzir ? 'auto' : 'smooth', block: 'start' });
+      this._ufSelect?.focus();
+      this.destacarBusca = true;
+      this.avisoBusca = 'Escolha o estado e a cidade para ver outras missas.';
+      clearTimeout(this._destaqueTimer);
+      this._destaqueTimer = setTimeout(() => {
+        this.destacarBusca = false;
+        this.avisoBusca = '';
+      }, 1800);
+    }, 60);
+  }
+
   ngOnInit(): void {
     this._setSeo();
     this._redesSociais.obterTipos().subscribe({
@@ -788,7 +818,6 @@ export class HomeComponent {
         this._userLat = pos.coords.latitude;
         this._userLng = pos.coords.longitude;
         this._reverseGeocode(pos.coords.latitude, pos.coords.longitude);
-        this.tituloProximasMissas = 'Próximas missas perto de você';
         this._loadProximasMissas(pos.coords.latitude, pos.coords.longitude);
         this.geoStatus = 'found';
       },

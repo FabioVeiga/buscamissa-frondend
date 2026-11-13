@@ -181,6 +181,13 @@ $texto-2: #6b7280;
   border: 1px solid #f0e6d8;
   box-shadow: 0 20px 60px rgba(40,25,10,.18), 0 4px 12px rgba(40,25,10,.08);
   overflow: hidden;
+  // Espaço do menu fixo ao rolar até aqui ("Alterar cidade").
+  scroll-margin-top: 5rem;
+  transition: box-shadow .25s ease;
+
+  &--destaque {
+    box-shadow: 0 0 0 3px rgba(173, 84, 12, .75), 0 20px 60px rgba(40,25,10,.18);
+  }
 }
 
 .search-tabs {

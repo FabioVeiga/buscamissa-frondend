@@ -21,7 +21,8 @@
     <p class="hero__subtitulo--results" *ngIf="resultsMode && searchTab === 'cidade'">Refine os filtros ou explore os resultados abaixo.</p>
 
     <!-- Card de busca com 2 abas -->
-    <div class="search-card">
+    <p class="sr-only" role="status" aria-live="polite">{{ avisoBusca }}</p>
+    <div class="search-card" [class.search-card--destaque]="destacarBusca">
       <div class="search-tabs" role="tablist" aria-label="Formas de busca">
         <button type="button" role="tab" id="tab-cidade" class="search-tab"
                 [class.search-tab--ativa]="searchTab === 'cidade'"
@@ -211,6 +212,7 @@
     [cidadeUf]="cidadeDetectada?.uf || ''"
     [origem]="origemDistancia"
     (pedirLocalizacao)="usarMinhaLocalizacao()"
+    (alterarCidade)="alterarCidade()"
     (cardClick)="onCardClick($event)"
     (navigateClick)="onNavigateClick($event)"
     (favoriteClick)="onFavoriteClick($event)"
