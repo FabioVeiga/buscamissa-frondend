@@ -22,37 +22,59 @@
   }
 }
 
-// ── Rótulo de origem das distâncias ──
-// min-height fixo: o rótulo só existe no browser, e sem a reserva ele empurraria
+// ── Chip de localização ──
+// min-height fixo: o chip só existe no browser, e sem a reserva ele empurraria
 // os cards para baixo na hidratação.
 .missas-origem-slot {
-  min-height: 1.75rem;
-  margin: -0.5rem 0 0.75rem;
+  min-height: 2.25rem;
+  margin: 0 0 1rem;
 }
+
+.sec-header--missas { margin-bottom: 0.5rem; }
+.sec-header__icone { color: $laranja; font-size: 1.1rem; margin-right: 0.35rem; }
 
 .missas-origem {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.35rem;
+  gap: 0.35rem 0.75rem;
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.9rem;
   color: $texto-2;
-
-  i { color: $laranja; font-size: 0.85rem; }
-
-  &--referencia strong { font-weight: 600; color: $texto; }
 
   &__btn {
     background: none;
     border: none;
-    padding: 0;
+    padding: 0.35rem 0;
+    min-height: 2.25rem;
     font: inherit;
     font-weight: 600;
     color: $laranja;
     cursor: pointer;
     text-decoration: underline;
     &:hover { color: $laranja-hover; }
+    &--sec { color: $texto-2; font-weight: 500; }
+  }
+}
+
+.missas-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  background: #fcf1e7;
+  color: $texto;
+  font-weight: 600;
+  line-height: 1.2;
+
+  i { color: $laranja; font-size: 0.95rem; }
+
+  &__tag {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: $texto-2;
+    &::before { content: '· '; }
   }
 }
 

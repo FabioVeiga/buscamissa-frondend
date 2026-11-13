@@ -1,4 +1,22 @@
 <footer class="footer-home">
+  <!-- Redes oficiais: um único convite, no rodapé global (todas as páginas). -->
+  <section class="footer-home__social" aria-labelledby="footer-social-titulo">
+    <div class="footer-home__social-texto">
+      <h2 id="footer-social-titulo" class="footer-home__social-titulo">Faça parte dessa comunidade</h2>
+      <p class="footer-home__social-sub">Acompanhe o Busca Missa e ajude a divulgar essa iniciativa.</p>
+    </div>
+    <div class="footer-home__social-links">
+      <a href="https://www.instagram.com/buscamissa/" target="_blank" rel="noopener noreferrer"
+         class="footer-home__rede footer-home__rede--instagram" aria-label="Instagram do Busca Missa (abre em nova aba)">
+        <i class="pi pi-instagram" aria-hidden="true"></i> Instagram
+      </a>
+      <a href="https://www.facebook.com/buscamissa" target="_blank" rel="noopener noreferrer"
+         class="footer-home__rede footer-home__rede--facebook" aria-label="Facebook do Busca Missa (abre em nova aba)">
+        <i class="pi pi-facebook" aria-hidden="true"></i> Facebook
+      </a>
+    </div>
+  </section>
+
   <div class="footer-home__grid">
     <div class="footer-home__marca">
       <a [routerLink]="['/']" class="flex items-center gap-2" aria-label="Busca Missa: início">
@@ -7,11 +25,6 @@
         <span class="text-lg font-semibold">Busca Missa</span>
       </a>
       <p class="footer-home__frase">Encontre missas perto de você.</p>
-      <a href="https://www.instagram.com/buscamissa/" target="_blank" rel="noopener noreferrer"
-        class="footer-home__instagram">
-        <i class="pi pi-instagram" aria-hidden="true"></i>
-        Siga &#64;buscamissa
-      </a>
     </div>
 
     <!-- Hubs de navegação: vivem no footer de todas as páginas para manter a

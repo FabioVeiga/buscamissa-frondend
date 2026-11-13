@@ -40,6 +40,9 @@ export class HomeMissasMapaComponent {
   /** Pedido explícito de geolocalização a partir do rótulo de referência. */
   @Output() pedirLocalizacao = new EventEmitter<void>();
 
+  /** "Alterar cidade": a Home rola até a busca e foca o Estado. */
+  @Output() alterarCidade = new EventEmitter<void>();
+
   @Output() cardClick = new EventEmitter<MassCardData>();
   @Output() navigateClick = new EventEmitter<MassCardData>();
   @Output() favoriteClick = new EventEmitter<MassCardData>();

@@ -1,0 +1,65 @@
+@use '../shared' as *;
+
+.colabore {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1.5rem 2rem;
+  margin: 0 0 2.5rem;
+  padding: 1.75rem 2rem;
+  border-radius: 1.25rem;
+  background: #fcf7f3;
+
+  &__ilustracao {
+    width: 7.5rem;
+    height: 7.5rem;
+    color: $laranja;
+    flex-shrink: 0;
+  }
+
+  &__rotulo {
+    margin: 0 0 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: $laranja;
+  }
+
+  &__titulo {
+    margin: 0 0 0.65rem;
+    font-size: 1.5rem;
+    font-weight: 800;
+    text-wrap: balance; // evita a palavra solta ("nós.") na última linha no celular
+    line-height: 1.2;
+    color: $texto;
+  }
+
+  &__lead {
+    margin: 0 0 0.75rem;
+    font-size: 1.0625rem;
+    color: #374151;
+    line-height: 1.5;
+  }
+
+  &__apoio {
+    margin: 0;
+    font-size: 1rem;
+    color: $texto-2;
+    line-height: 1.55;
+  }
+
+  // Tablet/celular: tudo empilhado, botão em largura total.
+  @media (max-width: 760px) {
+    grid-template-columns: 1fr;
+    justify-items: start;
+    padding: 1.5rem 1.25rem;
+    gap: 1rem;
+    margin-bottom: 2rem;
+
+    &__ilustracao { width: 4.75rem; height: 4.75rem; }
+    &__titulo { font-size: 1.3rem; }
+    &__acao { width: 100%; }
+    &__btn { width: 100%; white-space: normal; text-align: center; }
+  }
+}

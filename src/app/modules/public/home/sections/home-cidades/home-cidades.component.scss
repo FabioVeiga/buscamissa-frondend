@@ -68,3 +68,72 @@
   &__estado { font-size: 0.75rem; font-weight: 700; color: #9ca3af; flex-shrink: 0; }
   &__arrow { color: $laranja; flex-shrink: 0; font-size: 0.875rem; }
 }
+
+// ── CABEÇALHO DA SEÇÃO (home) ──
+.sec-header--cidades { align-items: flex-start; }
+.sec-header__icone { color: $laranja; font-size: 1.1rem; margin-right: 0.35rem; }
+.sec-header__sub { margin: 0.25rem 0 0; font-size: 0.9rem; color: $texto-2; }
+
+// ── GRADE DE CARDS ──
+// Colunas pela largura disponível (auto-fill), sem número fixo: o card nunca fica
+// mais estreito que 9rem, então o nome não quebra de forma feia em telas pequenas.
+.cidades-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: 0.75rem;
+
+  @media (max-width: 640px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.6rem;
+  }
+}
+
+.cidade-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.4rem;
+  // Altura única para todos os cards: comporta nomes de 2 linhas ("São José dos Campos")
+  // sem deixar a primeira fileira mais alta que a segunda.
+  min-height: 5.75rem;
+  padding: 0.875rem 1rem;
+  background: #fff;
+  border: 1px solid $borda;
+  border-radius: 0.875rem;
+  text-decoration: none;
+  transition: background 0.15s, border-color 0.15s;
+
+  &:hover { background: #fff7f0; border-color: #f3b989; }
+  &--skip { display: none; }
+
+  &__nome {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #1f2937;
+    line-height: 1.25;
+    overflow-wrap: break-word;
+    text-wrap: balance;
+  }
+
+  &__uf {
+    align-self: flex-start;
+    padding: 0.1rem 0.5rem;
+    border-radius: 999px;
+    background: #f3f4f6;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    color: $texto-2;
+  }
+
+  &--todas {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    background: #fcf7f3;
+    border-style: dashed;
+    border-color: #f3b989;
+    .cidade-card__nome { color: $laranja; }
+    i { color: $laranja; font-size: 0.85rem; }
+  }
+}
