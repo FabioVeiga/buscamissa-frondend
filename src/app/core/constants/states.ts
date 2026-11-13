@@ -77,8 +77,17 @@ const CONTRACAO_DE: Record<'no' | 'na' | 'em', 'do' | 'da' | 'de'> = {
  * "estado de {nome}".
  */
 export function nomeDoEstadoComArtigo(siglaOuNome: string): string {
+  return `estado ${nomeComContracaoDe(siglaOuNome)}`;
+}
+
+/**
+ * Nome do estado precedido de "de" contraído com o artigo: "do Paraná",
+ * "da Bahia", "de São Paulo". Aceita sigla ou nome; sem UF reconhecida, cai em
+ * "de {nome}".
+ */
+export function nomeComContracaoDe(siglaOuNome: string): string {
   const porSigla = STATES.find((e) => e.sigla === siglaOuNome.toUpperCase());
   const estado = porSigla ?? STATES.find((e) => e.nome === siglaOuNome);
-  if (!estado) return `estado de ${siglaOuNome}`;
-  return `estado ${CONTRACAO_DE[preposicaoDe(estado.sigla)]} ${estado.nome}`;
+  if (!estado) return `de ${siglaOuNome}`;
+  return `${CONTRACAO_DE[preposicaoDe(estado.sigla)]} ${estado.nome}`;
 }

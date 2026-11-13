@@ -18,7 +18,7 @@ import {
 import { cidades, estados, paroquias } from '../../../shared/utils/plural.utils';
 import { GeolocationService } from '../../../core/services/geolocation.service';
 import { acharCidade, nomeDoMunicipio, resolverUf } from '../../../shared/utils/localizacao.utils';
-import { STATES } from '../../../core/constants/states';
+import { nomeComContracaoDe } from '../../../core/constants/states';
 
 const SITE = 'https://buscamissa.com.br';
 /** Cap do bloco "Capitais e principais cidades" — vitrine, não substitui o índice completo. */
@@ -201,8 +201,8 @@ export class CidadesComponent implements OnInit, OnDestroy {
     const temEstado = this.cidadesParaBusca.some((c) => c.uf === ufMin);
     this.geoCidade = nome;
     this.geoLinkAlternativo = temEstado ? ['/missas', ufMin] : ['/estados'];
-    const nomeUf = STATES.find((s) => s.sigla === uf)?.nome ?? uf;
-    this.geoRotuloAlternativo = temEstado ? `Ver cidades de ${nomeUf}` : 'Ver cidades por estado';
+    // "do Paraná", "da Bahia", "de São Paulo": preposição por UF (states.ts).
+    this.geoRotuloAlternativo = temEstado ? `Ver cidades ${nomeComContracaoDe(uf)}` : 'Ver cidades por estado';
     this.geoEstado = 'sem-pagina';
     this._cdr.markForCheck();
   }

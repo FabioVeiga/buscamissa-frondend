@@ -113,7 +113,9 @@
       @if (geoEstado === 'sem-pagina') {
         <p class="geo__msg">
           <i class="pi pi-map-marker" aria-hidden="true"></i>
-          <span>Ainda não há missas em {{ geoCidade }}.
+          <!-- "Horários cadastrados", não "missas": não ter página no Busca Missa
+               não significa que a cidade não tenha missa. -->
+          <span>Ainda não temos horários cadastrados para {{ geoCidade }}.
             <a [routerLink]="geoLinkAlternativo">{{ geoRotuloAlternativo }}</a></span>
         </p>
       } @else if (geoEstado === 'indisponivel') {
