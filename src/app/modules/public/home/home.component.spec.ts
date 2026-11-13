@@ -267,6 +267,50 @@ describe('HomeComponent — origem das distâncias', () => {
 
     expect(montar('server').origemDistancia).toBeNull();
   });
+
+  it('mantém o título "Missas acontecendo agora" mesmo com a geolocalização concedida', () => {
+    const c = montar('browser');
+    spyOn(navigator.geolocation, 'getCurrentPosition').and.callFake(
+      ((ok: PositionCallback) => ok({ coords: { latitude: -23.5, longitude: -46.6 } } as GeolocationPosition)) as any,
+    );
+
+    (c as any)._requestGeolocation();
+
+    expect(c.tituloProximasMissas).toBe('Missas acontecendo agora');
+    expect(c.geoStatus).toBe('found');
+  });
+
+  describe('Alterar cidade', () => {
+    beforeEach(() => jasmine.clock().install());
+    afterEach(() => jasmine.clock().uninstall());
+
+    it('volta para a aba de busca por cidade, foca o Estado e dá retorno visual temporário', () => {
+      const c = montar('browser');
+      const focar = jasmine.createSpy('focus');
+      (c as any)._ufSelect = { focus: focar };
+      c.searchTab = 'local';
+
+      c.alterarCidade();
+      expect(c.destacarBusca).toBeFalse();
+
+      jasmine.clock().tick(60);
+      expect(c.searchTab).toBe('cidade');
+      expect(focar).toHaveBeenCalled();
+      expect(c.destacarBusca).toBeTrue();
+      expect(c.avisoBusca).toContain('Escolha o estado');
+
+      jasmine.clock().tick(1800);
+      expect(c.destacarBusca).toBeFalse();
+      expect(c.avisoBusca).toBe('');
+    });
+
+    it('não faz nada no servidor (prerender)', () => {
+      const c = montar('server');
+      c.alterarCidade();
+      jasmine.clock().tick(2000);
+      expect(c.destacarBusca).toBeFalse();
+    });
+  });
 });
 
 /**
