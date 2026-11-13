@@ -37,9 +37,8 @@ import { getSocialIconFromTipos } from "../../../shared/utils/social-icon.utils"
 import { distanciaMetrosAte } from "../../../shared/utils/distance.utils";
 import { CIDADES_POPULARES } from "../../../core/constants/cidades-populares";
 import { GeolocationService } from "../../../core/services/geolocation.service";
-import { HomeStatsComponent } from "./sections/home-stats/home-stats.component";
-import { HomeComoFuncionaComponent } from "./sections/home-como-funciona/home-como-funciona.component";
 import { HomeFavoritosComponent } from "./sections/home-favoritos/home-favoritos.component";
+import { HomeColaboreComponent } from "./sections/home-colabore/home-colabore.component";
 import { HomeCidadesComponent } from "./sections/home-cidades/home-cidades.component";
 import { ChipDestaque } from "./sections/home-chips/home-chips.component";
 import { HomeMissasMapaComponent } from "./sections/home-missas-mapa/home-missas-mapa.component";
@@ -64,9 +63,8 @@ interface AddressData {
     PrimeNgModule,
     RouterModule,
     ChurchResultCardComponent,
-    HomeStatsComponent,
-    HomeComoFuncionaComponent,
     HomeFavoritosComponent,
+    HomeColaboreComponent,
     HomeCidadesComponent,
     HomeMissasMapaComponent,
     ConviteAnuncieComponent,
@@ -512,9 +510,6 @@ export class HomeComponent {
    */
   private _resolverAposIndice = false;
 
-  /** Estatísticas (números reais via getInfo, com fallback) */
-  stats = { igrejas: 2000, horarios: 9100, cidades: 213, estados: 26 };
-
   /**
    * True só no browser. No prerender/SSG (Fase 3) a home é assada no server, onde
    * navigator/document/timers não existem — qualquer acesso trava o render e aborta
@@ -638,6 +633,36 @@ export class HomeComponent {
       ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+  /** Contorno temporário no card de busca após "Alterar cidade" (feedback visual). */
+  destacarBusca = false;
+  /** Mensagem para leitores de tela (região role="status" no hero). */
+  avisoBusca = '';
+  private _destaqueTimer?: ReturnType<typeof setTimeout>;
+
+  /**
+   * "Alterar cidade" (seção Missas acontecendo agora): leva o usuário ao formulário
+   * principal e foca o Estado. Não muda a lógica de localização nem a lista de missas.
+   * A busca continua terminando em /buscar, como sempre.
+   */
+  alterarCidade(): void {
+    if (!this._isBrowser) return;
+    this.setSearchTab('cidade');
+    const reduzir = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    // Espera o painel da aba "cidade" existir (*ngIf) antes de focar o Estado.
+    setTimeout(() => {
+      document.querySelector('.search-card')
+        ?.scrollIntoView({ behavior: reduzir ? 'auto' : 'smooth', block: 'start' });
+      this._ufSelect?.focus();
+      this.destacarBusca = true;
+      this.avisoBusca = 'Escolha o estado e a cidade para ver outras missas.';
+      clearTimeout(this._destaqueTimer);
+      this._destaqueTimer = setTimeout(() => {
+        this.destacarBusca = false;
+        this.avisoBusca = '';
+      }, 1800);
+    }, 60);
+  }
+
   ngOnInit(): void {
     this._setSeo();
     this._redesSociais.obterTipos().subscribe({
@@ -670,7 +695,6 @@ export class HomeComponent {
     this.searchTab = 'cidade';
     this.getAddress();
     this._loadFavorita();
-    this._loadStats();
 
     // Limpa resultados quando o usuário navega para home sem filtros (ex: clique no logo).
     // Usa a key 'uf' (minúscula) — a mesma gravada por searchFilter — senão o form
@@ -703,7 +727,7 @@ export class HomeComponent {
       name: "BuscaMissa",
       url: base,
       logo: `${base}/android-chrome-512x512.png`,
-      sameAs: ["https://www.instagram.com/buscamissa/"],
+      sameAs: ["https://www.instagram.com/buscamissa/", "https://www.facebook.com/buscamissa"],
     });
 
     this._seo.setJsonLd("website", {
@@ -796,32 +820,11 @@ export class HomeComponent {
         this._userLat = pos.coords.latitude;
         this._userLng = pos.coords.longitude;
         this._reverseGeocode(pos.coords.latitude, pos.coords.longitude);
-        this.tituloProximasMissas = 'Próximas missas perto de você';
         this._loadProximasMissas(pos.coords.latitude, pos.coords.longitude);
         this.geoStatus = 'found';
       },
       () => { this.geoStatus = 'denied'; }
     );
-  }
-
-  private _loadStats(): void {
-    this._churchService.getInfo().subscribe({
-      next: (res: any) => {
-        const d = res?.data ?? res ?? {};
-        const igrejas = d.quantidadesIgrejas ?? d.quantidadeIgrejas ?? d.totalIgrejas;
-        const horarios = d.quantidadeMissas ?? d.quantidadesMissas ?? d.totalMissas;
-        // Nova referência (não mutar): HomeStatsComponent é OnPush e só
-        // re-renderiza quando a referência do input muda.
-        if (igrejas || horarios) {
-          this.stats = {
-            ...this.stats,
-            ...(igrejas ? { igrejas } : {}),
-            ...(horarios ? { horarios } : {}),
-          };
-        }
-      },
-      error: () => { /* silencioso — mantém fallback */ },
-    });
   }
 
   /** Args da última carga — usados pelo refresh periódico para repetir a mesma busca. */

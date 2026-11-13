@@ -13,7 +13,7 @@ describe('HomeMissasMapaComponent — rótulo de origem', () => {
   let fixture: ComponentFixture<HomeMissasMapaComponent>;
   let c: HomeMissasMapaComponent;
 
-  const texto = () => fixture.nativeElement.querySelector('.missas-origem')?.textContent?.replace(/\s+/g, ' ').trim() ?? null;
+  const texto = () => fixture.nativeElement.querySelector('.missas-chip')?.textContent?.replace(/\s+/g, ' ').trim() ?? null;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
@@ -40,7 +40,7 @@ describe('HomeMissasMapaComponent — rótulo de origem', () => {
     fixture.detectChanges();
 
     expect(texto()).toContain('São Paulo');
-    expect(texto()).toContain('como referência');
+    expect(texto()).toContain('referência');
   });
 
   it('mostra a cidade do usuário quando há geolocalização', () => {
@@ -49,7 +49,7 @@ describe('HomeMissasMapaComponent — rótulo de origem', () => {
     c.cidadeUf = 'pe';
     fixture.detectChanges();
 
-    expect(texto()).toBe('Perto de você · Recife/PE');
+    expect(texto()).toBe('Recife/PE');
   });
 
   it('degrada para "Perto de você" quando o reverse geocode não devolveu cidade', () => {
@@ -65,8 +65,20 @@ describe('HomeMissasMapaComponent — rótulo de origem', () => {
     const spy = jasmine.createSpy('pedirLocalizacao');
     c.pedirLocalizacao.subscribe(spy);
 
-    fixture.nativeElement.querySelector('.missas-origem__btn').click();
+    fixture.nativeElement.querySelector('.missas-origem__btn--sec').click();
 
     expect(spy).toHaveBeenCalled();
+  });
+
+  it('emite alterarCidade no clique de "Alterar cidade", com ou sem geolocalização', () => {
+    const spy = jasmine.createSpy('alterarCidade');
+    c.alterarCidade.subscribe(spy);
+    for (const origem of ['usuario', 'referencia'] as const) {
+      c.origem = origem;
+      fixture.detectChanges();
+      fixture.nativeElement.querySelector('.missas-origem__btn').click();
+    }
+
+    expect(spy).toHaveBeenCalledTimes(2);
   });
 });

@@ -21,7 +21,8 @@
     <p class="hero__subtitulo--results" *ngIf="resultsMode && searchTab === 'cidade'">Refine os filtros ou explore os resultados abaixo.</p>
 
     <!-- Card de busca com 2 abas -->
-    <div class="search-card">
+    <p class="sr-only" role="status" aria-live="polite">{{ avisoBusca }}</p>
+    <div class="search-card" [class.search-card--destaque]="destacarBusca">
       <div class="search-tabs" role="tablist" aria-label="Formas de busca">
         <button type="button" role="tab" id="tab-cidade" class="search-tab"
                 [class.search-tab--ativa]="searchTab === 'cidade'"
@@ -211,16 +212,31 @@
     [cidadeUf]="cidadeDetectada?.uf || ''"
     [origem]="origemDistancia"
     (pedirLocalizacao)="usarMinhaLocalizacao()"
+    (alterarCidade)="alterarCidade()"
     (cardClick)="onCardClick($event)"
     (navigateClick)="onNavigateClick($event)"
     (favoriteClick)="onFavoriteClick($event)"
   />
 
-  <!-- ══ ANÚNCIO logo abaixo das próximas missas (home sem busca) ══ -->
-  <app-anuncio *ngIf="!resultsMode" posicao="home" />
+  <!-- ══ SEUS FAVORITOS ══ -->
+  <!-- Client-only: _loadFavorita() lê o localStorage no ngOnInit, então o servidor
+       assaria o estado vazio e o cliente a lista cheia — mismatch de hidratação.
+       O guard mantém o bloco fora do prerender em vez de usar @defer.
+       Sem favoritos a seção inteira some: o estado vazio ocupava 437px no mobile
+       para quem nunca favoritou nada. -->
+  @if (!resultsMode && _isBrowser && paroquiasFavoritas.length) {
+    <app-home-favoritos
+      [favoritas]="paroquiasFavoritas"
+      (remover)="removerFavorita($event)"
+    />
+  }
 
-  <!-- ══ ESTATÍSTICAS ══ -->
-  <app-home-stats *ngIf="!resultsMode" [stats]="stats" />
+  <!-- ══ SEÇÃO COLABORATIVA ══ -->
+  <!-- Sem @defer: markup estático e leve; um @placeholder assado no servidor nunca
+       seria acionado na hidratação. -->
+  @if (!resultsMode) {
+    <app-home-colabore />
+  }
 
   <!-- ══ CIDADES POPULARES ══ -->
   <!-- SEM @defer (mesmo motivo do "Como funciona"): sem geo, `cidadesExibidas` é a
@@ -235,26 +251,9 @@
     />
   }
 
-  <!-- ══ COMO FUNCIONA + NÃO ENCONTROU ══ -->
-  <!-- SEM @defer: um bloco que o servidor assa como @placeholder nunca é acionado
-       na hidratação (a seção ficava invisível em produção). É markup estático e
-       leve, então renderiza direto. -->
-  @if (!resultsMode) {
-    <app-home-como-funciona />
-  }
-
-  <!-- ══ SEUS FAVORITOS ══ -->
-  <!-- Client-only: _loadFavorita() lê o localStorage no ngOnInit, então o servidor
-       assaria o estado vazio e o cliente a lista cheia — mismatch de hidratação.
-       O guard mantém o bloco fora do prerender em vez de usar @defer.
-       Sem favoritos a seção inteira some: o estado vazio ocupava 437px no mobile
-       para quem nunca favoritou nada. -->
-  @if (!resultsMode && _isBrowser && paroquiasFavoritas.length) {
-    <app-home-favoritos
-      [favoritas]="paroquiasFavoritas"
-      (remover)="removerFavorita($event)"
-    />
-  }
+  <!-- ══ ANÚNCIO depois das cidades (home sem busca): não compete com a busca nem com os horários.
+       Mesmo componente/posição "home": métricas e campanha intactas. ══ -->
+  <app-anuncio *ngIf="!resultsMode" posicao="home" />
 
   <!-- ══ RESULTADOS: carregando / vazio ══ -->
   <div *ngIf="resultsMode && isLoading" class="resultados-feedback">
@@ -324,24 +323,5 @@
 
   <!-- ══ CONVITE ANUNCIE ══ -->
   <app-convite-anuncie *ngIf="resultsMode && churchInfo && churchInfo.length > 0" origem="home" />
-
-  <!-- ══ INSTAGRAM ══ -->
-  <div class="home-instagram" *ngIf="!resultsMode">
-    <a href="https://www.instagram.com/buscamissa/" target="_blank" rel="noopener noreferrer" class="home-instagram__card">
-      <span class="home-instagram__icon-wrap" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <rect x="2" y="2" width="20" height="20" rx="5.5" stroke="currentColor" stroke-width="1.8"/>
-          <circle cx="12" cy="12" r="4" stroke="currentColor" stroke-width="1.8"/>
-          <circle cx="17.5" cy="6.5" r="1" fill="currentColor"/>
-        </svg>
-      </span>
-      <div class="home-instagram__text">
-        <span class="home-instagram__titulo">Siga o BuscaMissa</span>
-        <span class="home-instagram__sub">Novidades, igrejas e horários no Instagram</span>
-      </div>
-      <i class="pi pi-arrow-right home-instagram__arrow"></i>
-    </a>
-  </div>
-
 
 </div>

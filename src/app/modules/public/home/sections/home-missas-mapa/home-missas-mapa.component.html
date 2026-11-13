@@ -1,30 +1,39 @@
 <section id="proximas-section" class="missas-mapa">
   <div class="missas-mapa__col-missas" [class.missas-mapa__col-missas--vazia]="!isLoading && cards.length === 0">
-    <div class="sec-header">
-      <div class="flex items-center gap-2">
-        <i class="pi pi-star-fill" style="color: #ad540c;"></i>
-        <h2 class="sec-header__titulo">{{ titulo }}</h2>
-      </div>
+    <div class="sec-header sec-header--missas">
+      <h2 class="sec-header__titulo">
+        <i class="pi pi-map-marker sec-header__icone" aria-hidden="true"></i>
+        {{ titulo }}
+      </h2>
       <a routerLink="/missa-agora" class="sec-header__link">Ver todas</a>
     </div>
 
-    <!-- Rótulo de referência: sem ele a lista (e as distâncias) de São Paulo passam
-         por "perto de você" para o Brasil inteiro. O slot existe sempre — inclusive
-         no prerender, onde `origem` é null — para o texto não empurrar os cards ao
-         hidratar (CLS logo abaixo do hero, onde o LCP é medido). -->
+    <!-- Localização de referência. O slot existe sempre (inclusive no prerender, onde
+         `origem` é null) para o texto não empurrar os cards ao hidratar (CLS logo
+         abaixo do hero, onde o LCP é medido). Mesma lógica de antes: só muda a
+         apresentação (chip) e o atalho "Alterar cidade". -->
     <div class="missas-origem-slot">
-      <p class="missas-origem" *ngIf="origem === 'usuario'">
-        <i class="pi pi-map-marker" aria-hidden="true"></i>
-        Perto de você<ng-container *ngIf="localidadeUsuario"> · {{ localidadeUsuario }}</ng-container>
-      </p>
-      <p class="missas-origem missas-origem--referencia" *ngIf="origem === 'referencia'">
-        <i class="pi pi-info-circle" aria-hidden="true"></i>
-        Mostrando <strong>São Paulo</strong> como referência.
-        <button type="button" class="missas-origem__btn" (click)="pedirLocalizacao.emit()">
-          Ative sua localização
-        </button>
-        para ver missas perto de você.
-      </p>
+      @if (origem) {
+        <div class="missas-origem">
+          <span class="missas-chip" [class.missas-chip--referencia]="origem === 'referencia'">
+            <i class="pi pi-map-marker" aria-hidden="true"></i>
+            @if (origem === 'usuario') {
+              <span class="missas-chip__nome">{{ localidadeUsuario || 'Perto de você' }}</span>
+            } @else {
+              <span class="missas-chip__nome">São Paulo</span>
+              <span class="missas-chip__tag">referência</span>
+            }
+          </span>
+          <button type="button" class="missas-origem__btn" (click)="alterarCidade.emit()">
+            Alterar cidade
+          </button>
+          @if (origem === 'referencia') {
+            <button type="button" class="missas-origem__btn missas-origem__btn--sec" (click)="pedirLocalizacao.emit()">
+              Ative sua localização
+            </button>
+          }
+        </div>
+      }
     </div>
 
     <!-- Skeleton: reserva o espaço final dos cards durante o carregamento (evita CLS) -->

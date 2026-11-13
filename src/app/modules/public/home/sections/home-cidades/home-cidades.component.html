@@ -1,10 +1,12 @@
-<section class="cidades-chips">
-  <div class="sec-header">
-    <div class="flex items-center gap-2">
-      <i class="pi pi-map-marker" style="color: #ad540c;"></i>
-      <h2 class="sec-header__titulo">Cidades populares</h2>
+<section class="cidades-chips" aria-labelledby="cidades-titulo">
+  <div class="sec-header sec-header--cidades">
+    <div>
+      <h2 id="cidades-titulo" class="sec-header__titulo">
+        <i class="pi pi-building sec-header__icone" aria-hidden="true"></i>
+        Encontre missas por cidade
+      </h2>
+      <p class="sec-header__sub">Veja horários e igrejas nas cidades mais buscadas.</p>
     </div>
-    <a routerLink="/cidades" class="sec-header__link">Ver todas as cidades →</a>
   </div>
 
   <!-- Wrapper com min-height reservado para evitar CLS quando geo resolve -->
@@ -22,13 +24,19 @@
     </a>
   </div>
 
-  <div class="cidades-chips__lista">
+  <!-- Mesmas cidades e mesmos links /missas/{uf}/{slug} de antes; só o visual muda. -->
+  <div class="cidades-grade">
     @for (c of cidades; track c.uf + '-' + c.slug; let i = $index) {
     <a [routerLink]="['/missas', c.uf.toLowerCase(), c.slug]"
-       class="cidade-chip"
-       [class.cidade-chip--skip]="geoEncontrada && i === 0">
-      {{ c.nome }}
+       class="cidade-card"
+       [class.cidade-card--skip]="geoEncontrada && i === 0">
+      <span class="cidade-card__nome">{{ c.nome }}</span>
+      <span class="cidade-card__uf">{{ c.uf }}</span>
     </a>
     }
+    <a routerLink="/cidades" class="cidade-card cidade-card--todas">
+      <span class="cidade-card__nome">Ver todas as cidades</span>
+      <i class="pi pi-arrow-right" aria-hidden="true"></i>
+    </a>
   </div>
 </section>

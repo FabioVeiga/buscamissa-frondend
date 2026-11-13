@@ -51,4 +51,19 @@ describe('HomeCidadesComponent — slot do card "Sua cidade"', () => {
 
     expect(colapsado()).toBeTrue();
   });
+
+  it('mostra título, UF de cada cidade e o acesso a todas as cidades', () => {
+    c.cidades = [
+      { nome: 'São Paulo', uf: 'SP', slug: 'sao-paulo' },
+      { nome: 'Curitiba', uf: 'PR', slug: 'curitiba' },
+    ];
+    fixture.detectChanges();
+    const el: HTMLElement = fixture.nativeElement;
+
+    expect(el.querySelector('h2')?.textContent).toContain('Encontre missas por cidade');
+    const cards = Array.from(el.querySelectorAll('.cidade-card:not(.cidade-card--todas)'));
+    expect(cards.map((a) => a.getAttribute('href'))).toEqual(['/missas/sp/sao-paulo', '/missas/pr/curitiba']);
+    expect(cards[1].textContent).toContain('PR');
+    expect(el.querySelector('.cidade-card--todas')?.getAttribute('href')).toBe('/cidades');
+  });
 });
