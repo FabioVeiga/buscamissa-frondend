@@ -13,7 +13,7 @@ $texto-2: #6b7280;
 .page {
   max-width: 1440px;
   margin: 0 auto;
-  padding: 1.25rem 2rem 2rem;
+  padding: 1.25rem 2rem 0.75rem;
 
   @media (max-width: 640px) { padding: 1rem 1rem 1.5rem; }
 }
