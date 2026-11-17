@@ -7,6 +7,7 @@ import { finalize } from "rxjs/operators";
 import { SkeletonModule } from "primeng/skeleton";
 import { ChurchesService } from "../../../../core/services/churches.service";
 import { distanciaMetrosAte } from "../../../../shared/utils/distance.utils";
+import { linkGoogleMaps } from "../../../../shared/utils/navegacao.utils";
 import { CIDADES_POPULARES } from "../../../../core/constants/cidades-populares";
 import { SeoService } from "../../../../core/services/seo.service";
 import { getNextOccurrenceMinutes } from "../../../../shared/utils/mass-time.utils";
@@ -439,11 +440,13 @@ export class CityComponent implements OnInit, OnDestroy {
 
   comoChegar(igreja: any): void {
     if (!this._isBrowser) return;
-    const lat = igreja.endereco?.latitude;
-    const lng = igreja.endereco?.longitude;
-    const url = lat && lng
-      ? `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
-      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(igreja.nome + ' ' + this.cidadeNome)}`;
+    const e = igreja.endereco;
+    const url = linkGoogleMaps({
+      ...e,
+      nome: igreja.nome,
+      localidade: e?.localidade || this.cidadeNome,
+      uf: e?.uf || this.uf,
+    });
     window.open(url, '_blank', 'noopener');
     this._analytics.getDirections(igreja.nome);
   }

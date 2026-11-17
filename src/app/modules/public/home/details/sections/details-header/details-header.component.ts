@@ -5,6 +5,7 @@ import { ConfidenceBadgeComponent } from '../../../../../../shared/components/co
 import { ChurchPlaceholderComponent } from '../../../../../../shared/components/church-placeholder/church-placeholder.component';
 import { TipoRedeSocial } from '../../../../../../core/services/redes-sociais.service';
 import { getSocialIconFromTipos } from '../../../../../../shared/utils/social-icon.utils';
+import { linkGoogleMaps, linkWaze } from '../../../../../../shared/utils/navegacao.utils';
 
 /**
  * Header da página da paróquia: foto, endereço, contato e ações.
@@ -100,19 +101,11 @@ export class DetailsHeaderComponent {
 
   get linkGoogleMaps(): string {
     const e = this.igreja?.endereco;
-    if (!e) return '#';
-    if (e.latitude && e.longitude)
-      return `https://www.google.com/maps/search/?api=1&query=${e.latitude},${e.longitude}`;
-    const q = encodeURIComponent(`${this.igreja.nome}, ${e.logradouro}, ${e.localidade} ${e.uf}`);
-    return `https://www.google.com/maps/search/?api=1&query=${q}`;
+    return e ? linkGoogleMaps({ ...e, nome: this.igreja.nome }) : '#';
   }
 
   get linkWaze(): string {
     const e = this.igreja?.endereco;
-    if (!e) return '#';
-    if (e.latitude && e.longitude)
-      return `https://waze.com/ul?ll=${e.latitude},${e.longitude}&navigate=yes`;
-    const q = encodeURIComponent(`${this.igreja.nome}, ${e.logradouro}, ${e.localidade}`);
-    return `https://waze.com/ul?q=${q}&navigate=yes`;
+    return e ? linkWaze({ ...e, nome: this.igreja.nome }) : '#';
   }
 }
