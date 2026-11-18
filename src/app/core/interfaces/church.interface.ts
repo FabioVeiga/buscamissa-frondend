@@ -105,6 +105,12 @@ export interface Address {
   uf: string;
   estado: string;
   regiao: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  /** Origem da coordenada (cnefe, osm, manual_mapa, legado...). */
+  geoFonte?: string | null;
+  /** Confiança da coordenada (alta, media, baixa, confirmada, legado...). */
+  geoConfianca?: string | null;
 }
 
 export interface ResponseAddress {

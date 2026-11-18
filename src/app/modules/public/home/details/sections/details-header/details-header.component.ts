@@ -5,7 +5,7 @@ import { ConfidenceBadgeComponent } from '../../../../../../shared/components/co
 import { ChurchPlaceholderComponent } from '../../../../../../shared/components/church-placeholder/church-placeholder.component';
 import { TipoRedeSocial } from '../../../../../../core/services/redes-sociais.service';
 import { getSocialIconFromTipos } from '../../../../../../shared/utils/social-icon.utils';
-import { linkGoogleMaps, linkWaze } from '../../../../../../shared/utils/navegacao.utils';
+import { linkGoogleMaps, linkWaze, origemCoordenada } from '../../../../../../shared/utils/navegacao.utils';
 
 /**
  * Header da página da paróquia: foto, endereço, contato e ações.
@@ -107,5 +107,11 @@ export class DetailsHeaderComponent {
   get linkWaze(): string {
     const e = this.igreja?.endereco;
     return e ? linkWaze({ ...e, nome: this.igreja.nome }) : '#';
+  }
+
+  /** Origem da coordenada (com a atribuição que a licença do OSM exige), ou null. */
+  get origemCoordenada(): string | null {
+    const e = this.igreja?.endereco;
+    return e?.latitude != null ? origemCoordenada(e.geoFonte, e.geoConfianca) : null;
   }
 }
