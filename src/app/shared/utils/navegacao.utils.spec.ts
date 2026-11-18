@@ -1,4 +1,4 @@
-import { coordenadaValida, linkGoogleMaps, linkWaze, textoBuscaDestino } from './navegacao.utils';
+import { coordenadaValida, linkGoogleMaps, linkWaze, origemCoordenada, textoBuscaDestino } from './navegacao.utils';
 
 describe('navegacao.utils', () => {
   const holambra = {
@@ -78,6 +78,32 @@ describe('navegacao.utils', () => {
 
     it('retorna # sem destino', () => {
       expect(linkWaze(undefined)).toBe('#');
+    });
+  });
+
+  describe('confiança da coordenada', () => {
+    const comPonto = { ...holambra, latitude: -22.63, longitude: -47.05 };
+
+    it('confiança baixa não navega pela coordenada', () => {
+      const baixa = { ...comPonto, geoConfianca: 'baixa' };
+      expect(linkGoogleMaps(baixa)).not.toContain('query=-22.63');
+      expect(decodeURIComponent(linkGoogleMaps(baixa))).toContain('Holambra - SP');
+      expect(linkWaze(baixa)).not.toContain('navigate=yes');
+    });
+
+    it('demais confianças navegam pela coordenada', () => {
+      for (const geoConfianca of ['alta', 'media', 'confirmada', 'legado', null]) {
+        expect(linkWaze({ ...comPonto, geoConfianca })).toBe('https://waze.com/ul?ll=-22.63,-47.05&navigate=yes');
+      }
+    });
+
+    it('origem com atribuição por fonte', () => {
+      expect(origemCoordenada('osm', 'alta')).toContain('OpenStreetMap');
+      expect(origemCoordenada('cnefe', 'media')).toContain('IBGE');
+      expect(origemCoordenada('manual_mapa', 'confirmada')).toContain('equipe');
+      expect(origemCoordenada('legado', 'baixa')).toBe('Localização aproximada');
+      expect(origemCoordenada('legado', 'legado')).toBeNull();
+      expect(origemCoordenada(null, null)).toBeNull();
     });
   });
 });
