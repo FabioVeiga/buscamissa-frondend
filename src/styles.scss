@@ -1,6 +1,11 @@
 
 @use "tailwindcss";
 @use './assets/layout/layout';
+
+// O Tailwind 4 varre o repositório inteiro atrás de classes. `edge/` (Worker da
+// publicação seletiva) não é site: sem esta exclusão, palavras do código dele
+// viram utilitários e mudam o CSS publicado.
+@source not "../edge";
 /* You can add global styles to this file, and also import other style files */
 
 /* Importing Bootstrap SCSS file. */

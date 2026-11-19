@@ -36,17 +36,37 @@ import { RedesSociaisService, TipoRedeSocial } from "../../../core/services/rede
 import { getSocialIconFromTipos } from "../../../shared/utils/social-icon.utils";
 import { distanciaMetrosAte } from "../../../shared/utils/distance.utils";
 import { CIDADES_POPULARES } from "../../../core/constants/cidades-populares";
-import { GeolocationService } from "../../../core/services/geolocation.service";
+import { EnderecoCep, GeolocationService, MotivoErroGeo, normalizarCep } from "../../../core/services/geolocation.service";
 import { HomeFavoritosComponent } from "./sections/home-favoritos/home-favoritos.component";
 import { HomeColaboreComponent } from "./sections/home-colabore/home-colabore.component";
 import { HomeCidadesComponent } from "./sections/home-cidades/home-cidades.component";
 import { ChipDestaque } from "./sections/home-chips/home-chips.component";
 import { HomeMissasMapaComponent } from "./sections/home-missas-mapa/home-missas-mapa.component";
 import { linkParoquia } from "../../../shared/utils/church-link.utils";
+import { LoggerService } from "../../../core/services/logger.service";
+import { linkGoogleMaps } from "../../../shared/utils/navegacao.utils";
 import { SeoPaginasService } from "../../../core/services/seo-paginas.service";
 import { SeoService } from "../../../core/services/seo.service";
 import { MetricasService } from "../../../core/services/metricas.service";
 import { BuscaLocalService, IgrejaBusca } from "../../../core/services/busca-local.service";
+
+type StatusGeo = 'idle' | 'loading' | 'found' | 'denied' | 'unavailable' | 'timeout' | 'error';
+
+const STATUS_POR_MOTIVO: Record<MotivoErroGeo, StatusGeo> = {
+  negada: 'denied',
+  indisponivel: 'unavailable',
+  'sem-suporte': 'unavailable',
+  timeout: 'timeout',
+  inseguro: 'error',
+  inesperado: 'error',
+};
+
+const MENSAGEM_GEO: Partial<Record<StatusGeo, string>> = {
+  denied: 'Não foi possível obter sua localização. Permita o acesso à localização nas configurações do navegador ou informe seu CEP.',
+  unavailable: 'Não foi possível obter sua localização. Verifique se a localização do aparelho está ativada ou informe seu CEP.',
+  timeout: 'Não foi possível obter sua localização a tempo. Tente novamente ou informe seu CEP.',
+  error: 'Não foi possível obter sua localização. Tente novamente ou informe seu CEP.',
+};
 
 interface AddressData {
   [uf: string]: {
@@ -86,14 +106,34 @@ export class HomeComponent {
   private _favorites = inject(FavoritesService);
   private _redesSociais = inject(RedesSociaisService);
   private _geo = inject(GeolocationService);
+  private _logger = inject(LoggerService);
   private _seo = inject(SeoService);
   private _seoPaginas = inject(SeoPaginasService);
   private _metricas = inject(MetricasService);
   private _buscaLocal = inject(BuscaLocalService);
   tiposRedeSocial: TipoRedeSocial[] = [];
 
-  /** Status da geolocalização */
-  geoStatus: 'idle' | 'loading' | 'found' | 'denied' | 'error' = 'idle';
+  /**
+   * Status do PEDIDO de localização por GPS. `found` só depois de as coordenadas
+   * chegarem e serem aplicadas; cada falha tem seu estado, para a tela dizer a coisa certa.
+   */
+  geoStatus: StatusGeo = 'idle';
+
+  /** De onde vêm as coordenadas em uso (`_userLat/_userLng`). `null` = nenhuma válida. */
+  origemLocalizacao: 'gps' | 'cep' | null = null;
+
+  /**
+   * CEP consultado na ViaCEP, mesmo quando não foi possível obter coordenadas dele. Com
+   * `origemLocalizacao === 'cep'` a distância vem de uma posição APROXIMADA (a do endereço
+   * do CEP, não a do usuário); sem coordenadas a busca segue só por cidade/UF.
+   */
+  enderecoCep: EnderecoCep | null = null;
+
+  /** Aviso (não bloqueante) sobre o CEP: falha de consulta ou distância indisponível. */
+  avisoCep: string | null = null;
+
+  /** A cidade do GPS não foi reconhecida (≠ falha de localização: as coordenadas existem). */
+  cidadeNaoResolvida = false;
 
   /** Cidade detectada por geoloc */
   cidadeDetectada: { nome: string; uf: string; slug: string } | null = null;
@@ -152,8 +192,8 @@ export class HomeComponent {
 
   setQuickFilter(f: typeof this.quickFilter): void {
     if (f === 'perto') {
-      this._requestGeolocation();
-      this.quickFilter = 'perto';
+      // O chip só fica ativo se a localização de fato chegou: sem ela não há "perto".
+      this._solicitarLocalizacao().then((ok) => { if (ok) this.quickFilter = 'perto'; });
       return;
     }
     if (!this.chipsHabilitados) return;
@@ -538,13 +578,79 @@ export class HomeComponent {
   /** Botão "Usar minha localização" (aba localização) */
   usarMinhaLocalizacao(): void {
     this._analytics.searchStarted();
-    this._requestGeolocation();
-    setTimeout(() => this._scrollToProximas(), 600);
+    this._solicitarLocalizacao().then((ok) => {
+      if (ok) setTimeout(() => this._scrollToProximas(), 300);
+    });
   }
 
-  /** Busca por CEP → geocodifica e lista missas por distância */
+  /** Alimenta o card "Sua cidade": falha de localização ou cidade do GPS não reconhecida. */
+  get geoFalhou(): boolean {
+    return this.mensagemErroGeo !== null || this.cidadeNaoResolvida;
+  }
+
+  /** Mensagem do último pedido de GPS que falhou (`null` se não falhou). */
+  get mensagemErroGeo(): string | null {
+    return MENSAGEM_GEO[this.geoStatus] ?? null;
+  }
+
+  /**
+   * O que a tela mostra como "localização usada". `aproximada` só é verdadeiro para CEP COM
+   * coordenadas: um CEP identifica uma região, não a posição exata de quem busca. Sem
+   * coordenadas válidas não há distância nem ordenação por proximidade, e o texto diz isso.
+   */
+  get localizacaoUsada(): { tipo: 'gps' | 'cep' | 'cep-sem-coordenadas'; texto: string } | null {
+    if (this.origemLocalizacao === 'gps' && this.temGeolocalizacao) {
+      return { tipo: 'gps', texto: 'Localização atualizada. Usando a posição do seu aparelho.' };
+    }
+    const e = this.enderecoCep;
+    if (!e) return null;
+    const onde = [e.logradouro, e.bairro].filter(Boolean).join(', ');
+    const local = `${onde ? onde + ' — ' : ''}${e.localidade}/${e.uf}`;
+    const cep = `${e.cep.slice(0, 5)}-${e.cep.slice(5)}`;
+    if (this.origemLocalizacao === 'cep' && this.temGeolocalizacao) {
+      return { tipo: 'cep', texto: `Usando o CEP ${cep} (${local}). Localização aproximada: o CEP indica a região, não a sua posição exata.` };
+    }
+    return { tipo: 'cep-sem-coordenadas', texto: `Buscando em ${e.localidade}/${e.uf} pelo CEP ${cep}. Não foi possível calcular distâncias a partir dele.` };
+  }
+
+  /**
+   * "Alterar" na faixa de localização: descarta a posição em uso (para não deixar
+   * distâncias de um lugar que o usuário quer trocar) e leva ao campo de CEP.
+   */
+  alterarLocalizacao(): void {
+    this._limparLocalizacao();
+    this.searchTab = 'local';
+    if (!this._isBrowser) return;
+    setTimeout(() => {
+      (document.getElementById('Cep') as HTMLInputElement | null)?.focus();
+      this._scrollToProximas();
+    }, 0);
+  }
+
+  private _limparLocalizacao(): void {
+    // "Alterar" invalida qualquer resposta pendente (GPS ou CEP): nada que estava em voo
+    // pode reaparecer depois de o usuário descartar a localização.
+    this._geracaoLocalizacao++;
+    const tinha = this.temGeolocalizacao;
+    this._userLat = null;
+    this._userLng = null;
+    this.origemLocalizacao = null;
+    this.enderecoCep = null;
+    this.avisoCep = null;
+    if (this.geoStatus === 'found' || this.geoStatus === 'loading') this.geoStatus = 'idle';
+    // O chip "Perto de mim" só vale com localização: sem ela, não pode ficar ativo.
+    if (this.quickFilter === 'perto') this.quickFilter = null;
+    if (!tinha) return;
+    if (this.ordenacaoResultados === 'proximidade') {
+      this.ordenacaoResultados = 'az';
+      if (this.resultsMode && this.churchInfo.length) this.searchFilter(true);
+    }
+    if (!this.resultsMode && this._isBrowser) this._loadProximasMissas();
+  }
+
+  /** Busca por CEP → valida na ViaCEP e abre /buscar (a localização é resolvida lá) */
   onCepSearch(): void {
-    const cepRaw = String(this.form.get('Cep')?.value ?? '').replace(/\D/g, '');
+    const cepRaw = normalizarCep(this.form.get('Cep')?.value);
     if (cepRaw.length !== 8) {
       this._toast.add({
         severity: 'warn',
@@ -555,7 +661,7 @@ export class HomeComponent {
     }
     this.isLoadingCep = true;
     this._analytics.searchStarted();
-    this._geocodeCep(cepRaw);
+    this._validarCepENavegar(cepRaw);
   }
 
   /** Reexecuta a busca com novo raio (chips 2/5/10 km) */
@@ -566,65 +672,106 @@ export class HomeComponent {
     }
   }
 
-  private _geocodeCep(cep: string): void {
-    // ViaCEP → obtém cidade/UF; a busca acontece em /buscar (URL própria,
+  private async _validarCepENavegar(cep: string): Promise<void> {
+    // ViaCEP → valida o CEP e obtém cidade/UF; a busca acontece em /buscar (URL própria,
     // com histórico — o "Voltar" do browser e o link p/ home funcionam)
-    fetch(`https://viacep.com.br/ws/${cep}/json/`)
-      .then(r => r.json())
-      .then((addr: any) => {
-        this.isLoadingCep = false;
-        if (!addr || addr.erro) { this._cepNaoEncontrado(); return; }
-
-        this._router.navigate(['/buscar'], {
-          queryParams: { uf: addr.uf, cidade: addr.localidade, cep, pagina: 1 },
-        });
-      })
-      .catch(() => this._cepNaoEncontrado());
+    const res = await this._geo.consultarCepDetalhado(cep);
+    this.isLoadingCep = false;
+    if (res.status !== 'ok') {
+      this._avisarFalhaCep(res.status);
+      return;
+    }
+    this._router.navigate(['/buscar'], {
+      queryParams: { uf: res.endereco.uf, cidade: res.endereco.localidade, cep, pagina: 1 },
+    });
   }
 
-  /** Tempo máximo esperando a geocodificação do CEP antes de buscar sem proximidade. */
-  private static readonly ESPERA_CEP_MS = 4000;
+  /** Cada falha da consulta de CEP tem a sua mensagem — "não encontrado" só para CEP inexistente. */
+  private _mensagemFalhaCep(status: 'invalido' | 'inexistente' | 'rede' | 'timeout'): { summary: string; detail: string } {
+    switch (status) {
+      case 'invalido':
+        return { summary: 'CEP inválido', detail: 'Digite um CEP com 8 dígitos.' };
+      case 'inexistente':
+        return { summary: 'CEP não encontrado', detail: 'Confira o número ou busque por estado e cidade.' };
+      case 'timeout':
+        return { summary: 'A consulta demorou demais', detail: 'O serviço de CEP não respondeu a tempo. Tente novamente.' };
+      default:
+        return { summary: 'Sem conexão com o serviço de CEP', detail: 'Verifique sua conexão e tente novamente, ou busque por estado e cidade.' };
+    }
+  }
+
+  private _avisarFalhaCep(status: 'invalido' | 'inexistente' | 'rede' | 'timeout'): void {
+    this._toast.add({ severity: 'warn', ...this._mensagemFalhaCep(status) });
+  }
+
+  /** Tempo máximo (consulta do CEP + geocodificação) antes de buscar sem proximidade. */
+  private static readonly ESPERA_CEP_MS = 6000;
 
   /**
-   * Geocodifica o CEP para a API ordenar por proximidade em todas as páginas. Resolve
-   * `true` com as coordenadas gravadas; `false` se o CEP não geocodificar ou demorar mais
-   * que ESPERA_CEP_MS, e nesse caso uma resposta tardia é ignorada (a busca já saiu).
+   * Resolve a localização por CEP para a API ordenar por proximidade em todas as páginas:
+   * valida o CEP na ViaCEP e tenta obter as coordenadas do endereço. Só marca
+   * `origemLocalizacao = 'cep'` (e ordena por proximidade) se vierem coordenadas válidas;
+   * senão a busca segue por cidade/UF, SEM distância, e `avisoCep` diz por quê. Respostas
+   * que chegam depois de ESPERA_CEP_MS são ignoradas (a busca já saiu).
    */
-  private _ordenarPorProximidadeDoCep(cep: string): Promise<boolean> {
-    let expirou = false;
-    const geocodificar = fetch(`https://viacep.com.br/ws/${cep}/json/`)
-      .then(r => r.json())
-      .then((addr: any) => {
-        if (!addr || addr.erro) return false;
-        const query = encodeURIComponent(
-          [addr.logradouro, addr.bairro, addr.localidade, addr.uf, 'Brazil'].filter(Boolean).join(', ')
-        );
-        return fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&countrycodes=br`)
-          .then(r => r.json())
-          .then((arr: any[]) => {
-            const hit = arr?.[0];
-            if (expirou || !hit?.lat || !hit?.lon) return false;
-            this._userLat = parseFloat(hit.lat);
-            this._userLng = parseFloat(hit.lon);
-            this.ordenacaoResultados = 'proximidade';
-            return true;
-          });
-      })
-      .catch(() => false);
-    const limite = new Promise<boolean>(resolve => setTimeout(() => {
-      expirou = true;
-      resolve(false);
-    }, HomeComponent.ESPERA_CEP_MS));
-    return Promise.race([geocodificar, limite]);
-  }
+  private _resolverLocalizacaoPorCep(cep: string): Promise<void> {
+    // O CEP é a última ação explícita: qualquer GPS (ou CEP) anterior, mesmo em andamento,
+    // torna-se obsoleto e suas respostas tardias serão descartadas.
+    const geracao = ++this._geracaoLocalizacao;
+    const atual = () => geracao === this._geracaoLocalizacao;
+    // Um CEP novo substitui qualquer posição anterior: nada de distância do lugar antigo.
+    this._userLat = null;
+    this._userLng = null;
+    this.origemLocalizacao = null;
+    this.enderecoCep = null;
+    this.avisoCep = null;
+    if (this.ordenacaoResultados === 'proximidade') this.ordenacaoResultados = 'az';
+    // ...e o que veio do GPS deixa de valer junto: "Sua cidade", selo "perto de você" e o
+    // chip "Perto de mim" descreveriam um lugar que não é mais a origem da busca. Um
+    // pedido de GPS ainda em 'loading' fica obsoleto (a geração mudou), então o estado
+    // também volta a 'idle': a resposta dele será ignorada.
+    this.geoStatus = 'idle';
+    this.cidadeDetectada = null;
+    this.cidadeNaoResolvida = false;
+    if (this.quickFilter === 'perto') this.quickFilter = null;
 
-  private _cepNaoEncontrado(): void {
-    this.isLoadingCep = false;
-    this._toast.add({
-      severity: 'warn',
-      summary: 'CEP não encontrado',
-      detail: 'Não encontramos igrejas para este CEP. Tente buscar por cidade.',
+    let expirou = false;
+    const resolver = (async () => {
+      const res = await this._geo.consultarCepDetalhado(cep);
+      if (expirou || !atual()) return;
+      if (res.status !== 'ok') {
+        const { summary, detail } = this._mensagemFalhaCep(res.status);
+        this.avisoCep = `${summary}. ${detail}`;
+        return;
+      }
+      this.enderecoCep = res.endereco;
+      const geo = await this._geo.geocodificarCepProvisorio(res.endereco);
+      if (expirou || !atual()) return;
+      if (geo.status !== 'ok') {
+        this.avisoCep = geo.status === 'sem-coordenadas'
+          ? 'Não encontramos as coordenadas deste CEP. Mostrando as igrejas da cidade, sem ordenar por distância.'
+          : 'Não foi possível calcular a distância a partir do CEP agora. Mostrando as igrejas da cidade, sem ordenar por distância.';
+        return;
+      }
+      this._userLat = geo.coords.lat;
+      this._userLng = geo.coords.lng;
+      this.origemLocalizacao = 'cep';
+      this.ordenacaoResultados = 'proximidade';
+    })().catch(() => {
+      if (!expirou && atual()) this.avisoCep = 'Não foi possível consultar o CEP agora. Mostrando as igrejas da cidade.';
     });
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const limite = new Promise<void>(resolve => {
+      timer = setTimeout(() => {
+        expirou = true;
+        if (atual()) {
+          this.avisoCep ??= 'A consulta do CEP demorou demais. Mostrando as igrejas da cidade, sem ordenar por distância.';
+        }
+        resolve();
+      }, HomeComponent.ESPERA_CEP_MS);
+    });
+    // O timer sai de cena assim que a consulta termina: não fica relógio pendente.
+    return Promise.race([resolver, limite]).finally(() => clearTimeout(timer));
   }
 
   private _scrollToProximas(): void {
@@ -785,9 +932,11 @@ export class HomeComponent {
         // Geolocalização e próximas missas são UPGRADE do cliente: no prerender o
         // server assa o estado default estável (sem geo), o browser preenche ao
         // hidratar. Guardar evita crash no SSR e hydration swap.
+        // A localização do aparelho NÃO é pedida aqui: só depois de um clique do usuário
+        // (chip "Perto de mim", "Usar minha localização", CTA). Pedir no load gera aviso de
+        // permissão sem contexto, que o iOS penaliza e o usuário tende a recusar.
         if (!this.resultsMode && this._isBrowser) {
           this._loadProximasMissas();
-          this._requestGeolocation();
           this._agendarRefreshProximas();
         }
       })
@@ -812,32 +961,123 @@ export class HomeComponent {
     });
   }
 
-  private _requestGeolocation(): void {
-    if (!this._isBrowser || !navigator.geolocation) return;
+  /**
+   * Geração da localização: sobe a cada AÇÃO explícita que muda a origem (pedir GPS,
+   * resolver um CEP, "Alterar"). Toda continuação assíncrona guarda a geração em que
+   * nasceu e só mexe no estado se ela ainda for a atual — assim uma resposta antiga
+   * (GPS que demorou, CEP lento) nunca sobrescreve a última escolha do usuário.
+   */
+  private _geracaoLocalizacao = 0;
+
+  /**
+   * Ao destruir a Home (ex.: o CEP válido navega para /buscar) a geração sobe: o GPS ou o CEP
+   * que ela havia pedido e que responde depois torna-se obsoleto e não dispara reverse
+   * geocode, próximas missas nem escreve estado numa instância que já saiu de cena.
+   */
+  private readonly _invalidarLocalizacaoAoDestruir = this._destroyRef.onDestroy(() => {
+    this._geracaoLocalizacao++;
+  });
+
+  /**
+   * Pedido de GPS em andamento, com a geração em que nasceu. Cliques repetidos
+   * compartilham a promessa SÓ enquanto a geração não mudou; se um CEP ou "Alterar"
+   * veio depois, o pedido é obsoleto e um novo clique cria um pedido novo.
+   */
+  private _pedidoGps: { geracao: number; promessa: Promise<boolean> } | null = null;
+
+  /** Registra só o erro técnico e o contexto: nunca coordenadas, CEP ou dado do usuário. */
+  private _registrarFalha(erro: unknown, contexto: string): void {
+    this._logger.logError(erro instanceof Error ? erro : 'erro não identificado', contexto);
+  }
+
+  /**
+   * Pede a posição do aparelho (SEMPRE a partir de um clique). Resolve `true` só quando as
+   * coordenadas chegaram, foram validadas e aplicadas; `false` em qualquer falha ou quando
+   * a resposta ficou obsoleta (outra ação explícita veio depois). O motivo da falha fica em
+   * `geoStatus`. Não repete o pedido se já há coordenadas de GPS em uso ou um pedido da
+   * geração atual em andamento; depois de uma falha, chamar de novo é a "nova tentativa".
+   */
+  private _solicitarLocalizacao(): Promise<boolean> {
+    if (!this._isBrowser) return Promise.resolve(false);
+    if (this._pedidoGps && this._pedidoGps.geracao === this._geracaoLocalizacao) {
+      return this._pedidoGps.promessa;
+    }
+    if (this.origemLocalizacao === 'gps' && this.temGeolocalizacao) {
+      this.geoStatus = 'found';
+      return Promise.resolve(true);
+    }
+
+    const geracao = ++this._geracaoLocalizacao;
+    const atual = () => geracao === this._geracaoLocalizacao;
     this.geoStatus = 'loading';
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        this._userLat = pos.coords.latitude;
-        this._userLng = pos.coords.longitude;
-        this._reverseGeocode(pos.coords.latitude, pos.coords.longitude);
-        this._loadProximasMissas(pos.coords.latitude, pos.coords.longitude);
+    const promessa: Promise<boolean> = this._geo.obterPosicaoAtual().then(
+      ({ lat, lng }) => {
+        if (!atual()) return false; // obsoleta: o usuário já fez outra escolha
+        this._userLat = lat;
+        this._userLng = lng;
+        this.origemLocalizacao = 'gps';
+        this.enderecoCep = null;
+        this.avisoCep = null;
+        this.cidadeNaoResolvida = false;
         this.geoStatus = 'found';
+        // "Sua cidade" e "Missas acontecendo agora" só existem na home; em /buscar a
+        // posição serve à ordenação, e esses dois pedidos seriam trabalho jogado fora.
+        // Se um desses efeitos secundários lançar erro síncrono, a posição JÁ foi obtida e
+        // aplicada: o erro não pode virar rejeição (que deixaria o estado preso em
+        // 'loading'), só degrada a parte secundária da tela.
+        if (!this.resultsMode) {
+          try {
+            this._reverseGeocode(lat, lng);
+          } catch (e) {
+            this._registrarFalha(e, 'home:geo:reverseGeocode');
+            this.cidadeNaoResolvida = true;
+          }
+          try {
+            this._loadProximasMissas(lat, lng);
+          } catch (e) {
+            this._registrarFalha(e, 'home:geo:proximasMissas');
+            this.isLoadingProximas = false;
+          }
+        }
+        return true;
       },
-      () => { this.geoStatus = 'denied'; }
-    );
+      (err: unknown) => {
+        if (!atual()) return false; // falha de um pedido obsoleto não toca o estado atual
+        const motivo = (err as { motivo?: MotivoErroGeo } | null)?.motivo ?? 'inesperado';
+        this.geoStatus = STATUS_POR_MOTIVO[motivo] ?? 'error';
+        return false;
+      },
+    ).catch(() => {
+      // Rede de segurança: qualquer falha não prevista sai de 'loading' em vez de ficar presa.
+      if (atual() && this.geoStatus === 'loading') this.geoStatus = 'error';
+      return false;
+    }).finally(() => {
+      // Só limpa o SEU registro: um pedido obsoleto que termina tarde não apaga o do pedido novo.
+      if (this._pedidoGps?.promessa === promessa) this._pedidoGps = null;
+    });
+    this._pedidoGps = { geracao, promessa };
+    return promessa;
   }
 
   /** Args da última carga — usados pelo refresh periódico para repetir a mesma busca. */
   private _ultimaBuscaProximas: { lat?: number | null; lng?: number | null; raioKm: number } | null = null;
   private _ultimaCargaProximasEm = 0;
 
+  /** Número da carga mais recente de "próximas missas": respostas de cargas anteriores são descartadas. */
+  private _cargaProximasSeq = 0;
+
   private _loadProximasMissas(lat?: number | null, lng?: number | null, raioKm = 10, silencioso = false): void {
     this._ultimaBuscaProximas = { lat, lng, raioKm };
+    const seq = ++this._cargaProximasSeq;
+    const atual = () => seq === this._cargaProximasSeq;
     // No refresh automático não mostramos skeleton: a lista já está na tela e
     // piscar o loading a cada ciclo seria pior que a espera invisível.
     if (!silencioso) this.isLoadingProximas = true;
     this._churchService.proximasMissas(lat, lng, raioKm).subscribe({
       next: (res: any) => {
+        // Duas cargas em voo podem terminar fora de ordem (ex.: a do GPS descartado depois
+        // de "Alterar"): só a mais recente escreve na tela e controla o loading.
+        if (!atual()) return;
         this._ultimaCargaProximasEm = Date.now();
         const items: any[] = res?.data ?? res ?? [];
         this.proximasMissasCards = items.slice(0, 5).map((item: any) => ({
@@ -872,7 +1112,7 @@ export class HomeComponent {
         }));
         this.isLoadingProximas = false;
       },
-      error: () => { this.isLoadingProximas = false; /* silencioso — seção simplesmente não aparece */ },
+      error: () => { if (atual()) this.isLoadingProximas = false; /* silencioso — seção simplesmente não aparece */ },
     });
   }
 
@@ -928,25 +1168,21 @@ export class HomeComponent {
       this._router.navigate(['/missas', this.cidadeDetectada.uf.toLowerCase(), this.cidadeDetectada.slug]);
       return;
     }
-    if (!navigator.geolocation) return;
+    if (!this._isBrowser || this.isLoadingGeoNav) return;
     this.isLoadingGeoNav = true;
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        this._userLat = pos.coords.latitude;
-        this._userLng = pos.coords.longitude;
-        this._reverseGeocode(pos.coords.latitude, pos.coords.longitude);
-        // Aguarda a cidade ser detectada (máx 5s) depois navega
-        const wait = setInterval(() => {
-          if (this.cidadeDetectada) {
-            clearInterval(wait);
-            this.isLoadingGeoNav = false;
-            this._router.navigate(['/missas', this.cidadeDetectada.uf.toLowerCase(), this.cidadeDetectada.slug]);
-          }
-        }, 200);
-        setTimeout(() => { clearInterval(wait); this.isLoadingGeoNav = false; }, 5000);
-      },
-      () => { this.isLoadingGeoNav = false; }
-    );
+    this._solicitarLocalizacao().then((ok) => {
+      if (!ok) { this.isLoadingGeoNav = false; return; }
+      // `_solicitarLocalizacao` já disparou o reverse geocode. Aguarda a cidade ser
+      // detectada (máx 5s) e navega.
+      const wait = setInterval(() => {
+        if (this.cidadeDetectada) {
+          clearInterval(wait);
+          this.isLoadingGeoNav = false;
+          this._router.navigate(['/missas', this.cidadeDetectada.uf.toLowerCase(), this.cidadeDetectada.slug]);
+        }
+      }, 200);
+      setTimeout(() => { clearInterval(wait); this.isLoadingGeoNav = false; }, 5000);
+    });
   }
 
   // Sprint 3B — Minhas Paróquias (localStorage)
@@ -973,11 +1209,13 @@ export class HomeComponent {
   }
 
   onNavigateClick(card: MassCardData): void {
-    const lat = card.latitude;
-    const lng = card.longitude;
-    const url = lat && lng
-      ? `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
-      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(card.churchName)}`;
+    const url = linkGoogleMaps({
+      nome: card.churchName,
+      localidade: card.localidade,
+      uf: card.uf,
+      latitude: card.latitude,
+      longitude: card.longitude,
+    });
     window.open(url, '_blank', 'noopener');
     this._analytics.getDirections(card.churchName);
   }
@@ -1087,23 +1325,29 @@ export class HomeComponent {
    * não shell CSR — por isso, sem slug conhecido, preferimos não navegar.
    */
   private _reverseGeocode(lat: number, lng: number): void {
+    // Resposta de um GPS que já não é a origem (CEP ou "Alterar" vieram depois) não pode
+    // reaparecer em "Sua cidade" nem alimentar a navegação para a cidade antiga.
+    const geracao = this._geracaoLocalizacao;
+    const atual = () => geracao === this._geracaoLocalizacao;
     Promise.all([this._geo.reverseGeocode(lat, lng), this._carregarCidadesPorUf()])
       .then(([addr, cidadesPorUf]) => {
-        if (!addr) { this.geoStatus = 'error'; return; }
+        if (!atual()) return;
+        // Falha aqui NÃO é falha de localização: as coordenadas já existem. Só o card
+        // "Sua cidade" fica sem cidade (cidadeNaoResolvida), e `geoStatus` segue 'found'.
+        if (!addr) { this.cidadeNaoResolvida = true; return; }
         const nomeCidade = addr.city || addr.town || addr.village || addr.municipality || '';
         const uf = this._resolverUf(addr);
-        if (!uf || !nomeCidade) { this.geoStatus = 'error'; return; }
+        if (!uf || !nomeCidade) { this.cidadeNaoResolvida = true; return; }
         // Só cidades que têm página gerada — o índice de `/v2/seo/estados` é o mesmo
         // conjunto que o prerender publica, então nenhum link daqui aponta para o vazio.
         const cidadesDoEstado = cidadesPorUf.get(uf) ?? [];
         const match = cidadesDoEstado.find(c => this._norm(c.nome) === this._norm(nomeCidade));
 
-        if (!match) { this.geoStatus = 'error'; return; }
+        if (!match) { this.cidadeNaoResolvida = true; return; }
 
         this.cidadeDetectada = { nome: match.nome, uf, slug: match.slug };
-        this.geoStatus = 'found';
       })
-      .catch(() => { this.geoStatus = 'error'; });
+      .catch(() => { if (atual()) this.cidadeNaoResolvida = true; });
   }
 
   private _norm(s: string): string {
@@ -1166,7 +1410,7 @@ export class HomeComponent {
       this.searchTab = 'local';
       this.form.get('Cep')?.setValue(p['cep']);
       this.isLoading = true;
-      this._ordenarPorProximidadeDoCep(String(p['cep'])).then(() => {
+      this._resolverLocalizacaoPorCep(normalizarCep(p['cep'])).then(() => {
         this.isLoading = false;
         this.searchFilter(false);
       });
@@ -1611,23 +1855,20 @@ export class HomeComponent {
   }
 
   private _pedirLocalizacaoParaOrdenar(): void {
-    const avisar = () => this._toast.add({
-      severity: 'info',
-      summary: 'Localização indisponível',
-      detail: 'Permita a localização no navegador ou busque pelo CEP para ver as mais próximas.',
-    });
-    if (!this._isBrowser || !navigator.geolocation) { avisar(); return; }
-    this.geoStatus = 'loading';
-    navigator.geolocation.getCurrentPosition(
-      pos => {
-        this._userLat = pos.coords.latitude;
-        this._userLng = pos.coords.longitude;
-        this.geoStatus = 'found';
+    this._solicitarLocalizacao().then((ok) => {
+      if (ok) {
         this.setOrdenacaoResultados('proximidade');
-      },
-      () => { this.geoStatus = 'denied'; avisar(); },
-      { timeout: 10000, maximumAge: 300000 },
-    );
+        return;
+      }
+      // Sem mensagem de erro = o pedido ficou obsoleto (o usuário escolheu outra origem
+      // depois): não há falha a avisar.
+      if (!this.mensagemErroGeo) return;
+      this._toast.add({
+        severity: 'info',
+        summary: 'Localização indisponível',
+        detail: this.mensagemErroGeo,
+      });
+    });
   }
 
   get churchInfoOrdenada(): any[] {

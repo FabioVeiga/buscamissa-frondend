@@ -12,8 +12,9 @@ import { MassCardData } from "../../../shared/models/mass-card.model";
 import { Mass } from "../../../core/interfaces/church.interface";
 import { getMissaAgoraUrgency, getCountdownLabel } from "../../../shared/utils/mass-time.utils";
 import { normalizarTexto } from "../../../shared/utils/busca.utils";
+import { linkGoogleMaps } from "../../../shared/utils/navegacao.utils";
 import { CIDADES_POPULARES_MISSA_AGORA } from "../../../core/constants/cidades-populares";
-import { GeolocationService } from "../../../core/services/geolocation.service";
+import { ErroGeolocalizacao, GeolocationService } from "../../../core/services/geolocation.service";
 import { MetricasService, PaginaMetrica } from "../../../core/services/metricas.service";
 import { MessageService } from "primeng/api";
 import { PrimeNgModule } from "../../../shared/primeng.module";
@@ -148,23 +149,37 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
     this.horaAtual = this._formatarHora(new Date());
   }
 
+  /**
+   * Geração da localização em uso. Cada ação explícita do usuário (GPS ou CEP) abre uma
+   * geração nova; respostas de gerações anteriores são descartadas. Sem isso, um GPS lento
+   * (o aviso de permissão pode ficar aberto até 25 s) sobrescreveria o CEP digitado depois.
+   */
+  private _geracao = 0;
+
   private _pedirGeolocalizacao(): void {
     this.geoStatus = 'loading';
+    this.isLoadingCep = false; // um CEP ainda em voo ficou obsoleto: não deixa o botão preso
+    const geracao = ++this._geracao;
+    const atual = () => geracao === this._geracao;
     this._geo.obterPosicaoAtual()
       .then(({ lat, lng }) => {
+        if (!atual()) return; // o usuário já escolheu outra origem (ex.: CEP)
         this.permissaoNegadaPeloBrowser = false;
         this.geoStatus = 'found';
         this._buscarMissas(lat, lng);
         this._reverseGeocode(lat, lng);
         this._loadCidadesProximas(lat, lng);
       })
-      .catch((err: GeolocationPositionError | Error) => {
-        this.geoStatus = 'denied';
-        const code = (err as GeolocationPositionError)?.code;
-        this.permissaoNegadaPeloBrowser = code === 1;
-        // Posição indisponível (2) ou timeout (3): não foi o usuário que negou —
-        // avisa e direciona para o fallback de cidade/CEP, sem culpar a permissão.
-        if (code === 2 || code === 3) {
+      .catch((err: unknown) => {
+        if (!atual()) return; // falha de um pedido obsoleto não toca o estado atual
+        // Só `negada` é recusa do usuário. Posição indisponível, timeout, página sem HTTPS,
+        // navegador sem suporte e erro inesperado NÃO são "permissão negada": ficam em
+        // 'error', sem culpar a permissão, e o aviso aponta o fallback de cidade/CEP.
+        const motivo = err instanceof ErroGeolocalizacao ? err.motivo : 'inesperado';
+        const negada = motivo === 'negada';
+        this.geoStatus = negada ? 'denied' : 'error';
+        this.permissaoNegadaPeloBrowser = negada;
+        if (!negada) {
           this._toast.add({
             severity: 'info',
             summary: 'Não conseguimos te localizar',
@@ -176,8 +191,13 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
 
   private _buscarMissas(lat: number, lng: number): void {
     this.isLoading = true;
+    // Uma busca já em voo pode terminar depois de o usuário trocar de origem: só a da
+    // geração atual escreve no estado (a mais nova controla o `isLoading`).
+    const geracao = this._geracao;
+    const atual = () => geracao === this._geracao;
     this._church.proximasMissas(lat, lng, 10).subscribe({
       next: (res: any) => {
+        if (!atual()) return;
         const items: any[] = res?.data ?? res ?? [];
         this.missas = items.slice(0, 10).map((item: any) => ({
           churchId: item.igrejaId,
@@ -203,14 +223,15 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
           longitude: item.longitude,
         }));
       },
-      error: () => { this.geoStatus = 'error'; },
-      complete: () => { this.isLoading = false; },
+      error: () => { if (atual()) this.geoStatus = 'error'; },
+      complete: () => { if (atual()) this.isLoading = false; },
     });
   }
 
   private _reverseGeocode(lat: number, lng: number): void {
+    const geracao = this._geracao;
     this._geo.reverseGeocode(lat, lng).then((addr) => {
-      if (!addr) return;
+      if (!addr || geracao !== this._geracao) return;
       this.cidadeDetectada = addr.city || addr.town || addr.village || null;
       this.cidadeDetectadaUf = addr.state_code?.toUpperCase?.() || null;
     });
@@ -227,45 +248,61 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
       });
       return;
     }
+    // Um CEP novo invalida qualquer GPS ainda em voo (ver `_geracao`).
+    const geracao = ++this._geracao;
+    const atual = () => geracao === this._geracao;
+    const anterior: GeoStatus = this.geoStatus === 'loading' ? 'idle' : this.geoStatus;
     this.isLoadingCep = true;
     this.geoStatus = 'loading';
     this._analytics.searchStarted();
-    fetch(`https://viacep.com.br/ws/${cep}/json/`)
-      .then(r => r.json())
-      .then((addr: any) => {
-        if (!addr || addr.erro) {
-          this._cepOuCidadeNaoEncontrada('Confira o CEP ou busque pela cidade.');
-          return;
-        }
-        const query = encodeURIComponent(
-          [addr.logradouro, addr.bairro, addr.localidade, addr.uf, 'Brazil'].filter(Boolean).join(', ')
-        );
-        this._geocodeEBuscar(query, addr.localidade, addr.uf, 'Confira o CEP ou busque pela cidade.');
-      })
-      .catch(() => this._cepOuCidadeNaoEncontrada('Não foi possível buscar o CEP.'))
-      .finally(() => { this.isLoadingCep = false; });
+    void this._resolverCep(cep, atual, anterior).finally(() => {
+      if (atual()) this.isLoadingCep = false;
+    });
   }
 
-  /** Geocodifica um endereço/cidade via Nominatim e roda a mesma busca da geolocalização (raio 10km / próximas 2h) */
-  private _geocodeEBuscar(query: string, cidadeNome: string, uf: string, msgFalha: string): void {
-    fetch(`https://nominatim.openstreetmap.org/search?q=${query}&format=json&limit=1&countrycodes=br`)
-      .then(r => r.json())
-      .then((arr: any[]) => {
-        const hit = arr?.[0];
-        if (!hit?.lat || !hit?.lon) {
-          this._cepOuCidadeNaoEncontrada(msgFalha);
-          return;
-        }
-        const lat = parseFloat(hit.lat);
-        const lng = parseFloat(hit.lon);
-        this.cidadeDetectada = cidadeNome;
-        this.cidadeDetectadaUf = uf?.toUpperCase() || null;
-        this.geoStatus = 'found';
-        this.permissaoNegadaPeloBrowser = false;
-        this._buscarMissas(lat, lng);
-        this._loadCidadesProximas(lat, lng);
-      })
-      .catch(() => this._cepOuCidadeNaoEncontrada(msgFalha));
+  /**
+   * CEP → endereço (ViaCEP) → coordenada (Nominatim) → mesma busca da geolocalização
+   * (raio de 10 km / próximas 2 h). As duas consultas passam pelo GeolocationService, que
+   * tem prazo e separa "CEP não existe" de "serviço fora do ar".
+   */
+  private async _resolverCep(cep: string, atual: () => boolean, anterior: GeoStatus): Promise<void> {
+    const consulta = await this._geo.consultarCepDetalhado(cep);
+    if (!atual()) return;
+    if (consulta.status === 'invalido' || consulta.status === 'inexistente') {
+      this._cepOuCidadeNaoEncontrada('Confira o CEP ou busque pela cidade.');
+      return;
+    }
+    if (consulta.status !== 'ok') return this._falhaDeServicoCep(anterior);
+
+    const geocodificacao = await this._geo.geocodificarCepProvisorio(consulta.endereco);
+    if (!atual()) return;
+    if (geocodificacao.status === 'sem-coordenadas') {
+      this._cepOuCidadeNaoEncontrada('Confira o CEP ou busque pela cidade.');
+      return;
+    }
+    if (geocodificacao.status !== 'ok') return this._falhaDeServicoCep(anterior);
+
+    const { lat, lng } = geocodificacao.coords;
+    this.cidadeDetectada = consulta.endereco.localidade;
+    this.cidadeDetectadaUf = consulta.endereco.uf?.toUpperCase() || null;
+    this.geoStatus = 'found';
+    this.permissaoNegadaPeloBrowser = false;
+    this._buscarMissas(lat, lng);
+    this._loadCidadesProximas(lat, lng);
+  }
+
+  /**
+   * Serviço de CEP/geocodificação fora do ar ou lento: não é "CEP sem resultado". Mantém
+   * o que a tela já mostrava (sem fingir uma busca vazia) e orienta a tentar de novo.
+   */
+  private _falhaDeServicoCep(anterior: GeoStatus): void {
+    this.geoStatus = anterior;
+    this.isLoading = false;
+    this._toast.add({
+      severity: 'warn',
+      summary: 'Não conseguimos buscar o CEP agora',
+      detail: 'O serviço de CEP não respondeu. Tente de novo em instantes ou escolha uma cidade abaixo.',
+    });
   }
 
   /** Mesma tela de "sem resultados" da geolocalização — sem beco sem saída */
@@ -348,11 +385,13 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
   }
 
   onNavigate(card: MassCardData): void {
-    const lat = card.latitude;
-    const lng = card.longitude;
-    const url = lat && lng
-      ? `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
-      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(card.churchName)}`;
+    const url = linkGoogleMaps({
+      nome: card.churchName,
+      localidade: card.localidade,
+      uf: card.uf,
+      latitude: card.latitude,
+      longitude: card.longitude,
+    });
     window.open(url, '_blank', 'noopener');
     this._analytics.getDirections(card.churchName);
   }
@@ -397,8 +436,10 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
   }
 
   private _loadCidadesProximas(lat: number, lng: number): void {
+    const geracao = this._geracao;
     this._church.cidadesProximas(lat, lng).subscribe({
       next: (res: any) => {
+        if (geracao !== this._geracao) return;
         const items: any[] = res?.data ?? res ?? [];
         const cidadesMapa = new Map<string, any>();
         items.forEach((item: any) => {

@@ -1,0 +1,41 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://buscamissa.com.br/schemas/manifesto-cidade-1.json",
+  "title": "Manifesto de ativação de cidade (esquema 1)",
+  "description": "Arquivo ativo/{uf}/{cidade}.json. Fonte executável do contrato: edge/src/manifesto.mjs. Regras entre campos (slug em uma única lista, lápide vazia, redir para si mesmo, semPagina exige shell) só existem lá.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["esquema", "uf", "cidade", "versao", "execucao", "commit", "geradoEm", "reversao", "lapide", "paroquias", "semPagina", "redir"],
+  "$defs": {
+    "slug": { "type": "string", "maxLength": 200, "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$" },
+    "lote": { "type": "string", "pattern": "^[A-Za-z0-9][A-Za-z0-9._-]{0,63}$" },
+    "caminhoBlob": { "type": "string", "maxLength": 512, "pattern": "^[A-Za-z0-9_][A-Za-z0-9._-]*(?:/[A-Za-z0-9_][A-Za-z0-9._-]*)*$" }
+  },
+  "properties": {
+    "esquema": { "const": 1 },
+    "uf": { "enum": ["ac", "al", "am", "ap", "ba", "ce", "df", "es", "go", "ma", "mg", "ms", "mt", "pa", "pb", "pe", "pi", "pr", "rj", "rn", "ro", "rr", "rs", "sc", "se", "sp", "to"] },
+    "cidade": { "$ref": "#/$defs/slug" },
+    "versao": { "type": "integer", "minimum": 0, "maximum": 9007199254740991 },
+    "execucao": { "type": "string", "pattern": "^[A-Za-z0-9._-]{1,100}$" },
+    "commit": { "type": "string", "pattern": "^[0-9a-f]{7,40}$" },
+    "geradoEm": { "type": "string", "format": "date-time" },
+    "reversao": { "type": "boolean" },
+    "lapide": { "type": "boolean" },
+    "pagina": { "$ref": "#/$defs/lote" },
+    "shell": { "$ref": "#/$defs/caminhoBlob" },
+    "paroquias": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/slug" },
+      "additionalProperties": { "$ref": "#/$defs/lote" }
+    },
+    "semPagina": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/slug" }
+    },
+    "redir": {
+      "type": "object",
+      "propertyNames": { "$ref": "#/$defs/slug" },
+      "additionalProperties": { "type": "string", "pattern": "^/paroquia/[a-z]{2}/[a-z0-9]+(?:-[a-z0-9]+)*/[a-z0-9]+(?:-[a-z0-9]+)*$" }
+    }
+  }
+}

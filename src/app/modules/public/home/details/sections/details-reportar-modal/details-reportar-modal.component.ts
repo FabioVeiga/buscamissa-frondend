@@ -23,6 +23,8 @@ interface ItemReportarProblema {
 function criarItensReportarProblema(): ItemReportarProblema[] {
   return [
     { key: "endereco", label: "Endereço", icon: "pi-map-marker", emoji: "📍", placeholder: "Descreva o que está incorreto ou informe o endereço correto.", marcado: false, texto: "" },
+    // O título "Localização no mapa" identifica o relato na fila de revisão do admin (não mude sem ajustar lá).
+    { key: "localizacao", label: "Localização no mapa", icon: "pi-map", emoji: "🗺️", subtitle: "O pino do mapa ou o \"Como chegar\" leva ao lugar errado.", placeholder: "Onde a igreja fica de verdade? Um ponto de referência ou um link do mapa ajuda muito.", marcado: false, texto: "" },
     { key: "contato", label: "Dados de contato", icon: "pi-phone", emoji: "☎️", subtitle: "Telefone, e-mail, Instagram, Facebook ou outras redes sociais.", placeholder: "Informe quais dados estão incorretos ou quais são os dados corretos.", marcado: false, texto: "" },
     { key: "nomeIgreja", label: "Nome da igreja", icon: "pi-building", emoji: "⛪", placeholder: "Informe o nome correto da igreja, comunidade ou paróquia.", marcado: false, texto: "" },
     { key: "incompleta", label: "Página incompleta", icon: "pi-file", emoji: "📄", placeholder: "Quais informações você acredita que estão faltando?", marcado: false, texto: "" },

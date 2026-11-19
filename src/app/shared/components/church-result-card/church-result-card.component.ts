@@ -16,6 +16,7 @@ import {
 } from "../../utils/proxima-missa-card.utils";
 import { distanciaMetrosAte } from "../../utils/distance.utils";
 import { linkParoquia } from "../../utils/church-link.utils";
+import { linkGoogleMaps } from "../../utils/navegacao.utils";
 
 /**
  * Card de igreja reutilizável (resultado de busca / página de cidade).
@@ -153,11 +154,13 @@ export class ChurchResultCardComponent implements OnInit {
   comoChegar(event: MouseEvent): void {
     event.preventDefault();
     event.stopPropagation();
-    const lat = this.igreja?.endereco?.latitude;
-    const lng = this.igreja?.endereco?.longitude;
-    const url = lat && lng
-      ? `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
-      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(this.igreja.nome + " " + this.cidadeNome)}`;
+    const e = this.igreja?.endereco;
+    const url = linkGoogleMaps({
+      ...e,
+      nome: this.igreja?.nome,
+      localidade: e?.localidade || this.cidadeNome,
+      uf: e?.uf || this.uf,
+    });
     window.open(url, "_blank", "noopener");
   }
 
