@@ -14,7 +14,7 @@ import { getMissaAgoraUrgency, getCountdownLabel } from "../../../shared/utils/m
 import { normalizarTexto } from "../../../shared/utils/busca.utils";
 import { linkGoogleMaps } from "../../../shared/utils/navegacao.utils";
 import { CIDADES_POPULARES_MISSA_AGORA } from "../../../core/constants/cidades-populares";
-import { GeolocationService } from "../../../core/services/geolocation.service";
+import { ErroGeolocalizacao, GeolocationService } from "../../../core/services/geolocation.service";
 import { MetricasService, PaginaMetrica } from "../../../core/services/metricas.service";
 import { MessageService } from "primeng/api";
 import { PrimeNgModule } from "../../../shared/primeng.module";
@@ -159,13 +159,15 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
         this._reverseGeocode(lat, lng);
         this._loadCidadesProximas(lat, lng);
       })
-      .catch((err: GeolocationPositionError | Error) => {
-        this.geoStatus = 'denied';
-        const code = (err as GeolocationPositionError)?.code;
-        this.permissaoNegadaPeloBrowser = code === 1;
-        // Posição indisponível (2) ou timeout (3): não foi o usuário que negou —
-        // avisa e direciona para o fallback de cidade/CEP, sem culpar a permissão.
-        if (code === 2 || code === 3) {
+      .catch((err: unknown) => {
+        // Só `negada` é recusa do usuário. Posição indisponível, timeout, página sem HTTPS,
+        // navegador sem suporte e erro inesperado NÃO são "permissão negada": ficam em
+        // 'error', sem culpar a permissão, e o aviso aponta o fallback de cidade/CEP.
+        const motivo = err instanceof ErroGeolocalizacao ? err.motivo : 'inesperado';
+        const negada = motivo === 'negada';
+        this.geoStatus = negada ? 'denied' : 'error';
+        this.permissaoNegadaPeloBrowser = negada;
+        if (!negada) {
           this._toast.add({
             severity: 'info',
             summary: 'Não conseguimos te localizar',
