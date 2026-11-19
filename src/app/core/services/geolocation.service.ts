@@ -119,6 +119,8 @@ export class GeolocationService {
   /** Prazos das consultas de CEP (ViaCEP e geocodificação provisória). */
   private static readonly TIMEOUT_CEP_MS = 8_000;
   private static readonly TIMEOUT_GEOCODIFICACAO_CEP_MS = 4_000;
+  /** Reverse geocoding e geocodificação de texto: são complemento da tela, não podem prendê-la. */
+  private static readonly TIMEOUT_NOMINATIM_MS = 6_000;
 
   /** Pedido em andamento: cliques repetidos compartilham UM aviso de permissão. */
   private _posicaoEmAndamento: Promise<Coordenadas> | null = null;
@@ -191,29 +193,20 @@ export class GeolocationService {
 
   /** Reverse geocoding: coordenadas → endereço (objeto `address` do Nominatim). */
   async reverseGeocode(lat: number, lng: number): Promise<NominatimAddress | null> {
-    try {
-      const url = `${GeolocationService.NOMINATIM}/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=pt-BR`;
-      const data = await fetch(url).then((r) => r.json());
-      return (data?.address ?? null) as NominatimAddress | null;
-    } catch (e) {
-      this.logger.logError(e, 'geo:reverseGeocode');
-      return null;
-    }
+    const url = `${GeolocationService.NOMINATIM}/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=pt-BR`;
+    const dados = await this._buscarJson(url, GeolocationService.TIMEOUT_NOMINATIM_MS, 'geo:reverseGeocode');
+    if (dados.status !== 'ok') return null;
+    const corpo = dados.corpo as { address?: NominatimAddress } | null;
+    return corpo?.address ?? null;
   }
 
   /** Geocoding: texto (cidade/endereço) → primeira coordenada no Brasil. */
   async geocodeEndereco(query: string): Promise<Coordenadas | null> {
-    try {
-      const url = `${GeolocationService.NOMINATIM}/search?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=br`;
-      const arr = await fetch(url).then((r) => r.json());
-      if (Array.isArray(arr) && arr[0]?.lat && arr[0]?.lon) {
-        return { lat: Number(arr[0].lat), lng: Number(arr[0].lon) };
-      }
-      return null;
-    } catch (e) {
-      this.logger.logError(e, 'geo:geocodeEndereco');
-      return null;
-    }
+    const url = `${GeolocationService.NOMINATIM}/search?q=${encodeURIComponent(query)}&format=json&limit=1&countrycodes=br`;
+    const dados = await this._buscarJson(url, GeolocationService.TIMEOUT_NOMINATIM_MS, 'geo:geocodeEndereco');
+    if (dados.status !== 'ok') return null;
+    const hit = Array.isArray(dados.corpo) ? dados.corpo[0] : null;
+    return hit?.lat && hit?.lon ? { lat: Number(hit.lat), lng: Number(hit.lon) } : null;
   }
 
   /** Consulta de CEP na ViaCEP. Retorna null em erro ou CEP inexistente (não distingue o motivo). */

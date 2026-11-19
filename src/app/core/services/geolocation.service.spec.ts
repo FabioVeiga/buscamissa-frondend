@@ -282,6 +282,74 @@ describe('GeolocationService', () => {
     });
   });
 
+  describe('reverseGeocode', () => {
+    it('devolve o `address` do Nominatim', async () => {
+      spyOn(window, 'fetch').and.returnValue(resposta({ address: { city: 'Maringá', state_code: 'pr' } }));
+
+      expect(await service.reverseGeocode(-23.4, -51.9)).toEqual({ city: 'Maringá', state_code: 'pr' } as any);
+    });
+
+    it('sem resposta em 6 s aborta e devolve null (não prende a tela)', async () => {
+      jasmine.clock().install();
+      try {
+        spyOn(window, 'fetch').and.callFake(fetchPendente as any);
+        const pedido = service.reverseGeocode(-23.4, -51.9);
+
+        jasmine.clock().tick(6_000);
+
+        expect(await pedido).toBeNull();
+      } finally {
+        jasmine.clock().uninstall();
+      }
+    });
+
+    it('HTTP de erro (ok=false) devolve null em vez de ler o corpo de erro como endereço', async () => {
+      spyOn(window, 'fetch').and.returnValue(resposta({ address: { city: 'X' } }, { ok: false, status: 429 }));
+
+      expect(await service.reverseGeocode(-23.4, -51.9)).toBeNull();
+    });
+
+    it('falha de rede devolve null', async () => {
+      spyOn(window, 'fetch').and.returnValue(Promise.reject(new TypeError('Failed to fetch')));
+
+      expect(await service.reverseGeocode(-23.4, -51.9)).toBeNull();
+    });
+  });
+
+  describe('geocodeEndereco', () => {
+    it('devolve a primeira coordenada', async () => {
+      spyOn(window, 'fetch').and.returnValue(resposta([{ lat: '-23.5', lon: '-46.6' }]));
+
+      expect(await service.geocodeEndereco('São Paulo')).toEqual({ lat: -23.5, lng: -46.6 });
+    });
+
+    it('sem resultado devolve null', async () => {
+      spyOn(window, 'fetch').and.returnValue(resposta([]));
+
+      expect(await service.geocodeEndereco('lugar nenhum')).toBeNull();
+    });
+
+    it('sem resposta em 6 s aborta e devolve null', async () => {
+      jasmine.clock().install();
+      try {
+        spyOn(window, 'fetch').and.callFake(fetchPendente as any);
+        const pedido = service.geocodeEndereco('São Paulo');
+
+        jasmine.clock().tick(6_000);
+
+        expect(await pedido).toBeNull();
+      } finally {
+        jasmine.clock().uninstall();
+      }
+    });
+
+    it('HTTP de erro (ok=false) devolve null', async () => {
+      spyOn(window, 'fetch').and.returnValue(resposta([{ lat: '1', lon: '2' }], { ok: false, status: 503 }));
+
+      expect(await service.geocodeEndereco('São Paulo')).toBeNull();
+    });
+  });
+
   describe('normalizarCep', () => {
     it('mantém só dígitos', () => {
       expect(normalizarCep('01001-000')).toBe('01001000');
