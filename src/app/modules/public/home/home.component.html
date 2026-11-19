@@ -163,9 +163,17 @@
             <i class="pi" [ngClass]="geoStatus === 'loading' ? 'pi-spin pi-spinner' : 'pi-map-marker'"></i>
             Usar minha localização
           </button>
-          <p class="search-panel__hint" *ngIf="geoStatus === 'denied'">
-            Permissão de localização negada. Use o CEP abaixo.
+          <p class="search-panel__hint" *ngIf="geoStatus === 'loading'" role="status">
+            Localizando você...
           </p>
+          <p class="search-panel__hint" *ngIf="geoStatus === 'found' && origemLocalizacao === 'gps'" role="status">
+            Localização atualizada.
+          </p>
+          <p class="search-panel__hint" *ngIf="mensagemErroGeo" role="alert">
+            {{ mensagemErroGeo }}
+            <button type="button" class="search-panel__retry" (click)="usarMinhaLocalizacao()">Tentar novamente</button>
+          </p>
+          <ng-container *ngTemplateOutlet="faixaLocalizacao"></ng-container>
 
           <div class="search-local__divider">
             <span>ou</span>
@@ -189,6 +197,20 @@
     <p-toast position="top-right"></p-toast>
   </div>
 </section>
+
+<!-- Localização em uso: deixa claro de onde vêm as distâncias e permite trocar. -->
+<ng-template #faixaLocalizacao>
+  @if (localizacaoUsada; as loc) {
+    <p class="search-panel__hint localizacao-usada" [class.localizacao-usada--aproximada]="loc.tipo === 'cep'" role="status">
+      <i class="pi" [ngClass]="loc.tipo === 'gps' ? 'pi-map-marker' : 'pi-info-circle'"></i>
+      {{ loc.texto }}
+      <button type="button" class="search-panel__retry" (click)="alterarLocalizacao()">Alterar</button>
+    </p>
+  }
+  @if (avisoCep; as aviso) {
+    <p class="search-panel__hint" role="alert">{{ aviso }}</p>
+  }
+</ng-template>
 
 <div class="page">
 
@@ -247,7 +269,7 @@
       [cidades]="cidadesExibidas"
       [cidadeDetectada]="cidadeDetectada"
       [geoEncontrada]="geoStatus === 'found'"
-      [geoFalhou]="geoStatus === 'denied' || geoStatus === 'error'"
+      [geoFalhou]="geoFalhou"
     />
   }
 
@@ -281,6 +303,11 @@
         <i class="pi pi-plus"></i> Cadastrar minha igreja
       </a>
     </div>
+  </div>
+
+  <!-- Localização em uso (CEP aproximado / GPS) e aviso de CEP, também nos resultados -->
+  <div *ngIf="resultsMode && !isLoading" class="mt-3">
+    <ng-container *ngTemplateOutlet="faixaLocalizacao"></ng-container>
   </div>
 
   <!-- ══ ORDENAÇÃO DOS RESULTADOS ══ -->

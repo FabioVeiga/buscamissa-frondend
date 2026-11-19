@@ -4,14 +4,14 @@ import { DatePipe } from '@angular/common';
 import { FormBuilder } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { MessageService } from 'primeng/api';
-import { of } from 'rxjs';
+import { of, Subject } from 'rxjs';
 
 import { HomeComponent } from './home.component';
 import { ChurchesService } from '../../../core/services/churches.service';
 import { AnalyticsService } from '../../../core/services/analytics.service';
 import { FavoritesService } from '../../../core/services/favorites.service';
 import { RedesSociaisService } from '../../../core/services/redes-sociais.service';
-import { GeolocationService } from '../../../core/services/geolocation.service';
+import { ErroGeolocalizacao, GeolocationService } from '../../../core/services/geolocation.service';
 import { SeoService } from '../../../core/services/seo.service';
 import { MetricasService } from '../../../core/services/metricas.service';
 import { SeoPaginasService } from '../../../core/services/seo-paginas.service';
@@ -73,7 +73,7 @@ describe('HomeComponent — /buscar?nome= sem UF', () => {
         { provide: AnalyticsService, useValue: jasmine.createSpyObj('AnalyticsService', ['searchStarted', 'trackEvent']) },
         { provide: FavoritesService, useValue: { favoritos$: of([]), listar: () => [], ehFavorita: () => false } },
         { provide: RedesSociaisService, useValue: { obterTipos: () => of([]) } },
-        { provide: GeolocationService, useValue: jasmine.createSpyObj('GeolocationService', ['obterPosicaoAtual', 'reverseGeocode', 'consultarCep']) },
+        { provide: GeolocationService, useValue: jasmine.createSpyObj('GeolocationService', ['obterPosicaoAtual', 'reverseGeocode', 'consultarCep', 'consultarCepDetalhado', 'geocodificarCepProvisorio']) },
         { provide: SeoService, useValue: jasmine.createSpyObj('SeoService', ['update', 'setJsonLd', 'removeJsonLd']) },
         { provide: MetricasService, useValue: jasmine.createSpyObj('MetricasService', ['registrarVisualizacaoHome', 'registrarVisualizacaoPagina']) },
         // Dependência que a home ganhou em 1d43291 (cidadeSlug real vindo de
@@ -216,7 +216,7 @@ describe('HomeComponent — origem das distâncias', () => {
         { provide: AnalyticsService, useValue: jasmine.createSpyObj('AnalyticsService', ['searchStarted', 'trackEvent']) },
         { provide: FavoritesService, useValue: { favoritos$: of([]), listar: () => [], ehFavorita: () => false } },
         { provide: RedesSociaisService, useValue: { obterTipos: () => of([]) } },
-        { provide: GeolocationService, useValue: jasmine.createSpyObj('GeolocationService', ['obterPosicaoAtual', 'reverseGeocode', 'consultarCep']) },
+        { provide: GeolocationService, useValue: jasmine.createSpyObj('GeolocationService', ['obterPosicaoAtual', 'reverseGeocode', 'consultarCep', 'consultarCepDetalhado', 'geocodificarCepProvisorio']) },
         { provide: SeoService, useValue: jasmine.createSpyObj('SeoService', ['update', 'setJsonLd', 'removeJsonLd']) },
         { provide: MetricasService, useValue: jasmine.createSpyObj('MetricasService', ['registrarVisualizacaoHome', 'registrarVisualizacaoPagina']) },
         { provide: SeoPaginasService, useValue: { getEstados: () => of([]) } },
@@ -268,16 +268,548 @@ describe('HomeComponent — origem das distâncias', () => {
     expect(montar('server').origemDistancia).toBeNull();
   });
 
-  it('mantém o título "Missas acontecendo agora" mesmo com a geolocalização concedida', () => {
+  it('mantém o título "Missas acontecendo agora" mesmo com a geolocalização concedida', async () => {
     const c = montar('browser');
-    spyOn(navigator.geolocation, 'getCurrentPosition').and.callFake(
-      ((ok: PositionCallback) => ok({ coords: { latitude: -23.5, longitude: -46.6 } } as GeolocationPosition)) as any,
-    );
+    const geo = TestBed.inject(GeolocationService) as jasmine.SpyObj<GeolocationService>;
+    geo.obterPosicaoAtual.and.resolveTo({ lat: -23.5, lng: -46.6 });
+    geo.reverseGeocode.and.resolveTo(null);
 
-    (c as any)._requestGeolocation();
+    await (c as any)._solicitarLocalizacao();
 
     expect(c.tituloProximasMissas).toBe('Missas acontecendo agora');
     expect(c.geoStatus).toBe('found');
+  });
+
+  /** Roda o ngOnInit real (monta o formulário) sem deixar timers de página aberta. */
+  const iniciar = (c: HomeComponent) => {
+    churches.addressRange.and.returnValue(of({ data: {} } as any));
+    spyOn(c as any, '_agendarRefreshProximas');
+    spyOn(c as any, '_iniciarRelogioResultados');
+    c.ngOnInit();
+  };
+
+  describe('localização por GPS', () => {
+    let geo: jasmine.SpyObj<GeolocationService>;
+    const comGeo = () => {
+      const c = montar('browser');
+      geo = TestBed.inject(GeolocationService) as jasmine.SpyObj<GeolocationService>;
+      geo.reverseGeocode.and.resolveTo(null);
+      return c;
+    };
+
+    it('o carregamento da Home NÃO pede a localização', () => {
+      const c = comGeo();
+      iniciar(c);
+
+      expect(geo.obterPosicaoAtual).not.toHaveBeenCalled();
+      expect(c.geoStatus).toBe('idle');
+      // A lista de próximas missas carrega sem coordenadas (referência), sem pedir GPS.
+      expect(churches.proximasMissas).toHaveBeenCalledWith(undefined, undefined, 10);
+    });
+
+    it('só marca "found" quando as coordenadas chegam, e as aplica na busca', async () => {
+      const c = comGeo();
+      let entregar!: (v: { lat: number; lng: number }) => void;
+      geo.obterPosicaoAtual.and.returnValue(new Promise(r => { entregar = r; }));
+
+      const pedido = (c as any)._solicitarLocalizacao() as Promise<boolean>;
+      expect(c.geoStatus).toBe('loading');
+      expect(c.temGeolocalizacao).toBeFalse();
+
+      entregar({ lat: -23.5, lng: -46.6 });
+      expect(await pedido).toBeTrue();
+
+      expect(c.geoStatus).toBe('found');
+      expect(c.origemLocalizacao).toBe('gps');
+      expect(churches.proximasMissas).toHaveBeenCalledWith(-23.5, -46.6, 10);
+    });
+
+    const motivos: [string, string][] = [
+      ['negada', 'denied'],
+      ['indisponivel', 'unavailable'],
+      ['sem-suporte', 'unavailable'],
+      ['timeout', 'timeout'],
+      ['inseguro', 'error'],
+      ['inesperado', 'error'],
+    ];
+    motivos.forEach(([motivo, esperado]) => {
+      it(`falha "${motivo}" vira o estado "${esperado}" sem coordenadas nem proximidade`, async () => {
+        const c = comGeo();
+        geo.obterPosicaoAtual.and.rejectWith(new ErroGeolocalizacao(motivo as any));
+
+        expect(await (c as any)._solicitarLocalizacao()).toBeFalse();
+
+        expect(c.geoStatus).toBe(esperado as any);
+        expect(c.temGeolocalizacao).toBeFalse();
+        expect(c.origemLocalizacao).toBeNull();
+        expect(c.mensagemErroGeo).toContain('Não foi possível obter sua localização');
+        expect(churches.proximasMissas).not.toHaveBeenCalledWith(jasmine.any(Number), jasmine.any(Number), jasmine.anything());
+      });
+    });
+
+    it('permissão negada orienta a liberar no navegador ou usar o CEP; timeout não culpa a permissão', async () => {
+      const c = comGeo();
+      geo.obterPosicaoAtual.and.rejectWith(new ErroGeolocalizacao('negada', 1));
+      await (c as any)._solicitarLocalizacao();
+      expect(c.mensagemErroGeo).toContain('Permita o acesso à localização nas configurações do navegador ou informe seu CEP');
+
+      geo.obterPosicaoAtual.and.rejectWith(new ErroGeolocalizacao('timeout', 3));
+      await (c as any)._solicitarLocalizacao();
+      expect(c.mensagemErroGeo).not.toContain('Permita');
+    });
+
+    // Regressão (correção A): erro síncrono nos efeitos pós-sucesso não pode prender 'loading'.
+    it('erro síncrono ao carregar as próximas missas não deixa o estado preso em "loading"', async () => {
+      const c = comGeo();
+      geo.obterPosicaoAtual.and.resolveTo({ lat: -23.5, lng: -46.6 });
+      churches.proximasMissas.and.throwError('boom');
+
+      const ok = await (c as any)._solicitarLocalizacao();
+
+      expect(ok).toBeTrue(); // a posição foi obtida
+      expect(c.geoStatus).toBe('found');
+      expect(c.temGeolocalizacao).toBeTrue();
+      expect(c.isLoadingProximas).toBeFalse(); // sem skeleton eterno na seção secundária
+      expect((c as any)._pedidoGps).toBeNull();
+    });
+
+    it('erro síncrono no reverse geocode não deixa o estado preso em "loading" e marca a cidade como não resolvida', async () => {
+      const c = comGeo();
+      geo.obterPosicaoAtual.and.resolveTo({ lat: -23.5, lng: -46.6 });
+      geo.reverseGeocode.and.throwError('boom');
+
+      const ok = await (c as any)._solicitarLocalizacao();
+
+      expect(ok).toBeTrue();
+      expect(c.geoStatus).toBe('found');
+      expect(c.cidadeNaoResolvida).toBeTrue();
+      expect((c as any)._pedidoGps).toBeNull();
+    });
+
+    it('permite nova tentativa depois de uma falha', async () => {
+      const c = comGeo();
+      geo.obterPosicaoAtual.and.rejectWith(new ErroGeolocalizacao('timeout', 3));
+      expect(await (c as any)._solicitarLocalizacao()).toBeFalse();
+
+      geo.obterPosicaoAtual.and.resolveTo({ lat: -23.5, lng: -46.6 });
+      expect(await (c as any)._solicitarLocalizacao()).toBeTrue();
+
+      expect(geo.obterPosicaoAtual).toHaveBeenCalledTimes(2);
+      expect(c.geoStatus).toBe('found');
+      expect(c.mensagemErroGeo).toBeNull();
+    });
+
+    it('cliques repetidos compartilham UM pedido; já localizado, não pede de novo', async () => {
+      const c = comGeo();
+      geo.obterPosicaoAtual.and.resolveTo({ lat: -23.5, lng: -46.6 });
+
+      const [a, b] = await Promise.all([(c as any)._solicitarLocalizacao(), (c as any)._solicitarLocalizacao()]);
+      expect(a && b).toBeTrue();
+      await (c as any)._solicitarLocalizacao();
+
+      expect(geo.obterPosicaoAtual).toHaveBeenCalledTimes(1);
+    });
+
+    it('falha ao identificar a cidade NÃO desfaz a localização encontrada', async () => {
+      const c = comGeo();
+      geo.obterPosicaoAtual.and.resolveTo({ lat: -23.5, lng: -46.6 });
+      geo.reverseGeocode.and.resolveTo(null);
+
+      await (c as any)._solicitarLocalizacao();
+      await new Promise(r => setTimeout(r));
+
+      expect(c.geoStatus).toBe('found');
+      expect(c.temGeolocalizacao).toBeTrue();
+      expect(c.cidadeNaoResolvida).toBeTrue();
+    });
+
+    it('chip "Perto de mim" só fica ativo com localização válida', async () => {
+      const c = comGeo();
+      geo.obterPosicaoAtual.and.rejectWith(new ErroGeolocalizacao('negada', 1));
+      c.setQuickFilter('perto');
+      await new Promise(r => setTimeout(r));
+      expect(c.quickFilter).toBeNull();
+
+      geo.obterPosicaoAtual.and.resolveTo({ lat: -23.5, lng: -46.6 });
+      c.setQuickFilter('perto');
+      await new Promise(r => setTimeout(r));
+      expect(c.quickFilter).toBe('perto');
+    });
+
+    // Regressão (correção B)
+    it('"Alterar" desativa o chip "Perto de mim"', async () => {
+      const c = comGeo();
+      geo.obterPosicaoAtual.and.resolveTo({ lat: -23.5, lng: -46.6 });
+      c.setQuickFilter('perto');
+      await new Promise(r => setTimeout(r));
+      expect(c.quickFilter).toBe('perto');
+
+      c.alterarLocalizacao();
+
+      expect(c.quickFilter).toBeNull();
+      expect(c.temGeolocalizacao).toBeFalse();
+    });
+
+    // Regressão (correção C)
+    describe('CEP substitui a localização do GPS', () => {
+      const comGpsAtivo = async () => {
+        const c = comGeo();
+        geo.obterPosicaoAtual.and.resolveTo({ lat: -23.5, lng: -46.6 });
+        await (c as any)._solicitarLocalizacao();
+        c.cidadeDetectada = { nome: 'São José dos Campos', uf: 'SP', slug: 'sao-jose-dos-campos' };
+        c.quickFilter = 'perto';
+        return c;
+      };
+
+      it('zera geoStatus, cidade detectada e chip do GPS, mesmo quando a consulta do CEP falha', async () => {
+        const c = await comGpsAtivo();
+        expect(c.geoStatus).toBe('found');
+        geo.consultarCepDetalhado.and.resolveTo({ status: 'inexistente' });
+
+        await (c as any)._resolverLocalizacaoPorCep('99999999');
+
+        expect(c.geoStatus).toBe('idle');
+        expect(c.cidadeDetectada).toBeNull();
+        expect(c.cidadeNaoResolvida).toBeFalse();
+        expect(c.quickFilter).toBeNull();
+        expect(c.temGeolocalizacao).toBeFalse();
+        expect(c.estadoDetectado).toBeNull();
+        expect(c.urgencyBadgeText).toBeNull();
+      });
+
+      it('também zera o estado de erro de um GPS anterior', async () => {
+        const c = comGeo();
+        geo.obterPosicaoAtual.and.rejectWith(new ErroGeolocalizacao('negada', 1));
+        await (c as any)._solicitarLocalizacao();
+        expect(c.geoStatus).toBe('denied');
+        geo.consultarCepDetalhado.and.resolveTo({ status: 'rede' });
+
+        await (c as any)._resolverLocalizacaoPorCep('01001000');
+
+        expect(c.geoStatus).toBe('idle');
+        expect(c.mensagemErroGeo).toBeNull();
+      });
+
+      it('torna obsoleto um GPS ainda em andamento: o estado deixa de ser "loading"', async () => {
+        const c = comGeo();
+        geo.obterPosicaoAtual.and.returnValue(new Promise(() => {})); // nunca responde
+        (c as any)._solicitarLocalizacao();
+        expect(c.geoStatus).toBe('loading');
+        geo.consultarCepDetalhado.and.resolveTo({ status: 'inexistente' });
+
+        await (c as any)._resolverLocalizacaoPorCep('01001000');
+
+        expect(c.geoStatus).toBe('idle');
+      });
+
+      it('CEP bem-sucedido limpa os dados anteriores do GPS e passa a ser a origem', async () => {
+        const c = await comGpsAtivo();
+        geo.consultarCepDetalhado.and.resolveTo({ status: 'ok', endereco: END_CEP });
+        geo.geocodificarCepProvisorio.and.resolveTo({ status: 'ok', coords: { lat: -23.55, lng: -46.63 } });
+
+        await (c as any)._resolverLocalizacaoPorCep('01001000');
+
+        expect(c.geoStatus).toBe('idle');
+        expect(c.cidadeDetectada).toBeNull();
+        expect(c.quickFilter).toBeNull();
+        expect(c.origemLocalizacao).toBe('cep');
+        expect(c.enderecoCep).toEqual(END_CEP);
+        expect(c.geoLat).toBe(-23.55); // coordenadas do CEP, não as do GPS (-23.5)
+        expect(c.localizacaoUsada?.tipo).toBe('cep');
+        expect(c.estadoDetectado).toBeNull();
+        expect(c.urgencyBadgeText).toBeNull();
+      });
+    });
+
+    const END_CEP = { cep: '01001000', logradouro: 'Praça da Sé', bairro: 'Sé', localidade: 'São Paulo', uf: 'SP' };
+    const esperar = () => new Promise(r => setTimeout(r));
+
+    // Corrida GPS × CEP: a ÚLTIMA ação explícita do usuário prevalece.
+    describe('corrida entre GPS e CEP', () => {
+      it('GPS tardio não sobrescreve o CEP escolhido depois', async () => {
+        const c = comGeo();
+        let entregarGps!: (v: { lat: number; lng: number }) => void;
+        geo.obterPosicaoAtual.and.returnValue(new Promise(r => { entregarGps = r; }));
+        (c as any)._solicitarLocalizacao(); // 1ª ação: GPS, pendente
+        geo.consultarCepDetalhado.and.resolveTo({ status: 'ok', endereco: END_CEP });
+        geo.geocodificarCepProvisorio.and.resolveTo({ status: 'ok', coords: { lat: -23.55, lng: -46.63 } });
+        await (c as any)._resolverLocalizacaoPorCep('01001000'); // 2ª ação (última): CEP
+        expect(c.origemLocalizacao).toBe('cep');
+
+        entregarGps({ lat: -10, lng: -10 }); // o GPS responde tarde
+        await esperar();
+
+        expect(c.origemLocalizacao).toBe('cep');
+        expect(c.geoLat).toBe(-23.55);
+        expect(c.enderecoCep).not.toBeNull();
+        expect(c.geoStatus).toBe('idle');
+        expect(geo.reverseGeocode).not.toHaveBeenCalled(); // efeitos do GPS obsoleto não rodam
+      });
+
+      it('CEP tardio não sobrescreve o GPS escolhido depois', async () => {
+        const c = comGeo();
+        let entregarCep!: (v: any) => void;
+        geo.consultarCepDetalhado.and.returnValue(new Promise(r => { entregarCep = r; }));
+        geo.geocodificarCepProvisorio.and.resolveTo({ status: 'ok', coords: { lat: -23.55, lng: -46.63 } });
+        const cep = (c as any)._resolverLocalizacaoPorCep('01001000'); // 1ª ação: CEP, pendente
+        geo.obterPosicaoAtual.and.resolveTo({ lat: -10, lng: -10 });
+        await (c as any)._solicitarLocalizacao(); // 2ª ação (última): GPS
+        expect(c.origemLocalizacao).toBe('gps');
+
+        entregarCep({ status: 'ok', endereco: END_CEP }); // o CEP responde tarde
+        await cep;
+
+        expect(c.origemLocalizacao).toBe('gps');
+        expect(c.geoLat).toBe(-10);
+        expect(c.enderecoCep).toBeNull();
+        expect(geo.geocodificarCepProvisorio).not.toHaveBeenCalled();
+      });
+
+      it('falha tardia de um GPS obsoleto não altera o estado atual', async () => {
+        const c = comGeo();
+        let falharGps!: (e: unknown) => void;
+        geo.obterPosicaoAtual.and.returnValue(new Promise((_, rej) => { falharGps = rej; }));
+        (c as any)._solicitarLocalizacao();
+        geo.consultarCepDetalhado.and.resolveTo({ status: 'inexistente' });
+        await (c as any)._resolverLocalizacaoPorCep('01001000');
+
+        falharGps(new ErroGeolocalizacao('negada', 1));
+        await esperar();
+
+        expect(c.geoStatus).toBe('idle');
+        expect(c.mensagemErroGeo).toBeNull();
+      });
+
+      it('"Alterar" invalida o GPS pendente: a resposta tardia não reaplica a localização', async () => {
+        const c = comGeo();
+        let entregarGps!: (v: { lat: number; lng: number }) => void;
+        geo.obterPosicaoAtual.and.returnValue(new Promise(r => { entregarGps = r; }));
+        (c as any)._solicitarLocalizacao();
+        expect(c.geoStatus).toBe('loading');
+
+        c.alterarLocalizacao();
+        expect(c.geoStatus).toBe('idle');
+
+        entregarGps({ lat: -23.5, lng: -46.6 });
+        await esperar();
+
+        expect(c.temGeolocalizacao).toBeFalse();
+        expect(c.origemLocalizacao).toBeNull();
+        expect(c.geoStatus).toBe('idle');
+      });
+
+      it('"Alterar" invalida a consulta de CEP pendente', async () => {
+        const c = comGeo();
+        let entregarCep!: (v: any) => void;
+        geo.consultarCepDetalhado.and.returnValue(new Promise(r => { entregarCep = r; }));
+        geo.geocodificarCepProvisorio.and.resolveTo({ status: 'ok', coords: { lat: -23.55, lng: -46.63 } });
+        const cep = (c as any)._resolverLocalizacaoPorCep('01001000');
+
+        c.alterarLocalizacao();
+        entregarCep({ status: 'ok', endereco: END_CEP });
+        await cep;
+
+        expect(c.temGeolocalizacao).toBeFalse();
+        expect(c.enderecoCep).toBeNull();
+      });
+
+      // Segurança da promessa compartilhada `_pedidoGps` entre gerações.
+      it('depois de um CEP, novo clique em GPS cria pedido novo; o antigo, ao terminar, não apaga o novo', async () => {
+        const c = comGeo();
+        let entregar1!: (v: { lat: number; lng: number }) => void;
+        let entregar3!: (v: { lat: number; lng: number }) => void;
+        const p1 = new Promise<{ lat: number; lng: number }>(r => { entregar1 = r; });
+        const p3 = new Promise<{ lat: number; lng: number }>(r => { entregar3 = r; });
+        geo.obterPosicaoAtual.and.returnValues(p1, p3);
+        geo.consultarCepDetalhado.and.resolveTo({ status: 'inexistente' });
+
+        (c as any)._solicitarLocalizacao(); // geração 1 (GPS)
+        await (c as any)._resolverLocalizacaoPorCep('01001000'); // geração 2 (CEP) torna a 1 obsoleta
+        const novo = (c as any)._solicitarLocalizacao() as Promise<boolean>; // geração 3 (GPS)
+        expect(geo.obterPosicaoAtual).toHaveBeenCalledTimes(2); // não reaproveitou o pedido obsoleto
+
+        entregar1({ lat: -10, lng: -10 }); // o antigo termina primeiro...
+        await esperar();
+        expect((c as any)._pedidoGps).not.toBeNull(); // ...e NÃO apaga o registro do pedido novo
+        expect(c.temGeolocalizacao).toBeFalse(); // nem aplica coordenadas obsoletas
+
+        // um clique repetido na geração atual ainda compartilha o pedido novo
+        (c as any)._solicitarLocalizacao();
+        expect(geo.obterPosicaoAtual).toHaveBeenCalledTimes(2);
+
+        entregar3({ lat: -23.5, lng: -46.6 });
+        expect(await novo).toBeTrue();
+        expect(c.geoLat).toBe(-23.5);
+        expect(c.origemLocalizacao).toBe('gps');
+        expect((c as any)._pedidoGps).toBeNull();
+      });
+
+      it('GPS obsoleto devolve false sem toast enganoso ao pedir "Mais próximas"', async () => {
+        const c = comGeo();
+        let entregarGps!: (v: { lat: number; lng: number }) => void;
+        geo.obterPosicaoAtual.and.returnValue(new Promise(r => { entregarGps = r; }));
+        const toast = (c as any)._toast.add as jasmine.Spy;
+        c.setOrdenacaoResultados('proximidade'); // dispara o pedido de GPS
+        geo.consultarCepDetalhado.and.resolveTo({ status: 'inexistente' });
+        await (c as any)._resolverLocalizacaoPorCep('01001000'); // torna o GPS obsoleto
+        toast.calls.reset();
+
+        entregarGps({ lat: -10, lng: -10 });
+        await esperar();
+
+        expect(toast).not.toHaveBeenCalled();
+        expect(c.ordenacaoResultados).toBe('az');
+      });
+    });
+
+    it('"Alterar" desativa o chip "Perto de mim" mesmo sem coordenadas', () => {
+      const c = comGeo();
+      c.quickFilter = 'perto';
+      expect(c.temGeolocalizacao).toBeFalse();
+
+      c.alterarLocalizacao();
+
+      expect(c.quickFilter).toBeNull();
+    });
+
+    it('em /buscar, os efeitos secundários da Home (cidade e próximas missas) não executam', async () => {
+      const c = comGeo();
+      (c as any).resultsMode = true;
+      churches.proximasMissas.calls.reset();
+      geo.obterPosicaoAtual.and.resolveTo({ lat: -23.5, lng: -46.6 });
+
+      expect(await (c as any)._solicitarLocalizacao()).toBeTrue();
+
+      expect(c.geoStatus).toBe('found');
+      expect(c.temGeolocalizacao).toBeTrue();
+      expect(geo.reverseGeocode).not.toHaveBeenCalled();
+      expect(churches.proximasMissas).not.toHaveBeenCalled();
+    });
+
+    it('nova tentativa de GPS funciona depois de cada tipo de falha', async () => {
+      for (const motivo of ['negada', 'indisponivel', 'timeout', 'inesperado'] as const) {
+        const c = comGeo();
+        geo.obterPosicaoAtual.and.rejectWith(new ErroGeolocalizacao(motivo));
+        expect(await (c as any)._solicitarLocalizacao()).toBeFalse();
+        expect(c.geoStatus).not.toBe('loading');
+        expect((c as any)._pedidoGps).toBeNull();
+
+        geo.obterPosicaoAtual.and.resolveTo({ lat: -23.5, lng: -46.6 });
+        expect(await (c as any)._solicitarLocalizacao()).toBeTrue();
+        expect(c.geoStatus).toBe('found');
+      }
+    });
+
+    describe('registro de falhas dos efeitos secundários', () => {
+      const registrado = (c: HomeComponent) => (c as any)._logger.logError as jasmine.Spy;
+
+      it('registra com contexto, sem coordenadas nem dados do usuário, e mantém a degradação', async () => {
+        const c = comGeo();
+        const log = spyOn((c as any)._logger, 'logError');
+        geo.obterPosicaoAtual.and.resolveTo({ lat: -23.512345, lng: -46.698765 });
+        geo.reverseGeocode.and.throwError('falha-1');
+        churches.proximasMissas.and.throwError('falha-2');
+
+        expect(await (c as any)._solicitarLocalizacao()).toBeTrue();
+
+        expect(registrado(c)).toHaveBeenCalledTimes(2);
+        const chamadas = log.calls.allArgs();
+        expect(chamadas.map(a => a[1])).toEqual(['home:geo:reverseGeocode', 'home:geo:proximasMissas']);
+        expect((chamadas[0][0] as Error).message).toBe('falha-1');
+        expect((chamadas[1][0] as Error).message).toBe('falha-2');
+        const tudo = JSON.stringify(chamadas.map(a => [String(a[0]), a[1]]));
+        expect(tudo).not.toContain('23.51');
+        expect(tudo).not.toContain('46.69');
+        // degradação controlada
+        expect(c.geoStatus).toBe('found');
+        expect(c.cidadeNaoResolvida).toBeTrue();
+        expect(c.isLoadingProximas).toBeFalse();
+      });
+
+      it('erro que não é Error não vaza o conteúdo: registra um texto genérico', async () => {
+        const c = comGeo();
+        const log = spyOn((c as any)._logger, 'logError');
+        geo.obterPosicaoAtual.and.resolveTo({ lat: -23.5, lng: -46.6 });
+        geo.reverseGeocode.and.callFake(() => { throw { url: 'x?lat=-23.5&lng=-46.6' }; });
+
+        await (c as any)._solicitarLocalizacao();
+
+        expect(log.calls.mostRecent().args[0]).toBe('erro não identificado');
+      });
+    });
+
+    it('"Alterar" descarta a posição em uso e volta ao CEP', async () => {
+      const c = comGeo();
+      geo.obterPosicaoAtual.and.resolveTo({ lat: -23.5, lng: -46.6 });
+      await (c as any)._solicitarLocalizacao();
+
+      c.alterarLocalizacao();
+
+      expect(c.temGeolocalizacao).toBeFalse();
+      expect(c.origemLocalizacao).toBeNull();
+      expect(c.searchTab).toBe('local');
+      expect(c.localizacaoUsada).toBeNull();
+    });
+  });
+
+  describe('CEP na Home', () => {
+    let geo: jasmine.SpyObj<GeolocationService>;
+    const comGeo = () => {
+      const c = montar('browser');
+      geo = TestBed.inject(GeolocationService) as jasmine.SpyObj<GeolocationService>;
+      iniciar(c);
+      return c;
+    };
+    const aviso = (c: HomeComponent) => ((c as any)._toast.add as jasmine.Spy).calls.mostRecent().args[0];
+
+    it('aceita CEP com e sem hífen e navega para /buscar com o CEP só em dígitos', async () => {
+      for (const digitado of ['01001-000', '01001000']) {
+        const c = comGeo();
+        geo.consultarCepDetalhado.and.resolveTo({
+          status: 'ok',
+          endereco: { cep: '01001000', logradouro: 'Praça da Sé', bairro: 'Sé', localidade: 'São Paulo', uf: 'SP' },
+        });
+        c.form.get('Cep')?.setValue(digitado);
+
+        c.onCepSearch();
+        await new Promise(r => setTimeout(r));
+
+        expect(geo.consultarCepDetalhado).toHaveBeenCalledWith('01001000');
+        expect(((c as any)._router.navigate as jasmine.Spy).calls.mostRecent().args[1].queryParams)
+          .toEqual({ uf: 'SP', cidade: 'São Paulo', cep: '01001000', pagina: 1 });
+        TestBed.resetTestingModule();
+      }
+    });
+
+    it('CEP incompleto não consulta o serviço', () => {
+      const c = comGeo();
+      c.form.get('Cep')?.setValue('0100');
+      c.onCepSearch();
+
+      expect(geo.consultarCepDetalhado).not.toHaveBeenCalled();
+      expect(aviso(c).summary).toBe('CEP inválido');
+    });
+
+    const falhas: [string, string, string][] = [
+      ['inexistente', 'CEP não encontrado', 'Confira o número'],
+      ['rede', 'Sem conexão com o serviço de CEP', 'conexão'],
+      ['timeout', 'A consulta demorou demais', 'não respondeu a tempo'],
+    ];
+    falhas.forEach(([status, titulo, trecho]) => {
+      it(`CEP "${status}" tem mensagem própria e não navega`, async () => {
+        const c = comGeo();
+        geo.consultarCepDetalhado.and.resolveTo({ status } as any);
+        c.form.get('Cep')?.setValue('01001-000');
+
+        c.onCepSearch();
+        await new Promise(r => setTimeout(r));
+
+        expect(aviso(c).summary).toBe(titulo);
+        expect(aviso(c).detail).toContain(trecho);
+        expect(((c as any)._router.navigate as jasmine.Spy)).not.toHaveBeenCalled();
+        expect(c.isLoadingCep).toBeFalse();
+      });
+    });
   });
 
   describe('Alterar cidade', () => {
@@ -360,7 +892,7 @@ describe('HomeComponent — cache de proximasFiltradas', () => {
         { provide: AnalyticsService, useValue: jasmine.createSpyObj('AnalyticsService', ['searchStarted', 'trackEvent']) },
         { provide: FavoritesService, useValue: { favoritos$: of([]), listar: () => [], ehFavorita: () => false } },
         { provide: RedesSociaisService, useValue: { obterTipos: () => of([]) } },
-        { provide: GeolocationService, useValue: jasmine.createSpyObj('GeolocationService', ['obterPosicaoAtual', 'reverseGeocode', 'consultarCep']) },
+        { provide: GeolocationService, useValue: jasmine.createSpyObj('GeolocationService', ['obterPosicaoAtual', 'reverseGeocode', 'consultarCep', 'consultarCepDetalhado', 'geocodificarCepProvisorio']) },
         { provide: SeoService, useValue: jasmine.createSpyObj('SeoService', ['update', 'setJsonLd', 'removeJsonLd']) },
         { provide: MetricasService, useValue: jasmine.createSpyObj('MetricasService', ['registrarVisualizacaoHome', 'registrarVisualizacaoPagina']) },
         { provide: SeoPaginasService, useValue: { getEstados: () => of([]) } },
@@ -437,7 +969,11 @@ describe('HomeComponent — filtro de dia em /buscar', () => {
     churches.searchByFilters.and.returnValue(of({ data: { items: [], totalItems: 0 } } as any));
   });
 
-  function montar(queryParams: Record<string, string>, data: Record<string, unknown> = {}): HomeComponent {
+  function montar(
+    queryParams: Record<string, string>,
+    data: Record<string, unknown> = {},
+    prep?: (geo: jasmine.SpyObj<GeolocationService>) => void,
+  ): HomeComponent {
     TestBed.configureTestingModule({
       providers: [
         FormBuilder,
@@ -451,13 +987,15 @@ describe('HomeComponent — filtro de dia em /buscar', () => {
         { provide: AnalyticsService, useValue: jasmine.createSpyObj('AnalyticsService', ['searchStarted', 'trackEvent']) },
         { provide: FavoritesService, useValue: { favoritos$: of([]), listar: () => [], ehFavorita: () => false } },
         { provide: RedesSociaisService, useValue: { obterTipos: () => of([]) } },
-        { provide: GeolocationService, useValue: jasmine.createSpyObj('GeolocationService', ['obterPosicaoAtual', 'reverseGeocode', 'consultarCep']) },
+        { provide: GeolocationService, useValue: jasmine.createSpyObj('GeolocationService', ['obterPosicaoAtual', 'reverseGeocode', 'consultarCep', 'consultarCepDetalhado', 'geocodificarCepProvisorio']) },
         { provide: SeoService, useValue: jasmine.createSpyObj('SeoService', ['update', 'setJsonLd', 'removeJsonLd']) },
         { provide: MetricasService, useValue: jasmine.createSpyObj('MetricasService', ['registrarVisualizacaoHome', 'registrarVisualizacaoPagina']) },
         { provide: SeoPaginasService, useValue: { getEstados: () => of([]) } },
       ],
     });
 
+    // Mocks da localização precisam existir ANTES do ngOnInit (a busca por CEP roda nele).
+    prep?.(TestBed.inject(GeolocationService) as jasmine.SpyObj<GeolocationService>);
     const c = TestBed.runInInjectionContext(() => new HomeComponent());
     (c as any).resultsMode = true;
     c.ngOnInit();
@@ -722,28 +1260,30 @@ describe('HomeComponent — filtro de dia em /buscar', () => {
       expect(c.churchInfoOrdenaFiltrado.map(x => x.nome)).toEqual(['Ávila', 'Bento', 'Zélia']);
     });
 
-    it('Mais próximas sem localização negada: não refaz a busca, não marca o chip e avisa', () => {
+    it('Mais próximas com localização negada: não refaz a busca, não marca o chip e avisa o motivo', async () => {
       responder([igreja(1, 'A', 1)]);
-      const c = montar({ uf: 'SP' }, RES);
+      const c = montar({ uf: 'SP' }, RES, g => g.obterPosicaoAtual.and.rejectWith(new ErroGeolocalizacao('negada', 1)));
       const chamadas = churches.searchByFilters.calls.count();
-      spyOn(navigator.geolocation, 'getCurrentPosition').and.callFake((_ok: any, erro: any) => erro({ code: 1 }));
       const toast = (c as any)._toast.add as jasmine.Spy;
       toast.calls.reset();
 
       c.setOrdenacaoResultados('proximidade');
+      await new Promise(r => setTimeout(r));
 
       expect(churches.searchByFilters.calls.count()).toBe(chamadas);
       expect(c.ordenacaoResultados).toBe('az');
-      expect(toast).toHaveBeenCalled();
+      expect(toast.calls.mostRecent().args[0].detail).toContain('Permita o acesso à localização');
     });
 
-    it('Mais próximas sem localização concedida: marca o chip e busca com a origem', () => {
+    it('Mais próximas com localização concedida: marca o chip e busca com a origem', async () => {
       responder([igreja(1, 'A', 1)]);
-      const c = montar({ uf: 'SP' }, RES);
-      spyOn(navigator.geolocation, 'getCurrentPosition').and.callFake((ok: any) =>
-        ok({ coords: { latitude: -23.5505199, longitude: -46.6333094 } }));
+      const c = montar({ uf: 'SP' }, RES, g => {
+        g.obterPosicaoAtual.and.resolveTo({ lat: -23.5505199, lng: -46.6333094 });
+        g.reverseGeocode.and.resolveTo(null);
+      });
 
       c.setOrdenacaoResultados('proximidade');
+      await new Promise(r => setTimeout(r));
 
       expect(c.ordenacaoResultados).toBe('proximidade');
       expect(ultimaBusca().Ordenacao).toBe(2);
@@ -816,51 +1356,109 @@ describe('HomeComponent — filtro de dia em /buscar', () => {
     });
 
     describe('busca vinda do CEP', () => {
-      const json = (corpo: unknown) => Promise.resolve({ json: () => Promise.resolve(corpo) } as Response);
+      const END = { cep: '01001000', logradouro: 'Praça da Sé', bairro: 'Sé', localidade: 'São Paulo', uf: 'SP' };
       const esvaziar = async () => { for (let i = 0; i < 10; i++) await Promise.resolve(); };
 
-      it('espera a geocodificação e pede proximidade à API', async () => {
-        spyOn(window, 'fetch').and.callFake((url: any) => String(url).includes('viacep')
-          ? json({ logradouro: 'Praça da Sé', localidade: 'São Paulo', uf: 'SP' })
-          : json([{ lat: '-23.55052', lon: '-46.63331' }]));
-
-        const c = montar({ uf: 'SP', cidade: 'São Paulo', cep: '01001000' }, RES);
+      it('com coordenadas: pede proximidade à API, mostra o CEP e marca a localização como aproximada', async () => {
+        const c = montar({ uf: 'SP', cidade: 'São Paulo', cep: '01001000' }, RES, g => {
+          g.consultarCepDetalhado.and.resolveTo({ status: 'ok', endereco: END });
+          g.geocodificarCepProvisorio.and.resolveTo({ status: 'ok', coords: { lat: -23.55052, lng: -46.63331 } });
+        });
         expect(churches.searchByFilters).not.toHaveBeenCalled();
 
         await esvaziar();
 
         expect(ultimaBusca().Ordenacao).toBe(2);
         expect(ultimaBusca().Lat).toBe(-23.5505);
+        expect(ultimaBusca().Lng).toBe(-46.6333);
         expect(c.ordenacaoResultados).toBe('proximidade');
+        expect(c.origemLocalizacao).toBe('cep');
+        expect(c.localizacaoUsada?.tipo).toBe('cep');
+        expect(c.localizacaoUsada?.texto).toContain('01001-000');
+        expect(c.localizacaoUsada?.texto).toContain('aproximada');
       });
 
-      it('sem coordenadas, busca na ordem padrão', async () => {
-        spyOn(window, 'fetch').and.returnValue(Promise.reject(new Error('offline')));
-
-        const c = montar({ uf: 'SP', cep: '01001000' }, RES);
+      it('endereço sem coordenadas: busca por cidade, sem ordenar por distância nem dizer "aproximada"', async () => {
+        const c = montar({ uf: 'SP', cep: '01001000' }, RES, g => {
+          g.consultarCepDetalhado.and.resolveTo({ status: 'ok', endereco: END });
+          g.geocodificarCepProvisorio.and.resolveTo({ status: 'sem-coordenadas' });
+        });
         await esvaziar();
 
         expect(ultimaBusca().Ordenacao).toBeUndefined();
+        expect(ultimaBusca().Lat).toBeUndefined();
         expect(c.ordenacaoResultados).toBe('az');
+        expect(c.temGeolocalizacao).toBeFalse();
+        expect(c.localizacaoUsada?.tipo).toBe('cep-sem-coordenadas');
+        expect(c.localizacaoUsada?.texto).not.toContain('aproximada');
+        expect(c.avisoCep).toContain('Não encontramos as coordenadas');
       });
 
-      it('geocodificação lenta: busca sem proximidade e ignora a resposta tardia', async () => {
-        jasmine.clock().install();
-        let responderNominatim!: (r: Response) => void;
-        spyOn(window, 'fetch').and.callFake((url: any) => String(url).includes('viacep')
-          ? json({ localidade: 'São Paulo', uf: 'SP' })
-          : new Promise<Response>(r => { responderNominatim = r; }));
-        try {
-          const c = montar({ uf: 'SP', cep: '01001000' }, RES);
+      const falhas: ['inexistente' | 'rede' | 'timeout', string][] = [
+        ['inexistente', 'CEP não encontrado'],
+        ['rede', 'Sem conexão'],
+        ['timeout', 'demorou demais'],
+      ];
+      falhas.forEach(([status, trecho]) => {
+        it(`CEP "${status}" na consulta: busca por cidade/UF, sem distância e com aviso próprio`, async () => {
+          const c = montar({ uf: 'SP', cep: '01001000' }, RES, g => {
+            g.consultarCepDetalhado.and.resolveTo({ status });
+          });
           await esvaziar();
-          jasmine.clock().tick(4000);
+
+          expect(ultimaBusca().Lat).toBeUndefined();
+          expect(c.temGeolocalizacao).toBeFalse();
+          expect(c.avisoCep).toContain(trecho);
+          expect(c.localizacaoUsada).toBeNull();
+        });
+      });
+
+      it('falha só na geocodificação (rede/timeout): aviso de distância indisponível', async () => {
+        const c = montar({ uf: 'SP', cep: '01001000' }, RES, g => {
+          g.consultarCepDetalhado.and.resolveTo({ status: 'ok', endereco: END });
+          g.geocodificarCepProvisorio.and.resolveTo({ status: 'timeout' });
+        });
+        await esvaziar();
+
+        expect(c.temGeolocalizacao).toBeFalse();
+        expect(c.avisoCep).toContain('Não foi possível calcular a distância');
+        expect(ultimaBusca().Ordenacao).toBeUndefined();
+      });
+
+      it('um CEP novo descarta a posição anterior (nada de distância do lugar antigo)', async () => {
+        const c = montar({ uf: 'SP', cep: '01001000' }, RES, g => {
+          g.consultarCepDetalhado.and.resolveTo({ status: 'ok', endereco: END });
+          g.geocodificarCepProvisorio.and.resolveTo({ status: 'sem-coordenadas' });
+        });
+        (c as any)._userLat = -1;
+        (c as any)._userLng = -1;
+        (c as any).origemLocalizacao = 'gps';
+
+        await (c as any)._resolverLocalizacaoPorCep('01001000');
+
+        expect(c.temGeolocalizacao).toBeFalse();
+        expect(c.origemLocalizacao).toBeNull();
+      });
+
+      it('consulta lenta: busca sem proximidade e ignora a resposta tardia', async () => {
+        jasmine.clock().install();
+        let entregarCep!: (r: any) => void;
+        try {
+          const c = montar({ uf: 'SP', cep: '01001000' }, RES, g => {
+            g.consultarCepDetalhado.and.returnValue(new Promise(r => { entregarCep = r; }));
+            g.geocodificarCepProvisorio.and.resolveTo({ status: 'ok', coords: { lat: -23.5, lng: -46.6 } });
+          });
+          await esvaziar();
+          jasmine.clock().tick(6000);
           await esvaziar();
 
           expect(ultimaBusca().Ordenacao).toBeUndefined();
+          expect(c.avisoCep).toContain('demorou demais');
 
-          responderNominatim({ json: () => Promise.resolve([{ lat: '-23.5', lon: '-46.6' }]) } as Response);
+          entregarCep({ status: 'ok', endereco: END });
           await esvaziar();
           expect(c.ordenacaoResultados).toBe('az');
+          expect(c.temGeolocalizacao).toBeFalse();
         } finally {
           jasmine.clock().uninstall();
         }
