@@ -44,6 +44,7 @@ import { ChipDestaque } from "./sections/home-chips/home-chips.component";
 import { HomeMissasMapaComponent } from "./sections/home-missas-mapa/home-missas-mapa.component";
 import { linkParoquia } from "../../../shared/utils/church-link.utils";
 import { LoggerService } from "../../../core/services/logger.service";
+import { linkGoogleMaps } from "../../../shared/utils/navegacao.utils";
 import { SeoPaginasService } from "../../../core/services/seo-paginas.service";
 import { SeoService } from "../../../core/services/seo.service";
 import { MetricasService } from "../../../core/services/metricas.service";
@@ -1199,11 +1200,13 @@ export class HomeComponent {
   }
 
   onNavigateClick(card: MassCardData): void {
-    const lat = card.latitude;
-    const lng = card.longitude;
-    const url = lat && lng
-      ? `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
-      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(card.churchName)}`;
+    const url = linkGoogleMaps({
+      nome: card.churchName,
+      localidade: card.localidade,
+      uf: card.uf,
+      latitude: card.latitude,
+      longitude: card.longitude,
+    });
     window.open(url, '_blank', 'noopener');
     this._analytics.getDirections(card.churchName);
   }

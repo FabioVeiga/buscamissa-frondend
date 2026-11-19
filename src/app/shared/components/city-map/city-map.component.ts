@@ -117,11 +117,14 @@ export class CityMapComponent implements AfterViewInit, OnChanges, OnDestroy {
 
     this._map = L.map(this.mapEl.nativeElement, {
       zoomControl: true,
-      attributionControl: false,
+      attributionControl: true,
     });
+    this._map.attributionControl.setPrefix(false);
 
+    // A licença dos tiles do OSM exige a atribuição visível no mapa.
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
       maxZoom: 19,
+      attribution: '© <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap</a>',
     }).addTo(this._map);
 
     this._renderMarkers();

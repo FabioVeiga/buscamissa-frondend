@@ -217,3 +217,10 @@
   padding-left: 0.75rem;
   padding-right: 0.75rem;
 }
+
+// Origem da coordenada (atribuição exigida pela licença do OSM).
+.origem-coordenada {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+  color: var(--text-color-secondary, #6b7280);
+}

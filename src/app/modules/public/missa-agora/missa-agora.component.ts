@@ -12,6 +12,7 @@ import { MassCardData } from "../../../shared/models/mass-card.model";
 import { Mass } from "../../../core/interfaces/church.interface";
 import { getMissaAgoraUrgency, getCountdownLabel } from "../../../shared/utils/mass-time.utils";
 import { normalizarTexto } from "../../../shared/utils/busca.utils";
+import { linkGoogleMaps } from "../../../shared/utils/navegacao.utils";
 import { CIDADES_POPULARES_MISSA_AGORA } from "../../../core/constants/cidades-populares";
 import { GeolocationService } from "../../../core/services/geolocation.service";
 import { MetricasService, PaginaMetrica } from "../../../core/services/metricas.service";
@@ -348,11 +349,13 @@ export class MissaAgoraComponent implements OnInit, OnDestroy {
   }
 
   onNavigate(card: MassCardData): void {
-    const lat = card.latitude;
-    const lng = card.longitude;
-    const url = lat && lng
-      ? `https://www.google.com/maps/search/?api=1&query=${lat},${lng}`
-      : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(card.churchName)}`;
+    const url = linkGoogleMaps({
+      nome: card.churchName,
+      localidade: card.localidade,
+      uf: card.uf,
+      latitude: card.latitude,
+      longitude: card.longitude,
+    });
     window.open(url, '_blank', 'noopener');
     this._analytics.getDirections(card.churchName);
   }
