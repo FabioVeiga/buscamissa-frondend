@@ -232,6 +232,28 @@ $texto-2: #6b7280;
 .search-panel__desc { font-size: 0.82rem; color: $texto-2; margin: 0.5rem 0 0; line-height: 1.5; }
 .search-panel__hint { font-size: 0.8rem; color: #b45309; margin: 0.6rem 0 0; }
 
+// Ação de texto dentro dos avisos de localização ("Tentar novamente", "Alterar").
+// Área de toque ≥ 44px de altura, sem aumentar a mancha visual do texto.
+.search-panel__retry {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 0.5rem;
+  margin-left: 0.25rem;
+  background: none;
+  border: 0;
+  font: inherit;
+  font-weight: 600;
+  color: inherit;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.localizacao-usada {
+  color: #374151;
+  &--aproximada { color: #92400e; }
+}
+
 .search-local {
   display: flex;
   flex-direction: column;
