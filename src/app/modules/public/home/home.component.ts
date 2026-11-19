@@ -970,6 +970,15 @@ export class HomeComponent {
   private _geracaoLocalizacao = 0;
 
   /**
+   * Ao destruir a Home (ex.: o CEP válido navega para /buscar) a geração sobe: o GPS ou o CEP
+   * que ela havia pedido e que responde depois torna-se obsoleto e não dispara reverse
+   * geocode, próximas missas nem escreve estado numa instância que já saiu de cena.
+   */
+  private readonly _invalidarLocalizacaoAoDestruir = this._destroyRef.onDestroy(() => {
+    this._geracaoLocalizacao++;
+  });
+
+  /**
    * Pedido de GPS em andamento, com a geração em que nasceu. Cliques repetidos
    * compartilham a promessa SÓ enquanto a geração não mudou; se um CEP ou "Alterar"
    * veio depois, o pedido é obsoleto e um novo clique cria um pedido novo.

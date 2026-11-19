@@ -603,6 +603,43 @@ describe('HomeComponent — origem das distâncias', () => {
         expect(geo.geocodificarCepProvisorio).not.toHaveBeenCalled();
       });
 
+      // Ao digitar um CEP válido a Home navega para /buscar e é destruída; o GPS que ela
+      // havia pedido responde depois e não pode disparar consulta nenhuma (reverse geocode,
+      // próximas missas) nem escrever estado numa Home que já saiu de cena.
+      describe('Home destruída antes da resposta', () => {
+        it('GPS que responde depois da destruição não dispara reverse geocode nem próximas missas', async () => {
+          const c = comGeo();
+          let entregarGps!: (v: { lat: number; lng: number }) => void;
+          geo.obterPosicaoAtual.and.returnValue(new Promise(r => { entregarGps = r; }));
+          (c as any)._solicitarLocalizacao(); // GPS pendente
+          churches.proximasMissas.calls.reset();
+
+          TestBed.resetTestingModule(); // destrói a Home (ex.: navegou para /buscar)
+          entregarGps({ lat: -25.43, lng: -49.27 });
+          await esperar();
+
+          expect(geo.reverseGeocode).not.toHaveBeenCalled();
+          expect(churches.proximasMissas).not.toHaveBeenCalled();
+          expect(c.origemLocalizacao).toBeNull();
+          expect(c.geoStatus).toBe('loading');
+        });
+
+        it('CEP que responde depois da destruição não segue para a geocodificação', async () => {
+          const c = comGeo();
+          let entregarCep!: (v: any) => void;
+          geo.consultarCepDetalhado.and.returnValue(new Promise(r => { entregarCep = r; }));
+          geo.geocodificarCepProvisorio.and.resolveTo({ status: 'ok', coords: { lat: -23.55, lng: -46.63 } });
+          const cep = (c as any)._resolverLocalizacaoPorCep('01001000');
+
+          TestBed.resetTestingModule();
+          entregarCep({ status: 'ok', endereco: END_CEP });
+          await cep;
+
+          expect(geo.geocodificarCepProvisorio).not.toHaveBeenCalled();
+          expect(c.origemLocalizacao).toBeNull();
+        });
+      });
+
       it('falha tardia de um GPS obsoleto não altera o estado atual', async () => {
         const c = comGeo();
         let falharGps!: (e: unknown) => void;
