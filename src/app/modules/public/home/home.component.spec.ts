@@ -246,6 +246,44 @@ describe('HomeComponent — origem das distâncias', () => {
     expect(c.proximasMissasCards[0].distanceMeters).toBe(1600);
   });
 
+  describe('cargas simultâneas de próximas missas', () => {
+    it('resposta antiga (do GPS descartado) não sobrescreve a carga mais recente', () => {
+      const c = montar('browser');
+      const antiga = new Subject<any>();
+      const recente = new Subject<any>();
+      churches.proximasMissas.and.returnValues(antiga, recente);
+
+      (c as any)._loadProximasMissas(-23.5, -46.6); // carga 1: com a posição do GPS
+      (c as any)._loadProximasMissas(); // carga 2: depois de "Alterar", sem localização
+      recente.next({ data: [{ ...itemApi, nome: 'Recente' }] });
+      expect(c.isLoadingProximas).toBeFalse();
+
+      antiga.next({ data: [{ ...itemApi, nome: 'Antiga' }] }); // chega tarde
+
+      expect(c.proximasMissasCards.length).toBe(1);
+      expect(c.proximasMissasCards[0].churchName).toBe('Recente');
+      expect(c.proximasMissasCards[0].distanceMeters).toBeUndefined();
+      expect(c.isLoadingProximas).toBeFalse();
+    });
+
+    it('erro de uma carga antiga não encerra o loading da carga mais nova', () => {
+      const c = montar('browser');
+      const antiga = new Subject<any>();
+      const recente = new Subject<any>();
+      churches.proximasMissas.and.returnValues(antiga, recente);
+
+      (c as any)._loadProximasMissas(-23.5, -46.6);
+      (c as any)._loadProximasMissas();
+      antiga.error(new Error('falhou'));
+
+      expect(c.isLoadingProximas).toBeTrue(); // a carga nova ainda está em andamento
+
+      recente.next({ data: [itemApi] });
+      expect(c.isLoadingProximas).toBeFalse();
+      expect(c.proximasMissasCards.length).toBe(1);
+    });
+  });
+
   it('mantém as cidades curadas mesmo com a geolocalização concedida', () => {
     const c = montar('browser');
 
@@ -642,6 +680,40 @@ describe('HomeComponent — origem das distâncias', () => {
         expect(c.geoLat).toBe(-23.5);
         expect(c.origemLocalizacao).toBe('gps');
         expect((c as any)._pedidoGps).toBeNull();
+      });
+
+      it('cidade do GPS que responde depois de um CEP não reaparece em "Sua cidade"', async () => {
+        const c = comGeo();
+        let entregarCidade!: (v: null) => void;
+        geo.reverseGeocode.and.returnValue(new Promise(r => { entregarCidade = r; }));
+        geo.obterPosicaoAtual.and.resolveTo({ lat: -10, lng: -10 });
+        await (c as any)._solicitarLocalizacao(); // GPS aplicado; a cidade ainda está sendo resolvida
+        geo.consultarCepDetalhado.and.resolveTo({ status: 'ok', endereco: END_CEP });
+        geo.geocodificarCepProvisorio.and.resolveTo({ status: 'ok', coords: { lat: -23.55, lng: -46.63 } });
+        await (c as any)._resolverLocalizacaoPorCep('01001000'); // CEP é a última escolha
+        expect(c.cidadeNaoResolvida).toBeFalse();
+
+        entregarCidade(null); // o reverse geocode do GPS antigo termina tarde
+        await esperar();
+
+        expect(c.cidadeDetectada).toBeNull();
+        expect(c.cidadeNaoResolvida).toBeFalse();
+        expect(c.origemLocalizacao).toBe('cep');
+      });
+
+      it('falha do reverse geocode de um GPS obsoleto não marca a cidade como não resolvida', async () => {
+        const c = comGeo();
+        let falhar!: (e: unknown) => void;
+        geo.reverseGeocode.and.returnValue(new Promise((_, rej) => { falhar = rej; }));
+        geo.obterPosicaoAtual.and.resolveTo({ lat: -10, lng: -10 });
+        await (c as any)._solicitarLocalizacao();
+        c.alterarLocalizacao(); // descarta a posição
+        expect(c.cidadeNaoResolvida).toBeFalse();
+
+        falhar(new Error('rede'));
+        await esperar();
+
+        expect(c.cidadeNaoResolvida).toBeFalse();
       });
 
       it('GPS obsoleto devolve false sem toast enganoso ao pedir "Mais próximas"', async () => {

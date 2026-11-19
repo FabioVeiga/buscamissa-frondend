@@ -1053,13 +1053,21 @@ export class HomeComponent {
   private _ultimaBuscaProximas: { lat?: number | null; lng?: number | null; raioKm: number } | null = null;
   private _ultimaCargaProximasEm = 0;
 
+  /** Número da carga mais recente de "próximas missas": respostas de cargas anteriores são descartadas. */
+  private _cargaProximasSeq = 0;
+
   private _loadProximasMissas(lat?: number | null, lng?: number | null, raioKm = 10, silencioso = false): void {
     this._ultimaBuscaProximas = { lat, lng, raioKm };
+    const seq = ++this._cargaProximasSeq;
+    const atual = () => seq === this._cargaProximasSeq;
     // No refresh automático não mostramos skeleton: a lista já está na tela e
     // piscar o loading a cada ciclo seria pior que a espera invisível.
     if (!silencioso) this.isLoadingProximas = true;
     this._churchService.proximasMissas(lat, lng, raioKm).subscribe({
       next: (res: any) => {
+        // Duas cargas em voo podem terminar fora de ordem (ex.: a do GPS descartado depois
+        // de "Alterar"): só a mais recente escreve na tela e controla o loading.
+        if (!atual()) return;
         this._ultimaCargaProximasEm = Date.now();
         const items: any[] = res?.data ?? res ?? [];
         this.proximasMissasCards = items.slice(0, 5).map((item: any) => ({
@@ -1094,7 +1102,7 @@ export class HomeComponent {
         }));
         this.isLoadingProximas = false;
       },
-      error: () => { this.isLoadingProximas = false; /* silencioso — seção simplesmente não aparece */ },
+      error: () => { if (atual()) this.isLoadingProximas = false; /* silencioso — seção simplesmente não aparece */ },
     });
   }
 
@@ -1305,8 +1313,13 @@ export class HomeComponent {
    * não shell CSR — por isso, sem slug conhecido, preferimos não navegar.
    */
   private _reverseGeocode(lat: number, lng: number): void {
+    // Resposta de um GPS que já não é a origem (CEP ou "Alterar" vieram depois) não pode
+    // reaparecer em "Sua cidade" nem alimentar a navegação para a cidade antiga.
+    const geracao = this._geracaoLocalizacao;
+    const atual = () => geracao === this._geracaoLocalizacao;
     Promise.all([this._geo.reverseGeocode(lat, lng), this._carregarCidadesPorUf()])
       .then(([addr, cidadesPorUf]) => {
+        if (!atual()) return;
         // Falha aqui NÃO é falha de localização: as coordenadas já existem. Só o card
         // "Sua cidade" fica sem cidade (cidadeNaoResolvida), e `geoStatus` segue 'found'.
         if (!addr) { this.cidadeNaoResolvida = true; return; }
@@ -1322,7 +1335,7 @@ export class HomeComponent {
 
         this.cidadeDetectada = { nome: match.nome, uf, slug: match.slug };
       })
-      .catch(() => { this.cidadeNaoResolvida = true; });
+      .catch(() => { if (atual()) this.cidadeNaoResolvida = true; });
   }
 
   private _norm(s: string): string {
