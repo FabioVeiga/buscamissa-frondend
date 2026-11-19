@@ -43,8 +43,27 @@
 
     <div *ngIf="!isLoading && cards.length === 0" class="proximas-vazia">
       <i class="pi pi-calendar proximas-vazia__icon"></i>
-      <p class="proximas-vazia__texto">Nenhuma missa encontrada para este filtro.</p>
-      <a routerLink="/missa-agora" class="proximas-vazia__link">Ver todas as missas de hoje →</a>
+      <!-- A janela desta seção é de 2 horas. O atalho leva à página da cidade (todas as
+           paróquias com a próxima missa de cada uma) ou à busca por outra cidade: nunca
+           a outra tela com a mesma janela de 2 horas. -->
+      <p class="proximas-vazia__texto">
+        @if (todasAsCards.length > 0) {
+          Nenhuma missa encontrada para este filtro.
+        } @else if (linkCidade) {
+          Não encontramos missas próximas. Veja os horários de missa em {{ cidadeNome }}.
+        } @else {
+          Não encontramos missas próximas.
+        }
+      </p>
+      @if (linkCidade; as rota) {
+        <a [routerLink]="rota" class="proximas-vazia__link">
+          Ver horários de missa em {{ cidadeNome }} →
+        </a>
+      } @else {
+        <button type="button" class="proximas-vazia__link" (click)="alterarCidade.emit()">
+          Buscar em outra cidade →
+        </button>
+      }
     </div>
 
     <div class="missas-grid" *ngIf="!isLoading && cards.length > 0">

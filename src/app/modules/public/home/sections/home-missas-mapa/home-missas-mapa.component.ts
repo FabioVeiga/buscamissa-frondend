@@ -31,6 +31,12 @@ export class HomeMissasMapaComponent {
   @Input() cidadeNome = '';
   @Input() cidadeUf = '';
   /**
+   * Slug REAL da cidade, vindo do backend (índice de `/v2/seo/estados`, o mesmo conjunto
+   * das páginas geradas). Nunca derivado do nome: `/missas/*` está fora do
+   * `navigationFallback`, então slug errado é 404 de verdade.
+   */
+  @Input() cidadeSlug = '';
+  /**
    * De onde as distâncias/os resultados são medidos, para dizer isso na tela:
    * `'usuario'` = geolocalização concedida; `'referencia'` = sem permissão, e a API
    * caiu no fallback de São Paulo. `null` no servidor — o rótulo é browser-only.
@@ -49,6 +55,22 @@ export class HomeMissasMapaComponent {
 
   get localidadeUsuario(): string {
     return this.cidadeNome ? `${this.cidadeNome}${this.cidadeUf ? '/' + this.cidadeUf.toUpperCase() : ''}` : '';
+  }
+
+  /**
+   * Rota da página da cidade, só quando a cidade é confiável: a posição do usuário está
+   * em uso (`origem === 'usuario'`) e a cidade casou com uma página existente (nome, UF e
+   * slug). Com a posição descartada ("Alterar"), a cidade do GPS anterior não vale mais.
+   * Sem isso devolve `null` e a tela oferece "Buscar em outra cidade".
+   *
+   * O link NÃO leva `?dia=`: a página da cidade sem filtro lista toda paróquia com a sua
+   * próxima missa e tem os atalhos Hoje/Amanhã/Fim de semana. Com `?dia=hoje`, uma cidade
+   * sem missa semanal naquele dia cairia em "Nenhuma paróquia com esses filtros", outro
+   * vazio, e a Home não sabe de antemão o que a cidade tem.
+   */
+  get linkCidade(): string[] | null {
+    if (this.origem !== 'usuario' || !this.cidadeNome || !this.cidadeUf || !this.cidadeSlug) return null;
+    return ['/missas', this.cidadeUf.toLowerCase(), this.cidadeSlug];
   }
 
   /** Placeholders do skeleton (reserva espaço enquanto carrega — evita CLS). */
